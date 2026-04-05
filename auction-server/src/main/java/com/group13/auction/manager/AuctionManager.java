@@ -77,10 +77,12 @@ public class AuctionManager {
    * @return User nếu tìm thấy, null nếu không
    */
   public User findUserByUsername(String username) {
-    return allUsers.stream()
-        .filter(u -> u.getUsername().equals(username))
-        .findFirst()
-        .orElse(null);
+    synchronized(allUsers) {
+      return allUsers.stream()
+              .filter(u -> u.getUsername().equals(username))
+              .findFirst()
+              .orElse(null);
+    }
   }
 
   // ── Auction management ─────────────────────────────────────────────────────
