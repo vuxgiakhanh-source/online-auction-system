@@ -98,10 +98,14 @@ public class AuctionManager {
     if (auction == null) {
       throw new IllegalArgumentException("Auction không được null.");
     }
-    if (allAuctions.stream().anyMatch(a -> a.getId().equals(auction.getId()))) {
-      return;
+    synchronized (allAuctions) {
+      boolean exists = allAuctions.stream()
+              .anyMatch(a -> a.getId().equals(auction.getId()));
+
+      if (!exists) {
+        allAuctions.add(auction);
+      }
     }
-    allAuctions.add(auction);
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
