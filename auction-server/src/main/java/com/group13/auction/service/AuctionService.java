@@ -1,6 +1,5 @@
 package com.group13.auction.service;
 
-import com.group13.auction.exception.AuctionClosedException;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.Auction.AuctionStatus;
 import com.group13.auction.model.auction.AuctionWinner;
@@ -14,17 +13,19 @@ import com.group13.auction.observer.AuctionObserver;
 import java.time.LocalDateTime;
 
 /**
+ * Quản lý vòng đời phiên đấu giá
  * Xử lý nghiệp vụ liên quan đến Auction.
  * Seller là chủ thể quyết định tạo phiên; sau khi tạo, phiên được đăng ký vào
+ * Nhận {@link IRatingService} qua constructor - không new cứng (DIP)
  * {@link com.group13.auction.manager.AuctionManager} để tra cứu (in-memory).
  * TODO: inject AuctionDAO để persist xuống DB.
  */
-public class AuctionService {
+public class AuctionService implements IAuctionService {
 
-  private final UserService userService;
+  private final IRatingService ratingService;
 
-  public AuctionService(UserService userService) {
-    this.userService = userService;
+  public AuctionService(IRatingService ratingService) {
+    this.ratingService = ratingService;
   }
 
   /**
@@ -43,7 +44,7 @@ public class AuctionService {
    */
   public Auction createAuction(Seller seller, Item item,
       LocalDateTime startTime, LocalDateTime endTime) {
-    if (!userService.canSellerCreateAuction(seller)) {
+    if (!ratingService.canSellerCreateAuction(seller)) {
       throw new IllegalStateException(
           "Seller không đủ điều kiện tạo auction (rating < 2.0 hoặc bị ban).");
     }

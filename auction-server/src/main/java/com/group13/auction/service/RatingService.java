@@ -6,12 +6,13 @@ import com.group13.auction.model.user.User.AccountStatus;
 
 /**
  * Quản lý toàn bộ logic rating — đảm bảo chỉ hệ thống mới thay đổi rating.
- *
+ * Không phụ thuộc vào service nào khác
+ * 
  * <p>Rating KHÔNG bao giờ được thay đổi trực tiếp từ bên ngoài service này.
  * {@link User#adjustRating(double)} chỉ được gọi từ đây.
  * TODO: inject UserDAO để persist xuống DB.
  */
-public class RatingService {
+public class RatingService implements IRatingService {
 
   private static final double MIN_RATING_ELIGIBLE   = 1.0;
   private static final double MIN_RATING_SELLER      = 2.0;

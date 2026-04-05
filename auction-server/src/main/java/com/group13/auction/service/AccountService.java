@@ -1,4 +1,4 @@
-package com.group13.auction.service;
+package com.group13.auction.service.account;
 
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.Bidder;
@@ -10,7 +10,17 @@ import com.group13.auction.model.user.User.AccountStatus;
  * Tách khỏi UserService để tuân thủ SRP.
  * TODO: inject UserDAO để persist xuống DB.
  */
-public class AccountService {
+public class AccountService implements IAccountService {
+
+  private final IRatingService ratingService;
+
+  /**
+   * Nhận {@link IRatingService} qua constructor — không new cứng (DIP).
+   * @param ratingService dùng để kiểm tra eligibility trước khi thực hiện
+   */
+  public AccountService(IRatingService ratingService) {
+    this.ratingService = ratingService;
+  }
 
   // ── Ban / Suspend ──────────────────────────────────────────────────────────
 
@@ -39,9 +49,15 @@ public class AccountService {
    *
    * @param bidder bidder cần nạp
    * @param amount số tiền nạp (phải > 0)
+   * @throws IllegalStateException nếu tài khoản bị khóa hoặc
+   * điểm rating quá thấp
    * @throws IllegalArgumentException nếu amount <= 0
    */
   public void deposit(Bidder bidder, double amount) {
+    if (!ratingService.isEligible(bidder)) {
+      throw new IllegalStateException(
+              "Tài khoản không đủ điều kiện thực hiện giao dịch");
+    }
     if (amount <= 0) {
       throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0.");
     }

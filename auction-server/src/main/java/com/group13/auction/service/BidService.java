@@ -8,22 +8,23 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.bid.BidTransaction.BidResult;
 import com.group13.auction.model.user.Bidder;
-import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.strategy.BidStrategy;
 
 /**
  * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
- * Payment được tách sang {@link PaymentService}.
+ * Nhận {@link IRatingService} và {@link IAuctionService} qua constructor (DIP)
+ * Không new cứng bất kì service nào
+ * Payment được tách sang {@link StandardPaymentService}.
  * TODO: inject BidTransactionDAO, AuctionDAO để persist xuống DB.
  */
-public class BidService {
+public class BidService implements IBidService {
 
-  private final RatingService ratingService;
-  private final AuctionService auctionService;
+  private final IRatingService ratingService;
+  private final IAuctionService auctionService;
 
-  public BidService(RatingService ratingService, AuctionService auctionService) {
+  public BidService(IRatingService ratingService, IAuctionService auctionService) {
     this.ratingService = ratingService;
     this.auctionService = auctionService;
   }
