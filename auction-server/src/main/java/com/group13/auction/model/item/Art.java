@@ -10,39 +10,72 @@ public class Art extends Item {
   private final int yearCreated;
   private final String medium;
 
-  // ── Constructor khai sinh ──────────────────────────────────────────────────
+  // ── Static factory methods ─────────────────────────────────────────────────
 
-  public Art(String name, String description, double startingPrice,
-      Seller seller, String artist, int yearCreated, String medium) {
+  /**
+   * Khai sinh tác phẩm nghệ thuật mới.
+   *
+   * @param name          tên tác phẩm
+   * @param description   mô tả
+   * @param startingPrice giá khởi điểm
+   * @param seller        người bán
+   * @param artist        nghệ sĩ sáng tác
+   * @param yearCreated   năm sáng tác
+   * @param medium        chất liệu nghệ thuật
+   * @return Art mới
+   */
+  protected static Art create(String name, String description, double startingPrice,
+                              Seller seller, String artist, int yearCreated, String medium) {
+    return new Art(name, description, startingPrice, seller, artist, yearCreated, medium);
+  }
+
+  /**
+   * Hồi sinh Art từ DB — chỉ DAO được gọi method này.
+   *
+   * @param id             id gốc
+   * @param createdAt      thời gian tạo gốc
+   * @param updatedAt      thời gian cập nhật gốc
+   * @param name           tên tác phẩm
+   * @param description    mô tả
+   * @param startingPrice  giá khởi điểm
+   * @param seller         người bán
+   * @param artist         nghệ sĩ
+   * @param yearCreated    năm sáng tác
+   * @param medium         chất liệu
+   * @return Art được phục hồi
+   */
+  public static Art reconstitute(String id, LocalDateTime createdAt,
+                                    LocalDateTime updatedAt, String name, String description, double startingPrice,
+                                    Seller seller, String artist, int yearCreated, String medium) {
+    return new Art(id, createdAt, updatedAt, name, description, startingPrice,
+            seller, artist, yearCreated, medium);
+  }
+
+  // ── Private constructors ───────────────────────────────────────────────────
+
+  private Art(String name, String description, double startingPrice,
+              Seller seller, String artist, int yearCreated, String medium) {
     super(name, description, startingPrice, ItemCategory.ART, seller);
     this.artist = artist;
     this.yearCreated = yearCreated;
     this.medium = medium;
   }
 
-  // ── Constructor hồi sinh ──────────────────────────────────────────────────
-
-  public Art(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-      String name, String description, double startingPrice, Seller seller,
-      String artist, int yearCreated, String medium) {
+  private Art(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
+              String name, String description, double startingPrice, Seller seller,
+              String artist, int yearCreated, String medium) {
     super(id, createdAt, updatedAt, name, description, startingPrice,
-        ItemCategory.ART, seller);
+            ItemCategory.ART, seller);
     this.artist = artist;
     this.yearCreated = yearCreated;
     this.medium = medium;
   }
 
-  public String getArtist() {
-    return artist;
-  }
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public int getYearCreated() {
-    return yearCreated;
-  }
-
-  public String getMedium() {
-    return medium;
-  }
+  public String getArtist() { return artist; }
+  public int getYearCreated() { return yearCreated; }
+  public String getMedium() { return medium; }
 
   @Override
   public void printInfo() {

@@ -58,7 +58,7 @@ public abstract class Item extends Entity {
    * @param category      loại sản phẩm
    * @param seller        người bán
    */
-  protected Item(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
+  public Item(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
       String name, String description, double startingPrice,
       ItemCategory category, Seller seller) {
     super(id, createdAt, updatedAt);

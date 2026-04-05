@@ -1,4 +1,4 @@
-package com.group13.auction.service.account;
+package com.group13.auction.service;
 
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.Bidder;

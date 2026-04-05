@@ -10,39 +10,72 @@ public class Vehicle extends Item {
   private final int year;
   private final double mileage;
 
-  // ── Constructor khai sinh ──────────────────────────────────────────────────
+  // ── Static factory methods ─────────────────────────────────────────────────
 
-  public Vehicle(String name, String description, double startingPrice,
-      Seller seller, String manufacturer, int year, double mileage) {
+  /**
+   * Khai sinh phương tiện mới.
+   *
+   * @param name          tên phương tiện
+   * @param description   mô tả
+   * @param startingPrice giá khởi điểm
+   * @param seller        người bán
+   * @param manufacturer  hãng sản xuất
+   * @param year          năm sản xuất
+   * @param mileage       số km đã đi (Odometer)
+   * @return Vehicle mới
+   */
+  protected static Vehicle create(String name, String description, double startingPrice,
+                                  Seller seller, String manufacturer, int year, double mileage) {
+    return new Vehicle(name, description, startingPrice, seller, manufacturer, year, mileage);
+  }
+
+  /**
+   * Hồi sinh Vehicle từ DB.
+   *
+   * @param id            id gốc
+   * @param createdAt     thời gian tạo gốc
+   * @param updatedAt     thời gian cập nhật gốc
+   * @param name          tên phương tiện
+   * @param description   mô tả
+   * @param startingPrice giá khởi điểm
+   * @param seller        người bán
+   * @param manufacturer  hãng sản xuất
+   * @param year          năm sản xuất
+   * @param mileage       số km
+   * @return Vehicle được phục hồi
+   */
+  public static Vehicle reconstitute(String id, LocalDateTime createdAt,
+                                        LocalDateTime updatedAt, String name, String description, double startingPrice,
+                                        Seller seller, String manufacturer, int year, double mileage) {
+    return new Vehicle(id, createdAt, updatedAt, name, description, startingPrice,
+            seller, manufacturer, year, mileage);
+  }
+
+  // ── Private constructors ───────────────────────────────────────────────────
+
+  private Vehicle(String name, String description, double startingPrice,
+                  Seller seller, String manufacturer, int year, double mileage) {
     super(name, description, startingPrice, ItemCategory.VEHICLE, seller);
     this.manufacturer = manufacturer;
     this.year = year;
     this.mileage = mileage;
   }
 
-  // ── Constructor hồi sinh ──────────────────────────────────────────────────
-
-  public Vehicle(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-      String name, String description, double startingPrice, Seller seller,
-      String manufacturer, int year, double mileage) {
+  private Vehicle(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
+                  String name, String description, double startingPrice, Seller seller,
+                  String manufacturer, int year, double mileage) {
     super(id, createdAt, updatedAt, name, description, startingPrice,
-        ItemCategory.VEHICLE, seller);
+            ItemCategory.VEHICLE, seller);
     this.manufacturer = manufacturer;
     this.year = year;
     this.mileage = mileage;
   }
 
-  public String getManufacturer() {
-    return manufacturer;
-  }
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public int getYear() {
-    return year;
-  }
-
-  public double getMileage() {
-    return mileage;
-  }
+  public String getManufacturer() { return manufacturer; }
+  public int getYear() { return year; }
+  public double getMileage() { return mileage; }
 
   @Override
   public void printInfo() {
