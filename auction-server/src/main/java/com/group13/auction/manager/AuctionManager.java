@@ -50,9 +50,7 @@ public class AuctionManager {
    */
   public static AuctionManager getInstance() {
     if (instance == null) {
-      instance = new AuctionManager();
-    }
-    return instance;
+      return instance;
   }
 
   // ── User management ────────────────────────────────────────────────────────
