@@ -26,7 +26,7 @@ public class Bidder extends User {
    * @param email    địa chỉ email
    * @return Bidder mới
    */
-  public static Bidder create(String username, String password, String email) {
+  protected static Bidder create(String username, String password, String email) {
     return new Bidder(username, password, email);
   }
 
@@ -44,7 +44,7 @@ public class Bidder extends User {
    * @param balance        số dư hiện tại
    * @return Bidder được phục hồi
    */
-  public static Bidder reconstitute(String id, LocalDateTime createdAt,
+  protected static Bidder reconstitute(String id, LocalDateTime createdAt,
       LocalDateTime updatedAt, String username, String hashedPassword,
       String email, AccountStatus accountStatus, double rating,
       double balance) {

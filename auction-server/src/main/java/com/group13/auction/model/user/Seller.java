@@ -22,7 +22,7 @@ public class Seller extends User {
    * @param email    địa chỉ email
    * @return Seller mới
    */
-  public static Seller create(String username, String password, String email) {
+  protected static Seller create(String username, String password, String email) {
     return new Seller(username, password, email);
   }
 
@@ -39,7 +39,7 @@ public class Seller extends User {
    * @param rating         rating hiện tại
    * @return Seller được phục hồi
    */
-  public static Seller reconstitute(String id, LocalDateTime createdAt,
+  protected static Seller reconstitute(String id, LocalDateTime createdAt,
       LocalDateTime updatedAt, String username, String hashedPassword,
       String email, AccountStatus accountStatus, double rating) {
     return new Seller(id, createdAt, updatedAt, username, hashedPassword,

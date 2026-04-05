@@ -1,6 +1,7 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.Seller;
+import com.group13.auction.service.IRatingService;
 
 /**
  * Observer dành cho Seller (lỗi #20 — cần thiết).
@@ -10,14 +11,16 @@ import com.group13.auction.model.user.Seller;
 public class SellerObserver implements AuctionObserver {
 
   private final Seller seller;
+  private final IRatingService ratingService;
 
   /**
    * Khởi tạo SellerObserver.
    *
    * @param seller seller được theo dõi
    */
-  public SellerObserver(Seller seller) {
+  public SellerObserver(Seller seller, IRatingService ratingService) {
     this.seller = seller;
+    this.ratingService = ratingService;
   }
 
   @Override
@@ -60,7 +63,7 @@ public class SellerObserver implements AuctionObserver {
             seller.getUsername(),
             event.getAuction().getItem().getName(),
             event.getBidAmount());
-        seller.increaseRating(0.3); // thưởng rating khi bán thành công
+        ratingService.rewardSeller(seller); // thưởng rating khi bán thành công
         break;
       case AUCTION_CANCELED:
         System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá đã bị Admin huỷ.%n",

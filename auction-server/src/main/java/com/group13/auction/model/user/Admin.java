@@ -49,7 +49,7 @@ public class Admin extends User {
    * @param adminLevel     cấp độ quyền
    * @return Admin được phục hồi
    */
-  public static Admin reconstitute(String id, LocalDateTime createdAt,
+  protected static Admin reconstitute(String id, LocalDateTime createdAt,
       LocalDateTime updatedAt, String username, String hashedPassword,
       String email, AccountStatus accountStatus, double rating,
       int adminLevel) {

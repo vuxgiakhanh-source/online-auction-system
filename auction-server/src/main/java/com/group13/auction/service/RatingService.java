@@ -14,7 +14,7 @@ import com.group13.auction.model.user.User.AccountStatus;
  */
 public class RatingService implements IRatingService {
 
-  private static final double MIN_RATING_ELIGIBLE   = 1.0;
+  private static final double MIN_RATING_ELIGIBLE    = 1.0;
   private static final double MIN_RATING_SELLER      = 2.0;
   private static final double REWARD_BIDDER_PAYMENT  = 0.2;
   private static final double REWARD_SELLER_SALE     = 0.3;
