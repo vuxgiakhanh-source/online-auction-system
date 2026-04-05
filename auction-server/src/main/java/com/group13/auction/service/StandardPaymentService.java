@@ -8,16 +8,22 @@ import com.group13.auction.model.user.Bidder;
 
 /**
  * Xử lý thanh toán sau khi phiên đấu giá kết thúc.
+ * Thanh toán tiêu chuẩn - trả toàn bộ ngay một lần.
+ * 
+ * <p>Là một trong nhiều implementation có thể có của {@link IPaymentService}.
+ * (Nếu có time) thì thêm kiểu thanh toán mới (trả góp, escrow) implements IPaymentService
+ *
+ * <p>Nhận {@link IRatingService} và {@link IAuctionService} qua constructor
  * Tách khỏi BidService để tuân thủ SRP.
  * TODO: inject AuctionDAO, UserDAO để persist xuống DB.
  */
-public class PaymentService {
+public class StandardPaymentService {
 
-  private final RatingService ratingService;
-  private final AuctionService auctionService;
+  private final IRatingService ratingService;
+  private final IAuctionService auctionService;
 
-  public PaymentService(RatingService ratingService,
-      AuctionService auctionService) {
+  public StandardPaymentService(IRatingService ratingService,
+      IAuctionService auctionService) {
     this.ratingService = ratingService;
     this.auctionService = auctionService;
   }
