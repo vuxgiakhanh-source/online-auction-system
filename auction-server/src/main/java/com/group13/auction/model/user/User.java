@@ -102,7 +102,7 @@ public abstract class User extends Entity {
    * Được clamp tự động trong [{@value #RATING_MIN}, {@value #RATING_MAX}].
    *
    * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
-   * Đặt tên rõ ràng thay vì {@code setRating()} để tránh nhầm lẫn.
+   * Tránh nhầm lẫn việc người dùng tự set rating cho bản thân
    *
    * @param delta lượng thay đổi (có thể âm)
    */

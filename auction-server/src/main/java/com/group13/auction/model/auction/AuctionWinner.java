@@ -21,6 +21,8 @@ public class AuctionWinner extends Entity {
 
   /**
    * Khai sinh AuctionWinner ngay khi auction FINISHED.
+   * Chỉ AuctionService tạo AuctionWinner, và chỉ khi closeAuction()
+   * được gọi mà có currentLeader tồn tại.
    * Hạn thanh toán = 24h từ lúc tạo.
    *
    * @param winner     người thắng

@@ -16,10 +16,12 @@ public class Seller extends User {
 
   /**
    * Khai sinh Seller mới.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
-   * @param username tên đăng nhập
-   * @param password mật khẩu thô
-   * @param email    địa chỉ email
+   * @param username   tên đăng nhập
+   * @param password   mật khẩu thô
+   * @param email      địa chỉ email
    * @return Seller mới
    */
   protected static Seller create(String username, String password, String email) {
@@ -27,7 +29,7 @@ public class Seller extends User {
   }
 
   /**
-   * Hồi sinh Seller từ DB — chỉ DAO được gọi method này.
+   * Hồi sinh Seller từ DB — CHÚ Ý: chỉ DAO được gọi method này.
    *
    * @param id             id gốc
    * @param createdAt      thời gian tạo gốc

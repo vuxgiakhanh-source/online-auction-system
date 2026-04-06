@@ -14,6 +14,8 @@ public class Art extends Item {
 
   /**
    * Khai sinh tác phẩm nghệ thuật mới.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
    * @param name          tên tác phẩm
    * @param description   mô tả

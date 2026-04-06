@@ -20,10 +20,12 @@ public class Bidder extends User {
 
   /**
    * Khai sinh Bidder mới với balance = 0, rating = 3.0.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
-   * @param username tên đăng nhập
-   * @param password mật khẩu thô
-   * @param email    địa chỉ email
+   * @param username   tên đăng nhập
+   * @param password   mật khẩu thô
+   * @param email      địa chỉ email
    * @return Bidder mới
    */
   protected static Bidder create(String username, String password, String email) {
@@ -31,7 +33,7 @@ public class Bidder extends User {
   }
 
   /**
-   * Hồi sinh Bidder từ DB — chỉ DAO được gọi method này.
+   * Hồi sinh Bidder từ DB — CHÚ Ý: chỉ DAO được gọi method này.
    *
    * @param id             id gốc từ DB
    * @param createdAt      thời gian tạo gốc
