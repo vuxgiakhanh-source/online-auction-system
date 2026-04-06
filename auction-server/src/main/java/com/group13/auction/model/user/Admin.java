@@ -23,6 +23,8 @@ public class Admin extends User {
 
   /**
    * Khai sinh Admin mới.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
    * @param username   tên đăng nhập
    * @param password   mật khẩu thô

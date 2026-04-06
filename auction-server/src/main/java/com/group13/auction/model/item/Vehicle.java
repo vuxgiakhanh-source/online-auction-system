@@ -14,6 +14,8 @@ public class Vehicle extends Item {
 
   /**
    * Khai sinh phương tiện mới.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
    * @param name          tên phương tiện
    * @param description   mô tả

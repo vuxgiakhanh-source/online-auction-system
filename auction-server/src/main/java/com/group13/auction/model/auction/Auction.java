@@ -30,7 +30,7 @@ public class Auction extends Entity {
 
   /**
    * Khai sinh Auction mới ở trạng thái OPEN.
-   * Có thể set lịch trước nhiều ngày — OPEN không có nghĩa đang chạy.
+   * Có thể set lịch trước nhiều ngày.
    *
    * @param item      sản phẩm đưa ra đấu giá
    * @param startTime thời điểm bắt đầu (có thể là tương lai)
@@ -114,29 +114,68 @@ public class Auction extends Entity {
 
   // ── Setters — chỉ AuctionService gọi ──────────────────────────────────────
 
+  /**
+   * Cập nhật trạng thái vòng đời phiên (OPEN → RUNNING → FINISHED/CANCELED → PAID).
+   *
+   * Chỉ {@link com.group13.auction.service.AuctionService} được gọi method này.
+   * Cụ thể qua: {@code startAuction()}, {@code closeAuction()},
+   * {@code markAsPaid()}, {@code cancelAuction()}.
+   */
   public void setStatus(AuctionStatus status) {
     this.status = status;
     markUpdated();
   }
 
+  /**
+   * Cập nhật giá hiện tại khi có bid mới hợp lệ được chấp nhận.
+   *
+   * Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
+   * bên trong {@code placeBid()} sau khi strategy đã validate bid thành công.
+   */
   public void setCurrentPrice(double price) {
     this.currentPrice = price;
     markUpdated();
   }
 
+/**
+ * Cập nhật người đang dẫn đầu phiên (người vừa đặt giá cao nhất).
+ *
+ * Chỉ {@link com.group13.auction.service.BidService} được gọi method này
+ * bên trong {@code placeBid()} ngay sau {@code setCurrentPrice()}.
+ */
   public void setCurrentLeader(User leader) {
     this.currentLeader = leader;
   }
 
+/**
+ * Ghi nhận người thắng phiên sau khi phiên kết thúc (RUNNING → FINISHED).
+ *
+ * Chỉ {@link com.group13.auction.service.AuctionService} được gọi method này,
+ * bên trong {@code closeAuction()} — chỉ khi có {@code currentLeader} tồn tại.
+ */
   public void setWinner(AuctionWinner winner) {
     this.winner = winner;
     markUpdated();
   }
 
+  /**
+   * Lưu id của một BidTransaction vừa được ghi nhận vào phiên.
+   *
+   * Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
+   * bên trong {@code placeBid()} sau khi tạo BidTransaction thành công.
+   */
   public void addBidTransactionId(String bidId) {
     bidTransactionIds.add(bidId);
   }
 
+  /**
+   * Đăng ký observer để nhận notify về sự kiện trong phiên này.
+   *
+   * <p><b>Chỉ {@link com.group13.auction.service.AuctionService} được gọi method này</b>
+   * (qua {@code addObserver()}), được trigger bởi
+   * {@link com.group13.auction.service.BidService}
+   * khi Bidder gọi {@code joinAuction()} hoặc {@code watchAuction()}.
+   */
   public void addObserver(AuctionObserver observer) {
     if (!observers.contains(observer)) {
       observers.add(observer);

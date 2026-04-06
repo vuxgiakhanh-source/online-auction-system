@@ -1,7 +1,5 @@
 package com.group13.auction.model.item;
 
-import com.group13.auction.model.item.Item;
-import com.group13.auction.model.item.Vehicle;
 import com.group13.auction.model.user.Seller;
 import com.group13.auction.service.IRatingService;
 

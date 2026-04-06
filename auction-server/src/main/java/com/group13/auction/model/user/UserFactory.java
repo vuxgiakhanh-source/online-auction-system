@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Factory tạo User — tập trung validate và khởi tạo (lỗi #24, #25).
- * ID được sinh bởi Entity (UUID) — không cần generateId() ở đây.
+ * Factory tạo User — tập trung validate và khởi tạo.
+ * ID được sinh bởi Entity (UUID).
  * Triển khai theo Factory Method Pattern.
  */
 public abstract class UserFactory {

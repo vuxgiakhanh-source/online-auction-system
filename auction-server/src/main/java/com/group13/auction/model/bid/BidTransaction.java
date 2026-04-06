@@ -33,7 +33,7 @@ public class BidTransaction extends Entity {
   }
 
   /**
-   * Hồi sinh BidTransaction từ DB — chỉ DAO được gọi method này.
+   * Hồi sinh BidTransaction từ DB — CHÚ Ý: chỉ DAO được gọi method này.
    *
    * @param id        id gốc
    * @param createdAt thời gian tạo gốc

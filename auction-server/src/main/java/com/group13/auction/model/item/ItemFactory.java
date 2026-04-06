@@ -31,7 +31,8 @@ public abstract class ItemFactory {
     return createProduct(name, description, startingPrice, seller, args);
   }
 
-  /** Cho lớp con tự định nghĩa cách 1 đối tượng của chúng
+  /**
+   * Cho lớp con tự định nghĩa cách 1 đối tượng của chúng
    * được tạo ra như thế nào.
    */
   protected abstract Item createProduct(String name, String description,

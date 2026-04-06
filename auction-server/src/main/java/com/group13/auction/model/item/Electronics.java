@@ -14,6 +14,8 @@ public class Electronics extends Item {
 
   /**
    * Khai sinh sản phẩm điện tử mới.
+   * Hàm này chỉ được sử dụng trong Factory, không được tạo
+   * đối tượng trực tiếp từ method này
    *
    * @param name           tên sản phẩm
    * @param description    mô tả

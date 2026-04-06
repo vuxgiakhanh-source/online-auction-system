@@ -23,7 +23,7 @@ public class AuctionManager {
   private static AuctionManager instance;
 
   /**
-   * Danh sách tất cả auction — lọc theo status khi cần (lỗi #6, #7).
+   * Danh sách tất cả auction — lọc theo status khi cần.
    * TODO: sau này sync với DB qua AuctionDAO.
    */
   private final List<Auction> allAuctions;

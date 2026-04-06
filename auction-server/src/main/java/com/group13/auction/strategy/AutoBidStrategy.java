@@ -36,7 +36,7 @@ public class AutoBidStrategy implements BidStrategy {
   }
 
   /**
-   * Tính số tiền tối thiểu cần đặt để vượt giá hiện tại (lỗi #22).
+   * Tính số tiền tối thiểu cần đặt để vượt giá hiện tại.
    * Hệ thống dùng mức tối thiểu, không tăng cố định.
    *
    * @param auction phiên đấu giá
@@ -53,7 +53,7 @@ public class AutoBidStrategy implements BidStrategy {
   @Override
   public String describe() {
     return String.format(
-        "Auto: Tự bid mức tối thiểu vượt đối thủ, tối đa %.0f (lỗi #22 đã sửa)",
+        "Auto: Tự bid mức tối thiểu vượt đối thủ, tối đa %.0f",
         maxBid);
   }
 
