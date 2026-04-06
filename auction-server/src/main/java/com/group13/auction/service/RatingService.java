@@ -17,7 +17,7 @@ public class RatingService implements IRatingService {
   private static final double MIN_RATING_ELIGIBLE    = 1.0;
   private static final double MIN_RATING_SELLER      = 2.0;
   private static final double REWARD_BIDDER_PAYMENT  = 0.2;
-  private static final double REWARD_SELLER_SALE     = 0.3;
+  private static final double REWARD_SELLER_SALE     = 0.1;
   private static final double PENALTY_LATE_PAYMENT   = 1.0;
 
   // ── Eligibility checks ─────────────────────────────────────────────────────

@@ -20,38 +20,45 @@ import java.util.stream.Collectors;
  */
 public class AuctionManager {
 
-  private static AuctionManager instance;
+  // FIX: dùng eager initialization → thread-safe, tránh tạo nhiều instance
+  private static final AuctionManager instance = new AuctionManager();
 
   /**
    * Danh sách tất cả auction — lọc theo status khi cần.
    * TODO: sau này sync với DB qua AuctionDAO.
+   *
+   * FIX: dùng synchronizedList để tránh race condition khi nhiều thread add/remove
    */
   private final List<Auction> allAuctions;
 
   /**
    * Danh sách tất cả user đã đăng ký.
    * TODO: sau này sync với DB qua UserDAO.
+   *
+   * FIX: thread-safe collection
    */
   private final List<User> allUsers;
 
+  /**
+   * FIX: thread-safe collection cho observer
+   */
   private final List<AuctionObserver> globalObservers;
 
   /** Private constructor — ngăn tạo instance từ bên ngoài. */
   private AuctionManager() {
-    this.allAuctions = new ArrayList<>();
-    this.allUsers = new ArrayList<>();
-    this.globalObservers = new ArrayList<>();
+    this.allAuctions = Collections.synchronizedList(new ArrayList<>());
+    this.allUsers = Collections.synchronizedList(new ArrayList<>());
+    this.globalObservers = Collections.synchronizedList(new ArrayList<>());
   }
 
   /**
    * Lấy instance duy nhất của AuctionManager.
    *
    * @return instance AuctionManager
+   *
+   * FIX: instance đã được khởi tạo sẵn → không cần check null
    */
   public static AuctionManager getInstance() {
-    if (instance == null) {
-      instance = new AuctionManager();
-    }
     return instance;
   }
 
@@ -77,110 +84,136 @@ public class AuctionManager {
    *
    * @param username tên đăng nhập cần tìm
    * @return User nếu tìm thấy, null nếu không
+   *
+   * FIX: phải synchronized khi iterate (stream)
    */
   public User findUserByUsername(String username) {
-    return allUsers.stream()
-        .filter(u -> u.getUsername().equals(username))
-        .findFirst()
-        .orElse(null);
+    synchronized (allUsers) {
+      return allUsers.stream()
+              .filter(u -> u.getUsername().equals(username))
+              .findFirst()
+              .orElse(null);
+    }
   }
 
   // ── Auction management ─────────────────────────────────────────────────────
 
   /**
-   * Đăng ký một phiên đã được tạo qua nghiệp vụ (vd. {@code AuctionService.createAuction}).
-   * Không tạo {@link Auction} tại đây — chỉ lưu reference để tra cứu/lọc.
-   * TODO: sau này sync với DB qua AuctionDAO.
+   * Đăng ký một phiên đã được tạo qua nghiệp vụ.
    *
-   * @param auction phiên cần đưa vào registry (không null, id duy nhất)
+   * @param auction phiên cần đưa vào registry
+   *
+   * FIX:
+   * - check + add phải nằm trong cùng 1 synchronized block (atomic)
    */
   public void registerAuction(Auction auction) {
     if (auction == null) {
       throw new IllegalArgumentException("Auction không được null.");
     }
-    if (allAuctions.stream().anyMatch(a -> a.getId().equals(auction.getId()))) {
-      return;
+
+    synchronized (allAuctions) {
+      if (allAuctions.stream().anyMatch(a -> a.getId().equals(auction.getId()))) {
+        return;
+      }
+      allAuctions.add(auction);
     }
-    allAuctions.add(auction);
+
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
   /**
-   * Đăng ký global observer (theo dõi toàn hệ thống).
+   * Đăng ký global observer.
    *
-   * @param observer observer cần thêm
+   * FIX: cần synchronized vì có contains + add
    */
   public void addGlobalObserver(AuctionObserver observer) {
-    if (observer != null && !globalObservers.contains(observer)) {
-      globalObservers.add(observer);
-    }
-  }
+    if (observer == null) return;
 
-  /**
-   * Fan-out cùng một {@link AuctionEvent} tới mọi global observer (song song với observer theo phiên).
-   */
-  public void notifyGlobalObservers(AuctionEvent event) {
-    if (event == null) {
-      return;
-    }
-    AuctionEvent.AuctionEventType type = event.getEventType();
-    for (AuctionObserver observer : globalObservers) {
-      if (type == AuctionEvent.AuctionEventType.BID_PLACED) {
-        observer.onBidPlaced(event);
-      } else {
-        observer.onAuctionEnded(event);
+    synchronized (globalObservers) {
+      if (!globalObservers.contains(observer)) {
+        globalObservers.add(observer);
       }
     }
   }
 
   /**
-   * Lấy tất cả auction đang RUNNING (lỗi #7 — lọc theo status).
-   * TODO: sau này truy vấn DB qua AuctionDAO.findByStatus(RUNNING).
+   * Fan-out event tới observer.
    *
-   * @return danh sách auction đang chạy (read-only)
+   * FIX: phải synchronized khi iterate
    */
-  public List<Auction> getRunningAuctions() {
-    return allAuctions.stream()
-        .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
-        .collect(Collectors.collectingAndThen(
-            Collectors.toList(), Collections::unmodifiableList));
+  public void notifyGlobalObservers(AuctionEvent event) {
+    if (event == null) {
+      return;
+    }
+
+    synchronized (globalObservers) {
+      AuctionEvent.AuctionEventType type = event.getEventType();
+      for (AuctionObserver observer : globalObservers) {
+        if (type == AuctionEvent.AuctionEventType.BID_PLACED) {
+          observer.onBidPlaced(event);
+        } else {
+          observer.onAuctionEnded(event);
+        }
+      }
+    }
   }
 
   /**
-   * Lấy auction theo trạng thái (lỗi #7).
-   * TODO: sau này truy vấn DB qua AuctionDAO.findByStatus(status).
+   * Lấy tất cả auction đang RUNNING.
    *
-   * @param status trạng thái cần lọc
-   * @return danh sách auction (read-only)
+   * FIX: synchronized khi stream
+   */
+  public List<Auction> getRunningAuctions() {
+    synchronized (allAuctions) {
+      return allAuctions.stream()
+              .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
+              .collect(Collectors.collectingAndThen(
+                      Collectors.toList(), Collections::unmodifiableList));
+    }
+  }
+
+  /**
+   * Lấy auction theo trạng thái.
+   *
+   * FIX: synchronized khi stream
    */
   public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
-    return allAuctions.stream()
-        .filter(a -> a.getStatus() == status)
-        .collect(Collectors.collectingAndThen(
-            Collectors.toList(), Collections::unmodifiableList));
+    synchronized (allAuctions) {
+      return allAuctions.stream()
+              .filter(a -> a.getStatus() == status)
+              .collect(Collectors.collectingAndThen(
+                      Collectors.toList(), Collections::unmodifiableList));
+    }
   }
 
   /**
    * Tìm auction theo id.
-   * TODO: sau này truy vấn DB qua AuctionDAO.findById(id).
    *
-   * @param id id cần tìm
-   * @return Auction nếu tìm thấy, null nếu không
+   * FIX: synchronized khi stream
    */
   public Auction findAuctionById(String id) {
-    return allAuctions.stream()
-        .filter(a -> a.getId().equals(id))
-        .findFirst()
-        .orElse(null);
+    synchronized (allAuctions) {
+      return allAuctions.stream()
+              .filter(a -> a.getId().equals(id))
+              .findFirst()
+              .orElse(null);
+    }
   }
 
-  /** @return toàn bộ auction (read-only) */
+  /** @return toàn bộ auction (read-only)
+   *
+   * FIX: trả về bản copy để tránh bị modify khi đang dùng
+   */
   public List<Auction> getAllAuctions() {
-    return Collections.unmodifiableList(allAuctions);
+    synchronized (allAuctions) {
+      return Collections.unmodifiableList(new ArrayList<>(allAuctions));
+    }
   }
 
   /** @return toàn bộ user (read-only) */
   public List<User> getAllUsers() {
-    return Collections.unmodifiableList(allUsers);
+    synchronized (allUsers) {
+      return Collections.unmodifiableList(new ArrayList<>(allUsers));
+    }
   }
 }
