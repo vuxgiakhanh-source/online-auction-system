@@ -13,12 +13,11 @@ public class UserDAO {
     }
 
     public boolean registerUser(String username, String passwordHash, String role, String email) {
-        String sql = "INSERT INTO users (username, password_hash, role, email) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             pstmt.setString(2, passwordHash);
-            pstmt.setString(3, role);
-            pstmt.setString(4, email);
+            pstmt.setString(3, email);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Lỗi đăng ký người dùng: " + e.getMessage());
