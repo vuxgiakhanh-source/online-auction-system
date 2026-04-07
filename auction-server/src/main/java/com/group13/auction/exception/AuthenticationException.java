@@ -19,11 +19,11 @@ public class AuthenticationException extends RuntimeException {
 
   private static String buildMessage(Reason reason) {
     switch (reason) {
-      case WRONG_PASSWORD:          return "Sai mật khẩu.";
-      case ACCOUNT_BANNED:          return "Tài khoản đã bị khoá.";
-      case ACCOUNT_SUSPENDED:       return "Tài khoản đang bị tạm ngưng.";
-      case INSUFFICIENT_RATING:     return "Rating không đủ điều kiện tham gia.";
-      default:                      return "Xác thực thất bại.";
+      case WRONG_PASSWORD: return "Sai mật khẩu.";
+      case ACCOUNT_BANNED: return "Tài khoản đã bị khoá.";
+      case ACCOUNT_SUSPENDED: return "Tài khoản đang bị tạm ngưng.";
+      case INSUFFICIENT_RATING: return "Rating không đủ điều kiện tham gia.";
+      default: return "Xác thực thất bại.";
     }
   }
 

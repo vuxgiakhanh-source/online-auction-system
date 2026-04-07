@@ -4,7 +4,7 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.IRatingService;
 
 /**
- * Factory tạo Item — tập trung validate và khởi tạo.
+ * Abstract Factory tạo Item — tập trung validate và khởi tạo.
  * ID được sinh bởi Entity (UUID).
  */
 public abstract class ItemFactory {
@@ -18,11 +18,11 @@ public abstract class ItemFactory {
   /**
    * Logic chung cho mọi loại Item.
    *
-   * @param name          tên sản phẩm
-   * @param description   mô tả
+   * @param name tên sản phẩm
+   * @param description mô tả
    * @param startingPrice giá khởi điểm
-   * @param seller        người bán
-   * @param args          các tham số khác tùy thuộc vào ItemCategory
+   * @param seller người bán
+   * @param args các tham số khác tùy thuộc vào ItemCategory
    * @return gọi tới hàm createProduct()
    */
   public Item createItem(String name, String description,

@@ -1,4 +1,4 @@
-package com.group13.auction.service;
+package com.group13.auction.service.serviceInterface;
 
 import com.group13.auction.model.auction.Auction;
 
@@ -15,6 +15,7 @@ public interface IPaymentService {
   /**
    * Xử lý thanh toán sau khi phiên FINISHED (trong 24h).
    * Winner thanh toán phần còn lại → tiền vào SystemBank → bank trừ thuế → chuyển seller.
+   * Tất cả trong một khối giao dịch — rollback nếu lỗi.
    *
    * @param auction phiên cần thanh toán
    * @throws IllegalStateException nếu không có winner
@@ -24,7 +25,9 @@ public interface IPaymentService {
 
   /**
    * Xử lý hết hạn thanh toán (quá 24h).
-   * Phạt rating và có thể tự động suspend. Kích hoạt quy trình second-chance offer.
+   * Tịch thu cọc vào SystemBank.
+   * Phạt rating và có thể tự động ban winner.
+   * Kích hoạt quy trình second-chance offer.
    *
    * @param auction phiên hết hạn thanh toán
    */

@@ -19,18 +19,18 @@ public class AuctionWinner extends Entity {
     FUNDS_HELD
   }
 
-  private final NormalUser    winner;
-  private final String        auctionId;
-  private final double        finalPrice;
+  private final NormalUser winner;
+  private final String auctionId;
+  private final double finalPrice;
   /**
    * Số tiền cọc winner đã đặt khi joinAuction.
    * Cọc được tính vào finalPrice — winner chỉ cần trả phần còn lại.
    */
-  private final double        depositPaid;
+  private final double depositPaid;
   private final LocalDateTime deadline;
-  private       PaymentStatus paymentStatus;
+  private PaymentStatus paymentStatus;
 
-  // ── Static factory methods ─────────────────────────────────────────────
+  // ── Static factory methods ─────────────────────────────────────────────────
 
   /**
    * Khai sinh AuctionWinner ngay khi auction FINISHED.
@@ -38,9 +38,9 @@ public class AuctionWinner extends Entity {
    * được gọi mà có currentLeader tồn tại và reserve price đã được đáp ứng.
    * Hạn thanh toán = 24h từ lúc tạo.
    *
-   * @param winner      người thắng
-   * @param auctionId   id phiên đấu giá
-   * @param finalPrice  giá cuối cùng
+   * @param winner người thắng
+   * @param auctionId id phiên đấu giá
+   * @param finalPrice giá cuối cùng
    * @param depositPaid số tiền cọc đã đặt
    * @return AuctionWinner mới
    */
@@ -60,16 +60,16 @@ public class AuctionWinner extends Entity {
             finalPrice, depositPaid, deadline, paymentStatus);
   }
 
-  // ── Private constructors ───────────────────────────────────────────────
+  // ── Private constructors ───────────────────────────────────────────────────
 
   private AuctionWinner(NormalUser winner, String auctionId,
                         double finalPrice, double depositPaid) {
     super();
-    this.winner        = winner;
-    this.auctionId     = auctionId;
-    this.finalPrice    = finalPrice;
-    this.depositPaid   = depositPaid;
-    this.deadline      = LocalDateTime.now().plusHours(24);
+    this.winner = winner;
+    this.auctionId = auctionId;
+    this.finalPrice = finalPrice;
+    this.depositPaid = depositPaid;
+    this.deadline = LocalDateTime.now().plusHours(24);
     this.paymentStatus = PaymentStatus.PENDING;
   }
 
@@ -78,28 +78,26 @@ public class AuctionWinner extends Entity {
                         double finalPrice, double depositPaid, LocalDateTime deadline,
                         PaymentStatus paymentStatus) {
     super(id, createdAt, updatedAt);
-    this.winner        = winner;
-    this.auctionId     = auctionId;
-    this.finalPrice    = finalPrice;
-    this.depositPaid   = depositPaid;
-    this.deadline      = deadline;
+    this.winner = winner;
+    this.auctionId = auctionId;
+    this.finalPrice = finalPrice;
+    this.depositPaid = depositPaid;
+    this.deadline = deadline;
     this.paymentStatus = paymentStatus;
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public NormalUser    getWinner()        { return winner; }
-  public String        getAuctionId()     { return auctionId; }
-  public double        getFinalPrice()    { return finalPrice; }
-  public double        getDepositPaid()   { return depositPaid; }
-  public LocalDateTime getDeadline()      { return deadline; }
+  public NormalUser getWinner() { return winner; }
+  public String getAuctionId() { return auctionId; }
+  public double getFinalPrice() { return finalPrice; }
+  public double getDepositPaid() { return depositPaid; }
+  public LocalDateTime getDeadline() { return deadline; }
   public PaymentStatus getPaymentStatus() { return paymentStatus; }
 
-  /**
-   * Số tiền winner còn cần thanh toán = finalPrice - depositPaid.
-   */
+  /** Số tiền còn phải trả sau khi trừ cọc. */
   public double getRemainingAmount() {
-    return finalPrice - depositPaid;
+    return Math.max(0, finalPrice - depositPaid);
   }
 
   public boolean isExpired() {
@@ -107,23 +105,23 @@ public class AuctionWinner extends Entity {
             && paymentStatus == PaymentStatus.PENDING;
   }
 
-  // ── Setter — chỉ PaymentService gọi ───────────────────────────────────
+  // ── Setter — chỉ PaymentService gọi ──────────────────────────────────────
 
-  public void setPaymentStatus(PaymentStatus status) {
-    this.paymentStatus = status;
+  public void setPaymentStatus(PaymentStatus paymentStatus) {
+    this.paymentStatus = paymentStatus;
     markUpdated();
   }
 
   @Override
   public void printInfo() {
     System.out.println("=== AUCTION WINNER ===================");
-    System.out.printf("Winner       : %s%n", winner.getUsername());
-    System.out.printf("Auction ID   : %s%n", auctionId);
-    System.out.printf("Giá cuối     : %.0f%n", finalPrice);
-    System.out.printf("Đã cọc       : %.0f%n", depositPaid);
-    System.out.printf("Còn thiếu    : %.0f%n", getRemainingAmount());
-    System.out.printf("Hạn thanh toán: %s%n", deadline);
-    System.out.printf("Trạng thái   : %s%n", paymentStatus);
+    System.out.printf("Winner : %s%n", winner.getUsername());
+    System.out.printf("Auction ID : %s%n", auctionId);
+    System.out.printf("Giá cuối : %.0f%n", finalPrice);
+    System.out.printf("Đã cọc : %.0f%n", depositPaid);
+    System.out.printf("Còn lại : %.0f%n", getRemainingAmount());
+    System.out.printf("Hạn TT : %s%n", deadline);
+    System.out.printf("TT Status : %s%n", paymentStatus);
     System.out.println("======================================");
   }
 }

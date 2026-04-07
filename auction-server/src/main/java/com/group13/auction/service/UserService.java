@@ -4,6 +4,7 @@ import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.AuthenticationException.Reason;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
+import com.group13.auction.service.serviceInterface.IUserService;
 
 /**
  * Xử lý xác thực người dùng (authentication).
@@ -16,7 +17,7 @@ public class UserService implements IUserService {
    * Xác thực đăng nhập.
    * Ném {@link AuthenticationException} với lý do cụ thể thay vì trả boolean.
    *
-   * @param user          user cần xác thực
+   * @param user user cần xác thực
    * @param inputPassword mật khẩu nhập vào
    * @throws AuthenticationException nếu xác thực thất bại
    */

@@ -11,13 +11,13 @@ import java.util.UUID;
  */
 public abstract class Entity {
 
-  private final String        id;
+  private final String id;
   private final LocalDateTime createdAt;
-  private       LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 
   /** Khai sinh — UUID tự động, timestamp = now. */
   protected Entity() {
-    this.id        = UUID.randomUUID().toString();
+    this.id = UUID.randomUUID().toString();
     this.createdAt = LocalDateTime.now();
     this.updatedAt = LocalDateTime.now();
   }
@@ -28,7 +28,7 @@ public abstract class Entity {
    * và chỉ DAO mới được gọi reconstitute().
    */
   protected Entity(String id, LocalDateTime createdAt, LocalDateTime updatedAt) {
-    this.id        = id;
+    this.id = id;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -38,7 +38,7 @@ public abstract class Entity {
     this.updatedAt = LocalDateTime.now();
   }
 
-  public String        getId()        { return id; }
+  public String getId() { return id; }
   public LocalDateTime getCreatedAt() { return createdAt; }
   public LocalDateTime getUpdatedAt() { return updatedAt; }
 

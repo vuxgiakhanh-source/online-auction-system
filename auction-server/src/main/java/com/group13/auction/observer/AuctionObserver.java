@@ -1,20 +1,19 @@
 package com.group13.auction.observer;
 
-/** Interface Observer — lắng nghe mọi sự kiện từ Auction. */
+/** Observer interface — nhận notify về sự kiện phiên đấu giá. */
 public interface AuctionObserver {
 
   /**
-   * Gọi khi có bid mới trong phiên.
+   * Được gọi khi có bid mới được đặt.
    *
-   * @param event thông tin sự kiện
+   * @param event sự kiện bid
    */
   void onBidPlaced(AuctionEvent event);
 
   /**
-   * Gọi khi có thay đổi trạng thái auction.
-   * Bao gồm: STARTED, ENDED, PAID, CANCELED, UPCOMING, RESERVE_NOT_MET, NO_WINNER.
+   * Được gọi khi phiên kết thúc hoặc có sự kiện hệ thống.
    *
-   * @param event thông tin sự kiện
+   * @param event sự kiện kết thúc / hệ thống
    */
   void onAuctionEnded(AuctionEvent event);
 }

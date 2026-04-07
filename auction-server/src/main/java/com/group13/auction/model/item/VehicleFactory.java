@@ -15,8 +15,8 @@ public class VehicleFactory extends ItemFactory {
     protected Item createProduct(String name, String description, double startingPrice,
                                  NormalUser seller, Object... args) {
         String manufacturer = (String) args[0];
-        int    year         = (int)    args[1];
-        double mileage      = (double) args[2];
+        int year = (int) args[1];
+        double mileage = (double) args[2];
         return Vehicle.create(name, description, startingPrice, seller, manufacturer, year, mileage);
     }
 }

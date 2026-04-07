@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
  *
  * <p>Phân biệt vai trò:
  * AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
- * Phiên đấu giá do Seller quyết định tạo; {@link com.group13.auction.service.AuctionService}
+ * Phiên đấu giá do Seller quyết định tạo; {@link
+ * com.group13.auction.service.AuctionService}
  * thực thi nghiệp vụ rồi gọi {@link #registerAuction(Auction)} để lưu vào registry.
  * Admin ra lệnh → các Service thực thi → AuctionManager phản ánh trạng thái (in-memory).
  *
- * <p>globalObservers: chứa AdminObserver của tất cả admin.
- * Admin sẽ nhận thông báo về gian lận / lỗi hệ thống / phiên không có winner
- * của TOÀN BỘ hệ thống, KHÔNG cần joinAuction.
+ * <p>globalObservers: chứa observer của SystemAdmin (nhận toàn bộ event hệ thống).
+ * staffObservers: chứa observer của Staff Admin (nhận event cancel, request, lỗi).
  * Chỉ khi admin joinAuction thì mới nhận thêm notify chi tiết theo phiên đó.
  */
 public class AuctionManager {
@@ -45,19 +45,24 @@ public class AuctionManager {
   private final List<User> allUsers;
 
   /**
-   * Global observers — tự động thêm AdminObserver của mọi Admin vào đây.
-   * Nhận notify về: gian lận, lỗi hệ thống, phiên không có winner,
-   * reserve not met.
+   * Global observers — SystemAdmin observer nhận toàn bộ event hệ thống.
    *
    * FIX: thread-safe collection cho observer
    */
   private final List<AuctionObserver> globalObservers;
 
+  /**
+   * Staff observers — Staff Admin nhận event về cancel, seller request, lỗi hệ thống.
+   * Staff chỉ nhận event liên quan để có thể can thiệp.
+   */
+  private final List<AuctionObserver> staffObservers;
+
   /** Private constructor — ngăn tạo instance từ bên ngoài. */
   private AuctionManager() {
-    this.allAuctions    = Collections.synchronizedList(new ArrayList<>());
-    this.allUsers       = Collections.synchronizedList(new ArrayList<>());
+    this.allAuctions = Collections.synchronizedList(new ArrayList<>());
+    this.allUsers = Collections.synchronizedList(new ArrayList<>());
     this.globalObservers = Collections.synchronizedList(new ArrayList<>());
+    this.staffObservers = Collections.synchronizedList(new ArrayList<>());
   }
 
   /**
@@ -71,7 +76,7 @@ public class AuctionManager {
     return instance;
   }
 
-  // ── User management ────────────────────────────────────────────────────
+  // ── User management ────────────────────────────────────────────────────────
 
   /**
    * Đăng ký người dùng mới vào hệ thống.
@@ -115,7 +120,7 @@ public class AuctionManager {
     allUsers.remove(user);
   }
 
-  // ── Auction management ─────────────────────────────────────────────────
+  // ── Auction management ─────────────────────────────────────────────────────
 
   /**
    * Đăng ký một phiên đã được tạo qua nghiệp vụ.
@@ -140,11 +145,11 @@ public class AuctionManager {
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
-  // ── Global observer management ─────────────────────────────────────────
+  // ── Global observer management (SystemAdmin) ───────────────────────────────
 
   /**
-   * Đăng ký global observer (Admin).
-   * Chỉ AdminObserver của Admin được thêm vào đây.
+   * Đăng ký global observer (SystemAdmin).
+   * Chỉ SystemAdminObserver được thêm vào đây.
    *
    * FIX: cần synchronized vì có contains + add
    */
@@ -158,16 +163,37 @@ public class AuctionManager {
     }
   }
 
-  /**
-   * Gỡ global observer (khi admin bị xóa hoặc ban).
-   */
+  /** Gỡ global observer (khi reset hoặc shutdown). */
   public void removeGlobalObserver(AuctionObserver observer) {
     globalObservers.remove(observer);
   }
 
+  // ── Staff observer management ──────────────────────────────────────────────
+
   /**
-   * Fan-out event tới global observer (Admin).
-   * Chỉ gửi các loại event hệ thống: FRAUD, RESERVE_NOT_MET, NO_WINNER.
+   * Đăng ký staff observer (Staff Admin).
+   * Staff chỉ nhận notify về cancel, seller request, lỗi hệ thống.
+   *
+   * @param observer StaffObserver của Staff Admin
+   */
+  public void addStaffObserver(AuctionObserver observer) {
+    if (observer == null) return;
+
+    synchronized (staffObservers) {
+      if (!staffObservers.contains(observer)) {
+        staffObservers.add(observer);
+      }
+    }
+  }
+
+  /** Gỡ staff observer (khi admin bị xóa hoặc ban). */
+  public void removeStaffObserver(AuctionObserver observer) {
+    staffObservers.remove(observer);
+  }
+
+  /**
+   * Fan-out event tới global observer (SystemAdmin).
+   * SystemAdmin nhận tất cả event.
    *
    * FIX: phải synchronized khi iterate
    */
@@ -175,18 +201,49 @@ public class AuctionManager {
     if (event == null) return;
 
     synchronized (globalObservers) {
-      AuctionEvent.AuctionEventType type = event.getEventType();
       for (AuctionObserver observer : globalObservers) {
-        if (type == AuctionEvent.AuctionEventType.BID_PLACED) {
-          observer.onBidPlaced(event);
-        } else {
-          observer.onAuctionEnded(event);
-        }
+        dispatchEvent(observer, event);
       }
     }
   }
 
-  // ── Auction queries ────────────────────────────────────────────────────
+  /**
+   * Fan-out event tới staff observers.
+   * Staff chỉ nhận event: AUCTION_CANCELED, FRAUD_DETECTED, QUALITY_REPORT_APPROVED,
+   * SELLER_CANCEL_REQUEST (event liên quan đến việc cần can thiệp thủ công).
+   *
+   * FIX: phải synchronized khi iterate
+   */
+  public void notifyStaffObservers(AuctionEvent event) {
+    if (event == null) return;
+
+    AuctionEvent.AuctionEventType type = event.getEventType();
+    // Staff chỉ nhận event mà họ có thể can thiệp
+    boolean isStaffRelevant = type == AuctionEvent.AuctionEventType.AUCTION_CANCELED
+            || type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
+            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
+            || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST;
+
+    if (!isStaffRelevant) return;
+
+    synchronized (staffObservers) {
+      for (AuctionObserver observer : staffObservers) {
+        dispatchEvent(observer, event);
+      }
+    }
+  }
+
+  /** Helper: dispatch event đúng method của observer. */
+  private void dispatchEvent(AuctionObserver observer, AuctionEvent event) {
+    if (event.getEventType() == AuctionEvent.AuctionEventType.BID_PLACED
+            || event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
+      observer.onBidPlaced(event);
+    } else {
+      observer.onAuctionEnded(event);
+    }
+  }
+
+  // ── Auction queries ────────────────────────────────────────────────────────
 
   /**
    * Lấy tất cả auction đang RUNNING.

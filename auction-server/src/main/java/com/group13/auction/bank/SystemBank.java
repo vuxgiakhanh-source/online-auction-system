@@ -5,29 +5,29 @@ package com.group13.auction.bank;
  *
  * <p>Singleton. Mọi giao dịch tài chính đều đi qua SystemBank:
  * <ol>
- *   <li>Winner → SystemBank (trả tiền)</li>
- *   <li>SystemBank → Seller (sau khi trừ thuế)</li>
- *   <li>Thuế ở lại SystemBank</li>
+ * <li>Winner → SystemBank (trả tiền)</li>
+ * <li>SystemBank → Seller (sau khi trừ thuế)</li>
+ * <li>Thuế ở lại SystemBank</li>
  * </ol>
  *
  * <p>Thuế suất theo giá bán:
  * <ul>
- *   <li>Dưới 1,000,000: 5%</li>
- *   <li>Từ 1,000,000 đến 10,000,000: 3%</li>
- *   <li>Trên 10,000,000: 2%</li>
+ * <li>Dưới 1,000,000: 5%</li>
+ * <li>Từ 1,000,000 đến 10,000,000: 3%</li>
+ * <li>Trên 10,000,000: 2%</li>
  * </ul>
  */
 public class SystemBank {
 
     private static final SystemBank INSTANCE = new SystemBank();
 
-    private static final double PRICE_TIER_LOW    = 1_000_000.0;
-    private static final double PRICE_TIER_MID    = 10_000_000.0;
-    private static final double TAX_RATE_LOW      = 0.05;
-    private static final double TAX_RATE_MID      = 0.03;
-    private static final double TAX_RATE_HIGH     = 0.02;
+    private static final double PRICE_TIER_LOW = 1_000_000.0;
+    private static final double PRICE_TIER_MID = 10_000_000.0;
+    private static final double TAX_RATE_LOW = 0.05;
+    private static final double TAX_RATE_MID = 0.03;
+    private static final double TAX_RATE_HIGH = 0.02;
 
-    /** Số dư tổng trong ngân hàng hệ thống (tiền thuế tích lũy). */
+    /** Số dư tổng trong ngân hàng hệ thống (tiền thuế tích lũy + cọc bị tịch thu). */
     private double totalBalance;
 
     private SystemBank() {
@@ -36,7 +36,7 @@ public class SystemBank {
 
     public static SystemBank getInstance() { return INSTANCE; }
 
-    // ── Tax calculation ────────────────────────────────────────────────────
+    // ── Tax calculation ────────────────────────────────────────────────────────
 
     /**
      * Tính thuế theo giá bán.
@@ -66,7 +66,7 @@ public class SystemBank {
         return salePrice - calculateTax(salePrice);
     }
 
-    // ── Bank operations ────────────────────────────────────────────────────
+    // ── Bank operations ────────────────────────────────────────────────────────
 
     /**
      * Tiếp nhận tiền từ winner (phần còn lại sau cọc).
@@ -88,7 +88,7 @@ public class SystemBank {
      * @return số tiền chuyển cho seller
      */
     public double payoutToSeller(double salePrice) {
-        double tax    = calculateTax(salePrice);
+        double tax = calculateTax(salePrice);
         double payout = salePrice - tax;
         // Thuế ở lại bank (totalBalance không giảm phần tax)
         this.totalBalance -= payout;
@@ -106,6 +106,18 @@ public class SystemBank {
         this.totalBalance -= amount;
         System.out.printf("[BANK] Hoàn tiền cho winner %.0f | Tổng quỹ: %.0f%n",
                 amount, totalBalance);
+    }
+
+    /**
+     * Tiếp nhận tiền cọc bị tịch thu từ winner không thanh toán.
+     * Cọc này được cộng thẳng vào balance của bank (phần phạt).
+     *
+     * @param depositAmount số tiền cọc bị tịch thu
+     */
+    public void receiveForfeittedDeposit(double depositAmount) {
+        this.totalBalance += depositAmount;
+        System.out.printf("[BANK] Tịch thu cọc %.0f từ winner vi phạm | Tổng quỹ: %.0f%n",
+                depositAmount, totalBalance);
     }
 
     public double getTotalBalance() { return totalBalance; }

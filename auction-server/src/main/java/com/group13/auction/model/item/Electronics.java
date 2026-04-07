@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public class Electronics extends Item {
 
   private final String brand;
-  private final int    warrantyMonths;
+  private final int warrantyMonths;
   private final String condition;
 
   protected static Electronics create(String name, String description, double startingPrice,
@@ -25,31 +25,31 @@ public class Electronics extends Item {
   private Electronics(String name, String description, double startingPrice,
                       NormalUser seller, String brand, int warrantyMonths, String condition) {
     super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
-    this.brand          = brand;
+    this.brand = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition      = condition;
+    this.condition = condition;
   }
 
   private Electronics(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                       String name, String description, double startingPrice, NormalUser seller,
                       String brand, int warrantyMonths, String condition) {
     super(id, createdAt, updatedAt, name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
-    this.brand          = brand;
+    this.brand = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition      = condition;
+    this.condition = condition;
   }
 
-  public String getBrand()          { return brand; }
-  public int    getWarrantyMonths() { return warrantyMonths; }
-  public String getCondition()      { return condition; }
+  public String getBrand() { return brand; }
+  public int getWarrantyMonths() { return warrantyMonths; }
+  public String getCondition() { return condition; }
 
   @Override
   public void printInfo() {
     System.out.println("=== ELECTRONICS ======================");
-    System.out.printf("Tên          : %s%n", getName());
-    System.out.printf("Thương hiệu  : %s%n", brand);
-    System.out.printf("Bảo hành     : %d tháng%n", warrantyMonths);
-    System.out.printf("Tình trạng   : %s%n", condition);
+    System.out.printf("Tên : %s%n", getName());
+    System.out.printf("Hãng : %s%n", brand);
+    System.out.printf("Bảo hành : %d tháng%n", warrantyMonths);
+    System.out.printf("Tình trạng : %s%n", condition);
     System.out.printf("Giá khởi điểm: %.0f%n", getStartingPrice());
     System.out.println("======================================");
   }

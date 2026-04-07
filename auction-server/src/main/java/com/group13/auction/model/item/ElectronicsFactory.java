@@ -14,9 +14,9 @@ public class ElectronicsFactory extends ItemFactory {
     @Override
     protected Item createProduct(String name, String description, double startingPrice,
                                  NormalUser seller, Object... args) {
-        String brand          = (String) args[0];
-        int    warrantyMonths = (int)    args[1];
-        String condition      = (String) args[2];
+        String brand = (String) args[0];
+        int warrantyMonths = (int) args[1];
+        String condition = (String) args[2];
         return Electronics.create(name, description, startingPrice, seller, brand, warrantyMonths, condition);
     }
 }

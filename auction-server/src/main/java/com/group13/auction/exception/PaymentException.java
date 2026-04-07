@@ -23,11 +23,11 @@ public class PaymentException extends RuntimeException {
 
     private static String buildMessage(Reason reason) {
         switch (reason) {
-            case INSUFFICIENT_BALANCE:    return "Số dư không đủ.";
-            case WRONG_AMOUNT:            return "Số tiền thanh toán không đúng.";
-            case PAYMENT_EXPIRED:         return "Đã quá hạn thanh toán.";
-            case SELLER_REFUND_OVERDUE:   return "Seller không hoàn trả đúng hạn.";
-            default:                      return "Lỗi thanh toán.";
+            case INSUFFICIENT_BALANCE: return "Số dư không đủ.";
+            case WRONG_AMOUNT: return "Số tiền thanh toán không đúng.";
+            case PAYMENT_EXPIRED: return "Đã quá hạn thanh toán.";
+            case SELLER_REFUND_OVERDUE: return "Seller không hoàn trả đúng hạn.";
+            default: return "Lỗi thanh toán.";
         }
     }
 

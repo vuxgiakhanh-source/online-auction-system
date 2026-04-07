@@ -1,4 +1,4 @@
-package com.group13.auction.service;
+package com.group13.auction.service.serviceInterface;
 
 import com.group13.auction.model.user.User;
 
@@ -12,7 +12,7 @@ public interface IUserService {
   /**
    * Xác thực đăng nhập.
    *
-   * @param user          user cần xác thực
+   * @param user user cần xác thực
    * @param inputPassword mật khẩu nhập vào
    * @throws com.group13.auction.exception.AuthenticationException nếu thất bại
    */

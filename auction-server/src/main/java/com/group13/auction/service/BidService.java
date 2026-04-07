@@ -1,7 +1,6 @@
 package com.group13.auction.service;
 
 import com.group13.auction.exception.AuctionBusinessException;
-import com.group13.auction.exception.AuctionBusinessException.Reason;
 import com.group13.auction.exception.AuctionClosedException;
 import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.InvalidBidException;
@@ -9,132 +8,145 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.bid.BidTransaction.BidResult;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.service.serviceInterface.IAuctionService;
+import com.group13.auction.service.serviceInterface.IBidService;
+import com.group13.auction.service.serviceInterface.IRatingService;
 import com.group13.auction.strategy.BidStrategy;
 
 /**
  * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
- * Nhận {@link IRatingService} và {@link IAuctionService} qua constructor (DIP).
- * Không new cứng bất kì service nào.
- * Payment được tách sang {@link StandardPaymentService}.
- * TODO: inject BidTransactionDAO, AuctionDAO để persist xuống DB.
+ * Nhận {@link IAuctionService} và {@link IRatingService} qua constructor — không new cứng (DIP).
+ * TODO: inject BidTransactionDAO.
  */
 public class BidService implements IBidService {
 
-  /** Tỷ lệ cọc tối thiểu — 30% giá khởi điểm. */
-  private static final double DEPOSIT_RATIO = 0.30;
-
-  private final IRatingService  ratingService;
   private final IAuctionService auctionService;
+  private final IRatingService ratingService;
+  private final WalletService walletService;
 
-  public BidService(IRatingService ratingService, IAuctionService auctionService) {
-    this.ratingService  = ratingService;
+  /**
+   * @param auctionService để notify sau khi bid
+   * @param ratingService để kiểm tra eligibility
+   * @param walletService để quản lý cọc
+   */
+  public BidService(IAuctionService auctionService, IRatingService ratingService,
+                    WalletService walletService) {
     this.auctionService = auctionService;
+    this.ratingService = ratingService;
+    this.walletService = walletService;
   }
 
   /**
    * Bidder tham gia phiên đấu giá.
-   * Khi join: tự động vào watchList và addObserver.
-   * Bidder có thể tham gia nhiều auction cùng lúc.
-   * Yêu cầu: rating >= 2.0 + số dư khả dụng >= 30% giá khởi điểm.
-   * Khoản cọc bị khóa cho đến khi phiên đóng.
+   * Ngay khi joinAuction thành công: trừ balance và cộng vào lockedDeposit.
+   * Khi phiên kết thúc, nếu không thắng thì mới hoàn cọc lại.
    *
-   * @param bidder   bidder muốn tham gia
-   * @param auction  phiên muốn tham gia
+   * <p>Chặn Seller tự đấu giá món hàng của chính mình ngay từ bước này.
+   *
+   * @param bidder bidder muốn tham gia
+   * @param auction phiên muốn tham gia
    * @param observer observer của bidder để nhận notify
-   * @throws AuthenticationException nếu bidder không đủ điều kiện
-   * @throws AuctionClosedException  nếu phiên không ở RUNNING
+   * @throws AuctionBusinessException nếu không đủ cọc hoặc seller tự bid
+   * @throws AuthenticationException nếu tài khoản không đủ điều kiện
    */
   @Override
   public void joinAuction(NormalUser bidder, Auction auction, AuctionObserver observer) {
-
-    // FIX 1: Chặn Seller tự đấu giá hàng của mình
-    NormalUser seller = (NormalUser) auction.getItem().getSeller();
-    if (bidder.getId().equals(seller.getId())) {
-      throw new InvalidBidException(
-              "Seller không được tham gia đấu giá món hàng của chính mình.");
-    }
-
+    // Guard: check trạng thái tài khoản và rating (cũng check lại ở mỗi placeBid)
     if (!ratingService.isEligible(bidder)) {
       throw buildIneligibleException(bidder);
     }
-    if (!auction.isAcceptingBids()) {
-      throw new AuctionClosedException(auction.getStatus());
+
+    // Guard: Seller không được tự đấu giá món hàng của chính mình
+    if (bidder.hasRole(User.UserRole.SELLER)
+            && bidder.getAllAuctionIds().contains(auction.getId())) {
+      throw new AuctionBusinessException(
+              AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
     }
 
-
-    // Kiểm tra và khóa cọc
-    double required = auction.getItem().getStartingPrice() * DEPOSIT_RATIO;
-    if (bidder.getBalance() < required) {   // so sánh với balance thực, không phải available
-      throw new AuctionBusinessException(Reason.INSUFFICIENT_DEPOSIT);
+    // Guard: đã join rồi thì không join lại
+    if (bidder.hasJoined(auction.getId())) {
+      System.out.printf("[BID] %s đã tham gia phiên %s trước đó.%n",
+              bidder.getUsername(), auction.getId());
+      return;
     }
 
-    bidder.lockDeposit(required);
+    // Trừ balance và lock deposit ngay lập tức
+    double depositAmount = auction.getItem().getStartingPrice() * 0.3;
+    walletService.lockDeposit(bidder, depositAmount, auction.getId());
 
     bidder.addJoinedAuction(auction.getId());
     bidder.addToWatchList(auction.getId());
+    auction.incrementViewerCount();
     auctionService.addObserver(auction, observer);
-    System.out.printf("[BID] %s tham gia phiên: %s (cọc khóa: %.0f)%n",
-            bidder.getUsername(), auction.getId(), required);
+
+    System.out.printf("[BID] %s tham gia phiên %s | Cọc khóa: %.0f%n",
+            bidder.getUsername(), auction.getId(), depositAmount);
+    // TODO: auctionDAO.update(auction), userDAO.update(bidder)
   }
 
   /**
    * Theo dõi phiên mà không tham gia đặt bid.
-   * Vẫn nhận đầy đủ notify. Không cần cọc.
    *
-   * @param bidder   bidder muốn theo dõi
-   * @param auction  phiên muốn theo dõi
+   * @param bidder bidder muốn theo dõi
+   * @param auction phiên muốn theo dõi
    * @param observer observer để nhận notify
    */
   @Override
-  public void watchAuction(NormalUser bidder, Auction auction,
-                           AuctionObserver observer) {
+  public void watchAuction(NormalUser bidder, Auction auction, AuctionObserver observer) {
     bidder.addToWatchList(auction.getId());
+    auction.incrementViewerCount();
     auctionService.addObserver(auction, observer);
-    System.out.printf("[BID] %s theo dõi phiên: %s%n",
-            bidder.getUsername(), auction.getId());
+    System.out.printf("[BID] %s theo dõi phiên %s.%n", bidder.getUsername(), auction.getId());
   }
 
   /**
    * Đặt giá cho một phiên đấu giá.
-   * Tự động lưu lịch sử dù thành công hay thất bại (DRY).
-   * Nếu bid hợp lệ nhưng chưa đạt reserve price → ACCEPTED_RESERVE_NOT_MET.
-   * TODO: bidTransactionDAO.save(tx), auctionDAO.update(auction).
    *
-   * @param bidder   người đặt giá
-   * @param auction  phiên đấu giá
-   * @param amount   số tiền đặt
+   * <p>Luôn check status == ACTIVE và rating >= threshold ở mỗi lần placeBid,
+   * không chỉ ở bước joinAuction — ngăn người dùng "lách" qua cửa kiểm tra.
+   *
+   * @param bidder người đặt giá
+   * @param auction phiên đấu giá
+   * @param amount số tiền đặt
    * @param strategy strategy kiểm tra tính hợp lệ
-   * @throws AuthenticationException nếu chưa join hoặc không đủ điều kiện
-   * @throws AuctionClosedException  nếu phiên không ở RUNNING
-   * @throws InvalidBidException     nếu bid không hợp lệ theo strategy
+   * @throws AuctionClosedException nếu phiên không RUNNING
+   * @throws AuctionBusinessException nếu chưa join phiên
+   * @throws AuthenticationException nếu tài khoản không đủ điều kiện
+   * @throws InvalidBidException nếu số tiền không hợp lệ
    */
   @Override
   public void placeBid(NormalUser bidder, Auction auction,
                        double amount, BidStrategy strategy) {
-    if (!bidder.hasJoined(auction.getId())) {
-      recordAndThrow(bidder, auction, amount,
-              new AuctionBusinessException(Reason.NOT_JOINED_AUCTION));
-    }
+    // FIX: luôn check status và rating tại mỗi lần placeBid — không chỉ ở joinAuction
     if (!ratingService.isEligible(bidder)) {
       recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
     }
+
     if (!auction.isAcceptingBids()) {
-      recordAndThrow(bidder, auction, amount,
-              new AuctionClosedException(auction.getStatus()));
+      throw new AuctionClosedException(auction.getStatus());
     }
+
+    if (!bidder.hasJoined(auction.getId())) {
+      recordAndThrow(bidder, auction, amount,
+              new AuctionBusinessException(AuctionBusinessException.Reason.NOT_JOINED_AUCTION));
+    }
+
     if (!strategy.isValidBid(auction, amount)) {
       recordAndThrow(bidder, auction, amount,
-              new InvalidBidException("Bid không hợp lệ: " + strategy.describe(),
+              new InvalidBidException(
+                      String.format("Bid %.0f không hợp lệ. Giá hiện tại: %.0f. %s",
+                              amount, auction.getCurrentPrice(), strategy.describe()),
                       amount, auction.getCurrentPrice()));
     }
 
-    // Hợp lệ về số tiền — cập nhật auction
+    // Cập nhật trạng thái phiên
+    NormalUser previousLeader = auction.getCurrentLeader();
     auction.setCurrentPrice(amount);
     auction.setCurrentLeader(bidder);
 
-    // Kiểm tra reserve price
     if (!auction.isReserveMet()) {
       BidTransaction tx = recordTransaction(bidder, auction, amount,
               BidResult.ACCEPTED_RESERVE_NOT_MET);
@@ -155,7 +167,7 @@ public class BidService implements IBidService {
     // TODO: auctionDAO.update(auction), bidTransactionDAO.save(tx)
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────
+  // ── Private helpers ────────────────────────────────────────────────────────
 
   /** Lưu lịch sử thất bại rồi ném exception (DRY). */
   private void recordAndThrow(NormalUser bidder, Auction auction,
@@ -176,9 +188,9 @@ public class BidService implements IBidService {
   /** Tạo exception phù hợp theo trạng thái tài khoản (KISS). */
   private static AuthenticationException buildIneligibleException(NormalUser bidder) {
     switch (bidder.getAccountStatus()) {
-      case BANNED:    return new AuthenticationException(AuthenticationException.Reason.ACCOUNT_BANNED);
+      case BANNED: return new AuthenticationException(AuthenticationException.Reason.ACCOUNT_BANNED);
       case SUSPENDED: return new AuthenticationException(AuthenticationException.Reason.ACCOUNT_SUSPENDED);
-      default:        return new AuthenticationException(AuthenticationException.Reason.INSUFFICIENT_RATING);
+      default: return new AuthenticationException(AuthenticationException.Reason.INSUFFICIENT_RATING);
     }
   }
 }

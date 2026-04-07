@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * Lớp abstract người dùng — chỉ lưu data, không chứa nghiệp vụ.
  *
  * <p>Rating được quản lý hoàn toàn bởi {@link com.group13.auction.service.RatingService}.
- * Không có setter public chov rating.
+ * Không có setter public cho rating.
  * Chỉ {@code RatingService} mới được điều chỉnh rating qua
  * {@code adjustRating(double)}.
  *
@@ -19,12 +19,12 @@ import java.time.LocalDateTime;
  */
 public abstract class User extends Entity {
 
-  public enum UserRole    { BIDDER, SELLER, ADMIN }
+  public enum UserRole { BIDDER, SELLER, ADMIN }
   public enum AccountStatus { ACTIVE, BANNED, SUSPENDED }
 
   private static final double RATING_DEFAULT = 3.0;
-  private static final double RATING_MIN     = 0.0;
-  private static final double RATING_MAX     = 5.0;
+  private static final double RATING_MIN = 0.0;
+  private static final double RATING_MAX = 5.0;
 
   /**
    * Ngưỡng rating bị đình chỉ tự động.
@@ -32,12 +32,12 @@ public abstract class User extends Entity {
    */
   public static final double RATING_SUSPEND_THRESHOLD = 1.5;
 
-  private final String        username;
-  private final String        hashedPassword;
-  private final String        email;
-  private       UserRole      primaryRole;
-  private       AccountStatus accountStatus;
-  private       double        rating;
+  private final String username;
+  private final String hashedPassword;
+  private final String email;
+  private UserRole primaryRole;
+  private AccountStatus accountStatus;
+  private double rating;
 
   /**
    * Thời điểm tài khoản bị đình chỉ gần nhất.
@@ -46,22 +46,22 @@ public abstract class User extends Entity {
    */
   private LocalDateTime suspendedAt;
 
-  // ── Constructor khai sinh ──────────────────────────────────────────────
+  // ── Constructor khai sinh ──────────────────────────────────────────────────
 
   /** Khai sinh — hash password ngay tại đây, rating mặc định 3.0. */
   protected User(String username, String password,
                  String email, UserRole role) {
     super();
-    this.username       = username;
+    this.username = username;
     this.hashedPassword = hashPassword(password);
-    this.email          = email;
-    this.primaryRole    = role;
-    this.accountStatus  = AccountStatus.ACTIVE;
-    this.rating         = RATING_DEFAULT;
-    this.suspendedAt    = null;
+    this.email = email;
+    this.primaryRole = role;
+    this.accountStatus = AccountStatus.ACTIVE;
+    this.rating = RATING_DEFAULT;
+    this.suspendedAt = null;
   }
 
-  // ── Constructor hồi sinh ──────────────────────────────────────────────
+  // ── Constructor hồi sinh ──────────────────────────────────────────────────
 
   /**
    * Hồi sinh từ DB — password đã hash, không hash lại.
@@ -72,16 +72,16 @@ public abstract class User extends Entity {
                  UserRole role, AccountStatus accountStatus, double rating,
                  LocalDateTime suspendedAt) {
     super(id, createdAt, updatedAt);
-    this.username       = username;
+    this.username = username;
     this.hashedPassword = hashedPassword;
-    this.email          = email;
-    this.primaryRole    = role;
-    this.accountStatus  = accountStatus;
-    this.rating         = rating;
-    this.suspendedAt    = suspendedAt;
+    this.email = email;
+    this.primaryRole = role;
+    this.accountStatus = accountStatus;
+    this.rating = rating;
+    this.suspendedAt = suspendedAt;
   }
 
-  // ── Hash utility ───────────────────────────────────────────────────────
+  // ── Hash utility ───────────────────────────────────────────────────────────
 
   /** Hash mật khẩu SHA-256. Public vì UserService dùng khi verify login. */
   public static String hashPassword(String password) {
@@ -96,15 +96,15 @@ public abstract class User extends Entity {
     }
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public String        getUsername()       { return username; }
-  public String        getEmail()          { return email; }
-  public UserRole      getPrimaryRole()    { return primaryRole; }
-  public AccountStatus getAccountStatus()  { return accountStatus; }
-  public double        getRating()         { return rating; }
-  public String        getHashedPassword() { return hashedPassword; }
-  public LocalDateTime getSuspendedAt()    { return suspendedAt; }
+  public String getUsername() { return username; }
+  public String getEmail() { return email; }
+  public UserRole getPrimaryRole() { return primaryRole; }
+  public AccountStatus getAccountStatus() { return accountStatus; }
+  public double getRating() { return rating; }
+  public String getHashedPassword() { return hashedPassword; }
+  public LocalDateTime getSuspendedAt() { return suspendedAt; }
 
   /**
    * Kiểm tra user có role cụ thể không.
@@ -116,7 +116,7 @@ public abstract class User extends Entity {
     return false; // override trong subclass nếu cần
   }
 
-  // ── Setter AccountStatus — chỉ AccountService / RatingService gọi ─────
+  // ── Setter AccountStatus — chỉ AccountService / RatingService gọi ─────────
 
   /**
    * Cập nhật trạng thái tài khoản.
@@ -130,7 +130,7 @@ public abstract class User extends Entity {
     markUpdated();
   }
 
-  // ── Rating — KHÔNG có setter public. Chỉ RatingService gọi ───────────
+  // ── Rating — KHÔNG có setter public. Chỉ RatingService gọi ──────────────
 
   /**
    * Điều chỉnh rating theo delta (dương = tăng, âm = giảm).
@@ -138,6 +138,7 @@ public abstract class User extends Entity {
    *
    * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
    * Tránh nhầm lẫn việc người dùng tự set rating cho bản thân.
+   * Admin override method này để không làm gì (rating cố định 5.0).
    *
    * @param delta lượng thay đổi (có thể âm)
    */
