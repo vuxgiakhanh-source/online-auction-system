@@ -14,18 +14,27 @@ public interface IPaymentService {
 
   /**
    * Xử lý thanh toán sau khi phiên FINISHED (trong 24h).
+   * Winner thanh toán phần còn lại → tiền vào SystemBank → bank trừ thuế → chuyển seller.
    *
    * @param auction phiên cần thanh toán
    * @throws IllegalStateException nếu không có winner
-   * @throws com.group13.auction.exception.InvalidBidException nếu không đủ số dư
+   * @throws com.group13.auction.exception.PaymentException nếu không đủ số dư
    */
   void completePayment(Auction auction);
 
   /**
    * Xử lý hết hạn thanh toán (quá 24h).
-   * Phạt rating và có thể tự động ban.
+   * Phạt rating và có thể tự động suspend. Kích hoạt quy trình second-chance offer.
    *
    * @param auction phiên hết hạn thanh toán
    */
   void expirePayment(Auction auction);
+
+  /**
+   * Hoàn lại cọc cho tất cả người đã join phiên (trừ winner).
+   * Gọi khi phiên kết thúc (FINISHED / CANCELED / RESERVE_NOT_MET).
+   *
+   * @param auction phiên vừa kết thúc
+   */
+  void refundDeposits(Auction auction);
 }

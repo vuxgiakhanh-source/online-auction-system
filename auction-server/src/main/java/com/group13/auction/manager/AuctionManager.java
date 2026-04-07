@@ -10,13 +10,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá (lỗi #10).
+ * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá.
  *
  * <p>Phân biệt vai trò:
  * AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
  * Phiên đấu giá do Seller quyết định tạo; {@link com.group13.auction.service.AuctionService}
  * thực thi nghiệp vụ rồi gọi {@link #registerAuction(Auction)} để lưu vào registry.
  * Admin ra lệnh → các Service thực thi → AuctionManager phản ánh trạng thái (in-memory).
+ *
+ * <p>globalObservers: chứa AdminObserver của tất cả admin.
+ * Admin sẽ nhận thông báo về gian lận / lỗi hệ thống / phiên không có winner
+ * của TOÀN BỘ hệ thống, KHÔNG cần joinAuction.
+ * Chỉ khi admin joinAuction thì mới nhận thêm notify chi tiết theo phiên đó.
  */
 public class AuctionManager {
 
@@ -40,14 +45,18 @@ public class AuctionManager {
   private final List<User> allUsers;
 
   /**
+   * Global observers — tự động thêm AdminObserver của mọi Admin vào đây.
+   * Nhận notify về: gian lận, lỗi hệ thống, phiên không có winner,
+   * reserve not met.
+   *
    * FIX: thread-safe collection cho observer
    */
   private final List<AuctionObserver> globalObservers;
 
   /** Private constructor — ngăn tạo instance từ bên ngoài. */
   private AuctionManager() {
-    this.allAuctions = Collections.synchronizedList(new ArrayList<>());
-    this.allUsers = Collections.synchronizedList(new ArrayList<>());
+    this.allAuctions    = Collections.synchronizedList(new ArrayList<>());
+    this.allUsers       = Collections.synchronizedList(new ArrayList<>());
     this.globalObservers = Collections.synchronizedList(new ArrayList<>());
   }
 
@@ -62,7 +71,7 @@ public class AuctionManager {
     return instance;
   }
 
-  // ── User management ────────────────────────────────────────────────────────
+  // ── User management ────────────────────────────────────────────────────
 
   /**
    * Đăng ký người dùng mới vào hệ thống.
@@ -96,7 +105,17 @@ public class AuctionManager {
     }
   }
 
-  // ── Auction management ─────────────────────────────────────────────────────
+  /**
+   * Xóa user khỏi danh sách hệ thống (soft-delete hoặc hard-delete).
+   * TODO: sau này gọi UserDAO.delete(user).
+   *
+   * @param user user cần xóa
+   */
+  public void removeUser(User user) {
+    allUsers.remove(user);
+  }
+
+  // ── Auction management ─────────────────────────────────────────────────
 
   /**
    * Đăng ký một phiên đã được tạo qua nghiệp vụ.
@@ -121,8 +140,11 @@ public class AuctionManager {
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
+  // ── Global observer management ─────────────────────────────────────────
+
   /**
-   * Đăng ký global observer.
+   * Đăng ký global observer (Admin).
+   * Chỉ AdminObserver của Admin được thêm vào đây.
    *
    * FIX: cần synchronized vì có contains + add
    */
@@ -137,14 +159,20 @@ public class AuctionManager {
   }
 
   /**
-   * Fan-out event tới observer.
+   * Gỡ global observer (khi admin bị xóa hoặc ban).
+   */
+  public void removeGlobalObserver(AuctionObserver observer) {
+    globalObservers.remove(observer);
+  }
+
+  /**
+   * Fan-out event tới global observer (Admin).
+   * Chỉ gửi các loại event hệ thống: FRAUD, RESERVE_NOT_MET, NO_WINNER.
    *
    * FIX: phải synchronized khi iterate
    */
   public void notifyGlobalObservers(AuctionEvent event) {
-    if (event == null) {
-      return;
-    }
+    if (event == null) return;
 
     synchronized (globalObservers) {
       AuctionEvent.AuctionEventType type = event.getEventType();
@@ -157,6 +185,8 @@ public class AuctionManager {
       }
     }
   }
+
+  // ── Auction queries ────────────────────────────────────────────────────
 
   /**
    * Lấy tất cả auction đang RUNNING.

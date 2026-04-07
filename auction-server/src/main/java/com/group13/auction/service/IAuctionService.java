@@ -1,12 +1,16 @@
+// ════════════════════════════════════════════════════════════════════════════
+// FILE: com/group13/auction/service/IAuctionService.java
+// ════════════════════════════════════════════════════════════════════════════
+
 package com.group13.auction.service;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.Admin;
-import com.group13.auction.model.user.Bidder;
-import com.group13.auction.model.user.Seller;
+import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.strategy.ReservePriceStrategy;
 import java.time.LocalDateTime;
 
 /**
@@ -16,15 +20,18 @@ public interface IAuctionService {
 
   /**
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
+   * Seller BẮT BUỘC cung cấp reserveStrategy ngay khi tạo.
    *
-   * @param seller    seller tạo phiên
-   * @param item      sản phẩm đưa ra đấu giá
-   * @param startTime thời điểm bắt đầu
-   * @param endTime   thời điểm kết thúc
+   * @param seller          seller tạo phiên
+   * @param item            sản phẩm đưa ra đấu giá
+   * @param startTime       thời điểm bắt đầu
+   * @param endTime         thời điểm kết thúc
+   * @param reserveStrategy reserve price strategy (BẮT BUỘC)
    * @return Auction mới
    */
-  Auction createAuction(Seller seller, Item item,
-      LocalDateTime startTime, LocalDateTime endTime);
+  Auction createAuction(NormalUser seller, Item item,
+                        LocalDateTime startTime, LocalDateTime endTime,
+                        ReservePriceStrategy reserveStrategy);
 
   /**
    * Bắt đầu phiên: OPEN → RUNNING.
@@ -34,7 +41,7 @@ public interface IAuctionService {
   void startAuction(Auction auction);
 
   /**
-   * Đóng phiên khi hết giờ: RUNNING → FINISHED / CANCELED.
+   * Đóng phiên khi hết giờ: RUNNING → FINISHED / CANCELED / RESERVE_NOT_MET.
    *
    * @param auction phiên cần đóng
    */
@@ -48,13 +55,26 @@ public interface IAuctionService {
   void markAsPaid(Auction auction);
 
   /**
-   * Admin huỷ phiên đấu giá.
+   * SYSTEM tự động huỷ phiên đấu giá (no-winner / reserve-not-met / system-error).
+   * Log được ghi vào SystemAdmin.
+   * Dùng khi không có staff cụ thể nào can thiệp.
    *
-   * @param admin   admin thực hiện
    * @param auction phiên cần huỷ
    * @param reason  lý do huỷ
    */
-  void cancelAuction(Admin admin, Auction auction, Admin.CancelReason reason);
+  void cancelAuction(Auction auction, Admin.CancelReason reason);
+
+  /**
+   * Admin STAFF huỷ phiên đấu giá sau khi trực tiếp điều tra.
+   * Log được ghi vào cả SystemAdmin (audit trail) lẫn staff cụ thể.
+   * Dùng khi phiên bị cancel liên tục và cần staff đi kiểm tra.
+   *
+   * @param staff   admin STAFF đang xử lý
+   * @param auction phiên cần huỷ
+   * @param reason  lý do huỷ
+   * @throws IllegalArgumentException nếu {@code staff} là SystemAdmin
+   */
+  void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason);
 
   /**
    * Thông báo trước khi phiên bắt đầu (5-10 phút).
@@ -71,6 +91,10 @@ public interface IAuctionService {
    * @param observer observer cần thêm
    */
   void addObserver(Auction auction, AuctionObserver observer);
+
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
-              Bidder bidder, double amount);
+              NormalUser bidder, double amount);
+
+  void notify(Auction auction, AuctionEvent.AuctionEventType type,
+              NormalUser bidder, double amount, String message);
 }

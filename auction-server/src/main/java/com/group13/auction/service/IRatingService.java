@@ -1,6 +1,6 @@
 package com.group13.auction.service;
 
-import com.group13.auction.model.user.Bidder;
+import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
 /**
@@ -10,7 +10,7 @@ import com.group13.auction.model.user.User;
 public interface IRatingService {
 
   /**
-   * Kiểm tra user đủ điều kiện hoạt động (ACTIVE + rating >= 1.0).
+   * Kiểm tra user đủ điều kiện hoạt động (ACTIVE + rating >= 2.0).
    *
    * @param user user cần kiểm tra
    * @return true nếu đủ điều kiện
@@ -30,7 +30,7 @@ public interface IRatingService {
    *
    * @param bidder bidder được thưởng
    */
-  void rewardBidder(Bidder bidder);
+  void rewardBidder(NormalUser bidder);
 
   /**
    * Thưởng rating cho Seller sau khi bán thành công.
@@ -41,9 +41,24 @@ public interface IRatingService {
 
   /**
    * Phạt Bidder khi không thanh toán đúng hạn.
-   * Tự động ban nếu rating xuống dưới ngưỡng tối thiểu.
+   * Tự động suspend/ban nếu rating xuống dưới ngưỡng.
    *
    * @param bidder bidder bị phạt
    */
-  void penalizeLatePayment(Bidder bidder);
+  void penalizeLatePayment(NormalUser bidder);
+
+  /**
+   * Phạt Seller khi bị báo cáo chất lượng kém.
+   *
+   * @param seller seller bị phạt
+   */
+  void penalizeSeller(User seller);
+
+  /**
+   * Auto-restore rating sau 6 tháng không vi phạm (cho user SUSPENDED).
+   * Cộng thêm 0.3 để user có thể tiếp tục hoạt động nếu rating > 1.5.
+   *
+   * @param user user cần kiểm tra restore
+   */
+  void checkAndRestoreSuspended(User user);
 }

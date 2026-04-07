@@ -11,10 +11,16 @@ import java.util.Set;
 public abstract class UserFactory {
 
     /**
-     * Lưu username đã dùng để kiểm tra trùng
+     * Lưu username đã dùng để kiểm tra trùng.
      * TODO: sau này thay bằng truy vấn DB qua UserDAO.
      */
     private static final Set<String> usedUsernames = new HashSet<>();
+
+    /**
+     * Lưu email đã dùng để kiểm tra trùng (phục vụ yêu cầu chống gian lận).
+     * TODO: sau này thay bằng truy vấn DB qua UserDAO.
+     */
+    private static final Set<String> usedEmails = new HashSet<>();
 
     /**
      * Tạo User theo role với validate đầu vào.
@@ -33,15 +39,35 @@ public abstract class UserFactory {
 
         User user = createProduct(username, password, email, args);
         usedUsernames.add(username);
+        usedEmails.add(email.toLowerCase());
         return user;
     }
 
     /**
-     * Factory Method để các subclass tự khởi tạo instance cụ thể.
+     * Kiểm tra email đã được dùng để đăng ký Bidder hoặc Seller chưa.
+     * Dùng trước khi đăng ký email làm Admin.
+     *
+     * @param email email cần kiểm tra
+     * @return true nếu email đã tồn tại trong hệ thống
      */
-    protected abstract User createProduct(String username, String password, String email, Object... args);
+    public static boolean isEmailAlreadyUsed(String email) {
+        return usedEmails.contains(email.toLowerCase());
+    }
 
-    // ── Validation methods ─────────────────────────────────────────────────────
+    /**
+     * Giải phóng username và email (dùng khi xóa tài khoản).
+     * TODO: sau này sync với DB.
+     */
+    public static void releaseUserIdentity(String username, String email) {
+        usedUsernames.remove(username);
+        usedEmails.remove(email.toLowerCase());
+    }
+
+    /** Factory Method để các subclass tự khởi tạo instance cụ thể. */
+    protected abstract User createProduct(String username, String password,
+                                          String email, Object... args);
+
+    // ── Validation methods ─────────────────────────────────────────────────
 
     private void validateUsername(String username) {
         if (username == null || username.isBlank()) {
@@ -63,9 +89,9 @@ public abstract class UserFactory {
     }
 
     /**
-     * Validate email bằng regex cơ bản
-     * Không thể verify email tồn tại thật từ phía server -
-     * cần gửi email xác nhạn (OTP) sau khi đăng kí
+     * Validate email bằng regex cơ bản.
+     * Không thể verify email tồn tại thật từ phía server —
+     * cần gửi email xác nhận (OTP) sau khi đăng ký.
      *
      * @param email địa chỉ email cần kiểm tra
      */
