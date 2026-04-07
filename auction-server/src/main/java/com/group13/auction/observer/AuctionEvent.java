@@ -16,25 +16,26 @@ public class AuctionEvent {
     AUCTION_NO_WINNER,      // kết thúc không có người đặt giá
     RESERVE_NOT_MET_CLOSED, // kết thúc nhưng giá cao nhất chưa đạt reserve
     PAYMENT_COMPLETED,      // thanh toán thành công PAID
-    AUCTION_CANCELED,       // bị admin huỷ
+    AUCTION_CANCELED,       // bị hủy
     SECOND_CHANCE_OFFERED,  // đề nghị mua thứ cấp cho runner-up
     QUALITY_REPORT_APPROVED,// báo cáo chất lượng được duyệt
-    FRAUD_DETECTED          // gian lận phát hiện (chỉ gửi global/admin)
+    FRAUD_DETECTED,         // gian lận phát hiện (chỉ gửi global/admin)
+    SELLER_CANCEL_REQUEST   // seller yêu cầu hủy — gửi cho Staff Admin xem xét
   }
 
   private final AuctionEventType eventType;
-  private final Auction          auction;
-  private final NormalUser       bidder;   // null nếu không liên quan đến bidder
-  private final double           bidAmount; // 0 nếu không liên quan đến bid
+  private final Auction auction;
+  private final NormalUser bidder; // null nếu không liên quan đến bidder
+  private final double bidAmount;  // 0 nếu không liên quan đến bid
   /** Thông điệp tùy chỉnh theo đối tượng nhận. */
-  private final String           message;
+  private final String message;
 
   /**
    * Khởi tạo AuctionEvent.
    *
    * @param eventType loại sự kiện
-   * @param auction   phiên liên quan
-   * @param bidder    người đặt giá (null nếu không liên quan)
+   * @param auction phiên liên quan
+   * @param bidder người đặt giá (null nếu không liên quan)
    * @param bidAmount số tiền (0 nếu không liên quan)
    */
   public AuctionEvent(AuctionEventType eventType, Auction auction,
@@ -48,15 +49,15 @@ public class AuctionEvent {
   public AuctionEvent(AuctionEventType eventType, Auction auction,
                       NormalUser bidder, double bidAmount, String message) {
     this.eventType = eventType;
-    this.auction   = auction;
-    this.bidder    = bidder;
+    this.auction = auction;
+    this.bidder = bidder;
     this.bidAmount = bidAmount;
-    this.message   = message;
+    this.message = message;
   }
 
   public AuctionEventType getEventType() { return eventType; }
-  public Auction          getAuction()   { return auction; }
-  public NormalUser       getBidder()    { return bidder; }
-  public double           getBidAmount() { return bidAmount; }
-  public String           getMessage()   { return message; }
+  public Auction getAuction() { return auction; }
+  public NormalUser getBidder() { return bidder; }
+  public double getBidAmount() { return bidAmount; }
+  public String getMessage() { return message; }
 }

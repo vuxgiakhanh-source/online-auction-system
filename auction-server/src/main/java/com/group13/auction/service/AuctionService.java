@@ -1,7 +1,3 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: com/group13/auction/service/AuctionService.java
-// ════════════════════════════════════════════════════════════════════════════
-
 package com.group13.auction.service;
 
 import com.group13.auction.manager.AuctionManager;
@@ -15,6 +11,8 @@ import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.service.serviceInterface.IAuctionService;
+import com.group13.auction.service.serviceInterface.IRatingService;
 import com.group13.auction.strategy.ReservePriceStrategy;
 import java.time.LocalDateTime;
 
@@ -41,13 +39,13 @@ public class AuctionService implements IAuctionService {
    * Có thể set lịch trước nhiều ngày.
    * TODO: auctionDAO.save(auction).
    *
-   * @param seller          seller tạo phiên
-   * @param item            sản phẩm đưa ra đấu giá
-   * @param startTime       thời điểm bắt đầu
-   * @param endTime         thời điểm kết thúc
+   * @param seller seller tạo phiên
+   * @param item sản phẩm đưa ra đấu giá
+   * @param startTime thời điểm bắt đầu
+   * @param endTime thời điểm kết thúc
    * @param reserveStrategy reserve price strategy (BẮT BUỘC)
    * @return Auction mới ở trạng thái OPEN
-   * @throws IllegalStateException    nếu seller không đủ điều kiện
+   * @throws IllegalStateException nếu seller không đủ điều kiện
    * @throws IllegalArgumentException nếu endTime trước startTime hoặc thiếu role SELLER
    */
   @Override
@@ -102,11 +100,10 @@ public class AuctionService implements IAuctionService {
   /**
    * Đóng phiên khi hết giờ.
    *
-   * <p>Logic 3 nhánh:
+   * <p>Logic 2 nhánh (đã bỏ tổ chức lại 1 phiên auction sau 2 ngày):
    * <ol>
-   *   <li>Không có currentLeader → SYSTEM auto-cancel (AUCTION_NO_WINNER) → lên lịch lại 2 ngày.</li>
-   *   <li>Có leader nhưng chưa đạt reserve → SYSTEM auto-cancel (RESERVE_NOT_MET) → lên lịch lại 2 ngày.</li>
-   *   <li>Có leader và đạt reserve → FINISHED (tạo AuctionWinner).</li>
+   * <li>Không có currentLeader hoặc chưa đạt reserve → SYSTEM auto-cancel.</li>
+   * <li>Có leader và đạt reserve → FINISHED (tạo AuctionWinner).</li>
    * </ol>
    *
    * Cả hai trường hợp auto-cancel đều ghi log vào SystemAdmin.
@@ -123,12 +120,13 @@ public class AuctionService implements IAuctionService {
     }
 
     if (auction.getCurrentLeader() == null) {
-      // Nhánh 1: không có ai đặt giá → SYSTEM auto-cancel
+      // Nhánh 1a: không có ai đặt giá → SYSTEM auto-cancel
+      notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0);
       cancelAuction(auction, Admin.CancelReason.NO_WINNER);
       System.out.println("[AUCTION SERVICE] Phiên đóng — không có ai đặt giá.");
 
     } else if (!auction.isReserveMet()) {
-      // Nhánh 2: có leader nhưng chưa đạt reserve → SYSTEM auto-cancel
+      // Nhánh 1b: có leader nhưng chưa đạt reserve → SYSTEM auto-cancel
       NormalUser leader = auction.getCurrentLeader();
       notify(auction, AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
               leader, auction.getCurrentPrice());
@@ -139,7 +137,7 @@ public class AuctionService implements IAuctionService {
               auction.getReserveStrategy().getReservePrice());
 
     } else {
-      // Nhánh 3: reserve met, có winner
+      // Nhánh 2: reserve met, có winner
       NormalUser winner = auction.getCurrentLeader();
       auction.setStatus(AuctionStatus.FINISHED);
       double depositPaid = auction.getItem().getStartingPrice() * 0.3;
@@ -181,7 +179,7 @@ public class AuctionService implements IAuctionService {
    * TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần huỷ
-   * @param reason  lý do huỷ
+   * @param reason lý do huỷ
    */
   @Override
   public void cancelAuction(Auction auction, Admin.CancelReason reason) {
@@ -194,20 +192,24 @@ public class AuctionService implements IAuctionService {
             auction.getId(), reason);
     system.addActionLog(log);
     System.out.println(log);
+
+    // Notify staff về việc hủy
+    AuctionManager.getInstance().notifyStaffObservers(
+            new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0));
     // TODO: auctionDAO.update(auction)
   }
 
   /**
    * Admin STAFF huỷ phiên sau khi trực tiếp điều tra.
    * Log được ghi vào cả {@link SystemAdmin} (audit trail) lẫn {@code staff}.
-   * Dùng khi phiên bị cancel nhiều lần liên tục và cần người cụ thể chịu trách nhiệm.
+   * Dùng khi có SELLER_REQUEST hoặc cần người cụ thể chịu trách nhiệm.
    * TODO: auctionDAO.update(auction).
    *
-   * @param staff   admin STAFF đang xử lý (không được là SystemAdmin)
+   * @param staff admin STAFF đang xử lý (không được là SystemAdmin)
    * @param auction phiên cần huỷ
-   * @param reason  lý do huỷ
+   * @param reason lý do huỷ
    * @throws IllegalArgumentException nếu {@code staff} là SystemAdmin
-   *         (SystemAdmin dùng overload không tham số staff)
+   * (SystemAdmin dùng overload không tham số staff)
    */
   @Override
   public void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason) {
@@ -244,13 +246,12 @@ public class AuctionService implements IAuctionService {
   @Override
   public void notifyUpcoming(Auction auction) {
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_UPCOMING, null, 0);
-    System.out.printf("[AUCTION SERVICE] Phiên sắp bắt đầu: %s%n", auction.getId());
   }
 
   /**
    * Đăng ký observer theo dõi phiên.
    *
-   * @param auction  phiên muốn theo dõi
+   * @param auction phiên muốn theo dõi
    * @param observer observer cần thêm
    */
   @Override
@@ -258,10 +259,6 @@ public class AuctionService implements IAuctionService {
     auction.addObserver(observer);
   }
 
-  /**
-   * Thông báo tất cả observer — gọi đúng method theo loại event.
-   * Giảm lặp code (DRY) bằng cách tập trung notify tại đây.
-   */
   @Override
   public void notify(Auction auction, AuctionEvent.AuctionEventType type,
                      NormalUser bidder, double amount) {
@@ -272,6 +269,7 @@ public class AuctionService implements IAuctionService {
   public void notify(Auction auction, AuctionEvent.AuctionEventType type,
                      NormalUser bidder, double amount, String message) {
     AuctionEvent event = new AuctionEvent(type, auction, bidder, amount, message);
+    // Notify per-auction observers
     for (AuctionObserver observer : auction.getObservers()) {
       if (type == AuctionEvent.AuctionEventType.BID_PLACED
               || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
@@ -280,6 +278,9 @@ public class AuctionService implements IAuctionService {
         observer.onAuctionEnded(event);
       }
     }
+    // Fan-out tới global observers (SystemAdmin)
     AuctionManager.getInstance().notifyGlobalObservers(event);
+    // Fan-out tới staff observers (chỉ event liên quan)
+    AuctionManager.getInstance().notifyStaffObservers(event);
   }
 }

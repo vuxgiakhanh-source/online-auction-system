@@ -1,50 +1,39 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.IRatingService;
+import com.group13.auction.service.serviceInterface.IRatingService;
 
 /**
- * Observer dành cho Seller.
- * Nhận thông báo khi có bid mới và khi phiên kết thúc.
- * Đặc biệt thông báo khi giao dịch thành công.
+ * Observer dành cho Seller — nhận notify về phiên đấu giá của mình.
  */
 public class SellerObserver implements AuctionObserver {
 
-  private final NormalUser     seller;
+  private final NormalUser seller;
   private final IRatingService ratingService;
 
   /**
    * Khởi tạo SellerObserver.
    *
-   * @param seller        seller được theo dõi
-   * @param ratingService để thưởng rating khi bán thành công
+   * @param seller seller được theo dõi
+   * @param ratingService dùng để thưởng rating sau khi bán thành công
    */
   public SellerObserver(NormalUser seller, IRatingService ratingService) {
-    this.seller        = seller;
+    this.seller = seller;
     this.ratingService = ratingService;
   }
 
   @Override
   public void onBidPlaced(AuctionEvent event) {
-    if (event.getEventType() != AuctionEvent.AuctionEventType.BID_PLACED
-            && event.getEventType() != AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
-      return;
-    }
-    System.out.printf("[NOTIFY → Seller %s] Có người vừa trả %.0f cho sản phẩm \"%s\"%s%n",
-            seller.getUsername(),
-            event.getBidAmount(),
-            event.getAuction().getItem().getName(),
-            event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
-                    ? " (chưa đạt giá sàn)" : "");
+    System.out.printf("[NOTIFY → Seller %s] Bid mới: %.0f | Phiên: %s%n",
+            seller.getUsername(), event.getBidAmount(), event.getAuction().getId());
   }
 
   @Override
   public void onAuctionEnded(AuctionEvent event) {
     switch (event.getEventType()) {
       case AUCTION_STARTED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá \"%s\" vừa bắt đầu!%n",
-                seller.getUsername(),
-                event.getAuction().getItem().getName());
+        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá của bạn đã bắt đầu!%n",
+                seller.getUsername());
         break;
       case AUCTION_ENDED:
         if (event.getBidder() != null) {
@@ -58,7 +47,7 @@ public class SellerObserver implements AuctionObserver {
         }
         break;
       case RESERVE_NOT_MET_CLOSED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá \"%s\" kết thúc với mức giá cao nhất là %.0f nhưng chưa đạt mức giá tối thiểu của bạn. Phiên sẽ được tổ chức lại sau 2 ngày.%n",
+        System.out.printf("[NOTIFY → Seller %s] Phiên \"%s\" kết thúc với mức giá cao nhất là %.0f nhưng chưa đạt mức giá tối thiểu của bạn. Phiên đã bị hủy.%n",
                 seller.getUsername(),
                 event.getAuction().getItem().getName(),
                 event.getBidAmount());
@@ -72,7 +61,7 @@ public class SellerObserver implements AuctionObserver {
         ratingService.rewardSeller(seller);
         break;
       case AUCTION_CANCELED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá đã bị Admin huỷ.%n",
+        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá đã bị hủy.%n",
                 seller.getUsername());
         break;
       case QUALITY_REPORT_APPROVED:

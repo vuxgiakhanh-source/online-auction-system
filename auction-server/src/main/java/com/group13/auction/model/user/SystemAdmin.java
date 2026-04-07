@@ -1,94 +1,69 @@
 package com.group13.auction.model.user;
 
 import com.group13.auction.manager.AuctionManager;
+import com.group13.auction.model.auction.Auction;
+import com.group13.auction.observer.SystemAdminObserver;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Admin hệ thống — tài khoản đặc biệt duy nhất được seed sẵn trong DB.
+ * SystemAdmin — MASTER duy nhất trong hệ thống.
  *
- * <p>Trách nhiệm tự động (không cần con người điều khiển):
+ * <p>Câu hỏi: Nếu SystemAdmin được seed sẵn trong Database thì có phải khởi tạo
+ * 1 đối tượng mới từ đầu không, hay cứ thế mà truy xuất lên xong dùng thôi?
+ *
+ * <p>Trả lời: KHÔNG cần khởi tạo mới. Nếu SystemAdmin đã được seed trong DB,
+ * {@link #bootstrap(String)} sẽ load từ DB qua DAO rồi gán vào instance —
+ * không tạo object mới. Chỉ tạo mới nếu chưa có trong DB (lần đầu boot).
+ * bootstrap() gọi 1 lần duy nhất khi app khởi động.
+ *
+ * <p>Automation thuộc về SystemAdmin:
  * <ul>
- *   <li>Auto-ban tài khoản có rating dưới ngưỡng tối thiểu ({@value #MIN_ELIGIBLE_RATING}).</li>
- *   <li>Auto-cancel phiên không có winner hoặc reserve not met — ghi log vào chính mình.</li>
+ * <li>Auto-cancel khi không có winner.</li>
+ * <li>Auto-ban khi rating quá thấp.</li>
+ * <li>Auto duyệt role Seller nếu đủ điều kiện.</li>
+ * <li>Tạo tài khoản Staff Admin qua AdminFactory.</li>
  * </ul>
  *
- * <p>Singleton: chỉ tồn tại duy nhất một instance trong toàn hệ thống.
- * Được khởi tạo qua {@link #"bootstrap"()} khi ứng dụng start.
- *
- * <p>Email cài sẵn: {@value #SYSTEM_EMAIL} — không thể thay đổi.
- * Username cài sẵn: {@value #SYSTEM_USERNAME}.
+ * <p>Overload method có tham số Staff Admin để lỡ có việc cần người cụ thể đi kiểm tra.
  */
-public final class SystemAdmin extends Admin {
+public class SystemAdmin extends Admin {
 
-    // ── Hằng số hệ thống ──────────────────────────────────────────────────
-
-    /** Email cài sẵn của tài khoản hệ thống — không được dùng cho user khác. */
-    public static final String SYSTEM_EMAIL    = "system@auction.internal";
-
-    /** Username cài sẵn. */
-    public static final String SYSTEM_USERNAME = "SYSTEM";
-
-    /**
-     * Rating tối thiểu để tài khoản hoạt động.
-     * Tài khoản có rating < ngưỡng này sẽ bị auto-ban.
-     */
-    private static final double MIN_ELIGIBLE_RATING = 2.0;
-
-    // ── Singleton ─────────────────────────────────────────────────────────
+    /** Ngưỡng rating tối thiểu để được hoạt động. */
+    public static final double MIN_ELIGIBLE_RATING = 2.0;
 
     private static SystemAdmin INSTANCE;
 
-    // ── Static factory / bootstrap ────────────────────────────────────────
+    // ── Bootstrap ──────────────────────────────────────────────────────────────
 
     /**
-     * Khởi tạo SystemAdmin lần đầu khi ứng dụng start (seed).
-     * Chỉ được gọi một lần duy nhất — thường từ tầng bootstrap/config.
+     * Khởi tạo hoặc load SystemAdmin.
+     * Nếu đã seed trong DB → load lên (không tạo mới).
+     * Nếu chưa có → tạo mới và seed vào DB.
      *
-     * @param rawPassword mật khẩu thô cho tài khoản system
+     * <p>Chỉ gọi 1 lần khi app khởi động.
+     *
+     * @param password mật khẩu (chỉ dùng nếu chưa có trong DB)
      * @return SystemAdmin instance
-     * @throws IllegalStateException nếu đã gọi bootstrap trước đó
      */
-    public static synchronized SystemAdmin bootstrap(String rawPassword) {
-        if (INSTANCE != null) {
-            throw new IllegalStateException(
-                    "SystemAdmin đã được khởi tạo. Chỉ gọi bootstrap() một lần.");
+    public static synchronized SystemAdmin bootstrap(String password) {
+        if (INSTANCE == null) {
+            // TODO: Kiểm tra DB qua UserDAO.findByUsername("system")
+            // Nếu tìm thấy → reconstitute từ DB, gán vào INSTANCE
+            // Nếu không tìm thấy → tạo mới như bên dưới:
+            INSTANCE = new SystemAdmin("system", password, "system@auction.com");
+            System.out.println("[SYSTEM] SystemAdmin khởi tạo lần đầu.");
+            // TODO: userDAO.save(INSTANCE)
+
+            // Đăng ký SystemAdmin làm global observer
+            AuctionManager.getInstance().addGlobalObserver(new SystemAdminObserver(INSTANCE));
+            AuctionManager.getInstance().registerUser(INSTANCE);
         }
-        INSTANCE = new SystemAdmin(rawPassword);
-        // Đăng ký vào AuctionManager như một global observer
-        AuctionManager.getInstance().registerUser(INSTANCE);
-        System.out.println("[SYSTEM] SystemAdmin khởi tạo thành công.");
         return INSTANCE;
     }
 
     /**
-     * Hồi sinh SystemAdmin từ DB — chỉ DAO gọi khi load lại.
-     *
-     * @param id              id gốc từ DB
-     * @param createdAt       thời gian tạo gốc
-     * @param updatedAt       thời gian cập nhật gốc
-     * @param hashedPassword  password đã hash
-     * @param accountStatus   trạng thái
-     * @param rating          rating
-     * @return SystemAdmin instance
-     * @throws IllegalStateException nếu đã gọi bootstrap trước đó
-     */
-    public static synchronized SystemAdmin reconstitute(String id,
-                                                        LocalDateTime createdAt, LocalDateTime updatedAt,
-                                                        String hashedPassword, AccountStatus accountStatus,
-                                                        double rating, LocalDateTime suspendedAt) {
-        if (INSTANCE != null) {
-            throw new IllegalStateException(
-                    "SystemAdmin đã được khởi tạo.");
-        }
-        INSTANCE = new SystemAdmin(id, createdAt, updatedAt,
-                hashedPassword, accountStatus, rating, suspendedAt);
-        AuctionManager.getInstance().registerUser(INSTANCE);
-        return INSTANCE;
-    }
-
-    /**
-     * Lấy instance SystemAdmin đã được bootstrap.
+     * Lấy instance hiện tại — phải gọi {@link #bootstrap(String)} trước.
      *
      * @return SystemAdmin instance
      * @throws IllegalStateException nếu chưa bootstrap
@@ -96,30 +71,21 @@ public final class SystemAdmin extends Admin {
     public static SystemAdmin getInstance() {
         if (INSTANCE == null) {
             throw new IllegalStateException(
-                    "SystemAdmin chưa được khởi tạo. Gọi bootstrap() trước.");
+                    "SystemAdmin chưa được bootstrap. Gọi SystemAdmin.bootstrap() khi app khởi động.");
         }
         return INSTANCE;
     }
 
-    // ── Private constructors ───────────────────────────────────────────────
+    // ── Constructor — chỉ bootstrap() được gọi ────────────────────────────────
 
-    private SystemAdmin(String rawPassword) {
-        super(SYSTEM_USERNAME, rawPassword, SYSTEM_EMAIL, LEVEL_MASTER);
+    private SystemAdmin(String username, String password, String email) {
+        super(username, password, email, LEVEL_MASTER);
     }
-
-    private SystemAdmin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                        String hashedPassword, AccountStatus accountStatus,
-                        double rating, LocalDateTime suspendedAt) {
-        super(id, createdAt, updatedAt, SYSTEM_USERNAME, hashedPassword,
-                SYSTEM_EMAIL, accountStatus, rating, LEVEL_MASTER, suspendedAt);
-    }
-
-    // ── Identity override ──────────────────────────────────────────────────
 
     @Override
     public boolean isSystem() { return true; }
 
-    // ── Auto-ban logic ─────────────────────────────────────────────────────
+    // ── Auto-ban logic ─────────────────────────────────────────────────────────
 
     /**
      * Quét tất cả user trong hệ thống và tự động ban những tài khoản
@@ -170,13 +136,79 @@ public final class SystemAdmin extends Admin {
         }
     }
 
+    /**
+     * Overload: Staff Admin cụ thể thực hiện ban sau khi kiểm tra thủ công.
+     *
+     * @param staff staff admin thực hiện
+     * @param user user cần ban
+     * @param reason lý do ban
+     */
+    public void banUserByStaff(Admin staff, User user, Admin.BanReason reason) {
+        if (user instanceof Admin) return;
+        user.setAccountStatus(AccountStatus.BANNED);
+        String staffLog = String.format("[STAFF BAN] %s ban %s | Lý do: %s",
+                staff.getUsername(), user.getUsername(), reason);
+        staff.addActionLog(staffLog);
+        System.out.println(staffLog);
+
+        String auditLog = String.format("[AUDIT] Staff %s ban %s | Lý do: %s",
+                staff.getUsername(), user.getUsername(), reason);
+        this.addActionLog(auditLog);
+        System.out.println(auditLog);
+        // TODO: userDAO.update(user)
+    }
+
+    // ── Auto-cancel logic ──────────────────────────────────────────────────────
+
+    /**
+     * Tự động hủy phiên đấu giá (no-winner / reserve-not-met / lỗi hệ thống).
+     * Log được ghi vào SystemAdmin.
+     *
+     * @param auction phiên cần hủy
+     * @param reason lý do hủy
+     */
+    public void autoCancelAuction(Auction auction, Admin.CancelReason reason) {
+        auction.setStatus(Auction.AuctionStatus.CANCELED);
+        String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
+                auction.getId(), reason);
+        addActionLog(log);
+        System.out.println(log);
+        // TODO: auctionDAO.update(auction)
+    }
+
+    /**
+     * Overload: Staff Admin cụ thể hủy phiên sau khi điều tra.
+     * Dùng khi có yêu cầu Seller request cancel hoặc cần người chịu trách nhiệm.
+     *
+     * @param staff staff admin thực hiện
+     * @param auction phiên cần hủy
+     * @param reason lý do hủy
+     */
+    public void cancelAuctionByStaff(Admin staff, Auction auction, Admin.CancelReason reason) {
+        if (staff.isSystem()) {
+            throw new IllegalArgumentException(
+                    "SystemAdmin không dùng overload này — gọi autoCancelAuction(auction, reason).");
+        }
+        auction.setStatus(Auction.AuctionStatus.CANCELED);
+        String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
+                staff.getUsername(), auction.getId(), reason);
+        staff.addActionLog(staffLog);
+        System.out.println(staffLog);
+
+        String auditLog = String.format("[AUDIT] Staff %s hủy phiên %s | Lý do: %s",
+                staff.getUsername(), auction.getId(), reason);
+        addActionLog(auditLog);
+        System.out.println(auditLog);
+        // TODO: auctionDAO.update(auction)
+    }
+
     @Override
     public void printInfo() {
         System.out.println("=== SYSTEM ADMIN =====================");
-        System.out.printf("Username    : %s%n", getUsername());
-        System.out.printf("Email       : %s%n", getEmail());
-        System.out.printf("Level       : %s [SYSTEM — DUY NHẤT]%n", getAdminLevel());
-        System.out.printf("Hành động   : %d lần%n", getActionLog().size());
+        System.out.printf("Username : %s%n", getUsername());
+        System.out.printf("Email : %s%n", getEmail());
+        System.out.printf("Level : %s [SYSTEM — DUY NHẤT]%n", getAdminLevel());
+        System.out.printf("Hành động : %d lần%n", getActionLog().size());
         System.out.println("======================================");
     }
 }

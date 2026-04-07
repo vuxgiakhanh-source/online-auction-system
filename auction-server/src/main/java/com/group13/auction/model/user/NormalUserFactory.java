@@ -1,6 +1,6 @@
 package com.group13.auction.model.user;
 
-/** Factory chuyên tạo NormalUser (Bidder/Seller). */
+/** Factory tạo NormalUser (Bidder mặc định). */
 public class NormalUserFactory extends UserFactory {
 
     @Override

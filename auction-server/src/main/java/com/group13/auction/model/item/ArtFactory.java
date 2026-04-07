@@ -14,9 +14,9 @@ public class ArtFactory extends ItemFactory {
     @Override
     protected Item createProduct(String name, String description, double startingPrice,
                                  NormalUser seller, Object... args) {
-        String artist      = (String) args[0];
-        int    yearCreated = (int)    args[1];
-        String medium      = (String) args[2];
+        String artist = (String) args[0];
+        int yearCreated = (int) args[1];
+        String medium = (String) args[2];
         return Art.create(name, description, startingPrice, seller, artist, yearCreated, medium);
     }
 }

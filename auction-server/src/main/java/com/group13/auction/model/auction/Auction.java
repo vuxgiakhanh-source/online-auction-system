@@ -19,30 +19,33 @@ public class Auction extends Entity {
     RESERVE_NOT_MET
   }
 
-  private final Item                  item;
-  private final LocalDateTime         startTime;
-  private final LocalDateTime         endTime;
+  private final Item item;
+  private final LocalDateTime startTime;
+  private final LocalDateTime endTime;
   /**
    * Reserve price strategy — bắt buộc thiết lập khi tạo auction.
    * Seller phải chỉ định giá sàn ngay từ đầu.
    */
-  private final ReservePriceStrategy  reserveStrategy;
-  private final List<String>          bidTransactionIds;
+  private final ReservePriceStrategy reserveStrategy;
+  private final List<String> bidTransactionIds;
   private final List<AuctionObserver> observers;
-  private       double                currentPrice;
-  private       NormalUser            currentLeader;
-  private       AuctionStatus         status;
-  private       AuctionWinner         winner;
+  private double currentPrice;
+  private NormalUser currentLeader;
+  private AuctionStatus status;
+  private AuctionWinner winner;
 
-  // ── Static factory methods ─────────────────────────────────────────────
+  /** Số người xem (watchlist) hiện tại, dùng để sort. */
+  private int viewerCount;
+
+  // ── Static factory methods ─────────────────────────────────────────────────
 
   /**
    * Khai sinh Auction mới ở trạng thái OPEN.
    * Có thể set lịch trước nhiều ngày.
    *
-   * @param item            sản phẩm đưa ra đấu giá
-   * @param startTime       thời điểm bắt đầu (có thể là tương lai)
-   * @param endTime         thời điểm kết thúc
+   * @param item sản phẩm đưa ra đấu giá
+   * @param startTime thời điểm bắt đầu (có thể là tương lai)
+   * @param endTime thời điểm kết thúc
    * @param reserveStrategy reserve price strategy — BẮT BUỘC
    * @return Auction mới
    */
@@ -63,20 +66,21 @@ public class Auction extends Entity {
             endTime, currentPrice, status, reserveStrategy);
   }
 
-  // ── Private constructors ───────────────────────────────────────────────
+  // ── Private constructors ───────────────────────────────────────────────────
 
   private Auction(Item item, LocalDateTime startTime, LocalDateTime endTime,
                   ReservePriceStrategy reserveStrategy) {
     super();
-    this.item              = item;
-    this.currentPrice      = item.getStartingPrice();
-    this.startTime         = startTime;
-    this.endTime           = endTime;
-    this.reserveStrategy   = reserveStrategy;
-    this.status            = AuctionStatus.OPEN;
+    this.item = item;
+    this.currentPrice = item.getStartingPrice();
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.reserveStrategy = reserveStrategy;
+    this.status = AuctionStatus.OPEN;
     this.bidTransactionIds = new ArrayList<>();
-    this.observers         = new ArrayList<>();
-    this.winner            = null;
+    this.observers = new ArrayList<>();
+    this.winner = null;
+    this.viewerCount = 0;
   }
 
   private Auction(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
@@ -84,27 +88,29 @@ public class Auction extends Entity {
                   double currentPrice, AuctionStatus status,
                   ReservePriceStrategy reserveStrategy) {
     super(id, createdAt, updatedAt);
-    this.item              = item;
-    this.currentPrice      = currentPrice;
-    this.startTime         = startTime;
-    this.endTime           = endTime;
-    this.reserveStrategy   = reserveStrategy;
-    this.status            = status;
+    this.item = item;
+    this.currentPrice = currentPrice;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.reserveStrategy = reserveStrategy;
+    this.status = status;
     this.bidTransactionIds = new ArrayList<>();
-    this.observers         = new ArrayList<>();
-    this.winner            = null;
+    this.observers = new ArrayList<>();
+    this.winner = null;
+    this.viewerCount = 0;
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public Item               getItem()            { return item; }
-  public LocalDateTime      getStartTime()        { return startTime; }
-  public LocalDateTime      getEndTime()          { return endTime; }
-  public double             getCurrentPrice()     { return currentPrice; }
-  public NormalUser         getCurrentLeader()    { return currentLeader; }
-  public AuctionStatus      getStatus()           { return status; }
-  public AuctionWinner      getWinner()           { return winner; }
-  public ReservePriceStrategy getReserveStrategy(){ return reserveStrategy; }
+  public Item getItem() { return item; }
+  public LocalDateTime getStartTime() { return startTime; }
+  public LocalDateTime getEndTime() { return endTime; }
+  public double getCurrentPrice() { return currentPrice; }
+  public NormalUser getCurrentLeader() { return currentLeader; }
+  public AuctionStatus getStatus() { return status; }
+  public AuctionWinner getWinner() { return winner; }
+  public ReservePriceStrategy getReserveStrategy() { return reserveStrategy; }
+  public int getViewerCount() { return viewerCount; }
 
   public boolean isAcceptingBids() {
     return status == AuctionStatus.RUNNING;
@@ -127,7 +133,7 @@ public class Auction extends Entity {
     return Collections.unmodifiableList(observers);
   }
 
-  // ── Setters — chỉ AuctionService / BidService gọi ────────────────────
+  // ── Setters — chỉ AuctionService / BidService gọi ────────────────────────
 
   /**
    * Cập nhật trạng thái vòng đời phiên (OPEN → RUNNING → FINISHED/CANCELED → PAID).
@@ -197,19 +203,26 @@ public class Auction extends Entity {
     }
   }
 
+  /** Tăng số người xem khi có watcher/bidder tham gia. */
+  public void incrementViewerCount() {
+    this.viewerCount++;
+  }
+
   @Override
   public void printInfo() {
     System.out.println("=== AUCTION ==========================");
-    System.out.printf("ID           : %s%n", getId());
-    System.out.printf("Sản phẩm     : %s%n", item.getName());
+    System.out.printf("ID : %s%n", getId());
+    System.out.printf("Sản phẩm : %s%n", item.getName());
+    System.out.printf("Danh mục : %s%n", item.getCategory());
     System.out.printf("Giá hiện tại : %.0f%n", currentPrice);
     System.out.printf("Reserve price: %.0f%n", reserveStrategy.getReservePrice());
-    System.out.printf("Reserve met  : %s%n", isReserveMet() ? "Có" : "Chưa");
-    System.out.printf("Dẫn đầu      : %s%n",
+    System.out.printf("Reserve met : %s%n", isReserveMet() ? "Có" : "Chưa");
+    System.out.printf("Dẫn đầu : %s%n",
             currentLeader != null ? currentLeader.getUsername() : "Chưa có");
-    System.out.printf("Trạng thái   : %s%n", status);
-    System.out.printf("Bắt đầu      : %s%n", startTime);
-    System.out.printf("Kết thúc     : %s%n", endTime);
+    System.out.printf("Trạng thái : %s%n", status);
+    System.out.printf("Người xem : %d%n", viewerCount);
+    System.out.printf("Bắt đầu : %s%n", startTime);
+    System.out.printf("Kết thúc : %s%n", endTime);
     System.out.println("======================================");
   }
 }

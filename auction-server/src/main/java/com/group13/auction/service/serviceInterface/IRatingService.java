@@ -1,4 +1,4 @@
-package com.group13.auction.service;
+package com.group13.auction.service.serviceInterface;
 
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;

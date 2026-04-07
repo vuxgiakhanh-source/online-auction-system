@@ -16,21 +16,21 @@ public class BidTransaction extends Entity {
     OUTBID
   }
 
-  private final NormalUser    bidder;
-  private final Auction       auction;
-  private final double        amount;
+  private final NormalUser bidder;
+  private final Auction auction;
+  private final double amount;
   private final LocalDateTime timestamp;
-  private       BidResult     result;
+  private BidResult result;
 
-  // ── Static factory methods ─────────────────────────────────────────────
+  // ── Static factory methods ─────────────────────────────────────────────────
 
   /**
    * Khai sinh BidTransaction mới.
    *
-   * @param bidder  người đặt giá
+   * @param bidder người đặt giá
    * @param auction phiên liên quan
-   * @param amount  số tiền đặt
-   * @param result  kết quả
+   * @param amount số tiền đặt
+   * @param result kết quả
    * @return BidTransaction mới
    */
   public static BidTransaction create(NormalUser bidder, Auction auction,
@@ -48,38 +48,38 @@ public class BidTransaction extends Entity {
             auction, amount, timestamp, result);
   }
 
-  // ── Private constructors ───────────────────────────────────────────────
+  // ── Private constructors ───────────────────────────────────────────────────
 
   private BidTransaction(NormalUser bidder, Auction auction,
                          double amount, BidResult result) {
     super();
-    this.bidder    = bidder;
-    this.auction   = auction;
-    this.amount    = amount;
+    this.bidder = bidder;
+    this.auction = auction;
+    this.amount = amount;
     this.timestamp = LocalDateTime.now();
-    this.result    = result;
+    this.result = result;
   }
 
   private BidTransaction(String id, LocalDateTime createdAt,
                          LocalDateTime updatedAt, NormalUser bidder, Auction auction,
                          double amount, LocalDateTime timestamp, BidResult result) {
     super(id, createdAt, updatedAt);
-    this.bidder    = bidder;
-    this.auction   = auction;
-    this.amount    = amount;
+    this.bidder = bidder;
+    this.auction = auction;
+    this.amount = amount;
     this.timestamp = timestamp;
-    this.result    = result;
+    this.result = result;
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────
+  // ── Getters ────────────────────────────────────────────────────────────────
 
-  public NormalUser    getBidder()    { return bidder; }
-  public Auction       getAuction()   { return auction; }
-  public double        getAmount()    { return amount; }
+  public NormalUser getBidder() { return bidder; }
+  public Auction getAuction() { return auction; }
+  public double getAmount() { return amount; }
   public LocalDateTime getTimestamp() { return timestamp; }
-  public BidResult     getResult()    { return result; }
+  public BidResult getResult() { return result; }
 
-  // ── Setter — chỉ BidService gọi ───────────────────────────────────────
+  // ── Setter — chỉ BidService gọi ───────────────────────────────────────────
 
   public void setResult(BidResult result) {
     this.result = result;
@@ -89,9 +89,9 @@ public class BidTransaction extends Entity {
   @Override
   public void printInfo() {
     System.out.println("=== BID TRANSACTION ==================");
-    System.out.printf("Bidder   : %s%n", bidder.getUsername());
-    System.out.printf("Số tiền  : %.0f%n", amount);
-    System.out.printf("Kết quả  : %s%n", result);
+    System.out.printf("Bidder : %s%n", bidder.getUsername());
+    System.out.printf("Số tiền : %.0f%n", amount);
+    System.out.printf("Kết quả : %s%n", result);
     System.out.printf("Thời gian: %s%n", timestamp);
     System.out.println("======================================");
   }

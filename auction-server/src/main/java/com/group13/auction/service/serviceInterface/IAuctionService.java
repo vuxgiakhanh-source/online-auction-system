@@ -1,8 +1,4 @@
-// ════════════════════════════════════════════════════════════════════════════
-// FILE: com/group13/auction/service/IAuctionService.java
-// ════════════════════════════════════════════════════════════════════════════
-
-package com.group13.auction.service;
+package com.group13.auction.service.serviceInterface;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Item;
@@ -22,10 +18,10 @@ public interface IAuctionService {
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
    * Seller BẮT BUỘC cung cấp reserveStrategy ngay khi tạo.
    *
-   * @param seller          seller tạo phiên
-   * @param item            sản phẩm đưa ra đấu giá
-   * @param startTime       thời điểm bắt đầu
-   * @param endTime         thời điểm kết thúc
+   * @param seller seller tạo phiên
+   * @param item sản phẩm đưa ra đấu giá
+   * @param startTime thời điểm bắt đầu
+   * @param endTime thời điểm kết thúc
    * @param reserveStrategy reserve price strategy (BẮT BUỘC)
    * @return Auction mới
    */
@@ -41,7 +37,8 @@ public interface IAuctionService {
   void startAuction(Auction auction);
 
   /**
-   * Đóng phiên khi hết giờ: RUNNING → FINISHED / CANCELED / RESERVE_NOT_MET.
+   * Đóng phiên khi hết giờ: RUNNING → FINISHED / CANCELED.
+   * Đã bỏ logic tổ chức lại phiên sau 2 ngày.
    *
    * @param auction phiên cần đóng
    */
@@ -60,18 +57,18 @@ public interface IAuctionService {
    * Dùng khi không có staff cụ thể nào can thiệp.
    *
    * @param auction phiên cần huỷ
-   * @param reason  lý do huỷ
+   * @param reason lý do huỷ
    */
   void cancelAuction(Auction auction, Admin.CancelReason reason);
 
   /**
    * Admin STAFF huỷ phiên đấu giá sau khi trực tiếp điều tra.
    * Log được ghi vào cả SystemAdmin (audit trail) lẫn staff cụ thể.
-   * Dùng khi phiên bị cancel liên tục và cần staff đi kiểm tra.
+   * Dùng khi có SELLER_REQUEST hoặc cần staff đi kiểm tra.
    *
-   * @param staff   admin STAFF đang xử lý
+   * @param staff admin STAFF đang xử lý
    * @param auction phiên cần huỷ
-   * @param reason  lý do huỷ
+   * @param reason lý do huỷ
    * @throws IllegalArgumentException nếu {@code staff} là SystemAdmin
    */
   void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason);
@@ -87,7 +84,7 @@ public interface IAuctionService {
   /**
    * Đăng ký observer theo dõi phiên.
    *
-   * @param auction  phiên muốn theo dõi
+   * @param auction phiên muốn theo dõi
    * @param observer observer cần thêm
    */
   void addObserver(Auction auction, AuctionObserver observer);

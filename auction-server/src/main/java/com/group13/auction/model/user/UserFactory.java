@@ -27,8 +27,8 @@ public abstract class UserFactory {
      *
      * @param username tên đăng nhập (tối thiểu 8 ký tự, không trùng)
      * @param password mật khẩu thô (tối thiểu 8 ký tự)
-     * @param email    địa chỉ email hợp lệ
-     * @param args     các tham số bổ sung tùy theo loại User
+     * @param email địa chỉ email hợp lệ
+     * @param args các tham số bổ sung tùy theo loại User
      * @return User mới, id do Entity tự sinh UUID
      * @throws IllegalArgumentException nếu dữ liệu không hợp lệ
      */
@@ -67,7 +67,7 @@ public abstract class UserFactory {
     protected abstract User createProduct(String username, String password,
                                           String email, Object... args);
 
-    // ── Validation methods ─────────────────────────────────────────────────
+    // ── Validation methods ─────────────────────────────────────────────────────
 
     private void validateUsername(String username) {
         if (username == null || username.isBlank()) {
