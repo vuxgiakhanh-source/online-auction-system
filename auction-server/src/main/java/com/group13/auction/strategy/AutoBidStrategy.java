@@ -3,13 +3,13 @@ package com.group13.auction.strategy;
 import com.group13.auction.model.auction.Auction;
 
 /**
- * Kiểu đặt giá tự động — thông minh hơn Standard (lỗi #22).
+ * Kiểu đặt giá tự động — thông minh hơn Standard.
  *
  * <p>Logic đúng: hệ thống chỉ bid mức TỐI THIỂU cần thiết để vượt
  * người trả cao thứ hai, không phải tăng một khoảng cố định mỗi lần.
  * Điều này bảo toàn ngân sách tối đa cho người dùng.
  *
- * <p>Dùng khi: muốn hệ thống tự đặt giá thay mình, chỉ cần đặt maxBid (lỗi #23).
+ * <p>Dùng khi: muốn hệ thống tự đặt giá thay mình, chỉ cần đặt maxBid.
  */
 public class AutoBidStrategy implements BidStrategy {
 
@@ -26,7 +26,7 @@ public class AutoBidStrategy implements BidStrategy {
     if (maxBid <= 0 || minIncrement <= 0) {
       throw new IllegalArgumentException("maxBid và minIncrement phải lớn hơn 0.");
     }
-    this.maxBid = maxBid;
+    this.maxBid       = maxBid;
     this.minIncrement = minIncrement;
   }
 
@@ -53,15 +53,9 @@ public class AutoBidStrategy implements BidStrategy {
   @Override
   public String describe() {
     return String.format(
-        "Auto: Tự bid mức tối thiểu vượt đối thủ, tối đa %.0f",
-        maxBid);
+            "Auto: Tự bid mức tối thiểu vượt đối thủ, tối đa %.0f", maxBid);
   }
 
-  public double getMaxBid() {
-    return maxBid;
-  }
-
-  public double getMinIncrement() {
-    return minIncrement;
-  }
+  public double getMaxBid()      { return maxBid; }
+  public double getMinIncrement() { return minIncrement; }
 }

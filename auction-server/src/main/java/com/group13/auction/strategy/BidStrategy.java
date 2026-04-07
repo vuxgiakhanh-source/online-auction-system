@@ -2,13 +2,12 @@ package com.group13.auction.strategy;
 
 import com.group13.auction.model.auction.Auction;
 
-/**
- * Interface Strategy — định nghĩa cách kiểm tra bid hợp lệ.
- */
+/** Interface Strategy — định nghĩa cách kiểm tra bid hợp lệ. */
 public interface BidStrategy {
 
   /**
-   * Kiểm tra bid có hợp lệ không.
+   * Kiểm tra bid có hợp lệ về mặt số tiền không (không xét reserve price).
+   * Reserve price được kiểm tra riêng ở BidService.
    *
    * @param auction phiên đấu giá
    * @param amount  số tiền muốn đặt

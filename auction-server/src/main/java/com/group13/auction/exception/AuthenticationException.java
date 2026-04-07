@@ -8,8 +8,6 @@ public class AuthenticationException extends RuntimeException {
     ACCOUNT_BANNED,
     ACCOUNT_SUSPENDED,
     INSUFFICIENT_RATING,
-    /** Chưa gọi joinAuction cho phiên này — không được đặt giá. */
-    NOT_JOINED_AUCTION
   }
 
   private final Reason reason;
@@ -21,12 +19,11 @@ public class AuthenticationException extends RuntimeException {
 
   private static String buildMessage(Reason reason) {
     switch (reason) {
-      case WRONG_PASSWORD:        return "Sai mật khẩu.";
-      case ACCOUNT_BANNED:        return "Tài khoản đã bị khoá.";
-      case ACCOUNT_SUSPENDED:     return "Tài khoản đang bị tạm ngưng.";
-      case INSUFFICIENT_RATING:   return "Rating không đủ điều kiện tham gia.";
-      case NOT_JOINED_AUCTION:    return "Bạn chưa tham gia phiên đấu giá này (hãy join trước).";
-      default:                    return "Xác thực thất bại.";
+      case WRONG_PASSWORD:          return "Sai mật khẩu.";
+      case ACCOUNT_BANNED:          return "Tài khoản đã bị khoá.";
+      case ACCOUNT_SUSPENDED:       return "Tài khoản đang bị tạm ngưng.";
+      case INSUFFICIENT_RATING:     return "Rating không đủ điều kiện tham gia.";
+      default:                      return "Xác thực thất bại.";
     }
   }
 

@@ -1,28 +1,33 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.auction.Auction;
-import com.group13.auction.model.user.Bidder;
+import com.group13.auction.model.user.NormalUser;
 
-/**
- * Object chứa thông tin sự kiện truyền cho Observer.
- * Bao gồm đầy đủ tất cả loại sự kiện (lỗi #18).
- */
+/** Object chứa thông tin sự kiện truyền cho Observer. */
 public class AuctionEvent {
 
   /** Tất cả loại sự kiện trong vòng đời phiên đấu giá. */
   public enum AuctionEventType {
-    AUCTION_UPCOMING,    // sắp bắt đầu (5-10p trước) — lỗi #19
-    AUCTION_STARTED,     // vừa bắt đầu RUNNING
-    BID_PLACED,          // có bid mới
-    AUCTION_ENDED,       // kết thúc FINISHED/CANCELED
-    PAYMENT_COMPLETED,   // thanh toán thành công PAID — lỗi #17
-    AUCTION_CANCELED     // bị admin huỷ — lỗi #12
+    AUCTION_UPCOMING,       // sắp bắt đầu (5-10p trước)
+    AUCTION_STARTED,        // vừa bắt đầu RUNNING
+    BID_PLACED,             // có bid mới
+    BID_RESERVE_NOT_MET,    // bid được chấp nhận nhưng chưa đạt reserve
+    AUCTION_ENDED,          // kết thúc FINISHED (reserve met, có winner)
+    AUCTION_NO_WINNER,      // kết thúc không có người đặt giá
+    RESERVE_NOT_MET_CLOSED, // kết thúc nhưng giá cao nhất chưa đạt reserve
+    PAYMENT_COMPLETED,      // thanh toán thành công PAID
+    AUCTION_CANCELED,       // bị admin huỷ
+    SECOND_CHANCE_OFFERED,  // đề nghị mua thứ cấp cho runner-up
+    QUALITY_REPORT_APPROVED,// báo cáo chất lượng được duyệt
+    FRAUD_DETECTED          // gian lận phát hiện (chỉ gửi global/admin)
   }
 
   private final AuctionEventType eventType;
-  private final Auction auction;
-  private final Bidder bidder;   // null nếu không liên quan đến bidder
-  private final double bidAmount; // 0 nếu không liên quan đến bid
+  private final Auction          auction;
+  private final NormalUser       bidder;   // null nếu không liên quan đến bidder
+  private final double           bidAmount; // 0 nếu không liên quan đến bid
+  /** Thông điệp tùy chỉnh theo đối tượng nhận. */
+  private final String           message;
 
   /**
    * Khởi tạo AuctionEvent.
@@ -33,26 +38,25 @@ public class AuctionEvent {
    * @param bidAmount số tiền (0 nếu không liên quan)
    */
   public AuctionEvent(AuctionEventType eventType, Auction auction,
-      Bidder bidder, double bidAmount) {
+                      NormalUser bidder, double bidAmount) {
+    this(eventType, auction, bidder, bidAmount, null);
+  }
+
+  /**
+   * Khởi tạo AuctionEvent với custom message.
+   */
+  public AuctionEvent(AuctionEventType eventType, Auction auction,
+                      NormalUser bidder, double bidAmount, String message) {
     this.eventType = eventType;
-    this.auction = auction;
-    this.bidder = bidder;
+    this.auction   = auction;
+    this.bidder    = bidder;
     this.bidAmount = bidAmount;
+    this.message   = message;
   }
 
-  public AuctionEventType getEventType() {
-    return eventType;
-  }
-
-  public Auction getAuction() {
-    return auction;
-  }
-
-  public Bidder getBidder() {
-    return bidder;
-  }
-
-  public double getBidAmount() {
-    return bidAmount;
-  }
+  public AuctionEventType getEventType() { return eventType; }
+  public Auction          getAuction()   { return auction; }
+  public NormalUser       getBidder()    { return bidder; }
+  public double           getBidAmount() { return bidAmount; }
+  public String           getMessage()   { return message; }
 }

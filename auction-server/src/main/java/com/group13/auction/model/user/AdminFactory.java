@@ -1,18 +1,29 @@
 package com.group13.auction.model.user;
 
 /**
- * Factory chuyên tạo Admin.
+ * Factory chuyên tạo Admin STAFF.
+ *
+ * <p>Lưu ý: {@link SystemAdmin} KHÔNG đi qua Factory này —
+ * SystemAdmin được khởi tạo qua {@link SystemAdmin#bootstrap(String)}.
+ * Factory này chỉ tạo admin STAFF theo lệnh của SystemAdmin.
+ *
+ * <p>args[0] bị bỏ qua — tất cả admin tạo qua Factory đều là STAFF.
  */
 public class AdminFactory extends UserFactory {
+
     /**
-     * @param args tham số phụ:
-     * args[0]: level (int) - Cấp độ quản trị (mặc định là 1)
+     * Tạo Admin STAFF mới.
+     * Level luôn là {@link Admin#LEVEL_STAFF} — không cho phép tạo MASTER qua Factory.
+     *
+     * @param username tên đăng nhập
+     * @param password mật khẩu thô
+     * @param email    email
+     * @param args     (bỏ qua — level cố định là STAFF)
+     * @return Admin STAFF mới
      */
     @Override
-    protected User createProduct(String username, String password, String email, Object... args) {
-        // Admin chỉ được tạo bởi Admin khác (lỗi #9)
-        // Tại đây chỉ dùng để seed admin đầu tiên từ hệ thống
-        int level = (args.length > 0) ? (int) args[0] : 1;
-        return Admin.create(username, password, email, level);
+    protected User createProduct(String username, String password,
+                                 String email, Object... args) {
+        return Admin.create(username, password, email, Admin.LEVEL_STAFF);
     }
 }

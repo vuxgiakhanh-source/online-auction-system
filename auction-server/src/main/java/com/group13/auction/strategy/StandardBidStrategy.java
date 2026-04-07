@@ -5,7 +5,7 @@ import com.group13.auction.model.auction.Auction;
 /**
  * Kiểu đặt giá thông thường.
  * Bid hợp lệ khi amount >= currentPrice + minIncrement.
- * Dùng khi: muốn tự kiểm soát từng lần đặt giá (lỗi #23).
+ * Dùng khi: muốn tự kiểm soát từng lần đặt giá.
  */
 public class StandardBidStrategy implements BidStrategy {
 
@@ -31,10 +31,8 @@ public class StandardBidStrategy implements BidStrategy {
   @Override
   public String describe() {
     return String.format(
-        "Standard: Đặt thủ công, mỗi lần phải cao hơn ít nhất %.0f", minIncrement);
+            "Standard: Đặt thủ công, mỗi lần phải cao hơn ít nhất %.0f", minIncrement);
   }
 
-  public double getMinIncrement() {
-    return minIncrement;
-  }
+  public double getMinIncrement() { return minIncrement; }
 }

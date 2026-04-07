@@ -9,7 +9,7 @@ public class AuctionClosedException extends RuntimeException {
 
   public AuctionClosedException(AuctionStatus currentStatus) {
     super("Phiên đấu giá không thể nhận bid — trạng thái hiện tại: "
-        + currentStatus);
+            + currentStatus);
     this.currentStatus = currentStatus;
   }
 

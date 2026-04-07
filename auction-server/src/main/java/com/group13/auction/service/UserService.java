@@ -10,7 +10,7 @@ import com.group13.auction.model.user.User.AccountStatus;
  * Sau khi tách RatingService và AccountService, UserService chỉ còn
  * trách nhiệm duy nhất: verify danh tính người dùng.
  */
-public class UserService {
+public class UserService implements IUserService {
 
   /**
    * Xác thực đăng nhập.
