@@ -1,5 +1,6 @@
 package com.group13.auction.service;
 
+import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.Auction.AuctionStatus;
@@ -22,14 +23,16 @@ import java.time.LocalDateTime;
  * Seller là chủ thể quyết định tạo phiên; sau khi tạo, phiên được đăng ký vào
  * {@link com.group13.auction.manager.AuctionManager} để tra cứu (in-memory).
  * Nhận {@link IRatingService} qua constructor — không new cứng (DIP).
- * TODO: inject AuctionDAO để persist xuống DB.
+ * Đã thực hiện TODO: inject AuctionDAO để persist xuống DB.
  */
 public class AuctionService implements IAuctionService {
 
   private final IRatingService ratingService;
+  private final AuctionDAO auctionDAO; // Thực hiện TODO: inject AuctionDAO
 
-  public AuctionService(IRatingService ratingService) {
+  public AuctionService(IRatingService ratingService, AuctionDAO auctionDAO) {
     this.ratingService = ratingService;
+    this.auctionDAO = auctionDAO;
   }
 
   /**
@@ -37,7 +40,7 @@ public class AuctionService implements IAuctionService {
    * Seller cần rating >= 2.0 và có role SELLER.
    * Reserve price strategy BẮT BUỘC phải được cung cấp.
    * Có thể set lịch trước nhiều ngày.
-   * TODO: auctionDAO.save(auction).
+   * Đã thực hiện TODO: auctionDAO.save(auction).
    *
    * @param seller seller tạo phiên
    * @param item sản phẩm đưa ra đấu giá
@@ -73,14 +76,17 @@ public class AuctionService implements IAuctionService {
     AuctionManager.getInstance().registerAuction(auction);
     System.out.printf("[AUCTION SERVICE] Tạo auction: %s (reserve: %.0f)%n",
             auction.getId(), reserveStrategy.getReservePrice());
-    // TODO: auctionDAO.save(auction)
+
+    // Thực hiện TODO: auctionDAO.save(auction)
+    auctionDAO.createAuction(auction);
+
     return auction;
   }
 
   /**
    * Bắt đầu phiên: OPEN → RUNNING.
    * Thông báo tất cả observer.
-   * TODO: auctionDAO.update(auction).
+   * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần bắt đầu
    * @throws IllegalStateException nếu phiên không ở OPEN
@@ -94,7 +100,9 @@ public class AuctionService implements IAuctionService {
     auction.setStatus(AuctionStatus.RUNNING);
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_STARTED, null, 0);
     System.out.printf("[AUCTION SERVICE] Phiên bắt đầu: %s%n", auction.getId());
-    // TODO: auctionDAO.update(auction)
+
+    // Thực hiện TODO: auctionDAO.update(auction)
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
 
   /**
@@ -107,7 +115,7 @@ public class AuctionService implements IAuctionService {
    * </ol>
    *
    * Cả hai trường hợp auto-cancel đều ghi log vào SystemAdmin.
-   * TODO: auctionDAO.update(auction).
+   * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần đóng
    * @throws IllegalStateException nếu phiên không ở RUNNING
@@ -149,12 +157,14 @@ public class AuctionService implements IAuctionService {
       System.out.printf("[AUCTION SERVICE] Winner: %s | Giá: %.0f%n",
               winner.getUsername(), auction.getCurrentPrice());
     }
-    // TODO: auctionDAO.update(auction)
+
+    // Thực hiện TODO: auctionDAO.update(auction)
+    auctionDAO.updateAuctionResult(auction);
   }
 
   /**
    * Đánh dấu thanh toán thành công: FINISHED → PAID.
-   * TODO: auctionDAO.update(auction).
+   * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần đánh dấu
    * @throws IllegalStateException nếu phiên không ở FINISHED
@@ -169,14 +179,16 @@ public class AuctionService implements IAuctionService {
     notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
             auction.getCurrentLeader(), auction.getCurrentPrice());
     System.out.println("[AUCTION SERVICE] Giao dịch hoàn tất — PAID.");
-    // TODO: auctionDAO.update(auction)
+
+    // Thực hiện TODO: auctionDAO.update(auction)
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
 
   /**
    * SYSTEM tự động huỷ phiên — không cần staff cụ thể.
    * Log được ghi vào {@link SystemAdmin}.
    * Thường dùng cho: no-winner, reserve-not-met, system-error.
-   * TODO: auctionDAO.update(auction).
+   * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần huỷ
    * @param reason lý do huỷ
@@ -196,14 +208,16 @@ public class AuctionService implements IAuctionService {
     // Notify staff về việc hủy
     AuctionManager.getInstance().notifyStaffObservers(
             new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0));
-    // TODO: auctionDAO.update(auction)
+
+    // Thực hiện TODO: auctionDAO.update(auction)
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
 
   /**
    * Admin STAFF huỷ phiên sau khi trực tiếp điều tra.
    * Log được ghi vào cả {@link SystemAdmin} (audit trail) lẫn {@code staff}.
    * Dùng khi có SELLER_REQUEST hoặc cần người cụ thể chịu trách nhiệm.
-   * TODO: auctionDAO.update(auction).
+   * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param staff admin STAFF đang xử lý (không được là SystemAdmin)
    * @param auction phiên cần huỷ
@@ -234,7 +248,9 @@ public class AuctionService implements IAuctionService {
             staff.getUsername(), auction.getId(), reason);
     system.addActionLog(auditLog);
     System.out.println(auditLog);
-    // TODO: auctionDAO.update(auction)
+
+    // Thực hiện TODO: auctionDAO.update(auction)
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
 
   /**
