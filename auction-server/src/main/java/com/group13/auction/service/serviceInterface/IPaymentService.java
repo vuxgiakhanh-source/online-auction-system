@@ -5,9 +5,8 @@ import com.group13.auction.model.auction.Auction;
 /**
  * Hợp đồng xử lý thanh toán sau khi phiên đấu giá kết thúc.
  *
- * <p>Đóng với sửa đổi, mở với mở rộng (OCP):
- * muốn thêm kiểu thanh toán mới (VD: trả góp, escrow, crypto...)
- * chỉ cần tạo implementation mới implement interface này —
+ * <p>muốn thêm kiểu thanh toán mới (trả góp, escrow, crypto...)
+ * nếu có time -
  * không sửa code hiện có.
  */
 public interface IPaymentService {

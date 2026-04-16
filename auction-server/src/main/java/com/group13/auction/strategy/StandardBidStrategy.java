@@ -6,33 +6,37 @@ import com.group13.auction.model.auction.Auction;
  * Kiểu đặt giá thông thường.
  * Bid hợp lệ khi amount >= currentPrice + minIncrement.
  * Dùng khi: muốn tự kiểm soát từng lần đặt giá.
+ *
+ * <p>minIncrement được tính tự động theo ngưỡng giá hiện tại
+ * bởi {@link BidIncrementCalculator}.
  */
 public class StandardBidStrategy implements BidStrategy {
 
-  private final double minIncrement;
-
   /**
    * Khởi tạo StandardBidStrategy.
-   *
-   * @param minIncrement bước giá tối thiểu (> 0)
+   * minIncrement được tính động tại thời điểm validate bid.
    */
-  public StandardBidStrategy(double minIncrement) {
-    if (minIncrement <= 0) {
-      throw new IllegalArgumentException("minIncrement phải lớn hơn 0.");
-    }
-    this.minIncrement = minIncrement;
-  }
+  public StandardBidStrategy() {}
 
   @Override
   public boolean isValidBid(Auction auction, double amount) {
-    return amount >= auction.getCurrentPrice() + minIncrement;
+    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+    return amount >= auction.getCurrentPrice() + increment;
   }
 
   @Override
   public String describe() {
-    return String.format(
-            "Standard: Đặt thủ công, mỗi lần phải cao hơn ít nhất %.0f", minIncrement);
+    return "Standard: Đặt thủ công, bước giá tối thiểu theo ngưỡng giá hiện tại"
+            + " (< 1tr: 50k | 1-10tr: 200k | > 10tr: 500k).";
   }
 
-  public double getMinIncrement() { return minIncrement; }
+  /**
+   * Lấy bước giá tối thiểu tại mức giá đã cho.
+   *
+   * @param currentPrice giá hiện tại để tính increment
+   * @return bước giá tối thiểu
+   */
+  public double getMinIncrement(double currentPrice) {
+    return BidIncrementCalculator.calculate(currentPrice);
+  }
 }

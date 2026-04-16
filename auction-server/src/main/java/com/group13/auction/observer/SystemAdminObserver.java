@@ -3,10 +3,9 @@ package com.group13.auction.observer;
 import com.group13.auction.model.user.SystemAdmin;
 
 /**
- * Observer dành riêng cho SystemAdmin — nhận tất cả event toàn cục.
+ * Observer dành riêng cho SystemAdmin - nhận tất cả event toàn cục.
  *
  * <p>SystemAdmin nhận global notify về mọi event trong hệ thống.
- * Không cần joinAuction để nhận notify.
  */
 public class SystemAdminObserver implements AuctionObserver {
 
@@ -39,44 +38,44 @@ public class SystemAdminObserver implements AuctionObserver {
         String log;
         switch (event.getEventType()) {
             case AUCTION_STARTED:
-                log = String.format("[GLOBAL - SYSTEM] Phiên bắt đầu: %s", event.getAuction().getId());
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên bắt đầu: %s", event.getAuction().getId());
                 break;
             case AUCTION_ENDED:
-                log = String.format("[GLOBAL - SYSTEM] Phiên kết thúc: %s | Winner: %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên kết thúc: %s | Winner: %s",
                         event.getAuction().getId(),
                         event.getBidder() != null ? event.getBidder().getUsername() : "Không có");
                 break;
             case AUCTION_NO_WINNER:
-                log = String.format("[GLOBAL - SYSTEM] Phiên %s kết thúc — không có người đặt giá. Auto-cancel.",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên %s kết thúc — không có người đặt giá. Auto-cancel.",
                         event.getAuction().getId());
                 break;
             case RESERVE_NOT_MET_CLOSED:
-                log = String.format("[GLOBAL - SYSTEM] Phiên %s kết thúc — giá cao nhất %.0f chưa đạt reserve. Auto-cancel.",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên %s kết thúc — giá cao nhất %.0f chưa đạt reserve. Auto-cancel.",
                         event.getAuction().getId(), event.getBidAmount());
                 break;
             case PAYMENT_COMPLETED:
-                log = String.format("[GLOBAL - SYSTEM] Thanh toán thành công: phiên %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Thanh toán thành công: phiên %s",
                         event.getAuction().getId());
                 break;
             case AUCTION_CANCELED:
-                log = String.format("[GLOBAL - SYSTEM] Phiên bị hủy: %s", event.getAuction().getId());
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên bị hủy: %s", event.getAuction().getId());
                 break;
             case FRAUD_DETECTED:
-                log = String.format("[GLOBAL - SYSTEM] GIAN LẶN phát hiện tại phiên %s: %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] GIAN LẶN phát hiện tại phiên %s: %s",
                         event.getAuction().getId(),
                         event.getMessage() != null ? event.getMessage() : "");
                 break;
             case QUALITY_REPORT_APPROVED:
-                log = String.format("[GLOBAL - SYSTEM] Báo cáo chất lượng được duyệt: phiên %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Báo cáo chất lượng được duyệt: phiên %s",
                         event.getAuction().getId());
                 break;
             case SELLER_CANCEL_REQUEST:
-                log = String.format("[GLOBAL - SYSTEM] Seller yêu cầu hủy phiên %s: %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Seller yêu cầu hủy phiên %s: %s",
                         event.getAuction().getId(),
                         event.getMessage() != null ? event.getMessage() : "");
                 break;
             default:
-                log = String.format("[GLOBAL - SYSTEM] Event: %s | Phiên: %s",
+                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Event: %s | Phiên: %s",
                         event.getEventType(), event.getAuction().getId());
                 break;
         }

@@ -10,6 +10,8 @@ public class Electronics extends Item {
   private final int warrantyMonths;
   private final String condition;
 
+  // Static factory method
+
   protected static Electronics create(String name, String description, double startingPrice,
                                       NormalUser seller, String brand, int warrantyMonths, String condition) {
     return new Electronics(name, description, startingPrice, seller, brand, warrantyMonths, condition);
@@ -22,6 +24,9 @@ public class Electronics extends Item {
             seller, brand, warrantyMonths, condition);
   }
 
+  // Private Constructors: Ngăn chặn new cứng
+
+  /** Khai sinh */
   private Electronics(String name, String description, double startingPrice,
                       NormalUser seller, String brand, int warrantyMonths, String condition) {
     super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
@@ -30,6 +35,7 @@ public class Electronics extends Item {
     this.condition = condition;
   }
 
+  /** Hồi sinh từ DB */
   private Electronics(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                       String name, String description, double startingPrice, NormalUser seller,
                       String brand, int warrantyMonths, String condition) {
@@ -39,13 +45,14 @@ public class Electronics extends Item {
     this.condition = condition;
   }
 
+  // Getters
   public String getBrand() { return brand; }
   public int getWarrantyMonths() { return warrantyMonths; }
   public String getCondition() { return condition; }
 
   @Override
   public void printInfo() {
-    System.out.println("=== ELECTRONICS ======================");
+    System.out.println("THÔNG TIN SẢN PHẨM - ELECTRONICS");
     System.out.printf("Tên : %s%n", getName());
     System.out.printf("Hãng : %s%n", brand);
     System.out.printf("Bảo hành : %d tháng%n", warrantyMonths);

@@ -5,7 +5,7 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
 /**
- * Hợp đồng quản lý tài khoản: ban, deposit, tạo admin STAFF, quản lý role.
+ * Hợp đồng quản lý tài khoản: ban, deposit, withdraw, tạo admin STAFF, quản lý role.
  */
 public interface IAccountService {
 
@@ -28,10 +28,22 @@ public interface IAccountService {
   void deposit(NormalUser user, double amount);
 
   /**
+   * Rút tiền từ tài khoản NormalUser.
+   *
+   * <p>Chỉ rút được phần availableBalance (không rút tiền đang khóa cọc).
+   * Bắt buộc rút hết trước khi xóa tài khoản.
+   *
+   * @param user user cần rút
+   * @param amount số tiền rút (phải > 0)
+   * @throws IllegalArgumentException nếu amount <= 0 hoặc vượt số dư khả dụng
+   * @throws IllegalStateException nếu tài khoản không đủ điều kiện
+   */
+  void withdraw(NormalUser user, double amount);
+
+  /**
    * SystemAdmin tạo tài khoản Admin STAFF mới.
    * Chỉ SystemAdmin (MASTER) mới được tạo admin.
    * AdminFactory tuyệt đối chỉ được cấp bởi System.
-   * Email đăng ký phải chưa từng dùng để tạo NormalUser (Bidder/Seller).
    *
    * @param username username admin mới
    * @param password password
@@ -50,18 +62,12 @@ public interface IAccountService {
   void autoApproveSellerRole(NormalUser user);
 
   /**
-   * Admin STAFF duyệt thủ công role Seller (dành cho user đã từng bị penalize).
-   *
-   * @param admin admin duyệt
-   * @param user user muốn trở thành seller
-   */
-  void approveSellerRole(Admin admin, NormalUser user);
-
-  /**
    * User tự xóa tài khoản của mình.
-   * Soft-delete: ban vĩnh viễn + giải phóng username/email.
+   * Soft-delete: ban + giữ rating cũ.
+   * Bắt buộc số dư phải bằng 0 và không còn cọc đang khóa.
    *
    * @param user user muốn xóa tài khoản
+   * @throws IllegalStateException nếu còn số dư hoặc cọc đang khóa
    */
   void deleteAccount(NormalUser user);
 }

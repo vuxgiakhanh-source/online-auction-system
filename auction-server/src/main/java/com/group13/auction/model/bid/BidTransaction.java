@@ -13,6 +13,7 @@ public class BidTransaction extends Entity {
     /** Bid được chấp nhận nhưng chưa đạt reserve price. */
     ACCEPTED_RESERVE_NOT_MET,
     REJECTED,
+    /** Dùng cho autobid or bỏ */
     OUTBID
   }
 
@@ -22,7 +23,7 @@ public class BidTransaction extends Entity {
   private final LocalDateTime timestamp;
   private BidResult result;
 
-  // ── Static factory methods ─────────────────────────────────────────────────
+  // Static factory methods
 
   /**
    * Khai sinh BidTransaction mới.
@@ -48,7 +49,7 @@ public class BidTransaction extends Entity {
             auction, amount, timestamp, result);
   }
 
-  // ── Private constructors ───────────────────────────────────────────────────
+  // Private constructors
 
   private BidTransaction(NormalUser bidder, Auction auction,
                          double amount, BidResult result) {
@@ -71,7 +72,7 @@ public class BidTransaction extends Entity {
     this.result = result;
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────────
+  // Getters
 
   public NormalUser getBidder() { return bidder; }
   public Auction getAuction() { return auction; }
@@ -79,7 +80,7 @@ public class BidTransaction extends Entity {
   public LocalDateTime getTimestamp() { return timestamp; }
   public BidResult getResult() { return result; }
 
-  // ── Setter — chỉ BidService gọi ───────────────────────────────────────────
+  // Setter - chỉ BidService gọi
 
   public void setResult(BidResult result) {
     this.result = result;
@@ -88,7 +89,7 @@ public class BidTransaction extends Entity {
 
   @Override
   public void printInfo() {
-    System.out.println("=== BID TRANSACTION ==================");
+    System.out.println("THÔNG TIN GIAO DỊCH");
     System.out.printf("Bidder : %s%n", bidder.getUsername());
     System.out.printf("Số tiền : %.0f%n", amount);
     System.out.printf("Kết quả : %s%n", result);

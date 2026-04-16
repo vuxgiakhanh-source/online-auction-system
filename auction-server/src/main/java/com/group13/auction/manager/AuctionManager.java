@@ -12,12 +12,11 @@ import java.util.stream.Collectors;
 /**
  * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá.
  *
- * <p>Phân biệt vai trò:
- * AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
- * Phiên đấu giá do Seller quyết định tạo; {@link
+ * <p>AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
+ * <p>Phiên đấu giá do Seller quyết định tạo; {@link
  * com.group13.auction.service.AuctionService}
  * thực thi nghiệp vụ rồi gọi {@link #registerAuction(Auction)} để lưu vào registry.
- * Admin ra lệnh → các Service thực thi → AuctionManager phản ánh trạng thái (in-memory).
+ * Admin ra lệnh -> các Service thực thi -> AuctionManager phản ánh trạng thái
  *
  * <p>globalObservers: chứa observer của SystemAdmin (nhận toàn bộ event hệ thống).
  * staffObservers: chứa observer của Staff Admin (nhận event cancel, request, lỗi).
@@ -25,11 +24,11 @@ import java.util.stream.Collectors;
  */
 public class AuctionManager {
 
-  // FIX: dùng eager initialization → thread-safe, tránh tạo nhiều instance
+  // FIX: dùng eager initialization -> thread-safe, tránh tạo nhiều instance
   private static final AuctionManager instance = new AuctionManager();
 
   /**
-   * Danh sách tất cả auction — lọc theo status khi cần.
+   * Danh sách tất cả auction - lọc theo status khi cần.
    * TODO: sau này sync với DB qua AuctionDAO.
    *
    * FIX: dùng synchronizedList để tránh race condition khi nhiều thread add/remove
@@ -45,7 +44,7 @@ public class AuctionManager {
   private final List<User> allUsers;
 
   /**
-   * Global observers — SystemAdmin observer nhận toàn bộ event hệ thống.
+   * Global observers - SystemAdmin observer nhận toàn bộ event hệ thống.
    *
    * FIX: thread-safe collection cho observer
    */
@@ -70,13 +69,13 @@ public class AuctionManager {
    *
    * @return instance AuctionManager
    *
-   * FIX: instance đã được khởi tạo sẵn → không cần check null
+   * FIX: instance đã được khởi tạo sẵn -> không cần check null
    */
   public static AuctionManager getInstance() {
     return instance;
   }
 
-  // ── User management ────────────────────────────────────────────────────────
+  // User management
 
   /**
    * Đăng ký người dùng mới vào hệ thống.
@@ -111,7 +110,7 @@ public class AuctionManager {
   }
 
   /**
-   * Xóa user khỏi danh sách hệ thống (soft-delete hoặc hard-delete).
+   * Xóa user khỏi danh sách hệ thống (soft-delete).
    * TODO: sau này gọi UserDAO.delete(user).
    *
    * @param user user cần xóa
@@ -120,7 +119,7 @@ public class AuctionManager {
     allUsers.remove(user);
   }
 
-  // ── Auction management ─────────────────────────────────────────────────────
+  // Auction management
 
   /**
    * Đăng ký một phiên đã được tạo qua nghiệp vụ.
@@ -128,7 +127,7 @@ public class AuctionManager {
    * @param auction phiên cần đưa vào registry
    *
    * FIX:
-   * - check + add phải nằm trong cùng 1 synchronized block (atomic)
+   * check + add phải nằm trong cùng 1 synchronized block (atomic)
    */
   public void registerAuction(Auction auction) {
     if (auction == null) {
@@ -145,7 +144,7 @@ public class AuctionManager {
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
-  // ── Global observer management (SystemAdmin) ───────────────────────────────
+  // Global observer management (SystemAdmin)
 
   /**
    * Đăng ký global observer (SystemAdmin).
@@ -168,7 +167,7 @@ public class AuctionManager {
     globalObservers.remove(observer);
   }
 
-  // ── Staff observer management ──────────────────────────────────────────────
+  // Staff observer management
 
   /**
    * Đăng ký staff observer (Staff Admin).
@@ -186,7 +185,7 @@ public class AuctionManager {
     }
   }
 
-  /** Gỡ staff observer (khi admin bị xóa hoặc ban). */
+  /** Gỡ staff observer (khi admin bị xóa). */
   public void removeStaffObserver(AuctionObserver observer) {
     staffObservers.remove(observer);
   }
@@ -243,10 +242,11 @@ public class AuctionManager {
     }
   }
 
-  // ── Auction queries ────────────────────────────────────────────────────────
+  // Auction queries
 
   /**
    * Lấy tất cả auction đang RUNNING.
+   * Dành cho "đang diễn ra"
    *
    * FIX: synchronized khi stream
    */

@@ -2,7 +2,7 @@ package com.group13.auction.strategy;
 
 import com.group13.auction.model.auction.Auction;
 
-/** Interface Strategy — định nghĩa cách kiểm tra bid hợp lệ. */
+/** Interface Strategy - định nghĩa cách kiểm tra bid hợp lệ. */
 public interface BidStrategy {
 
   /**

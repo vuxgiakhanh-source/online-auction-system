@@ -1,10 +1,11 @@
 package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.IRatingService;
+import com.group13.auction.model.user.User;
+import com.group13.auction.service.serviceInterface.IRatingService;
 
 /**
- * Abstract Factory tạo Item — tập trung validate và khởi tạo.
+ * Abstract Factory tạo Item - tập trung validate và khởi tạo.
  * ID được sinh bởi Entity (UUID).
  */
 public abstract class ItemFactory {
@@ -45,7 +46,10 @@ public abstract class ItemFactory {
     if (seller == null) {
       throw new IllegalArgumentException("Thông tin người bán không hợp lệ.");
     }
-    /** Hệ thống tự check quyền của Seller */
+    if (!seller.hasRole(User.UserRole.SELLER)) {
+      throw new IllegalArgumentException("Người dùng chưa được cấp role SELLER.");
+    }
+    /** Hệ thống check quyền của Seller */
     if (!ratingService.canSellerCreateAuction(seller)) {
       throw new IllegalStateException("Tài khoản người bán đang bị khóa hoặc uy tín thấp.");
     }

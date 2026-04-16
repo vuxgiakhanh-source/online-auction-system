@@ -55,8 +55,13 @@ public interface IRatingService {
   void penalizeSeller(User seller);
 
   /**
-   * Auto-restore rating sau 6 tháng không vi phạm (cho user SUSPENDED).
-   * Cộng thêm 0.3 để user có thể tiếp tục hoạt động nếu rating > 1.5.
+   * Auto-restore rating sau 3 tháng bị SUSPENDED.
+   *
+   * <p>Cơ chế chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi NormalUser.
+   * Sau khi được restore, tài khoản không được auto-restore thêm lần nữa
+   * dù bị SUSPENDED lại sau đó.
+   *
+   * <p>Gọi bởi scheduler định kỳ (ví dụ: mỗi ngày lúc 0h).
    *
    * @param user user cần kiểm tra restore
    */

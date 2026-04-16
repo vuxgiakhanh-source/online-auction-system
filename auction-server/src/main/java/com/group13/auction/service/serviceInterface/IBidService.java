@@ -13,8 +13,8 @@ public interface IBidService {
   /**
    * Bidder tham gia phiên đấu giá.
    * Tự động vào watchList và addObserver.
-   * Ngay khi join thành công: khóa cọc (30% giá khởi điểm) khỏi balance.
-   * Chặn Seller tự đấu giá món hàng của chính mình.
+   * Join thành công: khóa cọc (30% giá khởi điểm) khỏi balance.
+   * Không cho Seller tự đấu giá món hàng của chính mình.
    *
    * @param bidder bidder muốn tham gia
    * @param auction phiên muốn tham gia

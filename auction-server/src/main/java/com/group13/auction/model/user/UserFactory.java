@@ -6,9 +6,9 @@ import java.util.Set;
 /**
  * Factory tạo User — tập trung validate và khởi tạo.
  * ID được sinh bởi Entity (UUID).
- * Triển khai theo Factory Method Pattern.
+ * <p>Design Pattern: Factory Method.
  */
-public abstract class UserFactory {
+public abstract class UserFactory<T extends User> {
 
     /**
      * Lưu username đã dùng để kiểm tra trùng.
@@ -17,7 +17,8 @@ public abstract class UserFactory {
     private static final Set<String> usedUsernames = new HashSet<>();
 
     /**
-     * Lưu email đã dùng để kiểm tra trùng (phục vụ yêu cầu chống gian lận).
+     * Lưu email đã dùng để kiểm tra trùng.
+     * 1 email chỉ tạo được 1 tài khoản
      * TODO: sau này thay bằng truy vấn DB qua UserDAO.
      */
     private static final Set<String> usedEmails = new HashSet<>();
@@ -27,17 +28,17 @@ public abstract class UserFactory {
      *
      * @param username tên đăng nhập (tối thiểu 8 ký tự, không trùng)
      * @param password mật khẩu thô (tối thiểu 8 ký tự)
-     * @param email địa chỉ email hợp lệ
+     * @param email địa chỉ email hợp lệ (không trùng)
      * @param args các tham số bổ sung tùy theo loại User
      * @return User mới, id do Entity tự sinh UUID
      * @throws IllegalArgumentException nếu dữ liệu không hợp lệ
      */
-    public User createUser(String username, String password, String email, Object... args) {
+    public T createUser(String username, String password, String email, Object... args) {
         validateUsername(username);
         validatePassword(password);
         validateEmail(email);
 
-        User user = createProduct(username, password, email, args);
+        T user = createProduct(username, password, email, args);
         usedUsernames.add(username);
         usedEmails.add(email.toLowerCase());
         return user;
@@ -45,7 +46,7 @@ public abstract class UserFactory {
 
     /**
      * Kiểm tra email đã được dùng để đăng ký Bidder hoặc Seller chưa.
-     * Dùng trước khi đăng ký email làm Admin.
+     * Dùng trước khi đăng ký tài khoản.
      *
      * @param email email cần kiểm tra
      * @return true nếu email đã tồn tại trong hệ thống
@@ -64,10 +65,10 @@ public abstract class UserFactory {
     }
 
     /** Factory Method để các subclass tự khởi tạo instance cụ thể. */
-    protected abstract User createProduct(String username, String password,
+    protected abstract T createProduct(String username, String password,
                                           String email, Object... args);
 
-    // ── Validation methods ─────────────────────────────────────────────────────
+    // Validation methods
 
     private void validateUsername(String username) {
         if (username == null || username.isBlank()) {
@@ -77,7 +78,6 @@ public abstract class UserFactory {
             throw new IllegalArgumentException("Username phải từ 8 ký tự trở lên.");
         }
         if (usedUsernames.contains(username)) {
-            // Không lộ thông tin nhạy cảm — chỉ báo "không hợp lệ"
             throw new IllegalArgumentException("Thông tin đăng ký không hợp lệ.");
         }
     }
@@ -89,9 +89,9 @@ public abstract class UserFactory {
     }
 
     /**
-     * Validate email bằng regex cơ bản.
+     * Validate email bằng regex.
      * Không thể verify email tồn tại thật từ phía server —
-     * cần gửi email xác nhận (OTP) sau khi đăng ký.
+     * cần gửi email xác nhận (OTP) sau khi đăng ký. (đang phát triển)
      *
      * @param email địa chỉ email cần kiểm tra
      */
@@ -102,6 +102,9 @@ public abstract class UserFactory {
         String emailRegex = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
         if (!email.matches(emailRegex)) {
             throw new IllegalArgumentException("Email không đúng định dạng.");
+        }
+        if (isEmailAlreadyUsed(email)) {
+            throw new IllegalArgumentException("Email đã được sử dụng.");
         }
     }
 }

@@ -10,6 +10,8 @@ public class Art extends Item {
   private final int yearCreated;
   private final String medium;
 
+  // Static factory method
+
   protected static Art create(String name, String description, double startingPrice,
                               NormalUser seller, String artist, int yearCreated, String medium) {
     return new Art(name, description, startingPrice, seller, artist, yearCreated, medium);
@@ -22,6 +24,9 @@ public class Art extends Item {
             seller, artist, yearCreated, medium);
   }
 
+  // Private Constructors: Ngăn chặn new cứng
+
+  /** Khai sinh */
   private Art(String name, String description, double startingPrice,
               NormalUser seller, String artist, int yearCreated, String medium) {
     super(name, description, startingPrice, ItemCategory.ART, seller);
@@ -30,6 +35,7 @@ public class Art extends Item {
     this.medium = medium;
   }
 
+  /** Hồi sinh từ DB */
   private Art(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
               String name, String description, double startingPrice, NormalUser seller,
               String artist, int yearCreated, String medium) {
@@ -39,13 +45,14 @@ public class Art extends Item {
     this.medium = medium;
   }
 
+  // Getters
   public String getArtist() { return artist; }
   public int getYearCreated() { return yearCreated; }
   public String getMedium() { return medium; }
 
   @Override
   public void printInfo() {
-    System.out.println("=== ART ==============================");
+    System.out.println("THÔNG TIN SẢN PHẨM - ART");
     System.out.printf("Tên : %s%n", getName());
     System.out.printf("Nghệ sĩ : %s%n", artist);
     System.out.printf("Năm sáng tác : %d%n", yearCreated);

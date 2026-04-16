@@ -28,40 +28,60 @@ public class QualityReport extends Entity {
     private final String description;
     /** Danh sách URL ảnh minh chứng — bắt buộc phải có ít nhất 1 ảnh. */
     private final List<String> imageUrls;
-    private final LocalDateTime sellerRefundDeadline; // 24h từ khi APPROVED
+    /**
+     * Hạn hoàn tiền của Seller — 24h kể từ khi Admin APPROVED.
+     * null cho đến khi report được approve.
+     */
+    private LocalDateTime sellerRefundDeadline;
     private ReportStatus status;
 
-    // ── Static factory method ──────────────────────────────────────────────────
+    // Static factory method
 
     /**
-     * Khai sinh QualityReport khi winner gửi báo cáo.
+     * Khai sinh QualityReport khi winner / runner-up gửi báo cáo.
      * Bắt buộc phải đính kèm ít nhất 1 ảnh minh chứng.
      *
-     * @param reporter winner
+     * @param reporter winner / runner-up
      * @param auctionId id phiên
      * @param description mô tả vi phạm chất lượng
      * @param imageUrls danh sách URL ảnh minh chứng (không được rỗng)
      * @return QualityReport mới
      * @throws IllegalArgumentException nếu không có ảnh đính kèm
      */
-    public static QualityReport create(NormalUser reporter,
-                                       String auctionId, String description, List<String> imageUrls) {
+    public static QualityReport create(
+            NormalUser reporter,
+            String auctionId,
+            String description,
+            List<String> imageUrls) {
         if (imageUrls == null || imageUrls.isEmpty()) {
-            throw new IllegalArgumentException("Báo cáo chất lượng phải đính kèm ít nhất 1 ảnh minh chứng.");
+            throw new IllegalArgumentException(
+                    "Báo cáo chất lượng phải đính kèm ít nhất 1 ảnh minh chứng.");
         }
         return new QualityReport(reporter, auctionId, description, imageUrls);
     }
 
-    public static QualityReport reconstitute(String id, LocalDateTime createdAt,
-                                             LocalDateTime updatedAt, NormalUser reporter, String auctionId,
-                                             String description, List<String> imageUrls, ReportStatus status,
-                                             LocalDateTime sellerRefundDeadline) {
-        return new QualityReport(id, createdAt, updatedAt,
-                reporter, auctionId, description, imageUrls, status, sellerRefundDeadline);
+    public static QualityReport reconstitute(
+            String id,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            NormalUser reporter,
+            String auctionId,
+            String description,
+            List<String> imageUrls,
+            ReportStatus status,
+            LocalDateTime sellerRefundDeadline) {
+        return new QualityReport(
+                id, createdAt, updatedAt, reporter, auctionId, description,
+                imageUrls, status, sellerRefundDeadline);
     }
 
-    private QualityReport(NormalUser reporter, String auctionId, String description,
-                          List<String> imageUrls) {
+    // Private constructors
+
+    private QualityReport(
+            NormalUser reporter,
+            String auctionId,
+            String description,
+            List<String> imageUrls) {
         super();
         this.reporter = reporter;
         this.auctionId = auctionId;
@@ -71,9 +91,16 @@ public class QualityReport extends Entity {
         this.sellerRefundDeadline = null;
     }
 
-    private QualityReport(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                          NormalUser reporter, String auctionId, String description,
-                          List<String> imageUrls, ReportStatus status, LocalDateTime sellerRefundDeadline) {
+    private QualityReport(
+            String id,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            NormalUser reporter,
+            String auctionId,
+            String description,
+            List<String> imageUrls,
+            ReportStatus status,
+            LocalDateTime sellerRefundDeadline) {
         super(id, createdAt, updatedAt);
         this.reporter = reporter;
         this.auctionId = auctionId;
@@ -83,20 +110,60 @@ public class QualityReport extends Entity {
         this.sellerRefundDeadline = sellerRefundDeadline;
     }
 
-    public NormalUser getReporter() { return reporter; }
-    public String getAuctionId() { return auctionId; }
-    public String getDescription() { return description; }
-    public List<String> getImageUrls() { return Collections.unmodifiableList(imageUrls); }
-    public ReportStatus getStatus() { return status; }
-    public LocalDateTime getSellerRefundDeadline() { return sellerRefundDeadline; }
+    // Getters
 
-    // ── Setter — chỉ AdminService / PaymentService gọi ────────────────────────
+    public NormalUser getReporter() {
+        return reporter;
+    }
 
+    public String getAuctionId() {
+        return auctionId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public List<String> getImageUrls() {
+        return Collections.unmodifiableList(imageUrls);
+    }
+
+    public ReportStatus getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getSellerRefundDeadline() {
+        return sellerRefundDeadline;
+    }
+
+    /**
+     * Kiểm tra Seller đã quá hạn hoàn tiền chưa.
+     *
+     * @return true nếu đã quá hạn 24h và report đang ở APPROVED
+     */
+    public boolean isSellerRefundOverdue() {
+        return status == ReportStatus.APPROVED
+                && sellerRefundDeadline != null
+                && LocalDateTime.now().isAfter(sellerRefundDeadline);
+    }
+
+    // Setters — chỉ QualityReportService / PaymentService gọi
+
+    /**
+     * Admin approve report.
+     * Tự động set hạn hoàn tiền 24h cho Seller.
+     * Chỉ {@link com.group13.auction.service.QualityReportService} gọi.
+     */
     public void approve() {
         this.status = ReportStatus.APPROVED;
+        this.sellerRefundDeadline = LocalDateTime.now().plusHours(24);
         markUpdated();
     }
 
+    /**
+     * Admin reject report.
+     * Chỉ {@link com.group13.auction.service.QualityReportService} gọi.
+     */
     public void reject() {
         this.status = ReportStatus.REJECTED;
         markUpdated();
@@ -104,7 +171,8 @@ public class QualityReport extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.printf("[QUALITY REPORT] %s | Auction: %s | Status: %s | Ảnh: %d%n",
+        System.out.printf(
+                "[QUALITY REPORT] %s | Auction: %s | Status: %s | Ảnh: %d%n",
                 reporter.getUsername(), auctionId, status, imageUrls.size());
     }
 }

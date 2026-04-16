@@ -8,7 +8,7 @@ public class AuctionEvent {
 
   /** Tất cả loại sự kiện trong vòng đời phiên đấu giá. */
   public enum AuctionEventType {
-    AUCTION_UPCOMING,       // sắp bắt đầu (5-10p trước)
+    AUCTION_UPCOMING,       // sắp bắt đầu (5-10p trước) (chưa done, có thể bỏ)
     AUCTION_STARTED,        // vừa bắt đầu RUNNING
     BID_PLACED,             // có bid mới
     BID_RESERVE_NOT_MET,    // bid được chấp nhận nhưng chưa đạt reserve
@@ -20,14 +20,14 @@ public class AuctionEvent {
     SECOND_CHANCE_OFFERED,  // đề nghị mua thứ cấp cho runner-up
     QUALITY_REPORT_APPROVED,// báo cáo chất lượng được duyệt
     FRAUD_DETECTED,         // gian lận phát hiện (chỉ gửi global/admin)
-    SELLER_CANCEL_REQUEST   // seller yêu cầu hủy — gửi cho Staff Admin xem xét
+    SELLER_CANCEL_REQUEST   // seller yêu cầu hủy - gửi cho Staff Admin xem xét
   }
 
   private final AuctionEventType eventType;
   private final Auction auction;
   private final NormalUser bidder; // null nếu không liên quan đến bidder
   private final double bidAmount;  // 0 nếu không liên quan đến bid
-  /** Thông điệp tùy chỉnh theo đối tượng nhận. */
+  /** Thông điệp tùy theo đối tượng nhận. */
   private final String message;
 
   /**

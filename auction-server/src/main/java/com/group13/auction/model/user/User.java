@@ -8,14 +8,14 @@ import java.time.LocalDateTime;
 /**
  * Lớp abstract người dùng — chỉ lưu data, không chứa nghiệp vụ.
  *
- * <p>Rating được quản lý hoàn toàn bởi {@link com.group13.auction.service.RatingService}.
+ * <p>Rating được thay đổi, quản lý bởi {@link com.group13.auction.service.RatingService}
  * Không có setter public cho rating.
  * Chỉ {@code RatingService} mới được điều chỉnh rating qua
  * {@code adjustRating(double)}.
  *
  * <p>Một User bình thường (non-admin) có thể mang nhiều role:
- * BIDDER và SELLER cùng lúc (xem {@link #addRole}).
- * Admin không được mang thêm role khác.
+ * BIDDER và SELLER cùng lúc.
+ * Admin không được mang thêm role khác
  */
 public abstract class User extends Entity {
 
@@ -46,9 +46,9 @@ public abstract class User extends Entity {
    */
   private LocalDateTime suspendedAt;
 
-  // ── Constructor khai sinh ──────────────────────────────────────────────────
+  // Constructor khai sinh
 
-  /** Khai sinh — hash password ngay tại đây, rating mặc định 3.0. */
+  /** Khai sinh — hash password tại đây, rating mặc định 3.0. */
   protected User(String username, String password,
                  String email, UserRole role) {
     super();
@@ -61,11 +61,11 @@ public abstract class User extends Entity {
     this.suspendedAt = null;
   }
 
-  // ── Constructor hồi sinh ──────────────────────────────────────────────────
+  // Constructor hồi sinh
 
   /**
-   * Hồi sinh từ DB — password đã hash, không hash lại.
-   * Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con.
+   * Hồi sinh từ DB — password đã hash
+   * Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con
    */
   protected User(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                  String username, String hashedPassword, String email,
@@ -81,7 +81,7 @@ public abstract class User extends Entity {
     this.suspendedAt = suspendedAt;
   }
 
-  // ── Hash utility ───────────────────────────────────────────────────────────
+  // Hash mật khẩu
 
   /** Hash mật khẩu SHA-256. Public vì UserService dùng khi verify login. */
   public static String hashPassword(String password) {
@@ -96,7 +96,7 @@ public abstract class User extends Entity {
     }
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────────
+  // Getters
 
   public String getUsername() { return username; }
   public String getEmail() { return email; }
@@ -107,16 +107,16 @@ public abstract class User extends Entity {
   public LocalDateTime getSuspendedAt() { return suspendedAt; }
 
   /**
-   * Kiểm tra user có role cụ thể không.
-   * Admin chỉ có role ADMIN. Bidder/Seller có thể có cả hai.
+   * Kiểm tra user có role nào đó không
+   * Admin chỉ có role ADMIN. Bidder có thể là Seller và ngược lại
+   * nhưng phải thêm điều kiện trong quá trình đấu giá
    */
   public boolean hasRole(UserRole role) {
-    if (primaryRole == role) return true;
-    // Bidder có thể được thêm role SELLER và ngược lại
-    return false; // override trong subclass nếu cần
+    if (primaryRole == role) { return true; }
+    return false;
   }
 
-  // ── Setter AccountStatus — chỉ AccountService / RatingService gọi ─────────
+  // Setter AccountStatus - chỉ AccountService / RatingService gọi
 
   /**
    * Cập nhật trạng thái tài khoản.
@@ -130,15 +130,15 @@ public abstract class User extends Entity {
     markUpdated();
   }
 
-  // ── Rating — KHÔNG có setter public. Chỉ RatingService gọi ──────────────
+  // Rating - KHÔNG có setter public. Chỉ RatingService gọi
 
   /**
-   * Điều chỉnh rating theo delta (dương = tăng, âm = giảm).
-   * Được clamp tự động trong [{@value #RATING_MIN}, {@value #RATING_MAX}].
+   * Điều chỉnh rating theo delta (> 0 = tăng, < 0 = giảm)
+   * Đảm bảo nằm trong miền MIN, MAX (0.0, 5.0)
    *
    * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
-   * Tránh nhầm lẫn việc người dùng tự set rating cho bản thân.
-   * Admin override method này để không làm gì (rating cố định 5.0).
+   * Tránh gian lận người dùng tự chỉnh Rating.
+   * <p>Admin rating cố định 5.0.
    *
    * @param delta lượng thay đổi (có thể âm)
    */
@@ -148,16 +148,13 @@ public abstract class User extends Entity {
   }
 
   /**
-   * Thêm role cho user bình thường (non-admin).
-   * Chỉ UserService / AccountService gọi — sau khi hệ thống phê duyệt.
+   * Thêm role cho user bình thường (admin không).
+   * <p>Chỉ UserService / AccountService gọi — sau khi hệ thống phê duyệt.
    * Admin không được addRole thêm.
    *
    * @param role role cần thêm
    */
-  public void addRole(UserRole role) {
-    // Subclass override để lưu thêm danh sách roles nếu cần.
-    // Base: không làm gì — override ở NormalUser.
-  }
+  public void addRole(UserRole role) {}
 
   @Override
   public abstract void printInfo();

@@ -1,6 +1,6 @@
 package com.group13.auction.exception;
 
-/** Ném khi bid không hợp lệ theo nghiệp vụ. */
+/** Ném khi bid không hợp lệ theo nghiệp vụ.  */
 public class InvalidBidException extends RuntimeException {
 
   private final double attemptedAmount;
