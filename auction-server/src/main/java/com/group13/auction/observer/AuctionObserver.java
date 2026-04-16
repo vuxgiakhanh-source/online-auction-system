@@ -1,6 +1,6 @@
 package com.group13.auction.observer;
 
-/** Observer interface — nhận notify về sự kiện phiên đấu giá. */
+/** Observer interface - nhận notify về sự kiện phiên đấu giá. */
 public interface AuctionObserver {
 
   /**

@@ -21,10 +21,14 @@ public class AuctionBusinessException extends RuntimeException {
 
     private static String buildMessage(Reason reason) {
         switch (reason) {
-            case NOT_JOINED_AUCTION: return "Bạn chưa tham gia phiên đấu này (hãy join trước).";
-            case INSUFFICIENT_DEPOSIT: return "Số dư không đủ để đặt cọc (cần ít nhất 30% giá khởi điểm).";
-            case SELLER_CANNOT_BID_OWN_ITEM: return "Seller không được tự đấu giá món hàng của chính mình.";
-            default: return "Vi phạm logic hệ thống.";
+            case NOT_JOINED_AUCTION:
+                return "Bạn chưa tham gia phiên đấu này (hãy join trước).";
+            case INSUFFICIENT_DEPOSIT:
+                return "Số dư không đủ để đặt cọc (cần ít nhất 30% giá khởi điểm).";
+            case SELLER_CANNOT_BID_OWN_ITEM:
+                return "Seller không được tự đấu giá món hàng của chính mình.";
+            default:
+                return "Vi phạm logic hệ thống.";
         }
     }
 

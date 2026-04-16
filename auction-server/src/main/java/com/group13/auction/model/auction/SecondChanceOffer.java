@@ -14,7 +14,7 @@ public class SecondChanceOffer extends Entity {
 
     public enum OfferStatus {
         PENDING,   // chờ runner-up quyết định
-        ACCEPTED,  // runner-up chấp nhận → kích hoạt giao dịch
+        ACCEPTED,  // runner-up chấp nhận -> kích hoạt giao dịch
         DECLINED,  // runner-up từ chối
         EXPIRED    // hết 24h
     }
@@ -27,7 +27,7 @@ public class SecondChanceOffer extends Entity {
     private final LocalDateTime deadline;
     private OfferStatus status;
 
-    // ── Static factory methods ─────────────────────────────────────────────────
+    // Static factory methods
 
     /**
      * Khai sinh SecondChanceOffer sau khi winner không thanh toán.
@@ -50,7 +50,7 @@ public class SecondChanceOffer extends Entity {
                 runnerUp, auctionId, offerPrice, depositPaid, deadline, status);
     }
 
-    // ── Private constructors ───────────────────────────────────────────────────
+    // Private constructors
 
     private SecondChanceOffer(NormalUser runnerUp, String auctionId,
                               double offerPrice, double depositPaid) {
@@ -75,7 +75,7 @@ public class SecondChanceOffer extends Entity {
         this.status = status;
     }
 
-    // ── Getters ────────────────────────────────────────────────────────────────
+    // Getters
 
     public NormalUser getRunnerUp() { return runnerUp; }
     public String getAuctionId() { return auctionId; }
@@ -93,7 +93,7 @@ public class SecondChanceOffer extends Entity {
         return LocalDateTime.now().isAfter(deadline) && status == OfferStatus.PENDING;
     }
 
-    // ── Setter — chỉ PaymentService / AuctionService gọi ──────────────────────
+    // Setter - chỉ PaymentService / AuctionService gọi
 
     public void setStatus(OfferStatus status) {
         this.status = status;
@@ -102,7 +102,7 @@ public class SecondChanceOffer extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.println("=== SECOND CHANCE OFFER ==============");
+        System.out.println("CƠ HỘI THỨ HAI DÀNH CHO RUNNER-UP");
         System.out.printf("Runner-up : %s%n", runnerUp.getUsername());
         System.out.printf("Auction ID: %s%n", auctionId);
         System.out.printf("Giá mua : %.0f%n", offerPrice);

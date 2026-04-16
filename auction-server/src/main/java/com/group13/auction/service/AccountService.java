@@ -36,10 +36,12 @@ public class AccountService implements IAccountService {
   private final SellerDAO sellerDAO;
   private final AdminDAO adminDAO;
 
-  /**
-   * Nhận dependencies qua constructor (DIP).
-   */
-  public AccountService(IRatingService ratingService, UserDAO userDAO, SellerDAO sellerDAO, AdminDAO adminDAO) {
+  /** Nhận dependencies qua constructor (DIP). */
+  public AccountService(
+          IRatingService ratingService,
+          UserDAO userDAO,
+          SellerDAO sellerDAO,
+          AdminDAO adminDAO) {
     this.ratingService = ratingService;
     this.adminFactory = new AdminFactory();
     this.userDAO = userDAO;
@@ -47,7 +49,7 @@ public class AccountService implements IAccountService {
     this.adminDAO = adminDAO;
   }
 
-  // ── Ban ────────────────────────────────────────────────────────────────────
+  // Ban
 
   /**
    * Ban tài khoản với lý do cụ thể — chỉ Admin gọi.
@@ -59,8 +61,8 @@ public class AccountService implements IAccountService {
   @Override
   public void banUser(Admin admin, User target, Admin.BanReason reason) {
     target.setAccountStatus(AccountStatus.BANNED);
-    String log = String.format("[ACCOUNT] %s ban %s | Lý do: %s",
-            admin.getUsername(), target.getUsername(), reason);
+    String log = String.format(
+            "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);
     admin.addActionLog(log);
     System.out.println(log);
 
@@ -68,7 +70,7 @@ public class AccountService implements IAccountService {
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
   }
 
-  // ── Deposit ────────────────────────────────────────────────────────────────
+  // Deposit
 
   /**
    * Nạp tiền vào tài khoản NormalUser.
@@ -81,21 +83,56 @@ public class AccountService implements IAccountService {
   @Override
   public void deposit(NormalUser user, double amount) {
     if (!ratingService.isEligible(user)) {
-      throw new IllegalStateException(
-              "Tài khoản không đủ điều kiện thực hiện giao dịch.");
+      throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
     }
     if (amount <= 0) {
       throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0.");
     }
     user.setBalance(user.getBalance() + amount);
-    System.out.printf("[ACCOUNT] %s nạp %.0f | Số dư mới: %.0f%n",
+    System.out.printf(
+            "[ACCOUNT] %s nạp %.0f | Số dư mới: %.0f%n",
             user.getUsername(), amount, user.getBalance());
 
     // Gọi DAO để cộng tiền dưới DB
     userDAO.addBalance(user.getId(), amount);
   }
 
-  // ── Admin STAFF creation ───────────────────────────────────────────────────
+  // Rút tiền
+
+  /**
+   * Rút tiền từ tài khoản NormalUser.
+   *
+   * <p>Chỉ rút được phần {@code availableBalance} (không rút vào tiền đang khóa cọc).
+   *
+   * @param user user cần rút
+   * @param amount số tiền rút (phải > 0)
+   * @throws IllegalStateException nếu tài khoản không đủ điều kiện
+   * @throws IllegalArgumentException nếu amount <= 0 hoặc vượt số dư khả dụng
+   */
+  public void withdraw(NormalUser user, double amount) {
+    if (!ratingService.isEligible(user)) {
+      throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
+    }
+    if (amount <= 0) {
+      throw new IllegalArgumentException("Số tiền rút phải lớn hơn 0.");
+    }
+    if (user.getAvailableBalance() < amount) {
+      throw new IllegalArgumentException(
+              String.format(
+                      "Số dư khả dụng không đủ. Khả dụng: %.0f, Yêu cầu: %.0f",
+                      user.getAvailableBalance(), amount));
+    }
+
+    user.setBalance(user.getBalance() - amount);
+    System.out.printf(
+            "[ACCOUNT] %s rút %.0f | Số dư mới: %.0f%n",
+            user.getUsername(), amount, user.getBalance());
+
+    // TODO: userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit())
+    userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
+  }
+
+  // Tạo tài khoản Admin STAFF
 
   /**
    * Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này.
@@ -105,27 +142,22 @@ public class AccountService implements IAccountService {
   public Admin createStaffAdmin(String username, String password, String email) {
     SystemAdmin system = SystemAdmin.getInstance();
 
-    if (UserFactory.isEmailAlreadyUsed(email)) {
-      throw new IllegalArgumentException("Email này đã được dùng...");
-    }
-
     // 1. Khai sinh Object trên RAM trước (Entity sẽ tự động sinh UUID cho biến id final)
     Admin newAdmin = (Admin) adminFactory.createUser(username, password, email);
 
     // 2. Lấy ID và thông tin vừa tạo lưu xuống Database
     boolean success = adminDAO.createAdmin(
-            newAdmin.getId(),       // Lấy UUID do Java tự sinh
+            newAdmin.getId(),
             newAdmin.getUsername(),
-            newAdmin.getHashedPassword(), // Đảm bảo lấy pass đã hash từ Object
+            newAdmin.getHashedPassword(),
             newAdmin.getEmail(),
-            "STAFF"
-    );
+            "STAFF");
 
     if (!success) {
       throw new RuntimeException("Hệ thống lỗi: Không thể tạo Admin trong cơ sở dữ liệu.");
     }
 
-    // 3. Đăng ký Observer...
+    // 3. Đăng ký Observer
     AuctionManager.getInstance().addStaffObserver(new StaffObserver(newAdmin));
     AuctionManager.getInstance().registerUser(newAdmin);
 
@@ -136,7 +168,7 @@ public class AccountService implements IAccountService {
     return newAdmin;
   }
 
-  // ── Seller role approval ───────────────────────────────────────────────────
+  // Duyệt Seller
 
   /**
    * Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
@@ -149,8 +181,7 @@ public class AccountService implements IAccountService {
     }
     if (user.isHasEverBeenPenalized()) {
       throw new IllegalStateException(
-              "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller. "
-                      + "Cần Admin xem xét thủ công.");
+              "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller.");
     }
     if (user.hasRole(User.UserRole.SELLER)) {
       System.out.printf("[ACCOUNT] %s đã có role Seller.%n", user.getUsername());
@@ -166,34 +197,19 @@ public class AccountService implements IAccountService {
     sellerDAO.approveSellerRole(user.getId());
   }
 
-  /**
-   * Admin STAFF duyệt thủ công role Seller (dùng khi user đã từng bị penalize).
-   */
-  @Override
-  public void approveSellerRole(Admin admin, NormalUser user) {
-    if (!ratingService.isEligible(user)) {
-      throw new IllegalStateException(
-              "User không đủ điều kiện để thêm role Seller.");
-    }
-    if (user.hasRole(User.UserRole.SELLER)) {
-      System.out.printf("[ACCOUNT] %s đã có role Seller.%n", user.getUsername());
-      return;
-    }
-
-    user.addRole(User.UserRole.SELLER);
-    String log = String.format("[ACCOUNT] %s phê duyệt thủ công role Seller cho: %s",
-            admin.getUsername(), user.getUsername());
-    admin.addActionLog(log);
-    System.out.println(log);
-
-    // Gọi DAO để cập nhật DB
-    sellerDAO.approveSellerRole(user.getId());
-  }
-
-  // ── Seller cancel request ──────────────────────────────────────────────────
+  // Seller request hủy phiên
 
   /**
    * Seller gửi yêu cầu hủy phiên đấu giá lên hệ thống.
+   *
+   * <p>Phiên sẽ chuyển sang trạng thái {@code CANCEL_REQUESTED} và vẫn
+   * tiếp tục nhận bid cho đến khi Staff Admin approve hoặc reject.
+   *
+   * @param seller seller sở hữu phiên
+   * @param auction phiên cần yêu cầu hủy
+   * @param reason lý do yêu cầu hủy
+   * @throws IllegalArgumentException nếu seller không sở hữu phiên
+   * @throws IllegalStateException nếu phiên không ở OPEN hoặc RUNNING
    */
   public void requestCancelAuction(NormalUser seller, Auction auction, String reason) {
     if (!seller.hasRole(User.UserRole.SELLER)) {
@@ -204,10 +220,17 @@ public class AccountService implements IAccountService {
     }
     if (auction.getStatus() != Auction.AuctionStatus.OPEN
             && auction.getStatus() != Auction.AuctionStatus.RUNNING) {
-      throw new IllegalStateException("Phiên đấu giá không thể hủy ở trạng thái: " + auction.getStatus());
+      throw new IllegalStateException(
+              "Phiên đấu giá không thể yêu cầu hủy ở trạng thái: " + auction.getStatus());
     }
 
-    // Gửi thông báo đến Staff Admin để xem xét
+    // Chuyển trạng thái sang CANCEL_REQUESTED (phiên vẫn nhận bid)
+    auction.transitionToCancelRequested();
+
+    // TODO: auctionDAO.updateAuctionStatus(auction.getId(), "CANCEL_REQUESTED")
+    // — cập nhật xuống DB để Staff Admin truy vấn được
+
+    // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
             AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
             auction, null, 0,
@@ -215,18 +238,37 @@ public class AccountService implements IAccountService {
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);
 
-    System.out.printf("[ACCOUNT] Seller %s gửi yêu cầu hủy phiên %s | Lý do: %s%n",
+    System.out.printf(
+            "[ACCOUNT] Seller %s gửi yêu cầu hủy phiên %s | Lý do: %s%n",
             seller.getUsername(), auction.getId(), reason);
   }
 
-  // ── Delete account ─────────────────────────────────────────────────────────
+  // Delete account
 
   /**
    * User tự xóa tài khoản của mình (soft-delete).
-   * Giải phóng username/email để có thể đăng ký Admin sau này.
+   *
+   * <p>Bắt buộc số dư khả dụng phải bằng 0 trước khi xóa tài khoản.
+   * Nếu còn tiền, user phải rút hết trước.
+   *
+   * @param user user muốn xóa tài khoản
+   * @throws IllegalStateException nếu user còn số dư khả dụng hoặc còn cọc đang khóa
    */
   @Override
   public void deleteAccount(NormalUser user) {
+    if (user.getLockedDeposit() > 0) {
+      throw new IllegalStateException(
+              String.format(
+                      "Tài khoản còn %.0f đang bị khóa cọc. Hãy chờ phiên kết thúc trước khi xóa.",
+                      user.getLockedDeposit()));
+    }
+    if (user.getAvailableBalance() > 0) {
+      throw new IllegalStateException(
+              String.format(
+                      "Tài khoản còn %.0f. Hãy rút hết tiền trước khi xóa tài khoản.",
+                      user.getAvailableBalance()));
+    }
+
     user.markDeleted();
     UserFactory.releaseUserIdentity(user.getUsername(), user.getEmail());
     AuctionManager.getInstance().removeUser(user);

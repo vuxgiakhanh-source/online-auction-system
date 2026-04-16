@@ -10,6 +10,8 @@ public class Vehicle extends Item {
   private final int year;
   private final double mileage;
 
+  // Static factory method
+
   protected static Vehicle create(String name, String description, double startingPrice,
                                   NormalUser seller, String manufacturer, int year, double mileage) {
     return new Vehicle(name, description, startingPrice, seller, manufacturer, year, mileage);
@@ -22,6 +24,9 @@ public class Vehicle extends Item {
             seller, manufacturer, year, mileage);
   }
 
+  // Private Constructors: Ngăn chặn new cứng
+
+  /** Khai sinh */
   private Vehicle(String name, String description, double startingPrice,
                   NormalUser seller, String manufacturer, int year, double mileage) {
     super(name, description, startingPrice, ItemCategory.VEHICLE, seller);
@@ -30,6 +35,7 @@ public class Vehicle extends Item {
     this.mileage = mileage;
   }
 
+  /** Hồi sinh từ DB */
   private Vehicle(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                   String name, String description, double startingPrice, NormalUser seller,
                   String manufacturer, int year, double mileage) {
@@ -39,13 +45,14 @@ public class Vehicle extends Item {
     this.mileage = mileage;
   }
 
+  //Getters
   public String getManufacturer() { return manufacturer; }
   public int getYear() { return year; }
   public double getMileage() { return mileage; }
 
   @Override
   public void printInfo() {
-    System.out.println("=== VEHICLE ==========================");
+    System.out.println("THÔNG TIN SẢN PHẨM - VEHICLE");
     System.out.printf("Tên : %s%n", getName());
     System.out.printf("Hãng : %s%n", manufacturer);
     System.out.printf("Năm sản xuất : %d%n", year);

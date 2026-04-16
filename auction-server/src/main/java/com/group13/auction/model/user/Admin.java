@@ -8,29 +8,29 @@ import java.util.List;
 /**
  * Quản trị viên.
  *
- * <p>Phân cấp adminLevel:
+ * <p>Level:
  * <ul>
- * <li>{@value #LEVEL_MASTER} — SystemAdmin duy nhất, được seed sẵn trong DB.
- * Không thể tạo thêm MASTER qua Factory. Toàn bộ automation thuộc về đây.</li>
- * <li>{@value #LEVEL_STAFF} — do SystemAdmin tạo ra qua AdminFactory; không tạo được admin khác.</li>
+ * <li>{@value #LEVEL_MASTER} - SystemAdmin duy nhất, được seed sẵn trong DB.
+ * Không thể tạo thêm MASTER qua Factory. Toàn bộ automation cơ bản thuộc về đây.</li>
+ * <li>{@value #LEVEL_STAFF} - do SystemAdmin tạo ra qua AdminFactory; không tạo được admin khác.</li>
  * </ul>
  *
- * <p>Rating Admin luôn là 5.0 — không tăng, không giảm.
+ * <p>Rating Admin luôn là 5.0.
  *
- * <p>Staff Admin tự động là staffObserver trong AuctionManager.
+ * <p>Staff Admin tự động là staffObserver trong AuctionManager (nhận các thông báo lỗi, gian lận, ..).
  * SystemAdmin tự động là globalObserver.
- * Khi admin joinAuction sẽ nhận thêm notify theo phiên như watcher bình thường.
+ * Khi admin joinAuction sẽ nhận thêm notify theo phiên như người bình thường.
  */
 public class Admin extends User {
 
   public static final String LEVEL_MASTER = "MASTER";
   public static final String LEVEL_STAFF = "STAFF";
 
-  /** Rating cố định cho Admin — không thay đổi. */
+  /** Rating cố định cho Admin - không thay đổi. */
   private static final double ADMIN_FIXED_RATING = 5.0;
 
   /**
-   * Lý do ban tài khoản — chỉ giữ những lý do được dùng thực sự trong code.
+   * Lý do ban tài khoản.
    */
   public enum BanReason {
     /** Rating xuống dưới ngưỡng tối thiểu. */
@@ -40,7 +40,7 @@ public class Admin extends User {
   }
 
   /**
-   * Lý do hủy phiên — chỉ giữ những lý do được dùng thực sự trong code.
+   * Lý do hủy phiên.
    */
   public enum CancelReason {
     /** Phiên kết thúc không có ai đặt giá. */
@@ -51,14 +51,14 @@ public class Admin extends User {
     SELLER_REQUEST,
     /** Lỗi hệ thống. */
     SYSTEM_ERROR,
-    /** Item gian lận hoặc hàng giả. */
+    /** Item gian lận hoặc hàng giả. (Chưa xây dựng logic) */
     FRAUDULENT_ITEM
   }
 
   private final String adminLevel;
   private final List<String> actionLog;
 
-  // ── Static factory methods ─────────────────────────────────────────────────
+  // Static factory methods
 
   /**
    * Khai sinh Admin mới (STAFF).
@@ -82,14 +82,14 @@ public class Admin extends User {
             email, accountStatus, rating, adminLevel, suspendedAt);
   }
 
-  // ── Constructors, chỉ được new khi tạo SystemAdmin ────────────────────────
+  // Constructors, chỉ được new khi tạo SystemAdmin (trong test)
 
   public Admin(String username, String password, String email, String adminLevel) {
     super(username, password, email, UserRole.ADMIN);
     this.adminLevel = adminLevel;
     this.actionLog = new ArrayList<>();
     // Admin luôn được set rating = 5.0 ngay khi tạo
-    super.adjustRating(ADMIN_FIXED_RATING - this.getRating());
+    super.adjustRating(0);
   }
 
   public Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
@@ -102,18 +102,18 @@ public class Admin extends User {
     this.actionLog = new ArrayList<>();
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────────
+  // Getters
 
   public String getAdminLevel() {
     return adminLevel;
   }
 
-  /** @return true nếu đây là admin cấp MASTER (SystemAdmin). */
+  /** @return true nếu SystemAdmin. */
   public boolean isMaster() {
     return LEVEL_MASTER.equals(adminLevel);
   }
 
-  /** @return true nếu đây là admin cấp STAFF. */
+  /** @return true nếu admin STAFF. */
   public boolean isStaff() {
     return LEVEL_STAFF.equals(adminLevel);
   }
@@ -127,21 +127,19 @@ public class Admin extends User {
   }
 
   /**
-   * Rating Admin luôn cố định 5.0 — override để ngăn thay đổi.
-   * Không tăng, không giảm, kệ nó.
+   * Rating Admin luôn cố định 5.0.
+   * Không tăng, không giảm, kệ.
    *
-   * @param delta (bị bỏ qua)
+   * @param delta (có như không).
    */
   @Override
-  public void adjustRating(double delta) {
-    // Admin rating không thay đổi — intentionally no-op
-  }
+  public void adjustRating(double delta) {}
 
   public boolean isSystem() { return false; }
 
   @Override
   public void printInfo() {
-    System.out.println("=== ADMIN ====================================");
+    System.out.println("THÔNG TIN ADMIN");
     System.out.printf("Username : %s%n", getUsername());
     System.out.printf("Email : %s%n", getEmail());
     System.out.printf("Admin level : %s%n", adminLevel);

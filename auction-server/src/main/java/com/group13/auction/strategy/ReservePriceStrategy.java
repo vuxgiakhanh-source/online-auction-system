@@ -4,30 +4,29 @@ import com.group13.auction.model.auction.Auction;
 
 /**
  * Kiểu đặt giá với giá sàn bí mật.
- * Đây là strategy BẮT BUỘC được nhúng vào Auction khi tạo.
+ * Đây là strategy được kèm vào Auction khi tạo.
  * Seller phải thiết lập reservePrice ngay khi tạo auction.
  *
- * <p>Lưu ý: strategy này chỉ validate số tiền bid (phải >= currentPrice + minIncrement).
- * Việc so sánh với reservePrice được BidService xử lý để tạo thông báo "reserve not met".
+ * <p>Validate số tiền bid (phải >= currentPrice + minIncrement).
+ *
+ * <p>minIncrement được tính tự động theo ngưỡng giá hiện tại
+ * bởi {@link BidIncrementCalculator}.
  */
 public class ReservePriceStrategy implements BidStrategy {
 
   private final double reservePrice;
-  private final double minIncrement;
 
   /**
    * Khởi tạo ReservePriceStrategy.
+   * minIncrement được tính động tại thời điểm validate bid.
    *
    * @param reservePrice giá sàn bí mật của Seller (> 0)
-   * @param minIncrement bước giá tối thiểu (> 0)
    */
-  public ReservePriceStrategy(double reservePrice, double minIncrement) {
-    if (reservePrice <= 0 || minIncrement <= 0) {
-      throw new IllegalArgumentException(
-              "reservePrice và minIncrement phải lớn hơn 0.");
+  public ReservePriceStrategy(double reservePrice) {
+    if (reservePrice <= 0) {
+      throw new IllegalArgumentException("reservePrice phải lớn hơn 0.");
     }
     this.reservePrice = reservePrice;
-    this.minIncrement = minIncrement;
   }
 
   /**
@@ -36,16 +35,26 @@ public class ReservePriceStrategy implements BidStrategy {
    */
   @Override
   public boolean isValidBid(Auction auction, double amount) {
-    return amount >= auction.getCurrentPrice() + minIncrement;
+    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+    return amount >= auction.getCurrentPrice() + increment;
   }
 
   @Override
   public String describe() {
     return String.format(
-            "Reserve: Giá sàn bí mật đã được thiết lập. Mỗi bid phải cao hơn ít nhất %.0f.",
-            minIncrement);
+            "Reserve: Giá sàn bí mật đã được thiết lập (BÍ MẬT). "
+                    + "Bước giá tối thiểu theo ngưỡng giá hiện tại.");
   }
 
-  public double getReservePrice()  { return reservePrice; }
-  public double getMinIncrement()  { return minIncrement; }
+  public double getReservePrice() { return reservePrice; }
+
+  /**
+   * Lấy bước giá tối thiểu tại mức giá đã cho.
+   *
+   * @param currentPrice giá hiện tại để tính increment
+   * @return bước giá tối thiểu
+   */
+  public double getMinIncrement(double currentPrice) {
+    return BidIncrementCalculator.calculate(currentPrice);
+  }
 }

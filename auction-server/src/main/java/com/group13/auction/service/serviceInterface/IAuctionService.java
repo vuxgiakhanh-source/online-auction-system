@@ -16,13 +16,13 @@ public interface IAuctionService {
 
   /**
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
-   * Seller BẮT BUỘC cung cấp reserveStrategy ngay khi tạo.
+   * Seller cung cấp reserveStrategy ngay khi tạo.
    *
    * @param seller seller tạo phiên
    * @param item sản phẩm đưa ra đấu giá
    * @param startTime thời điểm bắt đầu
    * @param endTime thời điểm kết thúc
-   * @param reserveStrategy reserve price strategy (BẮT BUỘC)
+   * @param reserveStrategy reserve price strategy
    * @return Auction mới
    */
   Auction createAuction(NormalUser seller, Item item,
@@ -30,22 +30,21 @@ public interface IAuctionService {
                         ReservePriceStrategy reserveStrategy);
 
   /**
-   * Bắt đầu phiên: OPEN → RUNNING.
+   * Bắt đầu phiên: OPEN -> RUNNING.
    *
    * @param auction phiên cần bắt đầu
    */
   void startAuction(Auction auction);
 
   /**
-   * Đóng phiên khi hết giờ: RUNNING → FINISHED / CANCELED.
-   * Đã bỏ logic tổ chức lại phiên sau 2 ngày.
+   * Đóng phiên khi hết giờ: RUNNING -> FINISHED / CANCELED.
    *
    * @param auction phiên cần đóng
    */
   void closeAuction(Auction auction);
 
   /**
-   * Đánh dấu thanh toán thành công: FINISHED → PAID.
+   * Đánh dấu thanh toán thành công: FINISHED -> PAID.
    *
    * @param auction phiên cần đánh dấu
    */
@@ -62,7 +61,7 @@ public interface IAuctionService {
   void cancelAuction(Auction auction, Admin.CancelReason reason);
 
   /**
-   * Admin STAFF huỷ phiên đấu giá sau khi trực tiếp điều tra.
+   * Admin STAFF huỷ phiên đấu giá.
    * Log được ghi vào cả SystemAdmin (audit trail) lẫn staff cụ thể.
    * Dùng khi có SELLER_REQUEST hoặc cần staff đi kiểm tra.
    *
@@ -76,6 +75,7 @@ public interface IAuctionService {
   /**
    * Thông báo trước khi phiên bắt đầu (5-10 phút).
    * Gọi từ scheduler.
+   * Chưa phát triển xong (Có thể bỏ nếu không đủ time)
    *
    * @param auction phiên sắp bắt đầu
    */

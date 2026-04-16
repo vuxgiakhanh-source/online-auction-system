@@ -17,6 +17,9 @@ public abstract class Item extends Entity {
   private final ItemCategory category;
   private final NormalUser seller;
 
+  // Constructors
+
+  /** Khai sinh */
   protected Item(String name, String description, double startingPrice,
                  ItemCategory category, NormalUser seller) {
     super();
@@ -27,6 +30,7 @@ public abstract class Item extends Entity {
     this.seller = seller;
   }
 
+  /** Hồi sinh từ DB */
   protected Item(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                  String name, String description, double startingPrice,
                  ItemCategory category, NormalUser seller) {
@@ -38,6 +42,7 @@ public abstract class Item extends Entity {
     this.seller = seller;
   }
 
+  // Getters
   public String getName() { return name; }
   public String getDescription() { return description; }
   public double getStartingPrice() { return startingPrice; }

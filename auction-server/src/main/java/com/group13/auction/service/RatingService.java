@@ -5,7 +5,6 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.serviceInterface.IRatingService;
-
 import java.time.LocalDateTime;
 
 /**
@@ -15,6 +14,14 @@ import java.time.LocalDateTime;
  * <p>Rating KHÔNG bao giờ được thay đổi trực tiếp từ bên ngoài service này.
  * {@link User#adjustRating(double)} chỉ được gọi từ đây.
  * Đã thực hiện TODO: inject UserDAO để persist xuống DB.
+ *
+ * <p>Cơ chế phục hồi SUSPENDED:
+ * <ul>
+ *   <li>Sau 3 tháng bị SUSPENDED, hệ thống tự động cộng rating để tài khoản
+ *       vượt ngưỡng và chuyển về ACTIVE.</li>
+ *   <li>Cơ chế này chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi tài khoản.
+ *       Sau khi đã được phục hồi một lần, tài khoản sẽ không được auto-restore nữa.</li>
+ * </ul>
  */
 public class RatingService implements IRatingService {
 
@@ -25,17 +32,27 @@ public class RatingService implements IRatingService {
   private static final double PENALTY_LATE_PAYMENT = 1.0;
   private static final double PENALTY_SELLER_QUALITY = 1.0;
   private static final double AUTO_SUSPEND_THRESHOLD = User.RATING_SUSPEND_THRESHOLD;
-  private static final long SUSPEND_RESTORE_MONTHS = 6;
-  private static final double RESTORE_DELTA = 0.3;
 
-  // Thực hiện TODO: Tiêm UserDAO
+  /** Thời gian chờ trước khi auto-restore: 3 tháng. */
+  private static final long SUSPEND_RESTORE_MONTHS = 3;
+
+  /**
+   * Lượng rating cộng thêm khi restore.
+   *
+   * <p>Cộng đủ để vượt ngưỡng SUSPEND ({@value User#RATING_SUSPEND_THRESHOLD})
+   * và đạt tối thiểu {@value #MIN_RATING_ELIGIBLE} để có thể tham gia phiên.
+   * Công thức: SUSPEND_THRESHOLD + epsilon = 1.5 + 0.6 = 2.1 > MIN_RATING_ELIGIBLE (2.0).
+   */
+  private static final double RESTORE_DELTA = 0.6;
+
+  // TODO: Tiêm UserDAO
   private final UserDAO userDAO;
 
   public RatingService(UserDAO userDAO) {
     this.userDAO = userDAO;
   }
 
-  // ── Eligibility checks ─────────────────────────────────────────────────────
+  // Eligibility checks
 
   @Override
   public boolean isEligible(User user) {
@@ -45,15 +62,18 @@ public class RatingService implements IRatingService {
 
   @Override
   public boolean canSellerCreateAuction(User seller) {
-    return isEligible(seller) && seller.getRating() >= MIN_RATING_SELLER;
+    return seller.hasRole(User.UserRole.SELLER)
+            && isEligible(seller)
+            && seller.getRating() >= MIN_RATING_SELLER;
   }
 
-  // ── Reward methods ─────────────────────────────────────────────────────────
+  // Tăng thưởng
 
   @Override
   public void rewardBidder(NormalUser bidder) {
     bidder.adjustRating(REWARD_BIDDER_PAYMENT);
-    System.out.printf("[RATING] %s +%.1f → %.1f%n",
+    System.out.printf(
+            "[RATING] %s +%.1f → %.1f%n",
             bidder.getUsername(), REWARD_BIDDER_PAYMENT, bidder.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
@@ -63,20 +83,22 @@ public class RatingService implements IRatingService {
   @Override
   public void rewardSeller(User seller) {
     seller.adjustRating(REWARD_SELLER_SALE);
-    System.out.printf("[RATING] %s +%.1f → %.1f%n",
+    System.out.printf(
+            "[RATING] %s +%.1f → %.1f%n",
             seller.getUsername(), REWARD_SELLER_SALE, seller.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(seller.getId(), seller.getRating());
   }
 
-  // ── Penalty methods ────────────────────────────────────────────────────────
+  // Penalty methods
 
   @Override
   public void penalizeLatePayment(NormalUser bidder) {
     bidder.adjustRating(-PENALTY_LATE_PAYMENT);
     bidder.markPenalized();
-    System.out.printf("[RATING] %s -%.1f → %.1f (vi phạm thanh toán)%n",
+    System.out.printf(
+            "[RATING] %s -%.1f → %.1f (vi phạm thanh toán)%n",
             bidder.getUsername(), PENALTY_LATE_PAYMENT, bidder.getRating());
 
     autoSuspendIfNeeded(bidder);
@@ -96,7 +118,8 @@ public class RatingService implements IRatingService {
       isPenalized = true;
     }
 
-    System.out.printf("[RATING] %s -%.1f → %.1f (vi phạm chất lượng)%n",
+    System.out.printf(
+            "[RATING] %s -%.1f → %.1f (vi phạm chất lượng)%n",
             seller.getUsername(), PENALTY_SELLER_QUALITY, seller.getRating());
 
     autoSuspendIfNeeded(seller);
@@ -106,34 +129,83 @@ public class RatingService implements IRatingService {
     userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
   }
 
+  /**
+   * Auto-restore rating cho tài khoản SUSPENDED sau 3 tháng.
+   *
+   * <p>Điều kiện:
+   * <ol>
+   *   <li>Tài khoản đang SUSPENDED.</li>
+   *   <li>Đã đủ {@value #SUSPEND_RESTORE_MONTHS} tháng kể từ lúc bị suspend.</li>
+   *   <li>Chưa từng được auto-restore trước đó
+   *       (kiểm tra qua {@link NormalUser#isHasEverBeenRestored()}).</li>
+   * </ol>
+   *
+   * <p>Sau khi restore: rating tăng thêm {@value #RESTORE_DELTA},
+   * nếu rating > ngưỡng SUSPEND thì chuyển về ACTIVE.
+   * Đánh dấu {@code hasEverBeenRestored = true} để chặn restore lần 2.
+   *
+   * @param user user cần kiểm tra restore
+   */
   @Override
   public void checkAndRestoreSuspended(User user) {
-    if (user.getAccountStatus() != AccountStatus.SUSPENDED) return;
-    if (user.getSuspendedAt() == null) return;
+    if (user.getAccountStatus() != AccountStatus.SUSPENDED) {
+      return;
+    }
+    if (user.getSuspendedAt() == null) {
+      return;
+    }
+
+    // Chỉ NormalUser mới có cơ chế restore 1 lần
+    if (!(user instanceof NormalUser)) {
+      return;
+    }
+    NormalUser normalUser = (NormalUser) user;
+
+    // Guard: chỉ restore 1 lần duy nhất
+    if (normalUser.isHasEverBeenRestored()) {
+      System.out.printf(
+              "[RATING] %s đã từng được auto-restore — không restore thêm.%n",
+              user.getUsername());
+      return;
+    }
 
     LocalDateTime restoreThreshold = user.getSuspendedAt().plusMonths(SUSPEND_RESTORE_MONTHS);
-    if (LocalDateTime.now().isAfter(restoreThreshold)) {
-      user.adjustRating(RESTORE_DELTA);
-
-      if (user.getRating() > AUTO_SUSPEND_THRESHOLD) {
-        user.setAccountStatus(AccountStatus.ACTIVE);
-        System.out.printf("[RATING] %s được khôi phục sau 6 tháng | Rating: %.1f%n",
-                user.getUsername(), user.getRating());
-      }
-
-      // Thực hiện TODO: Cập nhật điểm và trạng thái mới xuống DB
-      userDAO.updateRating(user.getId(), user.getRating());
-      userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
+    if (!LocalDateTime.now().isAfter(restoreThreshold)) {
+      return; // Chưa đủ 3 tháng
     }
+
+    // Cộng rating
+    user.adjustRating(RESTORE_DELTA);
+
+    if (user.getRating() > AUTO_SUSPEND_THRESHOLD) {
+      user.setAccountStatus(AccountStatus.ACTIVE);
+      System.out.printf(
+              "[RATING] %s được khôi phục sau %d tháng | Rating: %.1f → ACTIVE%n",
+              user.getUsername(), SUSPEND_RESTORE_MONTHS, user.getRating());
+    } else {
+      System.out.printf(
+              "[RATING] %s: cộng %.1f nhưng rating %.1f vẫn <= %.1f — giữ SUSPENDED%n",
+              user.getUsername(), RESTORE_DELTA, user.getRating(), AUTO_SUSPEND_THRESHOLD);
+    }
+
+    // Đánh dấu đã restore 1 lần
+    normalUser.markRestored();
+
+    // Thực hiện TODO: Cập nhật điểm, cờ restore và trạng thái mới xuống DB
+    userDAO.updateRating(user.getId(), user.getRating());
+    userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
+    // TODO: userDAO.updateRestoreFlag(user.getId(), true)
+    // — lưu cờ hasEverBeenRestored xuống DB để không mất khi restart
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
+  // Private helpers
 
   private void autoSuspendIfNeeded(User user) {
     if (user.getAccountStatus() == AccountStatus.ACTIVE
             && user.getRating() <= AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.SUSPENDED);
-      System.out.printf("[RATING] %s bị SUSPEND — rating %.1f <= %.1f%n",
+      System.out.printf(
+              "[RATING] %s bị SUSPEND — rating %.1f <= %.1f%n",
               user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
   }

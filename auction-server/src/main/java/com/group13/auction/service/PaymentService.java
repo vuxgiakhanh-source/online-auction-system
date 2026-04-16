@@ -15,6 +15,7 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.service.serviceInterface.IAuctionService;
 import com.group13.auction.service.serviceInterface.IPaymentService;
 import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.serviceInterface.IWalletService;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class PaymentService implements IPaymentService {
 
   private final IAuctionService auctionService;
   private final IRatingService ratingService;
-  private final WalletService walletService;
+  private final IWalletService walletService;
 
   // Tiêm các DAO tương ứng
   private final AuctionWinnerDAO auctionWinnerDAO;
@@ -184,7 +185,7 @@ public class PaymentService implements IPaymentService {
     System.out.printf("[PAYMENT] Seller %s bị phạt rating | Winner %s sẽ nhận hoàn tiền trong 24h.%n",
             seller.getUsername(), winner.getUsername());
 
-    // Thực hiện TODO: System có thể gọi notificationService.send(seller.getId(), "Bạn có 24h để hoàn tiền...")
+    // TODO: System có thể gọi notificationService.send(seller.getId(), "Bạn có 24h để hoàn tiền...")
   }
 
   private void offerSecondChance(Auction auction) {
@@ -197,7 +198,6 @@ public class PaymentService implements IPaymentService {
     BidTransaction runnerUpBid = bidTransactionDAO.findHighestValidBidExcept(auction.getId(), winnerId);
 
     if (runnerUpBid != null) {
-      // Tùy theo kiến trúc in-memory, bạn có thể lấy NormalUser từ AuctionManager
       NormalUser runnerUp = runnerUpBid.getBidder();
 
       if (runnerUp != null) {

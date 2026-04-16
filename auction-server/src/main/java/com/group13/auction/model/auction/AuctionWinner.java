@@ -13,8 +13,8 @@ public class AuctionWinner extends Entity {
     EXPIRED,
     CANCELLED,
     /**
-     * Winner đã thanh toán đủ; tiền đang giữ ở "ngân hàng" hệ thống
-     * chờ chuyển cho seller (sau khi trừ thuế).
+     * Winner đã thanh toán đủ; tiền đang giữ ở SystemBank,
+     * chờ chuyển cho seller (có trừ thuế).
      */
     FUNDS_HELD
   }
@@ -24,13 +24,13 @@ public class AuctionWinner extends Entity {
   private final double finalPrice;
   /**
    * Số tiền cọc winner đã đặt khi joinAuction.
-   * Cọc được tính vào finalPrice — winner chỉ cần trả phần còn lại.
+   * Cọc được tính vào finalPrice - winner chỉ cần trả phần còn lại.
    */
   private final double depositPaid;
   private final LocalDateTime deadline;
   private PaymentStatus paymentStatus;
 
-  // ── Static factory methods ─────────────────────────────────────────────────
+  // Static factory methods
 
   /**
    * Khai sinh AuctionWinner ngay khi auction FINISHED.
@@ -60,7 +60,7 @@ public class AuctionWinner extends Entity {
             finalPrice, depositPaid, deadline, paymentStatus);
   }
 
-  // ── Private constructors ───────────────────────────────────────────────────
+  // Private constructors
 
   private AuctionWinner(NormalUser winner, String auctionId,
                         double finalPrice, double depositPaid) {
@@ -86,7 +86,7 @@ public class AuctionWinner extends Entity {
     this.paymentStatus = paymentStatus;
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────────
+  // Getters
 
   public NormalUser getWinner() { return winner; }
   public String getAuctionId() { return auctionId; }
@@ -105,7 +105,7 @@ public class AuctionWinner extends Entity {
             && paymentStatus == PaymentStatus.PENDING;
   }
 
-  // ── Setter — chỉ PaymentService gọi ──────────────────────────────────────
+  // Setter - chỉ PaymentService gọi
 
   public void setPaymentStatus(PaymentStatus paymentStatus) {
     this.paymentStatus = paymentStatus;
@@ -114,7 +114,7 @@ public class AuctionWinner extends Entity {
 
   @Override
   public void printInfo() {
-    System.out.println("=== AUCTION WINNER ===================");
+    System.out.println("THÔNG TIN WINNER CỦA PHIÊN");
     System.out.printf("Winner : %s%n", winner.getUsername());
     System.out.printf("Auction ID : %s%n", auctionId);
     System.out.printf("Giá cuối : %.0f%n", finalPrice);

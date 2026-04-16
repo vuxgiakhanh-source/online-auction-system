@@ -8,17 +8,29 @@ import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.service.serviceInterface.IWalletService;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * Quản lý tài chính và cọc tập trung — Single Responsibility.
+ * <p>Thay vì để NormalUser tự quản lý mọi thứ, WalletService tập trung
+ *  vào logic trừ tiền trực tiếp để tránh việc "dùng một số tiền cọc cho
+ *  nhiều nơi".
+ *
+ * <p>Mọi thao tác tiền tệ đều tạo {@link FinancialTransaction} để ghi log audit.
+ *
+ * <p>Rollback: nếu một bước trong luồng giao dịch thất bại, toàn bộ phải được
+ * rollback để tránh mất tiền của người dùng.
+ *
  * Đã thực hiện TODO: inject FinancialTransactionDAO và UserDAO để persist.
  */
-public class WalletService {
+public class WalletService implements IWalletService {
 
     private final SystemBank systemBank;
+    /** Lưu lịch sử giao dịch tài chính (in-memory, sau này persist qua DAO). */
     private final List<FinancialTransaction> transactionLog;
 
     // Tiêm DAO
@@ -35,8 +47,14 @@ public class WalletService {
         this.userDAO = userDAO;
     }
 
-    // ── Deposit (cọc) ──────────────────────────────────────────────────────────
+    // Deposit (cọc)
 
+    /**
+     * Khóa cọc khi joinAuction thành công.
+     * Trừ trực tiếp khỏi balance và tăng lockedDeposit.
+     * Ngăn dùng cùng một số tiền cọc cho nhiều phiên vượt khả năng chi trả.
+     */
+    @Override
     public void lockDeposit(NormalUser bidder, double depositAmount, String auctionId) {
         if (bidder.getAvailableBalance() < depositAmount) {
             throw new AuctionBusinessException(AuctionBusinessException.Reason.INSUFFICIENT_DEPOSIT);
@@ -55,29 +73,42 @@ public class WalletService {
         transactionLog.add(tx);
         tx.printInfo();
 
-        // Lưu lịch sử xuống DB
+        // Đã thực hiện TODO: Lưu lịch sử xuống DB
         financialTransactionDAO.saveTransaction(tx);
     }
 
+    /**
+     * Hoàn cọc cho bidder không thắng khi phiên kết thúc.
+     */
+    @Override
     public void unlockDeposit(NormalUser bidder, double depositAmount, String auctionId) {
         bidder.unlockDeposit(depositAmount);
         userDAO.updateBalances(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
 
+        // Ghi nhận giao dịch
         FinancialTransaction tx = FinancialTransaction.create(
                 "SYSTEM_LOCKED", bidder.getId(), depositAmount,
                 TransactionType.DEPOSIT_UNLOCK, auctionId);
         transactionLog.add(tx);
         tx.printInfo();
-
+        // Đã thực hiện TODO: financialTransactionDao.save(tx)
         financialTransactionDAO.saveTransaction(tx);
     }
 
+    /**
+     * Tịch thu cọc của winner không thanh toán → chuyển vào SystemBank.
+     * Theo luật đấu giá: winner không thanh toán mất cọc.
+     */
+    @Override
     public void forfeitDeposit(NormalUser winner, double depositAmount, String auctionId) {
+        // Xóa lockedDeposit của winner, tiền không trả về balance
         winner.unlockDeposit(depositAmount);
         userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
+        // Chuyển cọc vào SystemBank
         systemBank.receiveForfeittedDeposit(depositAmount);
 
+        // Ghi nhận giao dịch
         FinancialTransaction tx = FinancialTransaction.create(
                 winner.getId(), "SYSTEM_BANK", depositAmount,
                 TransactionType.DEPOSIT_FORFEIT, auctionId);
@@ -86,21 +117,29 @@ public class WalletService {
         System.out.printf("[WALLET] Tịch thu cọc %.0f của %s — chuyển vào SystemBank.%n",
                 depositAmount, winner.getUsername());
 
+        // Đã thực hiện TODO: financialTransactionDao.save(tx)
         financialTransactionDAO.saveTransaction(tx);
     }
 
-    // ── Payment transaction ────────────────────────────────────────────────────
+    // Payment transaction
 
+    /**
+     * Thực hiện toàn bộ luồng giao dịch thanh toán trong một khối chặt chẽ.
+     * Winner → SystemBank → Seller (sau thuế).
+     */
+    @Override
     public void executePaymentTransaction(NormalUser winner, NormalUser seller,
                                           double finalPrice, double depositPaid, String auctionId) {
 
         double remaining = finalPrice - depositPaid;
 
+        // b1: Kiểm tra số dư winner
         if (winner.getAvailableBalance() < remaining) {
             throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
                     String.format("Cần %.0f, khả dụng: %.0f", remaining, winner.getAvailableBalance()));
         }
 
+        // b2: Rollback state để xử lí lỗi
         double originalWinnerBalance = winner.getBalance();
         double originalWinnerLocked = winner.getLockedDeposit();
         double originalSellerBalance = seller.getBalance();
@@ -109,14 +148,14 @@ public class WalletService {
         List<FinancialTransaction> batchTx = new ArrayList<>();
 
         try {
-            // Bước 3: Trừ tiền Winner
+            // b3: Trừ tiền Winner
             winner.setBalance(winner.getBalance() - remaining);
             FinancialTransaction txPayment = FinancialTransaction.create(
                     winner.getId(), "SYSTEM_BANK", remaining,
                     TransactionType.PAYMENT_FROM_WINNER, auctionId);
             batchTx.add(txPayment);
 
-            // Bước 4: Mở khóa cọc
+            // b4: Mở khóa cọc
             winner.unlockDeposit(depositPaid);
             FinancialTransaction txUnlock = FinancialTransaction.create(
                     "SYSTEM_LOCKED", winner.getId(), depositPaid,
@@ -126,7 +165,7 @@ public class WalletService {
             // Cập nhật DB cho Winner (Bao gồm trừ balance và unlock cọc)
             userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
-            // Bước 5 & 6: Tính toán và trả tiền cho Seller
+            // b5: Tính toán và trả tiền cho Seller
             systemBank.receive(finalPrice);
             FinancialTransaction txTax = FinancialTransaction.create(
                     winner.getId(), "SYSTEM_BANK", systemBank.calculateTax(finalPrice),
@@ -151,10 +190,12 @@ public class WalletService {
             transactionLog.addAll(batchTx);
             for (FinancialTransaction tx : batchTx) {
                 tx.printInfo();
+                // Đã thực hiện TODO: finanacialTransactionDAO.save toàn bộ batch
                 financialTransactionDAO.saveTransaction(tx);
             }
 
         } catch (Exception e) {
+            // Rollback: khôi phục trạng thái ban đầu
             winner.setBalance(originalWinnerBalance);
             winner.lockDeposit(originalWinnerLocked - winner.getLockedDeposit());
             seller.setBalance(originalSellerBalance);
@@ -166,12 +207,18 @@ public class WalletService {
         }
     }
 
+    /**
+     * Hoàn tiền cho winner khi hàng lỗi (seller vi phạm chất lượng).
+     * Hệ thống hoàn thuế + Seller hoàn phần tiền nhận = 100% trả lại cho Winner.
+     */
+    @Override
     public void executeRefundToWinner(NormalUser winner, NormalUser seller,
                                       double finalPrice, String auctionId) {
 
         double tax = systemBank.calculateTax(finalPrice);
         double sellerPayout = finalPrice - tax;
 
+        // Seller hoàn phần thực nhận (trừ thuế)
         if (seller.getBalance() < sellerPayout) {
             System.err.printf("[WALLET] Seller %s không đủ tiền hoàn trả!%n", seller.getUsername());
         }
@@ -179,8 +226,10 @@ public class WalletService {
         seller.setBalance(Math.max(0, seller.getBalance() - sellerPayout));
         userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
 
+        // SystemBank hoàn phần thuế đã thu
         systemBank.refundToWinner(tax);
 
+        // Cộng toàn bộ finalPrice cho winner
         winner.setBalance(winner.getBalance() + finalPrice);
         userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
@@ -193,9 +242,14 @@ public class WalletService {
         System.out.printf("[WALLET] Hoàn tiền 100%% (%.0f) cho winner %s.%n",
                 finalPrice, winner.getUsername());
 
+        // Đã thực hiện TODO: financialTransactionDAO.save(txRefund)
         financialTransactionDAO.saveTransaction(txRefund);
     }
 
+    /**
+     * Thực hiện giao dịch Second Chance Offer khi runner-up chấp nhận.
+     * Logic tương tự winner ban đầu nhưng với offerPrice.
+     */
     public void executeSecondChancePayment(NormalUser runnerUp, NormalUser seller,
                                            double offerPrice, double depositPaid, String auctionId) {
 
@@ -208,14 +262,15 @@ public class WalletService {
         }
 
         double originalRunnerUpBalance = runnerUp.getBalance();
-        double originalRunnerUpLocked = runnerUp.getLockedDeposit();
         double originalSellerBalance = seller.getBalance();
 
         try {
+            // Runner-up trả phần còn lại
             runnerUp.setBalance(runnerUp.getBalance() - remaining);
             runnerUp.unlockDeposit(depositPaid);
             userDAO.updateBalances(runnerUp.getId(), runnerUp.getBalance(), runnerUp.getLockedDeposit());
 
+            // SystemBank tiếp nhận và chuyển cho seller
             systemBank.receive(offerPrice);
             double payout = systemBank.payoutToSeller(offerPrice);
 
@@ -233,8 +288,8 @@ public class WalletService {
                     runnerUp.getUsername(), offerPrice);
 
         } catch (Exception e) {
+            // Rollback
             runnerUp.setBalance(originalRunnerUpBalance);
-            runnerUp.lockDeposit(originalRunnerUpLocked - runnerUp.getLockedDeposit());
             seller.setBalance(originalSellerBalance);
 
             System.err.printf("[WALLET] ROLLBACK Second Chance Payment phiên %s | Lỗi: %s%n",
@@ -244,6 +299,7 @@ public class WalletService {
         }
     }
 
+    /** @return lịch sử giao dịch (chỉ đọc) */
     public List<FinancialTransaction> getTransactionLog() {
         return Collections.unmodifiableList(transactionLog);
     }

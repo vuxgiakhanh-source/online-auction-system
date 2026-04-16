@@ -17,12 +17,12 @@ import java.util.Set;
  * Muốn trở thành Seller, user phải gửi yêu cầu và được hệ thống phê duyệt
  * qua {@link com.group13.auction.service.AccountService}.
  *
- * <p>Lớp này thay thế các lớp Bidder và Seller riêng biệt để hỗ trợ
- * dual-role theo yêu cầu nghiệp vụ.
+ * <p>Lớp này hỗ trợ dual-role theo yêu cầu nghiệp vụ.
+ * BIDDER có state riêng SELLER có state riêng.
  */
 public class NormalUser extends User {
 
-    // ── Bidder state ───────────────────────────────────────────────────────────
+    // Bidder state
     private double balance;
     /** Số tiền bị khóa làm cọc cho các phiên đang tham gia. */
     private double lockedDeposit;
@@ -30,16 +30,21 @@ public class NormalUser extends User {
     private final Set<String> joinedAuctionIds;
     private final List<String> watchListAuctionIds;
 
-    // ── Seller state ───────────────────────────────────────────────────────────
+    // Seller state
     private final List<Item> listedItems;
     private final List<String> allAuctionIds;
     /** Đánh dấu seller đã từng bị trừ rating chưa — dùng để kiểm tra duyệt role Seller. */
     private boolean hasEverBeenPenalized;
+    /**
+     * Đánh dấu tài khoản đã từng được auto-restore sau khi bị SUSPENDED.
+     * Cơ chế restore chỉ xảy ra 1 lần duy nhất trên mỗi tài khoản.
+     */
+    private boolean hasEverBeenRestored;
 
-    /** Các role hiện tại của user. Mặc định = {BIDDER}. */
+    /** Các role hiện tại của user. Mặc định khi tạo tài khoản là BIDDER. */
     private final Set<UserRole> roles;
 
-    // ── Static factory methods ─────────────────────────────────────────────────
+    // Static factory methods
 
     /**
      * Khai sinh NormalUser mới — mặc định có role BIDDER, balance = 0.
@@ -55,18 +60,30 @@ public class NormalUser extends User {
 
     /**
      * Hồi sinh NormalUser từ DB — CHÚ Ý: chỉ DAO được gọi method này.
+     * Vấn đề: Chưa xử lý việc quá nhiều tham số khởi tạo =))
      */
-    public static NormalUser reconstitute(String id, LocalDateTime createdAt,
-                                          LocalDateTime updatedAt, String username, String hashedPassword,
-                                          String email, AccountStatus accountStatus, double rating,
-                                          double balance, double lockedDeposit, Set<UserRole> roles,
-                                          boolean hasEverBeenPenalized, LocalDateTime suspendedAt) {
-        return new NormalUser(id, createdAt, updatedAt, username, hashedPassword,
-                email, accountStatus, rating, balance, lockedDeposit, roles,
-                hasEverBeenPenalized, suspendedAt);
+    public static NormalUser reconstitute(
+            String id,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            String username,
+            String hashedPassword,
+            String email,
+            AccountStatus accountStatus,
+            double rating,
+            double balance,
+            double lockedDeposit,
+            Set<UserRole> roles,
+            boolean hasEverBeenPenalized,
+            boolean hasEverBeenRestored,
+            LocalDateTime suspendedAt) {
+        return new NormalUser(
+                id, createdAt, updatedAt, username, hashedPassword, email,
+                accountStatus, rating, balance, lockedDeposit, roles,
+                hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
     }
 
-    // ── Private constructors ───────────────────────────────────────────────────
+    // Private constructors
 
     private NormalUser(String username, String password, String email) {
         super(username, password, email, UserRole.BIDDER);
@@ -79,13 +96,24 @@ public class NormalUser extends User {
         this.allAuctionIds = new ArrayList<>();
         this.roles = EnumSet.of(UserRole.BIDDER);
         this.hasEverBeenPenalized = false;
+        this.hasEverBeenRestored = false;
     }
 
-    private NormalUser(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                       String username, String hashedPassword, String email,
-                       AccountStatus accountStatus, double rating,
-                       double balance, double lockedDeposit,
-                       Set<UserRole> roles, boolean hasEverBeenPenalized, LocalDateTime suspendedAt) {
+    private NormalUser(
+            String id,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            String username,
+            String hashedPassword,
+            String email,
+            AccountStatus accountStatus,
+            double rating,
+            double balance,
+            double lockedDeposit,
+            Set<UserRole> roles,
+            boolean hasEverBeenPenalized,
+            boolean hasEverBeenRestored,
+            LocalDateTime suspendedAt) {
         super(id, createdAt, updatedAt, username, hashedPassword, email,
                 UserRole.BIDDER, accountStatus, rating, suspendedAt);
         this.balance = balance;
@@ -97,9 +125,10 @@ public class NormalUser extends User {
         this.allAuctionIds = new ArrayList<>();
         this.roles = EnumSet.copyOf(roles);
         this.hasEverBeenPenalized = hasEverBeenPenalized;
+        this.hasEverBeenRestored = hasEverBeenRestored;
     }
 
-    // ── Role management ────────────────────────────────────────────────────────
+    // Role management
 
     @Override
     public boolean hasRole(UserRole role) {
@@ -120,15 +149,34 @@ public class NormalUser extends User {
         return Collections.unmodifiableSet(roles);
     }
 
-    // ── Bidder getters / setters ───────────────────────────────────────────────
+    // Bidder getters / setters
 
-    public double getBalance() { return balance; }
-    public double getLockedDeposit() { return lockedDeposit; }
+    public double getBalance() {
+        return balance;
+    }
+
+    public double getLockedDeposit() {
+        return lockedDeposit;
+    }
 
     /** Số dư khả dụng (không bị khóa). */
-    public double getAvailableBalance() { return balance - lockedDeposit; }
+    public double getAvailableBalance() {
+        return balance - lockedDeposit;
+    }
 
-    public boolean isHasEverBeenPenalized() { return hasEverBeenPenalized; }
+    public boolean isHasEverBeenPenalized() {
+        return hasEverBeenPenalized;
+    }
+
+    /**
+     * Kiểm tra tài khoản đã từng được auto-restore chưa.
+     * Dùng bởi {@link com.group13.auction.service.RatingService#checkAndRestoreSuspended}.
+     *
+     * @return true nếu đã được restore 1 lần
+     */
+    public boolean isHasEverBeenRestored() {
+        return hasEverBeenRestored;
+    }
 
     public List<BidTransaction> getBidHistory() {
         return Collections.unmodifiableList(bidHistory);
@@ -152,9 +200,9 @@ public class NormalUser extends User {
     }
 
     /**
-     * Khóa một khoản cọc — gọi khi joinAuction thành công.
-     * Không được vượt quá số dư khả dụng.
-     * Không được tự ý gọi, chỉ được gọi trong WalletService
+     * Khóa một khoản cọc - gọi khi joinAuction thành công.
+     * <= số dư khả dụng.
+     * Không được tự ý gọi, chỉ được gọi trong WalletService.
      *
      * @param amount số tiền cần khóa
      */
@@ -165,7 +213,7 @@ public class NormalUser extends User {
 
     /**
      * Giải phóng khoản cọc — gọi khi phiên kết thúc.
-     * Không được tự ý gọi, chỉ được gọi trong WalletService
+     * Không được tự ý gọi, chỉ được gọi trong WalletService.
      *
      * @param amount số tiền giải phóng
      */
@@ -183,6 +231,16 @@ public class NormalUser extends User {
         markUpdated();
     }
 
+    /**
+     * Đánh dấu tài khoản đã được auto-restore 1 lần.
+     * Chỉ {@link com.group13.auction.service.RatingService} gọi.
+     * Sau khi đánh dấu, tài khoản sẽ không được auto-restore nựa.
+     */
+    public void markRestored() {
+        this.hasEverBeenRestored = true;
+        markUpdated();
+    }
+
     public void addBidToHistory(BidTransaction tx) {
         bidHistory.add(tx);
     }
@@ -197,12 +255,14 @@ public class NormalUser extends User {
         }
     }
 
-    // ── Seller getters / setters ───────────────────────────────────────────────
+    // Seller getters / setters
 
+    /** @return Collections ở dạng read-only */
     public List<Item> getListedItems() {
         return Collections.unmodifiableList(listedItems);
     }
 
+    /** @return Collections ở dạng read-only */
     public List<String> getAllAuctionIds() {
         return Collections.unmodifiableList(allAuctionIds);
     }
@@ -222,9 +282,17 @@ public class NormalUser extends User {
         markUpdated();
     }
 
-    // ── Delete account ─────────────────────────────────────────────────────────
+    // Delete account
 
-    /** Đánh dấu tài khoản đã bị xóa (soft-delete). */
+    /**
+     * Đánh dấu tài khoản đã bị xóa (soft-delete).
+     *
+     * <p>Bên DB chia 2 bảng: 1 bảng bị BANNED do Rating,
+     * 1 bảng bị BANNED do xóa tài khoản (không cho đăng nhập).
+     * (2 bảng đều giữ Rating của người dùng).
+     *
+     * <p>Khi người dùng đăng kí lại → Giữ Rating cũ của họ.
+     */
     public void markDeleted() {
         setAccountStatus(AccountStatus.BANNED);
         markUpdated();
@@ -232,16 +300,17 @@ public class NormalUser extends User {
 
     @Override
     public void printInfo() {
-        System.out.println("=== NORMAL USER ======================");
-        System.out.printf("Username : %s%n", getUsername());
-        System.out.printf("Email : %s%n", getEmail());
-        System.out.printf("Roles : %s%n", getRoles());
-        System.out.printf("Balance : %.0f%n", balance);
-        System.out.printf("Locked : %.0f%n", lockedDeposit);
+        System.out.println("THÔNG TIN NORMAL USER");
+        System.out.printf("Username  : %s%n", getUsername());
+        System.out.printf("Email     : %s%n", getEmail());
+        System.out.printf("Roles     : %s%n", getRoles());
+        System.out.printf("Balance   : %.0f%n", balance);
+        System.out.printf("Locked    : %.0f%n", lockedDeposit);
         System.out.printf("Available : %.0f%n", getAvailableBalance());
-        System.out.printf("Rating : %.1f%n", getRating());
-        System.out.printf("Status : %s%n", getAccountStatus());
+        System.out.printf("Rating    : %.1f%n", getRating());
+        System.out.printf("Status    : %s%n", getAccountStatus());
         System.out.printf("Penalized : %s%n", hasEverBeenPenalized);
+        System.out.printf("Restored  : %s%n", hasEverBeenRestored);
         System.out.println("======================================");
     }
 }

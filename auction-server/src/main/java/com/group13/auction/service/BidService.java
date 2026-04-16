@@ -21,7 +21,7 @@ import com.group13.auction.strategy.BidStrategy;
 
 /**
  * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
- * Nhận {@link IAuctionService} và {@link IRatingService} qua constructor — không new cứng (DIP).
+ * Nhận {@link IAuctionService} và {@link IRatingService} qua constructor (DIP).
  * Đã thực hiện TODO: inject BidTransactionDAO, AuctionDAO, UserDAO.
  */
 public class BidService implements IBidService {
@@ -157,7 +157,7 @@ public class BidService implements IBidService {
     auctionDAO.updateHighestPrice(auction.getId(), amount, bidder.getId());
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
+  // Private helpers
 
   private void recordAndThrow(NormalUser bidder, Auction auction,
                               double amount, RuntimeException ex) {

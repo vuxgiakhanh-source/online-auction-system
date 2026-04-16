@@ -8,12 +8,10 @@ import java.util.List;
 
 /**
  * SystemAdmin — MASTER duy nhất trong hệ thống.
+ * <p>Design pattern: Singleton
  *
- * <p>Câu hỏi: Nếu SystemAdmin được seed sẵn trong Database thì có phải khởi tạo
- * 1 đối tượng mới từ đầu không, hay cứ thế mà truy xuất lên xong dùng thôi?
- *
- * <p>Trả lời: KHÔNG cần khởi tạo mới. Nếu SystemAdmin đã được seed trong DB,
- * {@link #bootstrap(String)} sẽ load từ DB qua DAO rồi gán vào instance —
+ * <p>Nếu SystemAdmin đã được seed trong DB,
+ * {@link #bootstrap(String)} sẽ load từ DB qua DAO rồi gán vào instance -
  * không tạo object mới. Chỉ tạo mới nếu chưa có trong DB (lần đầu boot).
  * bootstrap() gọi 1 lần duy nhất khi app khởi động.
  *
@@ -29,17 +27,17 @@ import java.util.List;
  */
 public class SystemAdmin extends Admin {
 
-    /** Ngưỡng rating tối thiểu để được hoạt động. */
+    /** Ngưỡng rating tối thiểu của Normal User để được hoạt động. */
     public static final double MIN_ELIGIBLE_RATING = 2.0;
 
     private static SystemAdmin INSTANCE;
 
-    // ── Bootstrap ──────────────────────────────────────────────────────────────
+    // Bootstrap
 
     /**
-     * Khởi tạo hoặc load SystemAdmin.
-     * Nếu đã seed trong DB → load lên (không tạo mới).
-     * Nếu chưa có → tạo mới và seed vào DB.
+     * Khởi tạo / load SystemAdmin.
+     * Nếu đã seed trong DB -> load lên (không tạo mới).
+     * Nếu chưa có -> tạo mới và seed vào DB.
      *
      * <p>Chỉ gọi 1 lần khi app khởi động.
      *
@@ -49,9 +47,9 @@ public class SystemAdmin extends Admin {
     public static synchronized SystemAdmin bootstrap(String password) {
         if (INSTANCE == null) {
             // TODO: Kiểm tra DB qua UserDAO.findByUsername("system")
-            // Nếu tìm thấy → reconstitute từ DB, gán vào INSTANCE
-            // Nếu không tìm thấy → tạo mới như bên dưới:
-            INSTANCE = new SystemAdmin("system", password, "system@auction.com");
+            // Nếu tìm thấy -> reconstitute từ DB, gán vào INSTANCE
+            // Nếu không tìm thấy -> tạo mới.
+            INSTANCE = new SystemAdmin("SYSTEM", password, "system@auction.com");
             System.out.println("[SYSTEM] SystemAdmin khởi tạo lần đầu.");
             // TODO: userDAO.save(INSTANCE)
 
@@ -63,7 +61,7 @@ public class SystemAdmin extends Admin {
     }
 
     /**
-     * Lấy instance hiện tại — phải gọi {@link #bootstrap(String)} trước.
+     * Lấy instance hiện tại - phải gọi {@link #bootstrap(String)} trước.
      *
      * @return SystemAdmin instance
      * @throws IllegalStateException nếu chưa bootstrap
@@ -76,7 +74,7 @@ public class SystemAdmin extends Admin {
         return INSTANCE;
     }
 
-    // ── Constructor — chỉ bootstrap() được gọi ────────────────────────────────
+    // Constructor - chỉ bootstrap() được gọi
 
     private SystemAdmin(String username, String password, String email) {
         super(username, password, email, LEVEL_MASTER);
@@ -85,40 +83,11 @@ public class SystemAdmin extends Admin {
     @Override
     public boolean isSystem() { return true; }
 
-    // ── Auto-ban logic ─────────────────────────────────────────────────────────
-
-    /**
-     * Quét tất cả user trong hệ thống và tự động ban những tài khoản
-     * có rating dưới ngưỡng tối thiểu ({@value #MIN_ELIGIBLE_RATING}).
-     *
-     * <p>Thường được gọi bởi scheduler định kỳ hoặc sau mỗi thao tác
-     * thay đổi rating.
-     *
-     * <p>Chỉ ban tài khoản đang ACTIVE — SUSPENDED / BANNED không xử lý lại.
-     *
-     * @param users danh sách user cần kiểm tra (thường từ AuctionManager.getAllUsers())
-     */
-    public void autoBanLowRatingUsers(List<User> users) {
-        if (users == null || users.isEmpty()) return;
-
-        for (User user : users) {
-            if (user instanceof Admin) continue; // không ban admin
-            if (user.getAccountStatus() != AccountStatus.ACTIVE) continue;
-            if (user.getRating() < MIN_ELIGIBLE_RATING) {
-                user.setAccountStatus(AccountStatus.BANNED);
-                String log = String.format(
-                        "[SYSTEM AUTO-BAN] %s bị ban — rating %.1f < %.1f",
-                        user.getUsername(), user.getRating(), MIN_ELIGIBLE_RATING);
-                addActionLog(log);
-                System.out.println(log);
-                // TODO: userDAO.update(user)
-            }
-        }
-    }
+    // Auto-ban logic
 
     /**
      * Tự động ban một user cụ thể nếu rating dưới ngưỡng.
-     * Tiện dụng để gọi ngay sau khi RatingService penalize.
+     * Gọi ngay sau khi RatingService penalize -> ban luôn.
      *
      * @param user user cần kiểm tra
      */
@@ -158,7 +127,7 @@ public class SystemAdmin extends Admin {
         // TODO: userDAO.update(user)
     }
 
-    // ── Auto-cancel logic ──────────────────────────────────────────────────────
+    // Auto-cancel logic
 
     /**
      * Tự động hủy phiên đấu giá (no-winner / reserve-not-met / lỗi hệ thống).
@@ -168,7 +137,7 @@ public class SystemAdmin extends Admin {
      * @param reason lý do hủy
      */
     public void autoCancelAuction(Auction auction, Admin.CancelReason reason) {
-        auction.setStatus(Auction.AuctionStatus.CANCELED);
+        auction.transitionToCancel();
         String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
                 auction.getId(), reason);
         addActionLog(log);
@@ -187,9 +156,9 @@ public class SystemAdmin extends Admin {
     public void cancelAuctionByStaff(Admin staff, Auction auction, Admin.CancelReason reason) {
         if (staff.isSystem()) {
             throw new IllegalArgumentException(
-                    "SystemAdmin không dùng overload này — gọi autoCancelAuction(auction, reason).");
+                    "SystemAdmin không dùng overload này - gọi autoCancelAuction(auction, reason).");
         }
-        auction.setStatus(Auction.AuctionStatus.CANCELED);
+        auction.transitionToCancel();
         String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
                 staff.getUsername(), auction.getId(), reason);
         staff.addActionLog(staffLog);
@@ -204,7 +173,7 @@ public class SystemAdmin extends Admin {
 
     @Override
     public void printInfo() {
-        System.out.println("=== SYSTEM ADMIN =====================");
+        System.out.println("THÔNG TIN SYSTEM ADMIN");
         System.out.printf("Username : %s%n", getUsername());
         System.out.printf("Email : %s%n", getEmail());
         System.out.printf("Level : %s [SYSTEM — DUY NHẤT]%n", getAdminLevel());

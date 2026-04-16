@@ -4,7 +4,7 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.serviceInterface.IRatingService;
 
 /**
- * Observer dành cho Seller — nhận notify về phiên đấu giá của mình.
+ * Observer dành cho Seller - nhận notify về phiên đấu giá của mình.
  */
 public class SellerObserver implements AuctionObserver {
 
@@ -24,7 +24,7 @@ public class SellerObserver implements AuctionObserver {
 
   @Override
   public void onBidPlaced(AuctionEvent event) {
-    System.out.printf("[NOTIFY → Seller %s] Bid mới: %.0f | Phiên: %s%n",
+    System.out.printf("[THÔNG BÁO tới Seller %s] Bid mới: %.0f | Phiên: %s%n",
             seller.getUsername(), event.getBidAmount(), event.getAuction().getId());
   }
 
@@ -32,40 +32,43 @@ public class SellerObserver implements AuctionObserver {
   public void onAuctionEnded(AuctionEvent event) {
     switch (event.getEventType()) {
       case AUCTION_STARTED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá của bạn đã bắt đầu!%n",
+        System.out.printf("[THÔNG BÁO tới Seller %s] Phiên đấu giá của bạn đã bắt đầu!%n",
                 seller.getUsername());
+        break;
+      case AUCTION_UPCOMING:
+        // Chưa done, đang trong quá trình hoàn thiện
         break;
       case AUCTION_ENDED:
         if (event.getBidder() != null) {
-          System.out.printf("[NOTIFY → Seller %s] Phiên kết thúc. Winner: %s | Giá: %.0f. Chờ thanh toán.%n",
+          System.out.printf("[THÔNG BÁO tới Seller %s] Phiên kết thúc. Winner: %s | Giá: %.0f. Chờ thanh toán.%n",
                   seller.getUsername(),
                   event.getBidder().getUsername(),
                   event.getBidAmount());
         } else {
-          System.out.printf("[NOTIFY → Seller %s] Phiên kết thúc mà không có người đặt giá.%n",
+          System.out.printf("[THÔNG BÁO tới Seller %s] Phiên kết thúc mà không có người đặt giá.%n",
                   seller.getUsername());
         }
         break;
       case RESERVE_NOT_MET_CLOSED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên \"%s\" kết thúc với mức giá cao nhất là %.0f nhưng chưa đạt mức giá tối thiểu của bạn. Phiên đã bị hủy.%n",
+        System.out.printf("[THÔNG BÁO tới Seller %s] Phiên \"%s\" kết thúc với mức giá cao nhất là %.0f nhưng chưa đạt mức giá tối thiểu của bạn. Phiên đã bị hủy.%n",
                 seller.getUsername(),
                 event.getAuction().getItem().getName(),
                 event.getBidAmount());
         break;
       case PAYMENT_COMPLETED:
         // Thông báo seller đã bán thành công
-        System.out.printf("[NOTIFY → Seller %s] Sản phẩm \"%s\" đã được bán thành công với giá %.0f! Tiền đã được chuyển vào tài khoản (sau thuế).%n",
+        System.out.printf("[THÔNG BÁO tới Seller %s] Sản phẩm \"%s\" đã được bán thành công với giá %.0f! Tiền đã được chuyển vào tài khoản (sau thuế).%n",
                 seller.getUsername(),
                 event.getAuction().getItem().getName(),
                 event.getBidAmount());
         ratingService.rewardSeller(seller);
         break;
       case AUCTION_CANCELED:
-        System.out.printf("[NOTIFY → Seller %s] Phiên đấu giá đã bị hủy.%n",
+        System.out.printf("[THÔNG BÁO tới Seller %s] Phiên đấu giá đã bị hủy.%n",
                 seller.getUsername());
         break;
       case QUALITY_REPORT_APPROVED:
-        System.out.printf("[NOTIFY → Seller %s] Báo cáo chất lượng của buyer được phê duyệt. Bạn phải hoàn trả tiền trong 24h, nếu không sẽ bị ban vĩnh viễn.%n",
+        System.out.printf("[THÔNG BÁO tới Seller %s] Báo cáo chất lượng của buyer được phê duyệt. Bạn phải hoàn trả tiền trong 24h, nếu không sẽ bị ban vĩnh viễn.%n",
                 seller.getUsername());
         break;
       default:

@@ -8,14 +8,13 @@ import com.group13.auction.service.serviceInterface.IUserService;
 
 /**
  * Xử lý xác thực người dùng (authentication).
- * Sau khi tách RatingService và AccountService, UserService chỉ còn
- * trách nhiệm duy nhất: verify danh tính người dùng.
+ * Trách nhiệm duy nhất: verify danh tính người dùng.
  */
 public class UserService implements IUserService {
 
   /**
    * Xác thực đăng nhập.
-   * Ném {@link AuthenticationException} với lý do cụ thể thay vì trả boolean.
+   * Ném {@link AuthenticationException} với lý do cụ thể.
    *
    * @param user user cần xác thực
    * @param inputPassword mật khẩu nhập vào

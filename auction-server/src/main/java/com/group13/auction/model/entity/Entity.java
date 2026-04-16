@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Lớp abstract gốc — mọi thực thể đều có id UUID và timestamp.
+ * Lớp abstract gốc — mọi thực thể đều có id UUID và timestamp
  *
- * <p>Dùng static factory method thay vì overloaded constructor:
- * {@code create()} cho object mới, {@code reconstitute()} cho object từ DB.
+ * <p>Dùng static factory method để khởi tạo
+ * {@code create()} cho object mới, {@code reconstitute()} cho object từ DB
  */
 public abstract class Entity {
 
@@ -38,6 +38,7 @@ public abstract class Entity {
     this.updatedAt = LocalDateTime.now();
   }
 
+  /** Getters */
   public String getId() { return id; }
   public LocalDateTime getCreatedAt() { return createdAt; }
   public LocalDateTime getUpdatedAt() { return updatedAt; }
