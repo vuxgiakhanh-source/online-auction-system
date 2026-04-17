@@ -8,6 +8,7 @@ public class AuthenticationException extends RuntimeException {
     ACCOUNT_BANNED,
     ACCOUNT_SUSPENDED,
     INSUFFICIENT_RATING,
+    USER_NOT_FOUND
   }
 
   private final Reason reason;
@@ -27,6 +28,8 @@ public class AuthenticationException extends RuntimeException {
         return "Tài khoản đang bị tạm ngưng.";
       case INSUFFICIENT_RATING:
         return "Rating không đủ điều kiện tham gia.";
+      case USER_NOT_FOUND:
+        return "Không tìm thấy tài khoản";
       default:
         return "Xác thực thất bại.";
     }
