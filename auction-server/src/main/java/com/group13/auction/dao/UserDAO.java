@@ -106,22 +106,67 @@ public class UserDAO {
     /**
      * Tìm kiếm NormalUser theo ID
      */
+    /**
+     * Tìm kiếm NormalUser theo ID và hồi sinh đối tượng từ Database.
+     */
     public NormalUser findNormalUserById(String userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId);
-            try (ResultSet rs = pstmt.executeQuery()) {
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // TODO: Bạn dùng UserFactory hoặc Constructor của NormalUser để nạp dữ liệu ở đây
-                    // Tạm thời trả về null để IDE hết báo đỏ
-                    return null;
+                    // 1. Lấy dữ liệu cơ bản
+                    String id = rs.getString("id");
+                    String username = rs.getString("username");
+                    String passwordHash = rs.getString("password_hash");
+                    String email = rs.getString("email");
+                    int rating = rs.getInt("rating");
+                    double balance = rs.getDouble("balance");
+                    double lockedBalance = rs.getDouble("locked_balance");
+                    String statusStr = rs.getString("status");
+                    boolean hasEverBeenPenalized = rs.getBoolean("has_ever_been_penalized");
+
+                    // 2. Xử lý thời gian an toàn
+                    java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+                    java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+                    java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
+                    java.time.LocalDateTime suspendedAt = (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
+
+                    // 3. Xử lý các trường không có sẵn trong bảng users hiện tại
+                    // Mặc định gán false, nếu sau này bạn thêm cột `has_ever_been_restored` vào DB thì dùng rs.getBoolean
+                    boolean hasEverBeenRestored = false;
+
+                    // Mặc định khởi tạo role là BIDDER
+                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+                    // (Tùy chọn: Nếu bạn muốn check xem user có phải SELLER không, bạn có thể query thêm bảng sellers ở đây)
+
+                    // 4. Hồi sinh Object
+                    return NormalUser.reconstitute(
+                            id,
+                            createdAt,
+                            createdAt, // Dùng tạm createdAt cho updatedAt
+                            username,
+                            passwordHash,
+                            email,
+                            com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr),
+                            rating,
+                            balance,
+                            lockedBalance,
+                            roles,
+                            hasEverBeenPenalized,
+                            hasEverBeenRestored,
+                            suspendedAt
+                    );
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi tìm User: " + e.getMessage());
+        } catch (java.sql.SQLException e) {
+            System.err.println("Lỗi tìm User theo ID: " + e.getMessage());
         }
         return null;
     }
@@ -174,5 +219,71 @@ public class UserDAO {
             System.err.println("Lỗi cập nhật số dư tài khoản: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Tìm kiếm NormalUser theo Username để phục vụ việc Đăng nhập.
+     */
+    /**
+     * Tìm kiếm NormalUser theo Username để phục vụ việc Đăng nhập.
+     */
+    public NormalUser findUserByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // 1. Lấy dữ liệu cơ bản
+                    String id = rs.getString("id");
+                    String fetchedUsername = rs.getString("username"); // Lấy chính xác từ DB
+                    String passwordHash = rs.getString("password_hash");
+                    String email = rs.getString("email");
+                    int rating = rs.getInt("rating");
+                    double balance = rs.getDouble("balance");
+                    double lockedBalance = rs.getDouble("locked_balance");
+                    String statusStr = rs.getString("status");
+                    boolean hasEverBeenPenalized = rs.getBoolean("has_ever_been_penalized");
+
+                    // 2. Xử lý thời gian an toàn
+                    java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+                    java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+                    java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
+                    java.time.LocalDateTime suspendedAt = (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
+
+                    // 3. Các trường phụ thuộc (mặc định)
+                    boolean hasEverBeenRestored = false;
+                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+                    // 4. Hồi sinh Object
+                    return NormalUser.reconstitute(
+                            id,
+                            createdAt,
+                            createdAt,
+                            fetchedUsername,
+                            passwordHash,
+                            email,
+                            com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr),
+                            rating,
+                            balance,
+                            lockedBalance,
+                            roles,
+                            hasEverBeenPenalized,
+                            hasEverBeenRestored,
+                            suspendedAt
+                    );
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Lỗi tìm User theo username: " + e.getMessage());
+        }
+
+        // Nếu không có dòng nào trong DB khớp với username, trả về null
+        return null;
     }
 }

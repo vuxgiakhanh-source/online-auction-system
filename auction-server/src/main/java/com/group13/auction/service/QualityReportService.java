@@ -1,5 +1,7 @@
 package com.group13.auction.service;
 
+import com.group13.auction.dao.QualityReportDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.QualityReport;
@@ -15,10 +17,10 @@ import com.group13.auction.service.serviceInterface.IWalletService;
  * QualityReport: submit, approve, reject và hoàn tiền cho winner.
  *
  * <ol>
- *   <li>Winner gọi {@link #submitReport} → report ở PENDING.</li>
- *   <li>Admin gọi {@link #approveReport} → trừ rating Seller, bắt đầu đếm 24h hoàn tiền,
- *       notify Staff.</li>
- *   <li>Seller hoàn tiền trong 24h; nếu không → {@link #handleSellerRefundDefault} ban Seller.</li>
+ * <li>Winner gọi {@link #submitReport} → report ở PENDING.</li>
+ * <li>Admin gọi {@link #approveReport} → trừ rating Seller, bắt đầu đếm 24h hoàn tiền,
+ * notify Staff.</li>
+ * <li>Seller hoàn tiền trong 24h; nếu không → {@link #handleSellerRefundDefault} ban Seller.</li>
  * </ol>
  */
 public class QualityReportService {
@@ -27,8 +29,9 @@ public class QualityReportService {
     private final IWalletService walletService;
     private final IAuctionService auctionService;
 
-    // TODO: inject QualityReportDAO khi tích hợp DB
-    // TODO: inject UserDAO để cập nhật trạng thái Seller sau khi bị ban
+    // Đã thực hiện TODO: inject QualityReportDAO và UserDAO
+    private final QualityReportDAO qualityReportDAO;
+    private final UserDAO userDAO;
 
     /**
      * Constructor nhận dependency qua constructor (DIP).
@@ -40,10 +43,14 @@ public class QualityReportService {
     public QualityReportService(
             IRatingService ratingService,
             IWalletService walletService,
-            IAuctionService auctionService) {
+            IAuctionService auctionService,
+            QualityReportDAO qualityReportDAO,
+            UserDAO userDAO) {
         this.ratingService = ratingService;
         this.walletService = walletService;
         this.auctionService = auctionService;
+        this.qualityReportDAO = qualityReportDAO;
+        this.userDAO = userDAO;
     }
 
     /**
@@ -61,7 +68,9 @@ public class QualityReportService {
                 "[QUALITY] Winner %s gửi báo cáo chất lượng cho phiên %s.%n",
                 report.getReporter().getUsername(), report.getAuctionId());
 
-        // TODO: qualityReportDAO.save(report) — lưu report xuống DB
+        // Thực hiện TODO: qualityReportDAO.save(report) — lưu report xuống DB
+        qualityReportDAO.saveReport(report);
+
         return report;
     }
 
@@ -70,10 +79,10 @@ public class QualityReportService {
      *
      * <p>Khi approve:
      * <ol>
-     *   <li>Report chuyển sang APPROVED + set hạn 24h cho Seller.</li>
-     *   <li>Trừ rating Seller, có thể auto-ban nếu rating xuống dưới ngưỡng.</li>
-     *   <li>Hoàn tiền từ SystemBank về winner ngay lập tức.</li>
-     *   <li>Notify Staff Admin để theo dõi.</li>
+     * <li>Report chuyển sang APPROVED + set hạn 24h cho Seller.</li>
+     * <li>Trừ rating Seller, có thể auto-ban nếu rating xuống dưới ngưỡng.</li>
+     * <li>Hoàn tiền từ SystemBank về winner ngay lập tức.</li>
+     * <li>Notify Staff Admin để theo dõi.</li>
      * </ol>
      *
      * @param admin admin thực hiện approve
@@ -120,8 +129,11 @@ public class QualityReportService {
         SystemAdmin.getInstance().addActionLog(log);
         System.out.println(log);
 
-        // TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
-        // TODO: userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name())
+        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
+        qualityReportDAO.updateReport(report);
+
+        // Thực hiện TODO: userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name())
+        userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
     }
 
     /**
@@ -145,7 +157,8 @@ public class QualityReportService {
         admin.addActionLog(log);
         System.out.println(log);
 
-        // TODO: qualityReportDAO.update(report)
+        // Thực hiện TODO: qualityReportDAO.update(report)
+        qualityReportDAO.updateReport(report);
     }
 
     /**
@@ -171,7 +184,10 @@ public class QualityReportService {
         SystemAdmin.getInstance().addActionLog(log);
         System.out.println(log);
 
-        // TODO: userDAO.updateAccountStatus(seller.getId(), "BANNED") — ban xuống DB
-        // TODO: qualityReportDAO.update(report) nếu cần ghi nhận trạng thái xử lý
+        // Thực hiện TODO: userDAO.updateAccountStatus(seller.getId(), "BANNED") — ban xuống DB
+        userDAO.updateAccountStatus(seller.getId(), "BANNED");
+
+        // Thực hiện TODO: qualityReportDAO.update(report) nếu cần ghi nhận trạng thái xử lý
+        // qualityReportDAO.updateReport(report); // Có thể bỏ comment dòng này nếu DB của bạn cần cập nhật thêm gì đó khi seller bị phạt.
     }
 }

@@ -1,6 +1,7 @@
 package com.group13.auction.service;
 
 import com.group13.auction.dao.AdminDAO;
+import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.SellerDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
@@ -35,18 +36,21 @@ public class AccountService implements IAccountService {
   private final UserDAO userDAO;
   private final SellerDAO sellerDAO;
   private final AdminDAO adminDAO;
+  private final AuctionDAO auctionDAO;
 
   /** Nhận dependencies qua constructor (DIP). */
   public AccountService(
           IRatingService ratingService,
           UserDAO userDAO,
           SellerDAO sellerDAO,
-          AdminDAO adminDAO) {
+          AdminDAO adminDAO,
+          AuctionDAO auctionDAO) {
     this.ratingService = ratingService;
     this.adminFactory = new AdminFactory();
     this.userDAO = userDAO;
     this.sellerDAO = sellerDAO;
     this.adminDAO = adminDAO;
+    this.auctionDAO = auctionDAO;
   }
 
   // Ban
@@ -229,6 +233,8 @@ public class AccountService implements IAccountService {
 
     // TODO: auctionDAO.updateAuctionStatus(auction.getId(), "CANCEL_REQUESTED")
     // — cập nhật xuống DB để Staff Admin truy vấn được
+    auction.transitionToCancelRequested();
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
 
     // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
