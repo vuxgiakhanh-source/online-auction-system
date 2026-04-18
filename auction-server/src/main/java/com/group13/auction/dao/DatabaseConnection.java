@@ -42,15 +42,23 @@ public class DatabaseConnection {
     // Phương thức cung cấp điểm truy cập toàn cục và an toàn đa luồng (Thread-safe)
     public static synchronized DatabaseConnection getInstance() {
         try {
-            // Khởi tạo mới nếu instance chưa có hoặc kết nối trước đó đã bị đóng
-            if (instance == null || (instance.getConnection() != null && instance.getConnection().isClosed())) {
+            if (instance == null) {
                 instance = new DatabaseConnection();
+            } else {
+                Connection conn = instance.getConnection();
+
+                // Thêm null-check trước khi gọi isClosed()
+                if (conn == null || conn.isClosed()) {
+                    instance = new DatabaseConnection();
+                }
             }
         } catch (SQLException e) {
             System.err.println("Lỗi kiểm tra trạng thái kết nối: " + e.getMessage());
         }
         return instance;
     }
+
+
 
     // Cung cấp Connection cho các lớp UserDAO, ItemDAO,... sử dụng
     public Connection getConnection() {

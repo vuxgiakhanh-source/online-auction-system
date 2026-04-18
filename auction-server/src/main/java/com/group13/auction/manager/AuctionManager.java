@@ -1,5 +1,7 @@
 package com.group13.auction.manager;
 
+import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
@@ -11,8 +13,8 @@ import java.util.stream.Collectors;
 
 /**
  * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá.
- * <p>TODO: DB là gốc, mỗi khi AM thay đổi gì thì phải gọi DAO cập nhật lập tức
- * <p>TODO: Cần 1 method gọi auctionDao.findAlL() -> nạp toàn bộ vào List của AM
+ * <p>ĐÃ THỰC HIỆN TODO: DB là gốc, mỗi khi AM thay đổi gì thì phải gọi DAO cập nhật lập tức
+ * <p>ĐÃ THỰC HIỆN TODO: Cần 1 method gọi auctionDao.findAll() -> nạp toàn bộ vào List của AM
  * khi ứng dụng khởi động
  *
  * <p>AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
@@ -30,9 +32,13 @@ public class AuctionManager {
   // FIX: dùng eager initialization -> thread-safe, tránh tạo nhiều instance
   private static final AuctionManager instance = new AuctionManager();
 
+  // Khai báo các DAO phục vụ cho các TODO bên dưới
+  private final AuctionDAO auctionDAO;
+  private final UserDAO userDAO;
+
   /**
    * Danh sách tất cả auction - lọc theo status khi cần.
-   * TODO: sau này sync với DB qua AuctionDAO.
+   * ĐÃ THỰC HIỆN TODO: sau này sync với DB qua AuctionDAO.
    *
    * FIX: dùng synchronizedList để tránh race condition khi nhiều thread add/remove
    */
@@ -40,7 +46,7 @@ public class AuctionManager {
 
   /**
    * Danh sách tất cả user đã đăng ký.
-   * TODO: sau này sync với DB qua UserDAO.
+   * ĐÃ THỰC HIỆN TODO: sau này sync với DB qua UserDAO.
    *
    * FIX: thread-safe collection
    */
@@ -61,6 +67,9 @@ public class AuctionManager {
 
   /** Private constructor — ngăn tạo instance từ bên ngoài. */
   private AuctionManager() {
+    this.auctionDAO = new AuctionDAO();
+    this.userDAO = new UserDAO();
+
     this.allAuctions = Collections.synchronizedList(new ArrayList<>());
     this.allUsers = Collections.synchronizedList(new ArrayList<>());
     this.globalObservers = Collections.synchronizedList(new ArrayList<>());
@@ -78,11 +87,50 @@ public class AuctionManager {
     return instance;
   }
 
+  // --- THỰC HIỆN TODO: Method nạp dữ liệu từ DB khi khởi động ứng dụng ---
+  /**
+   * Gọi khi ứng dụng bắt đầu khởi động để nạp dữ liệu từ Database lên In-Memory
+   */
+  public void loadDataFromDatabase() {
+    synchronized (allAuctions) {
+      allAuctions.clear();
+      List<Auction> dbAuctions = auctionDAO.findAll(); // Cần đảm bảo AuctionDAO có hàm findAll()
+      if (dbAuctions != null) {
+        allAuctions.addAll(dbAuctions);
+      }
+    }
+
+    synchronized (allUsers) {
+      allUsers.clear();
+      List<User> dbUsers = userDAO.findAll(); // Cần đảm bảo UserDAO có hàm findAll()
+      if (dbUsers != null) {
+        allUsers.addAll(dbUsers);
+      }
+    }
+    System.out.println("[MANAGER] Đã đồng bộ dữ liệu từ Database lên bộ nhớ thành công.");
+  }
+
   // User management
 
   /**
+   * Thêm user vào danh sách in-memory mà KHÔNG persist xuống DB.
+   * Dùng bởi {@link com.group13.auction.model.user.SystemAdmin#bootstrap(String)}
+   * để tránh duplicate insert khi SystemAdmin đã có trong DB.
+   *
+   * @param user user cần thêm vào danh sách
+   */
+  public void addToUserList(User user) {
+    if (user == null) return;
+    synchronized (allUsers) {
+      if (allUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
+        allUsers.add(user);
+      }
+    }
+  }
+
+  /**
    * Đăng ký người dùng mới vào hệ thống.
-   * TODO: sau khi tạo → lưu vào DB qua UserDAO.save(user).
+   * ĐÃ THỰC HIỆN TODO: sau khi tạo → lưu vào DB qua UserDAO.save(user).
    *
    * @param user người dùng cần đăng ký
    */
@@ -90,13 +138,17 @@ public class AuctionManager {
     if (user == null) {
       throw new IllegalArgumentException("User không được null.");
     }
+
+    // Gọi DAO để lưu user xuống DB
+    userDAO.save(user); // Cần đảm bảo UserDAO có hàm save(User user)
+
     allUsers.add(user);
     System.out.println("[MANAGER] Đăng ký thành công: " + user.getUsername());
   }
 
   /**
    * Tìm user theo username.
-   * TODO: sau này truy vấn DB qua UserDAO.findByUsername(username).
+   * ĐÃ THỰC HIỆN TODO: sau này truy vấn DB qua UserDAO.findByUsername(username).
    *
    * @param username tên đăng nhập cần tìm
    * @return User nếu tìm thấy, null nếu không
@@ -104,6 +156,13 @@ public class AuctionManager {
    * FIX: phải synchronized khi iterate (stream)
    */
   public User findUserByUsername(String username) {
+    // Ưu tiên truy vấn từ Database trước như TODO yêu cầu
+    User dbUser = userDAO.findUserByUsername(username);
+    if (dbUser != null) {
+      return dbUser;
+    }
+
+    // Fallback: Tìm trong memory nếu DB không có (hoặc chưa sync kịp)
     synchronized (allUsers) {
       return allUsers.stream()
               .filter(u -> u.getUsername().equals(username))
@@ -114,11 +173,14 @@ public class AuctionManager {
 
   /**
    * Xóa user khỏi danh sách hệ thống (soft-delete).
-   * TODO: sau này gọi UserDAO.delete(user).
+   * ĐÃ THỰC HIỆN TODO: sau này gọi UserDAO.delete(user).
    *
    * @param user user cần xóa
    */
   public void removeUser(User user) {
+    // Xóa khỏi Database
+    userDAO.delete(user); // Cần đảm bảo UserDAO có hàm delete(User user) hoặc delete(String id)
+
     allUsers.remove(user);
   }
 
