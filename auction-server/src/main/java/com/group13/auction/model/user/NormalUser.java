@@ -26,13 +26,13 @@ public class NormalUser extends User {
     private double balance;
     /** Số tiền bị khóa làm cọc cho các phiên đang tham gia. */
     private double lockedDeposit;
-    private final List<BidTransaction> bidHistory;
-    private final Set<String> joinedAuctionIds;
-    private final List<String> watchListAuctionIds;
+    private List<BidTransaction> bidHistory;
+    private Set<String> joinedAuctionIds;
+    private List<String> watchListAuctionIds;
 
     // Seller state
-    private final List<Item> listedItems;
-    private final List<String> allAuctionIds;
+    private List<Item> listedItems;
+    private List<String> allAuctionIds;
     /** Đánh dấu seller đã từng bị trừ rating chưa — dùng để kiểm tra duyệt role Seller. */
     private boolean hasEverBeenPenalized;
     /**
@@ -60,7 +60,15 @@ public class NormalUser extends User {
 
     /**
      * Hồi sinh NormalUser từ DB — CHÚ Ý: chỉ DAO được gọi method này.
-     * Vấn đề: Chưa xử lý việc quá nhiều tham số khởi tạo =))
+     * !!! Vấn đề: Chưa xử lý việc quá nhiều tham số khởi tạo
+     * DAO phải gọi thêm các setter tương ứng sau khi reconstitute để nạp dữ liệu lịch sử.
+     *
+     * <p>TODO: UserDAO — sau khi gọi reconstitute()
+     * setBidHistory(UserDAO.findBidHistoryByUserId(id))
+     * setJoinedAuctionIds(UserDAO.findJoinedAuctionIdsByUserId(id))
+     * setWatchListAuctionIds(UserDAO.findWatchListByUserId(id))
+     * setListedItems(ItemDAO.findItemsBySellerId(id))
+     * setAllAuctionIds(AuctionDAO.findAuctionIdsBySellerId(id))
      */
     public static NormalUser reconstitute(
             String id,
@@ -99,6 +107,10 @@ public class NormalUser extends User {
         this.hasEverBeenRestored = false;
     }
 
+    /**
+     * Constructor reconstitute: các list lịch sử được khởi tạo rỗng.
+     * DAO chịu trách nhiệm nạp dữ liệu
+     */
     private NormalUser(
             String id,
             LocalDateTime createdAt,
@@ -118,6 +130,7 @@ public class NormalUser extends User {
                 UserRole.BIDDER, accountStatus, rating, suspendedAt);
         this.balance = balance;
         this.lockedDeposit = lockedDeposit;
+        // Khởi tạo rỗng; DAO sẽ inject dữ liệu thực sau khi gọi reconstitute()
         this.bidHistory = new ArrayList<>();
         this.joinedAuctionIds = new HashSet<>();
         this.watchListAuctionIds = new ArrayList<>();
@@ -255,6 +268,33 @@ public class NormalUser extends User {
         }
     }
 
+    // DAO injection setters (package-private — chỉ DAO trong cùng package hoặc DAO được phép gọi)
+
+    /**
+     * Inject lịch sử bid từ DB — chỉ UserDAO gọi sau reconstitute().
+     * TODO: UserDAO.findBidHistoryByUserId(id) → gọi setBidHistory()
+     */
+    public void setBidHistory(List<BidTransaction> bidHistory) {
+        this.bidHistory = bidHistory != null ? new ArrayList<>(bidHistory) : new ArrayList<>();
+    }
+
+    /**
+     * Inject danh sách auctionId đã join từ DB — chỉ UserDAO gọi sau reconstitute().
+     * TODO: UserDAO.findJoinedAuctionIdsByUserId(id) → gọi setJoinedAuctionIds()
+     */
+    public void setJoinedAuctionIds(Set<String> joinedAuctionIds) {
+        this.joinedAuctionIds = joinedAuctionIds != null ? new HashSet<>(joinedAuctionIds) : new HashSet<>();
+    }
+
+    /**
+     * Inject watchlist từ DB — chỉ UserDAO gọi sau reconstitute().
+     * TODO: UserDAO.findWatchListByUserId(id) → gọi setWatchListAuctionIds()
+     */
+    public void setWatchListAuctionIds(List<String> watchListAuctionIds) {
+        this.watchListAuctionIds = watchListAuctionIds != null
+                ? new ArrayList<>(watchListAuctionIds) : new ArrayList<>();
+    }
+
     // Seller getters / setters
 
     /** @return Collections ở dạng read-only */
@@ -280,6 +320,35 @@ public class NormalUser extends User {
     public void addAuctionId(String auctionId) {
         allAuctionIds.add(auctionId);
         markUpdated();
+    }
+
+    /**
+     * Lọc ra các phiên đấu giá của Seller đang ở trạng thái OPEN hoặc RUNNING.
+     *
+     * <p>Dữ liệu được filter từ {@code allAuctionIds} đã được AuctionManager load vào memory.
+     * Trong môi trường thực tế, nên ưu tiên query thẳng DB để tránh load toàn bộ phiên.
+     *
+     * <p>TODO: Thay thế bằng AuctionDAO.findUnfinishedAuctionIdsBySellerId(getId())
+     * để query trực tiếp DB (WHERE seller_id = ? AND status IN ('OPEN','RUNNING'))
+     * thay vì filter in-memory — đặc biệt quan trọng khi allAuctionIds chưa được inject đủ.
+     *
+     * @param auctionLookup hàm tìm Auction theo id (thường là AuctionManager::findAuctionById)
+     * @return danh sách auctionId có trạng thái OPEN hoặc RUNNING (read-only)
+     */
+    public List<String> getUnfinishedAuctionIds(
+            java.util.function.Function<String, com.group13.auction.model.auction.Auction> auctionLookup) {
+        List<String> result = new ArrayList<>();
+        for (String auctionId : allAuctionIds) {
+            com.group13.auction.model.auction.Auction auction = auctionLookup.apply(auctionId);
+            if (auction != null) {
+                com.group13.auction.model.auction.Auction.AuctionStatus status = auction.getStatus();
+                if (status == com.group13.auction.model.auction.Auction.AuctionStatus.OPEN
+                        || status == com.group13.auction.model.auction.Auction.AuctionStatus.RUNNING) {
+                    result.add(auctionId);
+                }
+            }
+        }
+        return Collections.unmodifiableList(result);
     }
 
     // Delete account

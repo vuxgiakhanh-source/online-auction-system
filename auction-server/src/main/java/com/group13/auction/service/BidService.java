@@ -14,9 +14,9 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
-import com.group13.auction.service.serviceInterface.IAuctionService;
-import com.group13.auction.service.serviceInterface.IBidService;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IAuctionService;
+import com.group13.auction.service.iservice.IBidService;
+import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.strategy.BidStrategy;
 
 /**

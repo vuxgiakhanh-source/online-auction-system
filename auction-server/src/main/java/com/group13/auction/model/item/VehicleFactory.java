@@ -1,7 +1,7 @@
 package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IRatingService;
 
 /** Factory cụ thể để tạo các đối tượng Vehicle. */
 public class VehicleFactory extends ItemFactory {

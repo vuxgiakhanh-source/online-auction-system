@@ -12,14 +12,14 @@ public abstract class UserFactory<T extends User> {
 
     /**
      * Lưu username đã dùng để kiểm tra trùng.
-     * TODO: sau này thay bằng truy vấn DB qua UserDAO.
+     * TODO: Bỏ Set này, sau này thay bằng truy vấn DB qua UserDAO.
      */
     private static final Set<String> usedUsernames = new HashSet<>();
 
     /**
      * Lưu email đã dùng để kiểm tra trùng.
      * 1 email chỉ tạo được 1 tài khoản
-     * TODO: sau này thay bằng truy vấn DB qua UserDAO.
+     * TODO: Bỏ Set này, sau này thay bằng truy vấn DB qua UserDAO.
      */
     private static final Set<String> usedEmails = new HashSet<>();
 

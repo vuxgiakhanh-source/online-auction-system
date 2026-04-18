@@ -1,7 +1,7 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IRatingService;
 
 /**
  * Observer dành cho Seller - nhận notify về phiên đấu giá của mình.

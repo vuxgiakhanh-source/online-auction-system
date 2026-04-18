@@ -47,7 +47,7 @@ public class Admin extends User {
     NO_WINNER,
     /** Phiên kết thúc với giá cao nhất chưa đạt reserve price. */
     RESERVE_NOT_MET,
-    /** Seller yêu cầu hủy — phải qua Staff Admin xem xét. */
+    /** Seller yêu cầu hủy — phải qua SystemAdmin xem xét. */
     SELLER_REQUEST,
     /** Lỗi hệ thống. */
     SYSTEM_ERROR,

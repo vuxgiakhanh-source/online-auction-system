@@ -1,5 +1,6 @@
 package com.group13.auction.model.bid;
 
+import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
@@ -35,6 +36,17 @@ public class QualityReport extends Entity {
     private LocalDateTime sellerRefundDeadline;
     private ReportStatus status;
 
+    /**
+     * Đánh dấu Seller đã hoàn tất việc hoàn tiền cho Winner.
+     *
+     * <p>Được set thành {@code true} bởi {@link #markRefundCompleted()},
+     * chỉ {@link com.group13.auction.service.QualityReportService} được gọi method đó.
+     *
+     * <p>TODO: QualityReportDAO.updateReport() cần persist thêm cột {@code refund_completed}
+     * xuống DB
+     */
+    private boolean refundCompleted;
+
     // Static factory method
 
     /**
@@ -69,10 +81,11 @@ public class QualityReport extends Entity {
             String description,
             List<String> imageUrls,
             ReportStatus status,
-            LocalDateTime sellerRefundDeadline) {
+            LocalDateTime sellerRefundDeadline,
+            boolean refundCompleted) {
         return new QualityReport(
                 id, createdAt, updatedAt, reporter, auctionId, description,
-                imageUrls, status, sellerRefundDeadline);
+                imageUrls, status, sellerRefundDeadline, refundCompleted);
     }
 
     // Private constructors
@@ -89,6 +102,7 @@ public class QualityReport extends Entity {
         this.imageUrls = new ArrayList<>(imageUrls);
         this.status = ReportStatus.PENDING;
         this.sellerRefundDeadline = null;
+        this.refundCompleted = false;
     }
 
     private QualityReport(
@@ -100,7 +114,8 @@ public class QualityReport extends Entity {
             String description,
             List<String> imageUrls,
             ReportStatus status,
-            LocalDateTime sellerRefundDeadline) {
+            LocalDateTime sellerRefundDeadline,
+            boolean refundCompleted) {
         super(id, createdAt, updatedAt);
         this.reporter = reporter;
         this.auctionId = auctionId;
@@ -108,6 +123,7 @@ public class QualityReport extends Entity {
         this.imageUrls = new ArrayList<>(imageUrls);
         this.status = status;
         this.sellerRefundDeadline = sellerRefundDeadline;
+        this.refundCompleted = refundCompleted;
     }
 
     // Getters
@@ -136,8 +152,15 @@ public class QualityReport extends Entity {
         return sellerRefundDeadline;
     }
 
+    public boolean isRefundCompleted() {
+        return refundCompleted;
+    }
+
     /**
      * Kiểm tra Seller đã quá hạn hoàn tiền chưa.
+     * TODO: Cài Scheduler định kì 24h để quét và check.
+     * nếu quét ra true, gọi ngay
+     * {@link com.group13.auction.service.QualityReportService#handleSellerRefundDefault(QualityReport, NormalUser, Auction)}
      *
      * @return true nếu đã quá hạn 24h và report đang ở APPROVED
      */
@@ -147,7 +170,7 @@ public class QualityReport extends Entity {
                 && LocalDateTime.now().isAfter(sellerRefundDeadline);
     }
 
-    // Setters — chỉ QualityReportService / PaymentService gọi
+    // Setters - chỉ QualityReportService / PaymentService gọi
 
     /**
      * Admin approve report.
@@ -169,10 +192,16 @@ public class QualityReport extends Entity {
         markUpdated();
     }
 
+    public void markRefundCompleted() {
+        this.refundCompleted = true;
+        markUpdated();
+    }
+
+
     @Override
     public void printInfo() {
         System.out.printf(
-                "[QUALITY REPORT] %s | Auction: %s | Status: %s | Ảnh: %d%n",
-                reporter.getUsername(), auctionId, status, imageUrls.size());
+                "[QUALITY REPORT] %s | Auction: %s | Status: %s | Runđone: %s | Ảnh: %d%n",
+                reporter.getUsername(), auctionId, status, refundCompleted, imageUrls.size());
     }
 }

@@ -1,6 +1,7 @@
 package com.group13.auction.service;
 
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.exception.AuctionBusinessException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
@@ -11,10 +12,12 @@ import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
-import com.group13.auction.service.serviceInterface.IAuctionService;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IAuctionService;
+import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.strategy.ReservePriceStrategy;
 import java.time.LocalDateTime;
+
+import static com.group13.auction.model.user.Admin.CancelReason.SELLER_REQUEST;
 
 /**
  * Quản lý vòng đời phiên đấu giá.
@@ -68,7 +71,7 @@ public class AuctionService implements IAuctionService {
     }
     if (reserveStrategy == null) {
       throw new IllegalArgumentException(
-              "ReservePriceStrategy không được null — bắt buộc thiết lập khi tạo auction.");
+              "ReservePriceStrategy không được null - bắt buộc thiết lập khi tạo auction.");
     }
 
     Auction auction = Auction.create(item, startTime, endTime, reserveStrategy);
@@ -87,6 +90,7 @@ public class AuctionService implements IAuctionService {
    * Bắt đầu phiên: OPEN -> RUNNING.
    * Thông báo tất cả observer.
    * Đã thực hiện TODO: auctionDAO.update(auction).
+   * TODO: Xây dựng scheduler đếm sau mỗi 5s -> đến time thì tự động gọi
    *
    * @param auction phiên cần bắt đầu
    * @throws IllegalStateException nếu phiên không ở OPEN
@@ -111,8 +115,9 @@ public class AuctionService implements IAuctionService {
    * <li>Có leader và đạt reserve -> FINISHED (tạo AuctionWinner).</li>
    * </ol>
    *
-   * Cả hai trường hợp auto-cancel đều ghi log vào SystemAdmin.
+   * Cả hai trường hợp auto-cancel bằng SystemAdmin.
    * Đã thực hiện TODO: auctionDAO.update(auction).
+   * TODO: Xây dựng scheduler đếm sau mỗi 5s -> hết time thì tự động gọi
    *
    * @param auction phiên cần đóng
    * @throws IllegalStateException nếu phiên không ở RUNNING
@@ -142,7 +147,7 @@ public class AuctionService implements IAuctionService {
       double depositPaid = auction.getItem().getStartingPrice() * 0.3;
       auction.setWinner(
               AuctionWinner.create(winner, auction.getId(),
-                      auction.getCurrentPrice(), depositPaid));
+                      auction.getCurrentPrice(), depositPaid, false));
       auction.transitionToClose(true);
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_ENDED,
               winner, auction.getCurrentPrice());
@@ -155,7 +160,7 @@ public class AuctionService implements IAuctionService {
   }
 
   /**
-   * Đánh dấu thanh toán thành công: FINISHED → PAID.
+   * Đánh dấu thanh toán thành công: FINISHED -> PAID.
    * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần đánh dấu
@@ -166,7 +171,7 @@ public class AuctionService implements IAuctionService {
     auction.transitionToPaid();
     notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
             auction.getCurrentLeader(), auction.getCurrentPrice());
-    System.out.println("[AUCTION SERVICE] Giao dịch hoàn tất — PAID.");
+    System.out.println("[AUCTION SERVICE] Giao dịch hoàn tất - PAID.");
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -183,7 +188,12 @@ public class AuctionService implements IAuctionService {
    */
   @Override
   public void cancelAuction(Auction auction, Admin.CancelReason reason) {
-    system.autoCancelAuction(auction, reason);
+    auction.transitionToCancel();
+    String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
+            auction.getId(), reason);
+    system.addActionLog(log);
+    System.out.println(log);
+    // TODO: auctionDAO.update(auction)
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0);
 
     // Notify staff về việc hủy
@@ -208,14 +218,37 @@ public class AuctionService implements IAuctionService {
    */
   @Override
   public void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason) {
-    if (staff.isMaster()) {
+    if (staff.isSystem()) {
       throw new IllegalArgumentException(
-              "SystemAdmin không dùng overload này — gọi cancelAuction(auction, reason).");
+              "SystemAdmin không dùng overload này - gọi autoCancelAuction(auction, reason).");
     }
-    system.cancelAuctionByStaff(staff, auction, reason);
+    auction.transitionToCancel();
+    String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
+            staff.getUsername(), auction.getId(), reason);
+    staff.addActionLog(staffLog);
+    System.out.println(staffLog);
+
+    String auditLog = String.format("[AUDIT] Staff %s hủy phiên %s | Lý do: %s",
+            staff.getUsername(), auction.getId(), reason);
+    system.addActionLog(auditLog);
+    System.out.println(auditLog);
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+  }
+
+  /**
+   * SystemAdmin auto duyệt yêu cầu hủy phiên của Seller,
+   * với điều kiện phiên chỉ đang ở trạng thái OPEN
+   * Chỉ gọi khi Seller request hủy
+   * approve -> hủy
+   * reject -> phiên tiếp tục RUNNING
+   *
+   * @param auction phiên auction cần hủy
+   * <p>Lý do hủy (ở đây là Seller Request)
+   */
+  public void autoHandleCancelRequest(Auction auction) {
+      cancelAuction(auction, SELLER_REQUEST);
   }
 
   /**

@@ -20,16 +20,7 @@ public class Auction extends Entity {
     PAID,
     CANCELED,
     /** Phiên đã kết thúc nhưng reserve price chưa được đáp ứng. */
-    RESERVE_NOT_MET,
-    /**
-     * Seller đã gửi yêu cầu hủy phiên, đang chờ Staff Admin xem xét.
-     *
-     * <p>Đây là trạng thái trung gian: phiên chưa bị hủy cho đến khi Staff approve
-     * bằng cách gọi {@link com.group13.auction.service.AuctionService#cancelAuction(
-     * com.group13.auction.model.user.Admin, Auction,
-     * com.group13.auction.model.user.Admin.CancelReason)}.
-     */
-    CANCEL_REQUESTED
+    RESERVE_NOT_MET
   }
 
   private final Item item;
@@ -148,10 +139,6 @@ public class Auction extends Entity {
       case OPEN:
         return OpenState.INSTANCE;
       case RUNNING:
-        // TODO: CANCEL_REQUESTED được map về RunningState vì phiên vẫn đang chạy
-        // Logic nghiệp vụ CANCEL_REQUESTED được quản lý ở tầng Service
-        return RunningState.INSTANCE;
-      case CANCEL_REQUESTED:
         return RunningState.INSTANCE;
       case FINISHED:
         return FinishedState.INSTANCE;
@@ -209,8 +196,7 @@ public class Auction extends Entity {
   }
 
   public boolean isAcceptingBids() {
-    return state.getStatus() == AuctionStatus.RUNNING
-            || state.getStatus() == AuctionStatus.CANCEL_REQUESTED;
+    return state.getStatus() == AuctionStatus.RUNNING;
   }
 
   /**
@@ -271,25 +257,6 @@ public class Auction extends Entity {
    */
   public void transitionToPaid() {
     this.state = state.markPaid();
-    markUpdated();
-  }
-
-  /**
-   * Chuyển phiên sang trạng thái CANCEL_REQUESTED khi Seller yêu cầu hủy.
-   *
-   * <p>Phiên vẫn tiếp tục nhận bid cho đến khi Staff Admin approve hoặc reject.
-   * Chỉ được gọi từ {@link com.group13.auction.service.AccountService#requestCancelAuction}.
-   *
-   * @throws IllegalStateException nếu phiên không ở RUNNING hoặc OPEN
-   */
-  public void transitionToCancelRequested() {
-    AuctionStatus current = state.getStatus();
-    if (current != AuctionStatus.OPEN && current != AuctionStatus.RUNNING) {
-      throw new IllegalStateException(
-              "Chỉ có thể yêu cầu hủy khi phiên đang OPEN hoặc RUNNING. Hiện tại: " + current);
-    }
-    // Giữ nguyên state object (RUNNING/OPEN), chỉ đổi trạng thái logic
-    // TODO: AuctionDAO.updateAuctionStatus(getId(), CANCEL_REQUESTED.name())
     markUpdated();
   }
 

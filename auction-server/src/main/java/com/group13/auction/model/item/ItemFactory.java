@@ -2,7 +2,7 @@ package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IRatingService;
 
 /**
  * Abstract Factory tạo Item - tập trung validate và khởi tạo.

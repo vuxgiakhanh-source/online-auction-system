@@ -8,7 +8,7 @@ import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.serviceInterface.IWalletService;
+import com.group13.auction.service.iservice.IWalletService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,9 +16,6 @@ import java.util.List;
 
 /**
  * Quản lý tài chính và cọc tập trung — Single Responsibility.
- * <p>Thay vì để NormalUser tự quản lý mọi thứ, WalletService tập trung
- *  vào logic trừ tiền trực tiếp để tránh việc "dùng một số tiền cọc cho
- *  nhiều nơi".
  *
  * <p>Mọi thao tác tiền tệ đều tạo {@link FinancialTransaction} để ghi log audit.
  *
@@ -125,7 +122,7 @@ public class WalletService implements IWalletService {
 
     /**
      * Thực hiện toàn bộ luồng giao dịch thanh toán trong một khối chặt chẽ.
-     * Winner → SystemBank → Seller (sau thuế).
+     * Winner -> SystemBank -> Seller (sau thuế).
      */
     @Override
     public void executePaymentTransaction(NormalUser winner, NormalUser seller,
@@ -246,58 +243,6 @@ public class WalletService implements IWalletService {
         financialTransactionDAO.saveTransaction(txRefund);
     }
 
-    /**
-     * Thực hiện giao dịch Second Chance Offer khi runner-up chấp nhận.
-     * Logic tương tự winner ban đầu nhưng với offerPrice.
-     */
-    public void executeSecondChancePayment(NormalUser runnerUp, NormalUser seller,
-                                           double offerPrice, double depositPaid, String auctionId) {
-
-        double remaining = offerPrice - depositPaid;
-
-        if (runnerUp.getAvailableBalance() < remaining) {
-            throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
-                    String.format("Runner-up cần %.0f, khả dụng: %.0f",
-                            remaining, runnerUp.getAvailableBalance()));
-        }
-
-        double originalRunnerUpBalance = runnerUp.getBalance();
-        double originalSellerBalance = seller.getBalance();
-
-        try {
-            // Runner-up trả phần còn lại
-            runnerUp.setBalance(runnerUp.getBalance() - remaining);
-            runnerUp.unlockDeposit(depositPaid);
-            userDAO.updateBalances(runnerUp.getId(), runnerUp.getBalance(), runnerUp.getLockedDeposit());
-
-            // SystemBank tiếp nhận và chuyển cho seller
-            systemBank.receive(offerPrice);
-            double payout = systemBank.payoutToSeller(offerPrice);
-
-            seller.setBalance(seller.getBalance() + payout);
-            userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
-
-            FinancialTransaction tx = FinancialTransaction.create(
-                    runnerUp.getId(), seller.getId(), offerPrice,
-                    TransactionType.SECOND_CHANCE_PAYMENT, auctionId);
-            transactionLog.add(tx);
-            tx.printInfo();
-            financialTransactionDAO.saveTransaction(tx);
-
-            System.out.printf("[WALLET] Second Chance Payment thành công | Runner-up: %s | Giá: %.0f%n",
-                    runnerUp.getUsername(), offerPrice);
-
-        } catch (Exception e) {
-            // Rollback
-            runnerUp.setBalance(originalRunnerUpBalance);
-            seller.setBalance(originalSellerBalance);
-
-            System.err.printf("[WALLET] ROLLBACK Second Chance Payment phiên %s | Lỗi: %s%n",
-                    auctionId, e.getMessage());
-            throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
-                    "Second Chance giao dịch thất bại, đã rollback: " + e.getMessage());
-        }
-    }
 
     /** @return lịch sử giao dịch (chỉ đọc) */
     public List<FinancialTransaction> getTransactionLog() {
