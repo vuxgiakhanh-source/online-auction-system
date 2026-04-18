@@ -13,13 +13,13 @@ import java.time.LocalDateTime;
 public class FinancialTransaction extends Entity {
 
     public enum TransactionType {
-        DEPOSIT_LOCK,         // khóa tiền cọc khi joinAuction
-        DEPOSIT_UNLOCK,       // hoàn cọc cho bidder không thắng
-        DEPOSIT_FORFEIT,      // tịch thu cọc của winner vi phạm -> SystemBank
-        PAYMENT_FROM_WINNER,  // winner trả phần còn lại
-        TAX_COLLECTED,        // thuế thu vào ngân hàng hệ thống
-        PAYOUT_TO_SELLER,     // hệ thống chuyển tiền (đã trừ thuế) cho seller
-        REFUND_TO_WINNER,     // hệ thống hoàn tiền cho winner (khi seller vi phạm)
+        DEPOSIT_LOCK, // khóa tiền cọc khi joinAuction
+        DEPOSIT_UNLOCK, // hoàn cọc cho bidder không thắng
+        DEPOSIT_FORFEIT, // tịch thu cọc của winner vi phạm -> SystemBank
+        PAYMENT_FROM_WINNER, // winner trả phần còn lại
+        TAX_COLLECTED, // thuế thu vào ngân hàng hệ thống
+        PAYOUT_TO_SELLER, // hệ thống chuyển tiền (đã trừ thuế) cho seller
+        REFUND_TO_WINNER, // hệ thống hoàn tiền cho winner (khi seller vi phạm)
         SECOND_CHANCE_PAYMENT // runner-up thanh toán theo second chance offer
     }
 

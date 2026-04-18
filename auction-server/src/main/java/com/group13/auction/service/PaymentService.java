@@ -12,10 +12,10 @@ import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.observer.AuctionEvent;
-import com.group13.auction.service.serviceInterface.IAuctionService;
-import com.group13.auction.service.serviceInterface.IPaymentService;
-import com.group13.auction.service.serviceInterface.IRatingService;
-import com.group13.auction.service.serviceInterface.IWalletService;
+import com.group13.auction.service.iservice.IAuctionService;
+import com.group13.auction.service.iservice.IPaymentService;
+import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.service.iservice.IWalletService;
 
 import java.util.List;
 
@@ -76,9 +76,15 @@ public class PaymentService implements IPaymentService {
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
   }
 
+  /** Chú ý: method ni được gọi ở Scheduler check isExpired */
   @Override
   public void expirePayment(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
+
+    if (auctionWinner.getIsSecondOffer()) {
+      auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
+      return;
+    }
 
     if (!auctionWinner.isExpired()) {
       return;
@@ -125,7 +131,7 @@ public class PaymentService implements IPaymentService {
       throw new IllegalStateException("Second Chance Offer không còn ở PENDING: " + offer.getStatus());
     }
     if (offer.isExpired()) {
-      offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
+//      offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
       System.out.printf("[PAYMENT] Second Chance Offer hết hạn — phiên %s bị hủy.%n", auction.getId());
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
@@ -137,11 +143,24 @@ public class PaymentService implements IPaymentService {
     NormalUser runnerUp = offer.getRunnerUp();
     NormalUser seller = auction.getItem().getSeller();
 
-    walletService.executeSecondChancePayment(
-            runnerUp, seller, offer.getOfferPrice(), offer.getDepositPaid(), auction.getId());
+    // Khởi tạo Winner mới có thông tin của Runner-up
+    AuctionWinner newWinner = AuctionWinner.reconstitute(
+            runnerUp.getId(),
+            runnerUp.getCreatedAt(),
+            runnerUp.getUpdatedAt(),
+            runnerUp,
+            auction.getId(),
+            offer.getOfferPrice(),
+            offer.getDepositPaid(),
+            offer.getUpdatedAt().plusHours(24),
+            AuctionWinner.PaymentStatus.PENDING,
+            true
+    );
+
+    auction.setWinner(newWinner);
+    walletService.lockDeposit(runnerUp, offer.getDepositPaid(), auction.getId());
 
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
-    auctionService.markAsPaid(auction);
 
     System.out.printf("[PAYMENT] Runner-up %s chấp nhận Second Chance Offer | Giá: %.0f%n",
             runnerUp.getUsername(), offer.getOfferPrice());
@@ -154,7 +173,7 @@ public class PaymentService implements IPaymentService {
     if (offer.getStatus() != SecondChanceOffer.OfferStatus.PENDING) {
       throw new IllegalStateException("Second Chance Offer không còn ở PENDING: " + offer.getStatus());
     }
-    walletService.unlockDeposit(offer.getRunnerUp(), offer.getDepositPaid(), auction.getId());
+//    walletService.unlockDeposit(offer.getRunnerUp(), offer.getDepositPaid(), auction.getId());
 
     offer.setStatus(SecondChanceOffer.OfferStatus.DECLINED);
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
@@ -164,28 +183,6 @@ public class PaymentService implements IPaymentService {
 
     // Thực hiện TODO: Cập nhật DB
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
-  }
-
-  public void handleSellerRefundDefault(NormalUser seller, NormalUser winner, Auction auction) {
-    seller.setAccountStatus(NormalUser.AccountStatus.BANNED);
-    String log = String.format("[PAYMENT] Seller %s bị BAN VĨNH VIỄN do không hoàn trả đúng hạn.",
-            seller.getUsername());
-    SystemAdmin.getInstance().addActionLog(log);
-    System.out.println(log);
-
-    walletService.executeRefundToWinner(winner, seller, auction.getWinner().getFinalPrice(), auction.getId());
-
-    // Thực hiện TODO: Ban tài khoản seller xuống DB
-    userDAO.updateAccountStatus(seller.getId(), "BANNED");
-  }
-
-  public void handleQualityReportApproved(NormalUser seller, NormalUser winner) {
-    ratingService.penalizeSeller(seller);
-    SystemAdmin.getInstance().autoBanIfNeeded(seller);
-    System.out.printf("[PAYMENT] Seller %s bị phạt rating | Winner %s sẽ nhận hoàn tiền trong 24h.%n",
-            seller.getUsername(), winner.getUsername());
-
-    // TODO: System có thể gọi notificationService.send(seller.getId(), "Bạn có 24h để hoàn tiền...")
   }
 
   private void offerSecondChance(Auction auction) {

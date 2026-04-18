@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 /**
  * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá.
+ * <p>TODO: DB là gốc, mỗi khi AM thay đổi gì thì phải gọi DAO cập nhật lập tức
+ * <p>TODO: Cần 1 method gọi auctionDao.findAlL() -> nạp toàn bộ vào List của AM
+ * khi ứng dụng khởi động
  *
  * <p>AuctionManager = điều phối kỹ thuật (quản lý danh sách, routing).
  * <p>Phiên đấu giá do Seller quyết định tạo; {@link
@@ -297,7 +300,7 @@ public class AuctionManager {
     }
   }
 
-  /** @return toàn bộ user (read-only) */
+  /** @return toàn bộ user (chỉ đọc) */
   public List<User> getAllUsers() {
     synchronized (allUsers) {
       return Collections.unmodifiableList(new ArrayList<>(allUsers));

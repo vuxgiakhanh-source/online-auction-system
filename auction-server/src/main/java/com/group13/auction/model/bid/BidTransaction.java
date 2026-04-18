@@ -18,7 +18,7 @@ public class BidTransaction extends Entity {
   }
 
   private final NormalUser bidder;
-  private final Auction auction;
+  private final String auctionId;
   private final double amount;
   private final LocalDateTime timestamp;
   private BidResult result;
@@ -29,44 +29,44 @@ public class BidTransaction extends Entity {
    * Khai sinh BidTransaction mới.
    *
    * @param bidder người đặt giá
-   * @param auction phiên liên quan
+   * @param auctionId id của phiên liên quan
    * @param amount số tiền đặt
    * @param result kết quả
    * @return BidTransaction mới
    */
-  public static BidTransaction create(NormalUser bidder, Auction auction,
+  public static BidTransaction create(NormalUser bidder, String auctionId,
                                       double amount, BidResult result) {
-    return new BidTransaction(bidder, auction, amount, result);
+    return new BidTransaction(bidder, auctionId, amount, result);
   }
 
   /**
    * Hồi sinh BidTransaction từ DB — CHÚ Ý: chỉ DAO được gọi method này.
    */
   public static BidTransaction reconstitute(String id, LocalDateTime createdAt,
-                                            LocalDateTime updatedAt, NormalUser bidder, Auction auction,
+                                            LocalDateTime updatedAt, NormalUser bidder, String auctionId,
                                             double amount, LocalDateTime timestamp, BidResult result) {
     return new BidTransaction(id, createdAt, updatedAt, bidder,
-            auction, amount, timestamp, result);
+            auctionId, amount, timestamp, result);
   }
 
   // Private constructors
 
-  private BidTransaction(NormalUser bidder, Auction auction,
+  private BidTransaction(NormalUser bidder, String auctionId,
                          double amount, BidResult result) {
     super();
     this.bidder = bidder;
-    this.auction = auction;
+    this.auctionId = auctionId;
     this.amount = amount;
     this.timestamp = LocalDateTime.now();
     this.result = result;
   }
 
   private BidTransaction(String id, LocalDateTime createdAt,
-                         LocalDateTime updatedAt, NormalUser bidder, Auction auction,
+                         LocalDateTime updatedAt, NormalUser bidder, String auctionId,
                          double amount, LocalDateTime timestamp, BidResult result) {
     super(id, createdAt, updatedAt);
     this.bidder = bidder;
-    this.auction = auction;
+    this.auctionId = auctionId;
     this.amount = amount;
     this.timestamp = timestamp;
     this.result = result;
@@ -75,7 +75,7 @@ public class BidTransaction extends Entity {
   // Getters
 
   public NormalUser getBidder() { return bidder; }
-  public Auction getAuction() { return auction; }
+  public String getAuctionId() { return auctionId; }
   public double getAmount() { return amount; }
   public LocalDateTime getTimestamp() { return timestamp; }
   public BidResult getResult() { return result; }

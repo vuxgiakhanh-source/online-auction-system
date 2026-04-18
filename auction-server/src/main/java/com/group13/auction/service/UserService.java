@@ -6,7 +6,7 @@ import com.group13.auction.exception.AuthenticationException.Reason;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User.AccountStatus;
-import com.group13.auction.service.serviceInterface.IUserService;
+import com.group13.auction.service.iservice.IUserService;
 
 /**
  * Xử lý xác thực người dùng (authentication).
@@ -29,7 +29,8 @@ public class UserService implements IUserService {
    * @return Đối tượng User nếu đăng nhập thành công
    * @throws AuthenticationException nếu xác thực thất bại
    */
-  public User login(String username, String inputPassword) {
+  @Override
+  public void login(String username, String inputPassword) {
 
     // 1. Tìm user trong Database
     NormalUser user = userDAO.findUserByUsername(username);
@@ -53,7 +54,6 @@ public class UserService implements IUserService {
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
-    // 5. Đăng nhập thành công, trả về thông tin user
-    return user;
+    // 5. Đăng nhập thành công
   }
 }

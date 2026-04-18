@@ -1,7 +1,7 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IRatingService;
 
 /**
  * Observer dành cho Bidder — nhận notify về bid và kết quả phiên.

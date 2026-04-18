@@ -1,9 +1,6 @@
 package com.group13.auction.service;
 
-import com.group13.auction.dao.AdminDAO;
-import com.group13.auction.dao.AuctionDAO;
-import com.group13.auction.dao.SellerDAO;
-import com.group13.auction.dao.UserDAO;
+import com.group13.auction.dao.*;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.Admin;
@@ -15,15 +12,16 @@ import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.model.user.UserFactory;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.StaffObserver;
-import com.group13.auction.service.serviceInterface.IAccountService;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IAccountService;
+import com.group13.auction.service.iservice.IRatingService;
+
+import java.util.List;
 
 /**
  * Quản lý trạng thái tài khoản: ban, deposit, tạo admin STAFF, quản lý role.
- * Tách khỏi UserService để tuân thủ SRP.
  *
  * <p>Chỉ SystemAdmin (MASTER) mới được tạo admin STAFF qua
- * {@link #createStaffAdmin}. Không có overload nào cho phép tạo MASTER —
+ * {@link #createStaffAdmin}.
  * MASTER duy nhất là {@link SystemAdmin}, được seed sẵn khi bootstrap.
  *
  * <p>Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
@@ -38,19 +36,26 @@ public class AccountService implements IAccountService {
   private final AdminDAO adminDAO;
   private final AuctionDAO auctionDAO;
 
-  /** Nhận dependencies qua constructor (DIP). */
+  /**
+   * TODO: inject AuctionWinnerDAO để kiểm tra trạng thái thanh toán của winner/runner-up
+   * khi xóa tài khoản. Cần AuctionWinnerDAO.findPendingByUserId(userId).
+   */
+  private final AuctionWinnerDAO auctionWinnerDAO;
+
   public AccountService(
           IRatingService ratingService,
           UserDAO userDAO,
           SellerDAO sellerDAO,
           AdminDAO adminDAO,
-          AuctionDAO auctionDAO) {
+          AuctionDAO auctionDAO,
+          AuctionWinnerDAO auctionWinnerDAO) {
     this.ratingService = ratingService;
     this.adminFactory = new AdminFactory();
     this.userDAO = userDAO;
     this.sellerDAO = sellerDAO;
     this.adminDAO = adminDAO;
     this.auctionDAO = auctionDAO;
+    this.auctionWinnerDAO = auctionWinnerDAO;
   }
 
   // Ban
@@ -222,19 +227,10 @@ public class AccountService implements IAccountService {
     if (!seller.getAllAuctionIds().contains(auction.getId())) {
       throw new IllegalArgumentException("Seller không sở hữu phiên đấu giá này.");
     }
-    if (auction.getStatus() != Auction.AuctionStatus.OPEN
-            && auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+    if (auction.getStatus() != Auction.AuctionStatus.OPEN) {
       throw new IllegalStateException(
               "Phiên đấu giá không thể yêu cầu hủy ở trạng thái: " + auction.getStatus());
     }
-
-    // Chuyển trạng thái sang CANCEL_REQUESTED (phiên vẫn nhận bid)
-    auction.transitionToCancelRequested();
-
-    // TODO: auctionDAO.updateAuctionStatus(auction.getId(), "CANCEL_REQUESTED")
-    // — cập nhật xuống DB để Staff Admin truy vấn được
-    auction.transitionToCancelRequested();
-    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
 
     // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
@@ -252,8 +248,12 @@ public class AccountService implements IAccountService {
   // Delete account
 
   /**
+   * XEM XÉT NÊN BỎ (RƯỜM RÀ QUÁ)
    * User tự xóa tài khoản của mình (soft-delete).
    *
+   * Seller đang có phiên OPEN hoặc RUNNING -> không cho xóa
+   * User chưa thanh toán phiên -> không cho xóa
+   * Seller / User đang có QualityReport được approved nhưng chưa xong -> không cho xóa
    * <p>Bắt buộc số dư khả dụng phải bằng 0 trước khi xóa tài khoản.
    * Nếu còn tiền, user phải rút hết trước.
    *
@@ -262,6 +262,19 @@ public class AccountService implements IAccountService {
    */
   @Override
   public void deleteAccount(NormalUser user) {
+
+    // Seller đang có phiên OPEN hoặc RUNNING
+    if (user.hasRole(User.UserRole.SELLER)) {
+      List<String> unfinished = user.getUnfinishedAuctionIds(
+              AuctionManager.getInstance()::findAuctionById);
+      if (!unfinished.isEmpty()) {
+        throw new IllegalStateException(
+                String.format(
+                        "Seller đang có %d phiên chưa kết thúc (OPEN/RUNNING). "
+                                + "Không thể xóa tài khoản.",
+                        unfinished.size()));
+      }
+    }
     if (user.getLockedDeposit() > 0) {
       throw new IllegalStateException(
               String.format(

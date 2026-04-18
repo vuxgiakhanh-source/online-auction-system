@@ -1,4 +1,4 @@
-package com.group13.auction.service.serviceInterface;
+package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.user.NormalUser;
 
@@ -90,6 +90,6 @@ public interface IWalletService {
      * @param auctionId   id phiên
      * @throws com.group13.auction.exception.PaymentException nếu runner-up không đủ số dư
      */
-    void executeSecondChancePayment(NormalUser runnerUp, NormalUser seller,
-                                    double offerPrice, double depositPaid, String auctionId);
+//    void executeSecondChancePayment(NormalUser runnerUp, NormalUser seller,
+//                                    double offerPrice, double depositPaid, String auctionId);
 }

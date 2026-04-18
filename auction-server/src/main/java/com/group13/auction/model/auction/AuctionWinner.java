@@ -30,6 +30,8 @@ public class AuctionWinner extends Entity {
   private final LocalDateTime deadline;
   private PaymentStatus paymentStatus;
 
+  private boolean isSecondOffer;
+
   // Static factory methods
 
   /**
@@ -45,25 +47,28 @@ public class AuctionWinner extends Entity {
    * @return AuctionWinner mới
    */
   public static AuctionWinner create(NormalUser winner, String auctionId,
-                                     double finalPrice, double depositPaid) {
-    return new AuctionWinner(winner, auctionId, finalPrice, depositPaid);
+                                     double finalPrice, double depositPaid,
+                                     boolean isSecondOffer) {
+    return new AuctionWinner(winner, auctionId, finalPrice, depositPaid, isSecondOffer);
   }
 
   /**
-   * Hồi sinh AuctionWinner từ DB — chỉ DAO được gọi method này.
+   * Cách 1: Hồi sinh AuctionWinner từ DB — chỉ DAO được gọi method này.
+   * Cách 2: Tạo 1 đối tượng Winner mới từ dữ liệu của Runner-up
    */
   public static AuctionWinner reconstitute(String id, LocalDateTime createdAt,
                                            LocalDateTime updatedAt, NormalUser winner, String auctionId,
                                            double finalPrice, double depositPaid, LocalDateTime deadline,
-                                           PaymentStatus paymentStatus) {
+                                           PaymentStatus paymentStatus, boolean isSecondOffer) {
     return new AuctionWinner(id, createdAt, updatedAt, winner, auctionId,
-            finalPrice, depositPaid, deadline, paymentStatus);
+            finalPrice, depositPaid, deadline, paymentStatus, isSecondOffer);
   }
 
   // Private constructors
 
   private AuctionWinner(NormalUser winner, String auctionId,
-                        double finalPrice, double depositPaid) {
+                        double finalPrice, double depositPaid,
+                        boolean isSecondOffer) {
     super();
     this.winner = winner;
     this.auctionId = auctionId;
@@ -71,12 +76,13 @@ public class AuctionWinner extends Entity {
     this.depositPaid = depositPaid;
     this.deadline = LocalDateTime.now().plusHours(24);
     this.paymentStatus = PaymentStatus.PENDING;
+    this.isSecondOffer = isSecondOffer;
   }
 
   private AuctionWinner(String id, LocalDateTime createdAt,
                         LocalDateTime updatedAt, NormalUser winner, String auctionId,
                         double finalPrice, double depositPaid, LocalDateTime deadline,
-                        PaymentStatus paymentStatus) {
+                        PaymentStatus paymentStatus, boolean isSecondOffer) {
     super(id, createdAt, updatedAt);
     this.winner = winner;
     this.auctionId = auctionId;
@@ -84,6 +90,7 @@ public class AuctionWinner extends Entity {
     this.depositPaid = depositPaid;
     this.deadline = deadline;
     this.paymentStatus = paymentStatus;
+    this.isSecondOffer = isSecondOffer;
   }
 
   // Getters
@@ -99,7 +106,20 @@ public class AuctionWinner extends Entity {
   public double getRemainingAmount() {
     return Math.max(0, finalPrice - depositPaid);
   }
+  public boolean getIsSecondOffer() {
+    return this.isSecondOffer;
+  }
 
+  /**
+   * Kiểm tra Winner đã quá hạn thanh toán chưa
+   * TODO: Xây dựng scheduler quét định kỳ (ví dụ mỗi phút hoặc mỗi giờ) toàn bộ
+   * AuctionWinner có {@code paymentStatus == PENDING}.
+   * <p> Cụ thể: Khi scheduler quét trúng thằng nào trả về true,
+   * nó sẽ gọi {@link com.group13.auction.service.PaymentService#expirePayment(Auction)}
+   * để tịch thu cọc và kích hoạt luồng SecondChanceOffer
+   *
+   * @return true nếu đã quá deadline và chưa thanh toán
+   */
   public boolean isExpired() {
     return LocalDateTime.now().isAfter(deadline)
             && paymentStatus == PaymentStatus.PENDING;

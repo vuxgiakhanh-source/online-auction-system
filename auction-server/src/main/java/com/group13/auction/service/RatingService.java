@@ -4,7 +4,7 @@ import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
-import com.group13.auction.service.serviceInterface.IRatingService;
+import com.group13.auction.service.iservice.IRatingService;
 import java.time.LocalDateTime;
 
 /**
@@ -16,12 +16,8 @@ import java.time.LocalDateTime;
  * Đã thực hiện TODO: inject UserDAO để persist xuống DB.
  *
  * <p>Cơ chế phục hồi SUSPENDED:
- * <ul>
- *   <li>Sau 3 tháng bị SUSPENDED, hệ thống tự động cộng rating để tài khoản
- *       vượt ngưỡng và chuyển về ACTIVE.</li>
- *   <li>Cơ chế này chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi tài khoản.
- *       Sau khi đã được phục hồi một lần, tài khoản sẽ không được auto-restore nữa.</li>
- * </ul>
+ * Sau 3 tháng được 1 lần, 1 tài khoản đc 1 lần
+ *
  */
 public class RatingService implements IRatingService {
 
@@ -41,7 +37,6 @@ public class RatingService implements IRatingService {
    *
    * <p>Cộng đủ để vượt ngưỡng SUSPEND ({@value User#RATING_SUSPEND_THRESHOLD})
    * và đạt tối thiểu {@value #MIN_RATING_ELIGIBLE} để có thể tham gia phiên.
-   * Công thức: SUSPEND_THRESHOLD + epsilon = 1.5 + 0.6 = 2.1 > MIN_RATING_ELIGIBLE (2.0).
    */
   private static final double RESTORE_DELTA = 0.6;
 
@@ -131,14 +126,7 @@ public class RatingService implements IRatingService {
 
   /**
    * Auto-restore rating cho tài khoản SUSPENDED sau 3 tháng.
-   *
-   * <p>Điều kiện:
-   * <ol>
-   *   <li>Tài khoản đang SUSPENDED.</li>
-   *   <li>Đã đủ {@value #SUSPEND_RESTORE_MONTHS} tháng kể từ lúc bị suspend.</li>
-   *   <li>Chưa từng được auto-restore trước đó
-   *       (kiểm tra qua {@link NormalUser#isHasEverBeenRestored()}).</li>
-   * </ol>
+   *(Miễn chưa từng được restore)
    *
    * <p>Sau khi restore: rating tăng thêm {@value #RESTORE_DELTA},
    * nếu rating > ngưỡng SUSPEND thì chuyển về ACTIVE.
@@ -195,7 +183,7 @@ public class RatingService implements IRatingService {
     userDAO.updateRating(user.getId(), user.getRating());
     userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
     // TODO: userDAO.updateRestoreFlag(user.getId(), true)
-    // — lưu cờ hasEverBeenRestored xuống DB để không mất khi restart
+    // lưu cờ hasEverBeenRestored xuống DB để không mất khi restart
   }
 
   // Private helpers

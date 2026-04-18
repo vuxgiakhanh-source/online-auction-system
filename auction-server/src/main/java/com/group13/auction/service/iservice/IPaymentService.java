@@ -1,6 +1,7 @@
-package com.group13.auction.service.serviceInterface;
+package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
 
 /**
  * Hợp đồng xử lý thanh toán sau khi phiên đấu giá kết thúc.

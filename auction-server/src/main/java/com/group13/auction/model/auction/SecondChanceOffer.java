@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 public class SecondChanceOffer extends Entity {
 
     public enum OfferStatus {
-        PENDING,   // chờ runner-up quyết định
-        ACCEPTED,  // runner-up chấp nhận -> kích hoạt giao dịch
-        DECLINED,  // runner-up từ chối
-        EXPIRED    // hết 24h
+        PENDING, // chờ runner-up quyết định
+        ACCEPTED, // runner-up chấp nhận -> kích hoạt giao dịch
+        DECLINED, // runner-up từ chối
+        EXPIRED // hết 24h
     }
 
     private final NormalUser runnerUp;
@@ -89,6 +89,10 @@ public class SecondChanceOffer extends Entity {
         return Math.max(0, offerPrice - depositPaid);
     }
 
+    /** TODO: Xây dựng scheduler quét định kỳ toàn bộ SecondChanceOffer có
+     * {@code status == PENDING}.
+     * sau 24h -> chuyển trạng thái sang EXPIRED
+     */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(deadline) && status == OfferStatus.PENDING;
     }

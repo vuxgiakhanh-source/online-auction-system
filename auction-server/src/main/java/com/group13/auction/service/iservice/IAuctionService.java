@@ -1,4 +1,4 @@
-package com.group13.auction.service.serviceInterface;
+package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Item;
@@ -71,6 +71,17 @@ public interface IAuctionService {
    * @throws IllegalArgumentException nếu {@code staff} là SystemAdmin
    */
   void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason);
+
+  /**
+   * SystemAdmin auto duyệt yêu cầu hủy phiên của Seller,
+   * với điều kiện phiên chỉ đang ở trạng thái OPEN
+   * approve -> hủy
+   * reject -> phiên tiếp tục RUNNING
+   *
+   * @param auction phiên auction cần hủy
+   * <p>Lý do hủy (ở đây là Seller Request)
+   */
+  public void autoHandleCancelRequest(Auction auction);
 
   /**
    * Thông báo trước khi phiên bắt đầu (5-10 phút).

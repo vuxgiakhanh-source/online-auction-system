@@ -102,6 +102,7 @@ public class SystemAdmin extends Admin {
             addActionLog(log);
             System.out.println(log);
             // TODO: userDAO.update(user)
+            // SystemAdmin chưa inject UserDAO — cần refactor bootstrap() để nhận UserDAO.
         }
     }
 
@@ -125,50 +126,7 @@ public class SystemAdmin extends Admin {
         this.addActionLog(auditLog);
         System.out.println(auditLog);
         // TODO: userDAO.update(user)
-    }
-
-    // Auto-cancel logic
-
-    /**
-     * Tự động hủy phiên đấu giá (no-winner / reserve-not-met / lỗi hệ thống).
-     * Log được ghi vào SystemAdmin.
-     *
-     * @param auction phiên cần hủy
-     * @param reason lý do hủy
-     */
-    public void autoCancelAuction(Auction auction, Admin.CancelReason reason) {
-        auction.transitionToCancel();
-        String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
-                auction.getId(), reason);
-        addActionLog(log);
-        System.out.println(log);
-        // TODO: auctionDAO.update(auction)
-    }
-
-    /**
-     * Overload: Staff Admin cụ thể hủy phiên sau khi điều tra.
-     * Dùng khi có yêu cầu Seller request cancel hoặc cần người chịu trách nhiệm.
-     *
-     * @param staff staff admin thực hiện
-     * @param auction phiên cần hủy
-     * @param reason lý do hủy
-     */
-    public void cancelAuctionByStaff(Admin staff, Auction auction, Admin.CancelReason reason) {
-        if (staff.isSystem()) {
-            throw new IllegalArgumentException(
-                    "SystemAdmin không dùng overload này - gọi autoCancelAuction(auction, reason).");
-        }
-        auction.transitionToCancel();
-        String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
-                staff.getUsername(), auction.getId(), reason);
-        staff.addActionLog(staffLog);
-        System.out.println(staffLog);
-
-        String auditLog = String.format("[AUDIT] Staff %s hủy phiên %s | Lý do: %s",
-                staff.getUsername(), auction.getId(), reason);
-        addActionLog(auditLog);
-        System.out.println(auditLog);
-        // TODO: auctionDAO.update(auction)
+        // Tương tự autoBanIfNeeded() — cần inject UserDAO
     }
 
     @Override
