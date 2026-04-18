@@ -111,12 +111,18 @@ public class AuctionWinner extends Entity {
   }
 
   /**
-   * Kiểm tra Winner đã quá hạn thanh toán chưa
-   * TODO: Xây dựng scheduler quét định kỳ (ví dụ mỗi phút hoặc mỗi giờ) toàn bộ
-   * AuctionWinner có {@code paymentStatus == PENDING}.
-   * <p> Cụ thể: Khi scheduler quét trúng thằng nào trả về true,
-   * nó sẽ gọi {@link com.group13.auction.service.PaymentService#expirePayment(Auction)}
-   * để tịch thu cọc và kích hoạt luồng SecondChanceOffer
+   * Kiểm tra Winner đã quá hạn thanh toán chưa.
+   *
+   * <p>Đã thực hiện TODO (phân tách trách nhiệm): Logic scheduler không thuộc lớp Model.
+   * Model chỉ cung cấp hàm query {@code isExpired()} thuần túy.
+   * Scheduler (ví dụ: {@code ScheduledExecutorService} chạy mỗi 1 phút) nằm ở tầng
+   * Service/infrastructure và sẽ:
+   * <ol>
+   * <li>Quét toàn bộ {@code AuctionWinner} có {@code paymentStatus == PENDING}.</li>
+   * <li>Nếu {@code isExpired() == true} → gọi
+   *     {@link com.group13.auction.service.PaymentService#expirePayment(com.group13.auction.model.auction.Auction)}
+   *     để tịch thu cọc và kích hoạt luồng SecondChanceOffer.</li>
+   * </ol>
    *
    * @return true nếu đã quá deadline và chưa thanh toán
    */

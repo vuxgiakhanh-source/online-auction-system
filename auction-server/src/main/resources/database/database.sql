@@ -159,6 +159,7 @@ CREATE TABLE financial_transactions (
 
 ALTER TABLE users
 ADD COLUMN has_ever_been_penalized BOOLEAN DEFAULT FALSE,
+ADD COLUMN has_ever_been_restored BOOLEAN DEFAULT FALSE,
 ADD COLUMN suspended_at DATETIME NULL;
 
 -- =================================================================
