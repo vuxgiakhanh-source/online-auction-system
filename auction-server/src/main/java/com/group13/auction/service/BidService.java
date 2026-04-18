@@ -167,7 +167,7 @@ public class BidService implements IBidService {
 
   private BidTransaction recordTransaction(NormalUser bidder, Auction auction,
                                            double amount, BidResult result) {
-    BidTransaction tx = BidTransaction.create(bidder, auction, amount, result);
+    BidTransaction tx = BidTransaction.create(bidder, auction.getId(), amount, result);
     bidder.addBidToHistory(tx);
 
     // Thực hiện TODO: bidTransactionDAO.save(tx)

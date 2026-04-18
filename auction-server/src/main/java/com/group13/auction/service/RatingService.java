@@ -40,7 +40,6 @@ public class RatingService implements IRatingService {
    */
   private static final double RESTORE_DELTA = 0.6;
 
-  // TODO: Tiêm UserDAO
   private final UserDAO userDAO;
 
   public RatingService(UserDAO userDAO) {
@@ -179,11 +178,11 @@ public class RatingService implements IRatingService {
     // Đánh dấu đã restore 1 lần
     normalUser.markRestored();
 
-    // Thực hiện TODO: Cập nhật điểm, cờ restore và trạng thái mới xuống DB
+    // Đã thực hiện TODO: Cập nhật điểm, cờ restore và trạng thái mới xuống DB
     userDAO.updateRating(user.getId(), user.getRating());
     userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
-    // TODO: userDAO.updateRestoreFlag(user.getId(), true)
-    // lưu cờ hasEverBeenRestored xuống DB để không mất khi restart
+    // Đã thực hiện TODO: persist cờ hasEverBeenRestored để không mất khi restart
+    userDAO.updateHasEverBeenRestored(user.getId(), normalUser.isHasEverBeenRestored());
   }
 
   // Private helpers
