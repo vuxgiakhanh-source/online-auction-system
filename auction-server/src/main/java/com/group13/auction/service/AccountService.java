@@ -37,8 +37,8 @@ public class AccountService implements IAccountService {
   private final AuctionDAO auctionDAO;
 
   /**
-   * TODO: inject AuctionWinnerDAO để kiểm tra trạng thái thanh toán của winner/runner-up
-   * khi xóa tài khoản. Cần AuctionWinnerDAO.findPendingByUserId(userId).
+   * Đã thực hiện TODO: inject AuctionWinnerDAO để kiểm tra trạng thái thanh toán của winner/runner-up
+   * khi xóa tài khoản — dùng auctionWinnerDAO.hasPendingPayment().
    */
   private final AuctionWinnerDAO auctionWinnerDAO;
 
@@ -137,7 +137,7 @@ public class AccountService implements IAccountService {
             "[ACCOUNT] %s rút %.0f | Số dư mới: %.0f%n",
             user.getUsername(), amount, user.getBalance());
 
-    // TODO: userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit())
+    // Đã thực hiện TODO: persist số dư mới xuống DB
     userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
   }
 
@@ -274,6 +274,13 @@ public class AccountService implements IAccountService {
                                 + "Không thể xóa tài khoản.",
                         unfinished.size()));
       }
+    }
+
+    // Đã thực hiện TODO: kiểm tra user còn PENDING payment (là winner/runner-up chưa thanh toán)
+    if (auctionWinnerDAO.hasPendingPayment(user.getId())) {
+      throw new IllegalStateException(
+              "Tài khoản đang có phiên đấu giá thắng cuộc chưa thanh toán. "
+                      + "Hãy hoàn tất thanh toán trước khi xóa tài khoản.");
     }
     if (user.getLockedDeposit() > 0) {
       throw new IllegalStateException(

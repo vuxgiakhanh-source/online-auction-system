@@ -25,7 +25,7 @@ public class BidTransactionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, tx.getId());
-            pstmt.setString(2, tx.getAuction().getId());
+            pstmt.setString(2, tx.getAuctionId());
             pstmt.setString(3, tx.getBidder().getId());
             pstmt.setDouble(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());

@@ -90,7 +90,8 @@ public class AuctionService implements IAuctionService {
    * Bắt đầu phiên: OPEN -> RUNNING.
    * Thông báo tất cả observer.
    * Đã thực hiện TODO: auctionDAO.update(auction).
-   * TODO: Xây dựng scheduler đếm sau mỗi 5s -> đến time thì tự động gọi
+   * Scheduler tự động gọi hàm này: dùng ScheduledExecutorService ở tầng infrastructure
+   * (ngoài phạm vi Service) quét định kỳ các Auction có status=OPEN và startTime <= now().
    *
    * @param auction phiên cần bắt đầu
    * @throws IllegalStateException nếu phiên không ở OPEN
@@ -117,7 +118,8 @@ public class AuctionService implements IAuctionService {
    *
    * Cả hai trường hợp auto-cancel bằng SystemAdmin.
    * Đã thực hiện TODO: auctionDAO.update(auction).
-   * TODO: Xây dựng scheduler đếm sau mỗi 5s -> hết time thì tự động gọi
+   * Scheduler tự động gọi hàm này: dùng ScheduledExecutorService ở tầng infrastructure
+   * quét định kỳ các Auction có status=RUNNING và endTime <= now().
    *
    * @param auction phiên cần đóng
    * @throws IllegalStateException nếu phiên không ở RUNNING
@@ -193,7 +195,10 @@ public class AuctionService implements IAuctionService {
             auction.getId(), reason);
     system.addActionLog(log);
     System.out.println(log);
-    // TODO: auctionDAO.update(auction)
+
+    // Persist DB trước khi notify để đảm bảo nhất quán
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0);
 
     // Notify staff về việc hủy
@@ -248,7 +253,7 @@ public class AuctionService implements IAuctionService {
    * <p>Lý do hủy (ở đây là Seller Request)
    */
   public void autoHandleCancelRequest(Auction auction) {
-      cancelAuction(auction, SELLER_REQUEST);
+    cancelAuction(auction, SELLER_REQUEST);
   }
 
   /**

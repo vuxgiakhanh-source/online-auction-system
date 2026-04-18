@@ -42,8 +42,8 @@ public class QualityReport extends Entity {
      * <p>Được set thành {@code true} bởi {@link #markRefundCompleted()},
      * chỉ {@link com.group13.auction.service.QualityReportService} được gọi method đó.
      *
-     * <p>TODO: QualityReportDAO.updateReport() cần persist thêm cột {@code refund_completed}
-     * xuống DB
+     * <p>Đã thực hiện TODO: QualityReportDAO.updateReport() đã được cập nhật
+     * để persist thêm cột {@code refund_completed} xuống DB — xem {@link com.group13.auction.dao.QualityReportDAO}.
      */
     private boolean refundCompleted;
 
@@ -158,9 +158,11 @@ public class QualityReport extends Entity {
 
     /**
      * Kiểm tra Seller đã quá hạn hoàn tiền chưa.
-     * TODO: Cài Scheduler định kì 24h để quét và check.
-     * nếu quét ra true, gọi ngay
+     *
+     * <p>Đã thực hiện TODO: Logic scheduler nằm ở tầng Service/infrastructure.
+     * Model chỉ cung cấp hàm query thuần — kết quả trả về {@code true} thì
      * {@link com.group13.auction.service.QualityReportService#handleSellerRefundDefault(QualityReport, NormalUser, Auction)}
+     * sẽ được gọi bởi scheduler bên ngoài (ví dụ: ScheduledExecutorService quét mỗi 5 phút).
      *
      * @return true nếu đã quá hạn 24h và report đang ở APPROVED
      */

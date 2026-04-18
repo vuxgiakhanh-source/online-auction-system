@@ -60,15 +60,20 @@ public class NormalUser extends User {
 
     /**
      * Hồi sinh NormalUser từ DB — CHÚ Ý: chỉ DAO được gọi method này.
-     * !!! Vấn đề: Chưa xử lý việc quá nhiều tham số khởi tạo
-     * DAO phải gọi thêm các setter tương ứng sau khi reconstitute để nạp dữ liệu lịch sử.
      *
-     * <p>TODO: UserDAO — sau khi gọi reconstitute()
-     * setBidHistory(UserDAO.findBidHistoryByUserId(id))
-     * setJoinedAuctionIds(UserDAO.findJoinedAuctionIdsByUserId(id))
-     * setWatchListAuctionIds(UserDAO.findWatchListByUserId(id))
-     * setListedItems(ItemDAO.findItemsBySellerId(id))
-     * setAllAuctionIds(AuctionDAO.findAuctionIdsBySellerId(id))
+     * <p>Sau khi gọi reconstitute(), DAO phải inject thêm dữ liệu lịch sử
+     * bằng các setter tương ứng. Tất cả các hàm DAO đã được triển khai đầy đủ:
+     *
+     * <pre>
+     *   NormalUser user = NormalUser.reconstitute(...);
+     *   // Đã thực hiện TODO — tự động inject trong UserDAO.findNormalUserById():
+     *   user.setJoinedAuctionIds(userDAO.findJoinedAuctionIdsByUserId(id));
+     *   user.setWatchListAuctionIds(userDAO.findWatchListByUserId(id));
+     *   // Đã thực hiện TODO — caller inject thủ công nếu cần (tránh đệ quy):
+     *   user.setBidHistory(userDAO.findBidHistoryByUserId(id));
+     *   user.setListedItems(itemDAO.findItemsBySellerId(id));
+     *   user.setAllAuctionIds(auctionDAO.findAuctionIdsBySellerId(id));
+     * </pre>
      */
     public static NormalUser reconstitute(
             String id,
@@ -272,7 +277,9 @@ public class NormalUser extends User {
 
     /**
      * Inject lịch sử bid từ DB — chỉ UserDAO gọi sau reconstitute().
-     * TODO: UserDAO.findBidHistoryByUserId(id) → gọi setBidHistory()
+     * Đã thực hiện TODO: UserDAO.findBidHistoryByUserId(id) đã được triển khai.
+     * Lưu ý: UserDAO.findNormalUserById() không tự inject để tránh đệ quy;
+     * caller cần gọi thủ công nếu cần đầy đủ lịch sử bid.
      */
     public void setBidHistory(List<BidTransaction> bidHistory) {
         this.bidHistory = bidHistory != null ? new ArrayList<>(bidHistory) : new ArrayList<>();
@@ -280,7 +287,8 @@ public class NormalUser extends User {
 
     /**
      * Inject danh sách auctionId đã join từ DB — chỉ UserDAO gọi sau reconstitute().
-     * TODO: UserDAO.findJoinedAuctionIdsByUserId(id) → gọi setJoinedAuctionIds()
+     * Đã thực hiện TODO: UserDAO.findJoinedAuctionIdsByUserId(id) đã được triển khai
+     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
      */
     public void setJoinedAuctionIds(Set<String> joinedAuctionIds) {
         this.joinedAuctionIds = joinedAuctionIds != null ? new HashSet<>(joinedAuctionIds) : new HashSet<>();
@@ -288,7 +296,8 @@ public class NormalUser extends User {
 
     /**
      * Inject watchlist từ DB — chỉ UserDAO gọi sau reconstitute().
-     * TODO: UserDAO.findWatchListByUserId(id) → gọi setWatchListAuctionIds()
+     * Đã thực hiện TODO: UserDAO.findWatchListByUserId(id) đã được triển khai
+     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
      */
     public void setWatchListAuctionIds(List<String> watchListAuctionIds) {
         this.watchListAuctionIds = watchListAuctionIds != null
@@ -328,9 +337,10 @@ public class NormalUser extends User {
      * <p>Dữ liệu được filter từ {@code allAuctionIds} đã được AuctionManager load vào memory.
      * Trong môi trường thực tế, nên ưu tiên query thẳng DB để tránh load toàn bộ phiên.
      *
-     * <p>TODO: Thay thế bằng AuctionDAO.findUnfinishedAuctionIdsBySellerId(getId())
-     * để query trực tiếp DB (WHERE seller_id = ? AND status IN ('OPEN','RUNNING'))
-     * thay vì filter in-memory — đặc biệt quan trọng khi allAuctionIds chưa được inject đủ.
+     * <p>Đã thực hiện TODO: Hàm {@code AuctionDAO.findUnfinishedAuctionIdsBySellerId(id)}
+     * đã được thêm vào AuctionDAO để query trực tiếp DB
+     * (WHERE item_id IN (SELECT id FROM items WHERE seller_id = ?) AND status IN ('OPEN','RUNNING')).
+     * Nên gọi hàm đó thay vì filter in-memory khi allAuctionIds chưa được inject đủ.
      *
      * @param auctionLookup hàm tìm Auction theo id (thường là AuctionManager::findAuctionById)
      * @return danh sách auctionId có trạng thái OPEN hoặc RUNNING (read-only)

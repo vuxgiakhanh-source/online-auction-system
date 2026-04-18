@@ -51,4 +51,28 @@ public class AuctionWinnerDAO {
             return false;
         }
     }
+
+    /**
+     * Kiểm tra user có đang là winner/runner-up với trạng thái PENDING không.
+     * Đã thực hiện TODO trong AccountService.deleteAccount():
+     * chặn xóa tài khoản khi user chưa hoàn tất thanh toán phiên đấu giá.
+     *
+     * @param userId ID của user cần kiểm tra
+     * @return true nếu có ít nhất 1 AuctionWinner ở trạng thái PENDING
+     */
+    public boolean hasPendingPayment(String userId) {
+        String sql = "SELECT COUNT(*) FROM auction_winners WHERE winner_id = ? AND payment_status = 'PENDING'";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, userId);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi kiểm tra pending payment: " + e.getMessage());
+        }
+        return false;
+    }
 }
