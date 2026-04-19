@@ -8,6 +8,7 @@ import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
 
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class WalletService implements IWalletService {
     private final SystemBank systemBank;
     /** Lưu lịch sử giao dịch tài chính (in-memory, sau này persist qua DAO). */
     private final List<FinancialTransaction> transactionLog;
+    private final IRatingService ratingService;
 
     // Tiêm DAO
     private final FinancialTransactionDAO financialTransactionDAO;
@@ -37,12 +39,76 @@ public class WalletService implements IWalletService {
     /**
      * Cập nhật Constructor để nhận các DAO.
      */
-    public WalletService(FinancialTransactionDAO financialTransactionDAO, UserDAO userDAO) {
+    public WalletService(FinancialTransactionDAO financialTransactionDAO, UserDAO userDAO, IRatingService ratingService) {
         this.systemBank = SystemBank.getInstance();
         this.transactionLog = new ArrayList<>();
+        this.ratingService = ratingService;
         this.financialTransactionDAO = financialTransactionDAO;
         this.userDAO = userDAO;
     }
+
+    // Deposit
+
+    /**
+     * Nạp tiền vào tài khoản NormalUser.
+     *
+     * @param user user cần nạp
+     * @param amount số tiền nạp (phải > 0)
+     * @throws IllegalStateException nếu tài khoản bị khóa hoặc rating quá thấp
+     * @throws IllegalArgumentException nếu amount <= 0
+     */
+    @Override
+    public void deposit(NormalUser user, double amount) {
+        if (!ratingService.isEligible(user)) {
+            throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0.");
+        }
+        user.setBalance(user.getBalance() + amount);
+        System.out.printf(
+                "[ACCOUNT] %s nạp %.0f | Số dư mới: %.0f%n",
+                user.getUsername(), amount, user.getBalance());
+
+        // Gọi DAO để cộng tiền dưới DB
+        userDAO.addBalance(user.getId(), amount);
+    }
+
+    // Rút tiền
+
+    /**
+     * Rút tiền từ tài khoản NormalUser.
+     *
+     * <p>Chỉ rút được phần {@code availableBalance} (không rút vào tiền đang khóa cọc).
+     *
+     * @param user user cần rút
+     * @param amount số tiền rút (phải > 0)
+     * @throws IllegalStateException nếu tài khoản không đủ điều kiện
+     * @throws IllegalArgumentException nếu amount <= 0 hoặc vượt số dư khả dụng
+     */
+    public void withdraw(NormalUser user, double amount) {
+        if (!ratingService.isEligible(user)) {
+            throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Số tiền rút phải lớn hơn 0.");
+        }
+        if (user.getAvailableBalance() < amount) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "Số dư khả dụng không đủ. Khả dụng: %.0f, Yêu cầu: %.0f",
+                            user.getAvailableBalance(), amount));
+        }
+
+        user.setBalance(user.getBalance() - amount);
+        System.out.printf(
+                "[ACCOUNT] %s rút %.0f | Số dư mới: %.0f%n",
+                user.getUsername(), amount, user.getBalance());
+
+        // Đã thực hiện TODO: persist số dư mới xuống DB
+        userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
+    }
+
 
     // Deposit (cọc)
 
@@ -193,9 +259,9 @@ public class WalletService implements IWalletService {
 
         } catch (Exception e) {
             // Rollback: khôi phục trạng thái ban đầu
-            winner.setBalance(originalWinnerBalance);
-            winner.lockDeposit(originalWinnerLocked - winner.getLockedDeposit());
-            seller.setBalance(originalSellerBalance);
+            winner.restoreBalances(originalWinnerBalance, originalWinnerLocked);
+            seller.restoreBalances(originalSellerBalance, seller.getLockedDeposit());
+            // TODO: Sync lại DB về trạng thái gốc
 
             System.err.printf("[WALLET] ROLLBACK giao dịch phiên %s | Lỗi: %s%n",
                     auctionId, e.getMessage());

@@ -16,5 +16,5 @@ public interface IUserService {
    * @param inputPassword mật khẩu nhập vào
    * @throws com.group13.auction.exception.AuthenticationException nếu thất bại
    */
-  void login(String username, String inputPassword);
+  User login(String username, String inputPassword);
 }

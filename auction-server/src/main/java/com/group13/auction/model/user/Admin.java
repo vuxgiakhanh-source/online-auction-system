@@ -89,7 +89,6 @@ public class Admin extends User {
     this.adminLevel = adminLevel;
     this.actionLog = new ArrayList<>();
     // Admin luôn được set rating = 5.0 ngay khi tạo
-    super.adjustRating(0);
   }
 
   public Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
@@ -102,10 +101,21 @@ public class Admin extends User {
     this.actionLog = new ArrayList<>();
   }
 
+  @Override
+  public void addRole(UserRole role) {
+    throw new UnsupportedOperationException(
+            "Admin không thể thêm role. Admin chỉ có role ADMIN.");
+  }
+
   // Getters
 
   public String getAdminLevel() {
     return adminLevel;
+  }
+
+  @Override
+  public double getRating() {
+    return ADMIN_FIXED_RATING;  // luôn trả 5.0, bất kể field rating trong User
   }
 
   /** @return true nếu SystemAdmin. */

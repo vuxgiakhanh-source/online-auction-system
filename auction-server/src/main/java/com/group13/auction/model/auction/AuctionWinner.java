@@ -53,8 +53,7 @@ public class AuctionWinner extends Entity {
   }
 
   /**
-   * Cách 1: Hồi sinh AuctionWinner từ DB — chỉ DAO được gọi method này.
-   * Cách 2: Tạo 1 đối tượng Winner mới từ dữ liệu của Runner-up
+   * Hồi sinh AuctionWinner từ DB — chỉ DAO được gọi method này.
    */
   public static AuctionWinner reconstitute(String id, LocalDateTime createdAt,
                                            LocalDateTime updatedAt, NormalUser winner, String auctionId,

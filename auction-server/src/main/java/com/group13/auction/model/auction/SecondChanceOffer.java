@@ -97,7 +97,7 @@ public class SecondChanceOffer extends Entity {
      * Service/infrastructure và sẽ:
      * <ol>
      * <li>Quét toàn bộ {@code SecondChanceOffer} có {@code status == PENDING}.</li>
-     * <li>Nếu {@code isExpired() == true} → set {@code status = EXPIRED}
+     * <li>Nếu {@code isExpired() == true} -> set {@code status = EXPIRED}
      *     và persist xuống DB qua {@code SecondChanceOfferDAO.updateOfferStatus()}.</li>
      * <li>Sau đó cancel auction (no-winner) nếu không còn runner-up nào khác.</li>
      * </ol>

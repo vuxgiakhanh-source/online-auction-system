@@ -18,9 +18,7 @@ public class Auction extends Entity {
     RUNNING,
     FINISHED,
     PAID,
-    CANCELED,
-    /** Phiên đã kết thúc nhưng reserve price chưa được đáp ứng. */
-    RESERVE_NOT_MET
+    CANCELED
   }
 
   private final Item item;
@@ -145,7 +143,6 @@ public class Auction extends Entity {
       case PAID:
         return PaidState.INSTANCE;
       case CANCELED:
-      case RESERVE_NOT_MET:
         return CanceledState.INSTANCE;
       default:
         throw new IllegalArgumentException("AuctionStatus không được hỗ trợ: " + status);

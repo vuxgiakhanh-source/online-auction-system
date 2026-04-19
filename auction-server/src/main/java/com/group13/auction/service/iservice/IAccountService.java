@@ -19,28 +19,6 @@ public interface IAccountService {
   void banUser(Admin admin, User target, Admin.BanReason reason);
 
   /**
-   * Nạp tiền vào tài khoản NormalUser.
-   *
-   * @param user user cần nạp
-   * @param amount số tiền (phải > 0)
-   * @throws IllegalArgumentException nếu amount <= 0
-   */
-  void deposit(NormalUser user, double amount);
-
-  /**
-   * Rút tiền từ tài khoản NormalUser.
-   *
-   * <p>Chỉ rút được phần availableBalance (không rút tiền đang khóa cọc).
-   * Bắt buộc rút hết trước khi xóa tài khoản.
-   *
-   * @param user user cần rút
-   * @param amount số tiền rút (phải > 0)
-   * @throws IllegalArgumentException nếu amount <= 0 hoặc vượt số dư khả dụng
-   * @throws IllegalStateException nếu tài khoản không đủ điều kiện
-   */
-  void withdraw(NormalUser user, double amount);
-
-  /**
    * SystemAdmin tạo tài khoản Admin STAFF mới.
    * Chỉ SystemAdmin (MASTER) mới được tạo admin.
    * AdminFactory tuyệt đối chỉ được cấp bởi System.
@@ -60,14 +38,4 @@ public interface IAccountService {
    * @throws IllegalStateException nếu user đã từng bị penalize
    */
   void autoApproveSellerRole(NormalUser user);
-
-  /**
-   * User tự xóa tài khoản của mình.
-   * Soft-delete: ban + giữ rating cũ.
-   * Bắt buộc số dư phải bằng 0 và không còn cọc đang khóa.
-   *
-   * @param user user muốn xóa tài khoản
-   * @throws IllegalStateException nếu còn số dư hoặc cọc đang khóa
-   */
-  void deleteAccount(NormalUser user);
 }

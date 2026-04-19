@@ -3,7 +3,7 @@ package com.group13.auction.model.user;
 import com.group13.auction.dao.UserDAO;
 
 /**
- * Factory tạo User — tập trung validate và khởi tạo.
+ * Factory tạo User - tập trung validate và khởi tạo.
  * ID được sinh bởi Entity (UUID).
  * <p>Design Pattern: Factory Method.
  *
@@ -16,7 +16,7 @@ public abstract class UserFactory<T extends User> {
      * DAO dùng để kiểm tra username/email đã tồn tại trong DB chưa.
      * Inject qua setUserDAO() hoặc constructor của lớp con.
      *
-     * <p>Khi userDAO == null, factory bỏ qua kiểm tra unique với DB —
+     * <p>Khi userDAO == null, factory bỏ qua kiểm tra unique với DB -
      * chỉ chấp nhận trong môi trường test.
      */
     private UserDAO userDAO;
@@ -27,7 +27,7 @@ public abstract class UserFactory<T extends User> {
     }
 
     /**
-     * Constructor inject UserDAO — nên dùng trong production.
+     * Constructor inject UserDAO - nên dùng trong production.
      *
      * @param userDAO DAO để kiểm tra unique username/email với DB
      */
@@ -36,7 +36,7 @@ public abstract class UserFactory<T extends User> {
     }
 
     /**
-     * Setter injection — dùng khi factory được tạo trước khi DAO sẵn sàng.
+     * Setter injection - dùng khi factory được tạo trước khi DAO sẵn sàng.
      *
      * @param userDAO DAO để kiểm tra unique username/email với DB
      */
@@ -49,8 +49,8 @@ public abstract class UserFactory<T extends User> {
      *
      * @param username tên đăng nhập (tối thiểu 8 ký tự, không trùng)
      * @param password mật khẩu thô (tối thiểu 8 ký tự)
-     * @param email    địa chỉ email hợp lệ (không trùng)
-     * @param args     các tham số bổ sung tùy theo loại User
+     * @param email địa chỉ email hợp lệ (không trùng)
+     * @param args các tham số bổ sung tùy theo loại User
      * @return User mới, id do Entity tự sinh UUID
      * @throws IllegalArgumentException nếu dữ liệu không hợp lệ hoặc đã tồn tại
      */
@@ -62,7 +62,7 @@ public abstract class UserFactory<T extends User> {
     }
 
     /**
-     * Kiểm tra email đã dùng chưa — truy vấn DB.
+     * Kiểm tra email đã dùng chưa - truy vấn DB.
      *
      * @param email email cần kiểm tra
      * @return true nếu email đã tồn tại
@@ -72,20 +72,11 @@ public abstract class UserFactory<T extends User> {
         return userDAO.existsByEmail(email);
     }
 
-    /**
-     * Giải phóng username/email khi xóa tài khoản.
-     * Đã thực hiện TODO: Không cần thao tác Set nữa;
-     * DB là nguồn sự thật duy nhất — soft-delete qua UserDAO.delete() là đủ.
-     */
-    public static void releaseUserIdentity(String username, String email) {
-        // No-op: DB quản lý toàn bộ, không còn Set in-memory nào cần xóa.
-    }
-
     /** Factory Method để các subclass tự khởi tạo instance cụ thể. */
     protected abstract T createProduct(String username, String password,
                                        String email, Object... args);
 
-    // ─── Validation ───────────────────────────────────────────────────────────
+    // Validation
 
     private void validateUsername(String username) {
         if (username == null || username.isBlank()) {

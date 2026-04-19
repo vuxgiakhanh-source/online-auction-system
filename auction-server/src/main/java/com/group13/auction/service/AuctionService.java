@@ -1,7 +1,6 @@
 package com.group13.auction.service;
 
 import com.group13.auction.dao.AuctionDAO;
-import com.group13.auction.exception.AuctionBusinessException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
@@ -42,7 +41,6 @@ public class AuctionService implements IAuctionService {
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
    * Seller cần rating >= 3.0 và có role SELLER.
    * Reserve price strategy (tức giá Seller muốn) phải được cung cấp.
-   * Có thể set lịch trước nhiều ngày.
    * Đã thực hiện TODO: auctionDAO.save(auction).
    *
    * @param seller seller tạo phiên
@@ -146,6 +144,7 @@ public class AuctionService implements IAuctionService {
     } else {
       // TH2: reserve met, có winner
       NormalUser winner = auction.getCurrentLeader();
+      // TODO: Query từ DAO (deposit đã lock thực tế của Winner). Thịnh sửa dòng 148
       double depositPaid = auction.getItem().getStartingPrice() * 0.3;
       auction.setWinner(
               AuctionWinner.create(winner, auction.getId(),

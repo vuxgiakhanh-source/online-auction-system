@@ -106,16 +106,6 @@ public abstract class User extends Entity {
   public String getHashedPassword() { return hashedPassword; }
   public LocalDateTime getSuspendedAt() { return suspendedAt; }
 
-  /**
-   * Kiểm tra user có role nào đó không
-   * Admin chỉ có role ADMIN. Bidder có thể là Seller và ngược lại
-   * nhưng phải thêm điều kiện trong quá trình đấu giá
-   */
-  public boolean hasRole(UserRole role) {
-    if (primaryRole == role) { return true; }
-    return false;
-  }
-
   // Setter AccountStatus - chỉ AccountService / RatingService gọi
 
   /**
@@ -148,13 +138,23 @@ public abstract class User extends Entity {
   }
 
   /**
+   * Kiểm tra user có role nào đó không
+   * Admin chỉ có role ADMIN. Bidder có thể là Seller và ngược lại
+   * nhưng phải thêm điều kiện trong quá trình đấu giá
+   */
+  public boolean hasRole(UserRole role) {
+    return primaryRole == role;
+  }
+
+
+  /**
    * Thêm role cho user bình thường (admin không).
    * <p>Chỉ UserService / AccountService gọi — sau khi hệ thống phê duyệt.
    * Admin không được addRole thêm.
    *
    * @param role role cần thêm
    */
-  public void addRole(UserRole role) {}
+  public abstract void addRole(UserRole role);
 
   @Override
   public abstract void printInfo();
