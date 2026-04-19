@@ -9,7 +9,7 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.observer.AuctionEvent;
-import com.group13.auction.service.iservice.IAuctionService;
+import com.group13.auction.service.iservice.IQualityReportService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
 
@@ -25,7 +25,7 @@ import com.group13.auction.service.iservice.IWalletService;
  * </ol>
  */
 public class
-QualityReportService {
+QualityReportService implements IQualityReportService {
 
     private final IRatingService ratingService;
     private final IWalletService walletService;
@@ -39,12 +39,10 @@ QualityReportService {
      *
      * @param ratingService service quản lý rating
      * @param walletService service quản lý tài chính
-     * @param auctionService service quản lý phiên
      */
     public QualityReportService(
             IRatingService ratingService,
             IWalletService walletService,
-            IAuctionService auctionService,
             QualityReportDAO qualityReportDAO,
             UserDAO userDAO) {
         this.ratingService = ratingService;
@@ -60,6 +58,7 @@ QualityReportService {
      * @return report vừa lưu
      * @throws IllegalArgumentException nếu report null hoặc không có ảnh
      */
+    @Override
     public QualityReport submitReport(QualityReport report) {
         if (report == null) {
             throw new IllegalArgumentException("QualityReport không được null.");
@@ -78,7 +77,6 @@ QualityReportService {
      * Admin approve QualityReport.
      * TODO: SOS: chưa tìm ra cách giải quyết send message cho Seller với reporter biết
      *
-     * <p>Khi approve:
      * <ol>
      * <li>Report chuyển sang APPROVED + set hạn 24h cho Seller.</li>
      * <li>Trừ rating Seller, có thể auto-ban nếu rating xuống dưới ngưỡng.</li>
@@ -91,6 +89,7 @@ QualityReportService {
      * @param auction phiên liên quan (để lấy seller và notify)
      * @throws IllegalStateException nếu report không ở PENDING
      */
+    @Override
     public void approveReport(Admin admin, QualityReport report, Auction auction) {
         if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
             throw new IllegalStateException(
@@ -145,6 +144,7 @@ QualityReportService {
      * @param report report cần reject
      * @throws IllegalStateException nếu report không ở PENDING
      */
+    @Override
     public void rejectReport(Admin admin, QualityReport report) {
         if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
             throw new IllegalStateException(
@@ -171,6 +171,7 @@ QualityReportService {
      * @param report report đã APPROVED
      * @param auction phiên liên quan
      */
+    @Override
     public void handleSellerRefundDefault(QualityReport report, NormalUser reporter, Auction auction) {
         if (!report.isSellerRefundOverdue()) {
             return;

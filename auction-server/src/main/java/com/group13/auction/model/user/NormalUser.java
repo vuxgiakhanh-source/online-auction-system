@@ -230,7 +230,7 @@ public class NormalUser extends User {
     }
 
     /**
-     * Giải phóng khoản cọc — gọi khi phiên kết thúc.
+     * Giải phóng khoản cọc - gọi khi phiên kết thúc.
      * Không được tự ý gọi, chỉ được gọi trong WalletService.
      *
      * @param amount số tiền giải phóng
@@ -331,6 +331,13 @@ public class NormalUser extends User {
         markUpdated();
     }
 
+    /** Chỉ được gọi trong WalletService hỗ trợ quá trình Rollback */
+    public void restoreBalances(double balance, double lockedDeposit) {
+        this.balance = balance;
+        this.lockedDeposit = lockedDeposit;
+        markUpdated();
+    }
+
     /**
      * Lọc ra các phiên đấu giá của Seller đang ở trạng thái OPEN hoặc RUNNING.
      *
@@ -359,22 +366,6 @@ public class NormalUser extends User {
             }
         }
         return Collections.unmodifiableList(result);
-    }
-
-    // Delete account
-
-    /**
-     * Đánh dấu tài khoản đã bị xóa (soft-delete).
-     *
-     * <p>Bên DB chia 2 bảng: 1 bảng bị BANNED do Rating,
-     * 1 bảng bị BANNED do xóa tài khoản (không cho đăng nhập).
-     * (2 bảng đều giữ Rating của người dùng).
-     *
-     * <p>Khi người dùng đăng kí lại → Giữ Rating cũ của họ.
-     */
-    public void markDeleted() {
-        setAccountStatus(AccountStatus.BANNED);
-        markUpdated();
     }
 
     @Override

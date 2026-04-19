@@ -68,7 +68,6 @@ public class BidderObserver implements AuctionObserver {
         break;
       case PAYMENT_COMPLETED:
         System.out.printf("[THÔNG BÁO tới Bidder %s] Thanh toán thành công!%n", bidder.getUsername());
-        ratingService.rewardBidder(bidder);
         break;
       default:
         break;

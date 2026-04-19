@@ -30,7 +30,7 @@ public class UserService implements IUserService {
    * @throws AuthenticationException nếu xác thực thất bại
    */
   @Override
-  public void login(String username, String inputPassword) {
+  public User login(String username, String inputPassword) {
 
     // 1. Tìm user trong Database
     NormalUser user = userDAO.findUserByUsername(username);
@@ -55,5 +55,6 @@ public class UserService implements IUserService {
     }
 
     // 5. Đăng nhập thành công
+    return user;
   }
 }

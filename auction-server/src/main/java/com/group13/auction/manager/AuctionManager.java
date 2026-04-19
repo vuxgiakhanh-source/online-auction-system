@@ -171,19 +171,6 @@ public class AuctionManager {
     }
   }
 
-  /**
-   * Xóa user khỏi danh sách hệ thống (soft-delete).
-   * ĐÃ THỰC HIỆN TODO: sau này gọi UserDAO.delete(user).
-   *
-   * @param user user cần xóa
-   */
-  public void removeUser(User user) {
-    // Xóa khỏi Database
-    userDAO.delete(user); // Cần đảm bảo UserDAO có hàm delete(User user) hoặc delete(String id)
-
-    allUsers.remove(user);
-  }
-
   // Auction management
 
   /**
@@ -248,11 +235,6 @@ public class AuctionManager {
         staffObservers.add(observer);
       }
     }
-  }
-
-  /** Gỡ staff observer (khi admin bị xóa). */
-  public void removeStaffObserver(AuctionObserver observer) {
-    staffObservers.remove(observer);
   }
 
   /**

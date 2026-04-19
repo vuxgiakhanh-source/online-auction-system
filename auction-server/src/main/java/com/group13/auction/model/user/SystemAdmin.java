@@ -41,7 +41,7 @@ public class SystemAdmin extends Admin {
      */
     private UserDAO userDAO;
 
-    // ─── Bootstrap ────────────────────────────────────────────────────────────
+    // Bootstrap
 
     /**
      * Khởi tạo / load SystemAdmin.
@@ -115,7 +115,7 @@ public class SystemAdmin extends Admin {
         return INSTANCE;
     }
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
+    // Constructor
 
     private SystemAdmin(String username, String password, String email) {
         super(username, password, email, LEVEL_MASTER);
@@ -124,11 +124,11 @@ public class SystemAdmin extends Admin {
     @Override
     public boolean isSystem() { return true; }
 
-    // ─── Auto-ban logic ───────────────────────────────────────────────────────
+    // Auto-ban logic
 
     /**
      * Tự động ban một user cụ thể nếu rating dưới ngưỡng.
-     * Gọi ngay sau khi RatingService penalize → ban luôn.
+     * Gọi ngay sau khi RatingService penalize -> ban luôn.
      *
      * <p>Đã thực hiện TODO: gọi {@code userDAO.updateAccountStatus()} để persist xuống DB.
      *
@@ -161,8 +161,8 @@ public class SystemAdmin extends Admin {
      *
      * <p>Đã thực hiện TODO: gọi {@code userDAO.updateAccountStatus()} để persist xuống DB.
      *
-     * @param staff  staff admin thực hiện
-     * @param user   user cần ban
+     * @param staff staff admin thực hiện
+     * @param user user cần ban
      * @param reason lý do ban
      */
     public void banUserByStaff(Admin staff, User user, Admin.BanReason reason) {

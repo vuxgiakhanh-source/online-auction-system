@@ -131,7 +131,7 @@ public class PaymentService implements IPaymentService {
       throw new IllegalStateException("Second Chance Offer không còn ở PENDING: " + offer.getStatus());
     }
     if (offer.isExpired()) {
-//      offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
+      offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
       System.out.printf("[PAYMENT] Second Chance Offer hết hạn — phiên %s bị hủy.%n", auction.getId());
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
@@ -144,16 +144,11 @@ public class PaymentService implements IPaymentService {
     NormalUser seller = auction.getItem().getSeller();
 
     // Khởi tạo Winner mới có thông tin của Runner-up
-    AuctionWinner newWinner = AuctionWinner.reconstitute(
-            runnerUp.getId(),
-            runnerUp.getCreatedAt(),
-            runnerUp.getUpdatedAt(),
+    AuctionWinner newWinner = AuctionWinner.create(
             runnerUp,
             auction.getId(),
             offer.getOfferPrice(),
             offer.getDepositPaid(),
-            offer.getUpdatedAt().plusHours(24),
-            AuctionWinner.PaymentStatus.PENDING,
             true
     );
 
@@ -173,7 +168,6 @@ public class PaymentService implements IPaymentService {
     if (offer.getStatus() != SecondChanceOffer.OfferStatus.PENDING) {
       throw new IllegalStateException("Second Chance Offer không còn ở PENDING: " + offer.getStatus());
     }
-//    walletService.unlockDeposit(offer.getRunnerUp(), offer.getDepositPaid(), auction.getId());
 
     offer.setStatus(SecondChanceOffer.OfferStatus.DECLINED);
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
