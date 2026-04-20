@@ -1,0 +1,166 @@
+.root {
+  -fx-font-family: "Arial";
+}
+
+.landing-root,
+.auth-root {
+  -fx-background-color: linear-gradient(to bottom, #041f3d 0%, #89a2be 55%, #d7dde7 100%);
+}
+
+.top-bar {
+  -fx-background-color: linear-gradient(to right, #04162d 0%, #0b2747 75%, #173d64 100%);
+}
+
+.brand-logo {
+  -fx-text-fill: white;
+  -fx-font-size: 26px;
+  -fx-font-weight: 300;
+}
+
+.nav-link,
+.nav-separator {
+  -fx-text-fill: white;
+  -fx-font-size: 12px;
+  -fx-font-weight: 700;
+}
+
+.search-field {
+  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-background-radius: 20;
+  -fx-border-color: white;
+  -fx-border-radius: 20;
+  -fx-border-width: 1;
+  -fx-text-fill: white;
+  -fx-prompt-text-fill: rgba(255, 255, 255, 0.7);
+}
+
+.nav-button,
+.hero-button,
+.submit-button,
+.auth-tab,
+.auth-tab-link {
+  -fx-cursor: hand;
+}
+
+.nav-button {
+  -fx-background-radius: 18;
+  -fx-padding: 8 16 8 16;
+  -fx-font-weight: 700;
+}
+
+.nav-button.muted {
+  -fx-background-color: rgba(255, 255, 255, 0.14);
+  -fx-text-fill: white;
+}
+
+.nav-button.primary,
+.hero-button,
+.submit-button,
+.auth-tab.secondary {
+  -fx-background-color: #62b5ec;
+  -fx-text-fill: white;
+}
+
+.hero-title {
+  -fx-text-fill: white;
+  -fx-font-size: 58px;
+  -fx-font-weight: 800;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 6, 0.2, 0, 2);
+}
+
+.hero-subtitle {
+  -fx-text-fill: rgba(255, 255, 255, 0.55);
+  -fx-font-size: 22px;
+  -fx-font-weight: 700;
+}
+
+.hero-button {
+  -fx-background-radius: 16;
+  -fx-padding: 14 28 14 28;
+  -fx-font-size: 24px;
+  -fx-font-weight: 800;
+}
+
+.feature-circle {
+  -fx-alignment: center;
+  -fx-background-color: transparent;
+  -fx-border-color: white;
+  -fx-border-width: 3;
+  -fx-border-radius: 999;
+  -fx-background-radius: 999;
+}
+
+.feature-icon {
+  -fx-text-fill: white;
+  -fx-font-size: 56px;
+}
+
+.feature-title {
+  -fx-text-fill: white;
+  -fx-font-size: 20px;
+  -fx-font-weight: 800;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 4, 0.2, 0, 2);
+}
+
+.feature-subtitle {
+  -fx-text-fill: rgba(255, 255, 255, 0.7);
+  -fx-font-size: 16px;
+  -fx-font-weight: 700;
+}
+
+.auth-card {
+  -fx-background-color: rgba(103, 128, 154, 0.62);
+  -fx-background-radius: 28;
+}
+
+.auth-brand {
+  -fx-font-size: 64px;
+}
+
+.brand-tagline {
+  -fx-text-fill: white;
+  -fx-font-size: 20px;
+}
+
+.auth-tab {
+  -fx-background-radius: 22;
+  -fx-font-size: 18px;
+  -fx-font-weight: 700;
+  -fx-padding: 10 26 10 26;
+}
+
+.auth-tab-link {
+  -fx-background-color: transparent;
+  -fx-text-fill: white;
+  -fx-font-size: 18px;
+  -fx-font-weight: 700;
+}
+
+.auth-input {
+  -fx-background-color: transparent;
+  -fx-border-color: white;
+  -fx-border-radius: 999;
+  -fx-background-radius: 999;
+  -fx-border-width: 3;
+  -fx-text-fill: white;
+  -fx-prompt-text-fill: rgba(255, 255, 255, 0.75);
+  -fx-font-size: 18px;
+  -fx-padding: 15 24 15 24;
+}
+
+.submit-button {
+  -fx-background-radius: 0;
+  -fx-font-size: 20px;
+  -fx-font-weight: 800;
+  -fx-padding: 14 26 14 26;
+}
+
+.text-link {
+  -fx-text-fill: #294b73;
+  -fx-font-size: 16px;
+  -fx-border-color: transparent;
+}
+
+.secondary-link {
+  -fx-font-size: 18px;
+}

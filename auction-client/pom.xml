@@ -2,9 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-    <!-- Phiên bản model chuẩn của Maven -->
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -14,31 +12,17 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <!-- Thông tin định danh project -->
     <artifactId>auction-client</artifactId>
+    <packaging>jar</packaging>
     <name>auction-client</name>
 
     <properties>
-        <!-- Dự án dùng Java 17 -->
-        <maven.compiler.release>17</maven.compiler.release>
-
-        <!-- Phiên bản thư viện -->
         <javafx.version>21.0.2</javafx.version>
-        <gson.version>2.10.1</gson.version>
-        <junit.version>5.10.2</junit.version>
-
-        <!-- Encoding để tránh lỗi tiếng Việt/ký tự lạ -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <main.class>com.group13.auction.App</main.class>
 
-        <!--
-            Tạm thời để true cho đỡ bị check style quá gắt lúc đầu.
-            Sau này khi nhóm code ổn hơn, đổi thành false để bật kiểm tra style.
-        -->
+        <!-- Tạm thời cho phép bỏ qua checkstyle khi chạy gấp deadline -->
         <checkstyle.skip>true</checkstyle.skip>
-
-        <!-- Main class của JavaFX app -->
-        <main.class>com.group13.auction.client.App</main.class>
     </properties>
 
     <dependencies>
@@ -48,66 +32,52 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- JavaFX: các control cơ bản như Button, Label, TableView, ListView... -->
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- JavaFX FXML: dùng khi thiết kế giao diện bằng .fxml và Scene Builder -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Gson: dùng để chuyển object <-> JSON, dùng cho client-server -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
-        </dependency>
-
-        <!-- JUnit 5: dùng để viết unit test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!--
-                Plugin biên dịch Java.
-                release=17 nghĩa là compile theo chuẩn Java 17.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
                 <configuration>
-                    <release>${maven.compiler.release}</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
-            <!--
-                Plugin chạy test bằng JUnit 5.
-                Sau này có thể dùng: mvn test
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
             </plugin>
 
-            <!--
-                Plugin chạy JavaFX app.
-                Sau này dùng: mvn javafx:run
-            -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -117,13 +87,6 @@
                 </configuration>
             </plugin>
 
-            <!--
-                Plugin kiểm tra môi trường.
-                Mục đích:
-                - ép project phải chạy bằng Java 17
-                - ép Maven version đủ mới
-                Tránh trường hợp máy mỗi người một version khác nhau.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -149,11 +112,6 @@
                 </executions>
             </plugin>
 
-            <!--
-                Plugin check style code theo Google Java Style.
-                Hiện tại đang tắt bằng checkstyle.skip=true.
-                Sau này muốn bật thì đổi checkstyle.skip thành false.
-            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
