@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane prefHeight="720.0" prefWidth="1280.0"
+           stylesheets="@../../css/app.css"
+           styleClass="auth-root"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.group13.auction.ui.controller.auth.RegisterController">
+    <children>
+        <VBox alignment="CENTER" maxWidth="560.0" prefWidth="560.0" spacing="18.0" styleClass="auth-card">
+            <padding>
+                <Insets top="34.0" right="48.0" bottom="34.0" left="48.0"/>
+            </padding>
+
+            <Label styleClass="brand-logo auth-brand" text="OmniBid"/>
+            <Label styleClass="brand-tagline" text="Connected Biding Solutions"/>
+
+            <StackPane>
+                <children>
+                    <Button mnemonicParsing="false" onAction="#handleGoToLogin" styleClass="auth-tab-link" translateX="-88.0" text="Đăng nhập"/>
+                    <Button mnemonicParsing="false" onAction="#handleCurrentTab" styleClass="auth-tab secondary" translateX="52.0" text="Đăng ký"/>
+                </children>
+            </StackPane>
+
+            <TextField fx:id="emailField" maxWidth="420.0" promptText="Email" styleClass="auth-input"/>
+            <TextField fx:id="usernameField" maxWidth="420.0" promptText="Tên đăng nhập" styleClass="auth-input"/>
+            <PasswordField fx:id="passwordField" maxWidth="420.0" promptText="Mật khẩu" styleClass="auth-input"/>
+            <Button mnemonicParsing="false" onAction="#handleRegister" prefWidth="280.0" styleClass="submit-button" text="Sign up"/>
+        </VBox>
+    </children>
+</StackPane>
+
