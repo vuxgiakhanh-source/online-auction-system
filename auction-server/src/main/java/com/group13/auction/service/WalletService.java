@@ -208,6 +208,7 @@ public class WalletService implements IWalletService {
         double originalWinnerBalance = winner.getBalance();
         double originalWinnerLocked = winner.getLockedDeposit();
         double originalSellerBalance = seller.getBalance();
+        double originalSellerLocked = seller.getLockedDeposit();
 
         // Danh sách lưu trữ các transaction trong phiên giao dịch này để lưu DB hàng loạt
         List<FinancialTransaction> batchTx = new ArrayList<>();
@@ -263,8 +264,16 @@ public class WalletService implements IWalletService {
         } catch (Exception e) {
             // Rollback: khôi phục trạng thái ban đầu
             winner.restoreBalances(originalWinnerBalance, originalWinnerLocked);
-            seller.restoreBalances(originalSellerBalance, seller.getLockedDeposit());
-            // TODO: Sync lại DB về trạng thái gốc
+            seller.restoreBalances(originalSellerBalance, originalSellerLocked);
+
+            // Sync DB về trạng thái gốc để đảm bảo nhất quán
+            try {
+                userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
+                userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
+            } catch (Exception syncEx) {
+                System.err.printf("[WALLET] ROLLBACK DB thất bại phiên %s | Lỗi: %s%n",
+                        auctionId, syncEx.getMessage());
+            }
 
             System.err.printf("[WALLET] ROLLBACK giao dịch phiên %s | Lỗi: %s%n",
                     auctionId, e.getMessage());
