@@ -17,6 +17,26 @@ public class UserDAO {
     public UserDAO() {}
 
     /**
+     * Parse trạng thái tài khoản từ DB một cách an toàn.
+     *
+     * <p>DB có thể có trạng thái soft-delete (DELETED). Trong code domain hiện tại
+     * {@link com.group13.auction.model.user.User.AccountStatus} không có DELETED,
+     * nên map DELETED -> BANNED để chặn mọi thao tác xác thực/đấu giá với tài khoản đã xoá.
+     */
+    private static com.group13.auction.model.user.User.AccountStatus parseAccountStatus(String statusStr) {
+        if (statusStr == null) return com.group13.auction.model.user.User.AccountStatus.ACTIVE;
+        if ("DELETED".equalsIgnoreCase(statusStr)) {
+            return com.group13.auction.model.user.User.AccountStatus.BANNED;
+        }
+        try {
+            return com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr);
+        } catch (IllegalArgumentException ex) {
+            // Fallback an toàn nếu DB chứa giá trị không mong đợi
+            return com.group13.auction.model.user.User.AccountStatus.ACTIVE;
+        }
+    }
+
+    /**
      * Đăng ký User mới (Mặc định là Bidder)
      * Trả về UUID của user vừa tạo nếu thành công, null nếu thất bại.
      */
@@ -159,7 +179,7 @@ public class UserDAO {
                             username,
                             passwordHash,
                             email,
-                            com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr),
+                            parseAccountStatus(statusStr),
                             rating,
                             balance,
                             lockedBalance,
@@ -283,7 +303,7 @@ public class UserDAO {
                             fetchedUsername,
                             passwordHash,
                             email,
-                            com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr),
+                            parseAccountStatus(statusStr),
                             rating,
                             balance,
                             lockedBalance,

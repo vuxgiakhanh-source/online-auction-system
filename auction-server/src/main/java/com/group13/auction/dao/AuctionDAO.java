@@ -18,7 +18,8 @@ public class AuctionDAO {
      * ID được sinh từ tầng Entity (Java) và truyền xuống.
      */
     public boolean createAuction(Auction auction) {
-        String sql = "INSERT INTO auctions (id, item_id, start_time, end_time, status) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO auctions (id, item_id, start_time, end_time, status, reserve_price, current_price, current_leader_id, current_highest_price, winning_bidder_id, viewer_count) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -28,6 +29,21 @@ public class AuctionDAO {
             pstmt.setTimestamp(3, Timestamp.valueOf(auction.getStartTime()));
             pstmt.setTimestamp(4, Timestamp.valueOf(auction.getEndTime()));
             pstmt.setString(5, auction.getStatus().name());
+            pstmt.setDouble(6, auction.getReserveStrategy().getReservePrice());
+            pstmt.setDouble(7, auction.getCurrentPrice());
+            if (auction.getCurrentLeader() != null) {
+                pstmt.setString(8, auction.getCurrentLeader().getId());
+            } else {
+                pstmt.setNull(8, java.sql.Types.VARCHAR);
+            }
+            // Legacy columns: giữ đồng bộ để các query/handler cũ vẫn hoạt động
+            pstmt.setDouble(9, auction.getCurrentPrice());
+            if (auction.getCurrentLeader() != null) {
+                pstmt.setString(10, auction.getCurrentLeader().getId());
+            } else {
+                pstmt.setNull(10, java.sql.Types.VARCHAR);
+            }
+            pstmt.setInt(11, auction.getViewerCount());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -60,22 +76,29 @@ public class AuctionDAO {
      * (Lưu trạng thái, giá cao nhất hiện tại và ID người chiến thắng nếu có).
      */
     public boolean updateAuctionResult(Auction auction) {
-        String sql = "UPDATE auctions SET status = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
+        String sql = "UPDATE auctions SET status = ?, current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auction.getStatus().name());
-            pstmt.setDouble(2, auction.getCurrentPrice()); // Bảng DB là BIGINT, JDBC setDouble sẽ ép kiểu tự động
-
-            // Xử lý trường hợp không có người chiến thắng (NULL)
+            pstmt.setDouble(2, auction.getCurrentPrice()); // current_price
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(3, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(3, java.sql.Types.VARCHAR);
             }
+            // legacy current_highest_price
+            pstmt.setDouble(4, auction.getCurrentPrice());
 
-            pstmt.setString(4, auction.getId());
+            // Xử lý trường hợp không có người chiến thắng (NULL)
+            if (auction.getCurrentLeader() != null) {
+                pstmt.setString(5, auction.getCurrentLeader().getId());
+            } else {
+                pstmt.setNull(5, java.sql.Types.VARCHAR);
+            }
+
+            pstmt.setString(6, auction.getId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -89,14 +112,17 @@ public class AuctionDAO {
      * Hàm này bạn đã có, tôi chỉ sửa lại kiểu dữ liệu String cho khớp UUID.
      */
     public boolean updateHighestPrice(String auctionId, double newPrice, String bidderId) {
-        String sql = "UPDATE auctions SET current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
+        String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setDouble(1, newPrice);
             pstmt.setString(2, bidderId);
-            pstmt.setString(3, auctionId);
+            // legacy columns
+            pstmt.setDouble(3, newPrice);
+            pstmt.setString(4, bidderId);
+            pstmt.setString(5, auctionId);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -120,6 +146,22 @@ public class AuctionDAO {
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Lỗi cập nhật số lượt xem phiên đấu giá: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật end_time của phiên (phục vụ anti-sniping).
+     */
+    public boolean updateEndTime(String auctionId, java.time.LocalDateTime endTime) {
+        String sql = "UPDATE auctions SET end_time = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setTimestamp(1, Timestamp.valueOf(endTime));
+            pstmt.setString(2, auctionId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi cập nhật end_time của phiên: " + e.getMessage());
             return false;
         }
     }
