@@ -16,6 +16,7 @@ import com.group13.auction.service.iservice.IWalletService;
 /**
  * QualityReport: submit, approve, reject và hoàn tiền cho winner.
  * TODO: SOS: Chưa có hướng xử lí gửi thông báo tới reporter - seller
+ * -> đã có hướng giải quyết qua notificationDao
  *
  * <ol>
  * <li>Winner gọi {@link #submitReport} -> report ở PENDING.</li>
@@ -69,13 +70,13 @@ QualityReportService implements IQualityReportService {
 
         // Thực hiện TODO: qualityReportDAO.save(report) — lưu report xuống DB
         qualityReportDAO.saveReport(report);
+        // TODO: notificationDao.save() - báo cho người report
 
         return report;
     }
 
     /**
      * Admin approve QualityReport.
-     * TODO: SOS: chưa tìm ra cách giải quyết send message cho Seller với reporter biết
      *
      * <ol>
      * <li>Report chuyển sang APPROVED + set hạn 24h cho Seller.</li>

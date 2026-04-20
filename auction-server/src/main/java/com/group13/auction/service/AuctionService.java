@@ -179,7 +179,7 @@ public class AuctionService implements IAuctionService {
   }
 
   /**
-   * SYSTEM tự động huỷ phiên — không cần staff cụ thể.
+   * SYSTEM tự động huỷ phiên - không cần staff cụ thể.
    * Log được ghi vào {@link SystemAdmin}.
    * Khi: no-winner, reserve-not-met, system-error.
    * Đã thực hiện TODO: auctionDAO.update(auction).

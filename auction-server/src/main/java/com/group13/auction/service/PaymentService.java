@@ -71,6 +71,9 @@ public class PaymentService implements IPaymentService {
 
     auctionWinner.setPaymentStatus(AuctionWinner.PaymentStatus.COMPLETED);
     auctionService.markAsPaid(auction);
+    ratingService.rewardBidder(winner);
+    ratingService.rewardSeller(seller);
+    auctionService.notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED, winner, auctionWinner.getFinalPrice());
 
     // Thực hiện TODO: Cập nhật trạng thái thanh toán xuống DB
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
@@ -115,6 +118,7 @@ public class PaymentService implements IPaymentService {
     System.out.printf("[PAYMENT] Hoàn cọc cho tất cả bidder phiên %s (trừ winner %s).%n",
             auction.getId(), winnerId != null ? winnerId : "N/A");
 
+
     // Thực hiện TODO: query DB lấy danh sách bidder đã tham gia (những người có bid ACCEPTED)
     List<NormalUser> participants = bidTransactionDAO.findBiddersByAuction(auction.getId());
     double depositAmount = auction.getItem().getStartingPrice() * 0.3;
@@ -153,6 +157,7 @@ public class PaymentService implements IPaymentService {
     );
 
     auction.setWinner(newWinner);
+    // TODO: notificationDao.save() - báo cho seller là runner-up đã accept
     walletService.lockDeposit(runnerUp, offer.getDepositPaid(), auction.getId());
 
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
@@ -175,6 +180,7 @@ public class PaymentService implements IPaymentService {
     System.out.printf("[PAYMENT] Runner-up %s từ chối Second Chance Offer — phiên %s bị hủy.%n",
             offer.getRunnerUp().getUsername(), auction.getId());
 
+    // TODO: notificationDao.save() - báo cho seller
     // Thực hiện TODO: Cập nhật DB
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }
@@ -199,6 +205,9 @@ public class PaymentService implements IPaymentService {
       System.out.println("[PAYMENT] Không tìm thấy runner-up hợp lệ. Hủy phiên.");
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
     }
+
+    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, null, 0);
+    // TODO: notificationDao.save() - báo cho runner-up
   }
 
   public SecondChanceOffer createSecondChanceOffer(NormalUser runnerUp,
