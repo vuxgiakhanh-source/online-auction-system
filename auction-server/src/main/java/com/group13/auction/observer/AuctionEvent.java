@@ -12,6 +12,7 @@ public class AuctionEvent {
     AUCTION_STARTED, // vừa bắt đầu RUNNING
     BID_PLACED, // có bid mới
     BID_RESERVE_NOT_MET, // bid được chấp nhận nhưng chưa đạt reserve
+    AUCTION_EXTENDED, // anti-sniping: gia hạn thời gian kết thúc
     AUCTION_ENDED, // kết thúc FINISHED (reserve met, có winner)
     AUCTION_NO_WINNER, // kết thúc không có người đặt giá
     RESERVE_NOT_MET_CLOSED, // kết thúc nhưng giá cao nhất chưa đạt reserve

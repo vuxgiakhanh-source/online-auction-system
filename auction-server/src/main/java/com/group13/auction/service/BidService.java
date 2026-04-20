@@ -18,6 +18,8 @@ import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.strategy.BidStrategy;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 /**
  * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
@@ -25,6 +27,9 @@ import com.group13.auction.strategy.BidStrategy;
  * Đã thực hiện TODO: inject BidTransactionDAO, AuctionDAO, UserDAO.
  */
 public class BidService implements IBidService {
+
+  private static final long ANTI_SNIPING_WINDOW_SECONDS = 30;
+  private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
   private final IAuctionService auctionService;
   private final IRatingService ratingService;
@@ -131,7 +136,6 @@ public class BidService implements IBidService {
     }
 
     // Cập nhật trạng thái phiên
-    NormalUser previousLeader = auction.getCurrentLeader();
     auction.setCurrentPrice(amount);
     auction.setCurrentLeader(bidder);
 
@@ -151,6 +155,23 @@ public class BidService implements IBidService {
               AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
       System.out.printf("[BID] %s đặt giá %.0f thành công!%n",
               bidder.getUsername(), amount);
+    }
+
+    // Anti-sniping: nếu có bid hợp lệ trong N giây cuối thì gia hạn phiên thêm M giây
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime currentEnd = auction.getEndTime();
+    if (currentEnd != null) {
+      long secondsLeft = Duration.between(now, currentEnd).getSeconds();
+      if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
+        auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
+        auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+        auctionService.notify(
+                auction,
+                AuctionEvent.AuctionEventType.AUCTION_EXTENDED,
+                bidder,
+                amount,
+                String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
+      }
     }
 
     // Thực hiện TODO: auctionDAO.update(auction)

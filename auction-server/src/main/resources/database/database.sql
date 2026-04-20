@@ -15,17 +15,23 @@ USE auction_db;
 -- 3. TẠO BẢNG (DDL)
 -- =================================================================
 
--- 1. Bảng Users (Đã gộp balance, locked_balance và status)
+-- 1. Bảng Users (gộp balance, locked_balance và status)
 CREATE TABLE users (
     id VARCHAR(36) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    rating INT DEFAULT 3,
+    -- rating dùng double ở Java (ngưỡng 1.5, 2.0, 3.0...) nên lưu DECIMAL để giữ phần thập phân
+    rating DECIMAL(3,2) DEFAULT 3.00,
     balance BIGINT DEFAULT 0,
     locked_balance BIGINT DEFAULT 0,
-    status ENUM('ACTIVE', 'BANNED', 'DELETED') DEFAULT 'ACTIVE'
+    -- Khớp với User.AccountStatus trong code: ACTIVE, BANNED, SUSPENDED
+    -- Thêm DELETED để soft-delete theo UserDAO.delete()
+    status ENUM('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETED') DEFAULT 'ACTIVE',
+    has_ever_been_penalized BOOLEAN DEFAULT FALSE,
+    has_ever_been_restored BOOLEAN DEFAULT FALSE,
+    suspended_at DATETIME NULL
 );
 
 -- 2. Bảng Sellers
@@ -66,21 +72,42 @@ CREATE TABLE items (
      description TEXT,
      starting_price BIGINT NOT NULL,
      category_type ENUM('ELECTRONICS', 'ART', 'VEHICLE', 'OTHER') DEFAULT 'OTHER',
+     -- Các cột theo category để ItemDAO.mapRowToItem() không lỗi
+     -- ELECTRONICS
+     brand VARCHAR(255) NULL,
+     warranty_months INT NULL,
+     `condition` VARCHAR(255) NULL,
+     -- ART
+     artist VARCHAR(255) NULL,
+     year_created INT NULL,
+     medium VARCHAR(255) NULL,
+     -- VEHICLE
+     manufacturer VARCHAR(255) NULL,
+     `year` INT NULL,
+     mileage DOUBLE NULL,
      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
--- 6. Bảng Auctions (Phiên đấu giá - Đã gộp status chuẩn và viewer_count)
+-- 6. Bảng Auctions (Phiên đấu giá)
 CREATE TABLE auctions (
      id VARCHAR(36) PRIMARY KEY,
      item_id VARCHAR(36) NOT NULL,
      start_time DATETIME NOT NULL,
      end_time DATETIME NOT NULL,
      status ENUM('OPEN', 'RUNNING', 'FINISHED', 'PAID', 'CANCELED') DEFAULT 'OPEN',
+     -- Reserve price cần cho Auction.isReserveMet() và AuctionDAO.findAuctionById()
+     reserve_price BIGINT NOT NULL DEFAULT 1,
+     -- Các cột đúng theo AuctionDAO.findAuctionById()
+     current_price BIGINT DEFAULT 0,
+     current_leader_id VARCHAR(36) DEFAULT NULL,
+     -- Giữ lại 2 cột legacy (đang được update bởi AuctionDAO.updateHighestPrice/updateAuctionResult)
      current_highest_price BIGINT DEFAULT 0,
      winning_bidder_id VARCHAR(36) DEFAULT NULL,
      viewer_count INT DEFAULT 0,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
      FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+     FOREIGN KEY (current_leader_id) REFERENCES users(id) ON DELETE SET NULL,
      FOREIGN KEY (winning_bidder_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
@@ -157,10 +184,19 @@ CREATE TABLE financial_transactions (
     FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
 );
 
-ALTER TABLE users
-ADD COLUMN has_ever_been_penalized BOOLEAN DEFAULT FALSE,
-ADD COLUMN has_ever_been_restored BOOLEAN DEFAULT FALSE,
-ADD COLUMN suspended_at DATETIME NULL;
+-- 12. Bảng Quality Reports (bị thiếu nhưng QualityReportDAO đang dùng)
+CREATE TABLE quality_reports (
+    id VARCHAR(36) PRIMARY KEY,
+    auction_id VARCHAR(36) NOT NULL,
+    reporter_id VARCHAR(36) NOT NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    -- Các cột được QualityReportDAO.updateReport() cập nhật
+    seller_refund_deadline DATETIME NULL,
+    refund_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
 -- =================================================================
 -- 4. SEED DATA (DỮ LIỆU MẪU)
@@ -171,6 +207,6 @@ VALUES (
     UUID(), 
     'superadmin', 
     'chuoi_ma_hoa_cua_mat_khau', 
-    'system@aution.internal', 
+    'system@auction.internal', 
     'MASTER'
 );

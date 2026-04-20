@@ -5,6 +5,7 @@ import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.strategy.ReservePriceStrategy;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +24,8 @@ public class Auction extends Entity {
 
   private final Item item;
   private final LocalDateTime startTime;
-  private final LocalDateTime endTime;
+  private final LocalDateTime originalEndTime;
+  private LocalDateTime endTime;
   /**
    * Reserve price strategy - thiết lập khi tạo auction.
    * Seller phải chỉ định giá sàn ngay từ đầu.
@@ -93,6 +95,7 @@ public class Auction extends Entity {
     this.item = item;
     this.currentPrice = item.getStartingPrice();
     this.startTime = startTime;
+    this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reserveStrategy = reserveStrategy;
     this.state = OpenState.INSTANCE;
@@ -116,6 +119,7 @@ public class Auction extends Entity {
     this.item = item;
     this.currentPrice = currentPrice;
     this.startTime = startTime;
+    this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reserveStrategy = reserveStrategy;
     this.state = resolveState(status);
@@ -161,6 +165,10 @@ public class Auction extends Entity {
 
   public LocalDateTime getEndTime() {
     return endTime;
+  }
+
+  public LocalDateTime getOriginalEndTime() {
+    return originalEndTime;
   }
 
   public double getCurrentPrice() {
@@ -278,6 +286,19 @@ public class Auction extends Entity {
    */
   public void setCurrentLeader(NormalUser leader) {
     this.currentLeader = leader;
+  }
+
+  /**
+   * Gia hạn phiên (anti-sniping).
+   *
+   * @param extension khoảng thời gian gia hạn (phải > 0)
+   */
+  public void extendEndTime(Duration extension) {
+    if (extension == null || extension.isZero() || extension.isNegative()) {
+      throw new IllegalArgumentException("extension phải > 0.");
+    }
+    this.endTime = this.endTime.plus(extension);
+    markUpdated();
   }
 
   /**

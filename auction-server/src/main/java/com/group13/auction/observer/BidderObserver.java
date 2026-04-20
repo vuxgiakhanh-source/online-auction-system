@@ -46,6 +46,14 @@ public class BidderObserver implements AuctionObserver {
         // TODO: notificationDao.save()
         break;
 
+      case AUCTION_EXTENDED:
+        System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên %s được gia hạn. EndTime mới: %s. %s%n",
+                bidder.getUsername(),
+                event.getAuction().getId(),
+                event.getAuction().getEndTime(),
+                event.getMessage() != null ? event.getMessage() : "");
+        break;
+
       case AUCTION_UPCOMING:
         // Chưa done, đang trong quá trình hoàn thiện
         System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên sắp bắt đầu — chuẩn bị sẵn sàng.%n",
