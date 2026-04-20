@@ -72,6 +72,7 @@ public class RatingService implements IRatingService {
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(bidder.getId(), bidder.getRating());
+    // TODO: notificationDao.save() - báo cho bidder
   }
 
   @Override
@@ -83,6 +84,7 @@ public class RatingService implements IRatingService {
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(seller.getId(), seller.getRating());
+    // TODO: notificationDao.save() - báo cho seller
   }
 
   // Penalty methods
@@ -100,6 +102,7 @@ public class RatingService implements IRatingService {
     // Thực hiện TODO: Cập nhật điểm, cờ vi phạm và trạng thái xuống DB
     userDAO.updateRatingAndPenalty(bidder.getId(), bidder.getRating(), bidder.isHasEverBeenPenalized());
     userDAO.updateAccountStatus(bidder.getId(), bidder.getAccountStatus().name());
+    // TODO: notificationDao.save() - báo cho bidder
   }
 
   @Override
@@ -121,6 +124,7 @@ public class RatingService implements IRatingService {
     // Thực hiện TODO: Cập nhật điểm, cờ vi phạm và trạng thái xuống DB
     userDAO.updateRatingAndPenalty(seller.getId(), seller.getRating(), isPenalized);
     userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
+    // TODO: notificationDao.save() - báo cho seller
   }
 
   /**
@@ -183,6 +187,7 @@ public class RatingService implements IRatingService {
     userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
     // Đã thực hiện TODO: persist cờ hasEverBeenRestored để không mất khi restart
     userDAO.updateHasEverBeenRestored(user.getId(), normalUser.isHasEverBeenRestored());
+    // TODO: notificationDao.save() - báo cho user
   }
 
   // Private helpers
@@ -195,5 +200,6 @@ public class RatingService implements IRatingService {
               "[RATING] %s bị SUSPEND — rating %.1f <= %.1f%n",
               user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
+    // TODO: notificationDao.save() - báo cho user
   }
 }

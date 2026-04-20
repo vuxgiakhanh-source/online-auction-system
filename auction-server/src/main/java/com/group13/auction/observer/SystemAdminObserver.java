@@ -23,63 +23,106 @@ public class SystemAdminObserver implements AuctionObserver {
     @Override
     public void onBidPlaced(AuctionEvent event) {
         String log = String.format(
-                "[GLOBAL - SYSTEM] Bid mới: %s đặt %.0f | Phiên: %s%s",
+                "[SYSTEM] Bid mới: %s đặt %.0f | Phiên: %s%s",
                 event.getBidder() != null ? event.getBidder().getUsername() : "?",
                 event.getBidAmount(),
                 event.getAuction().getId(),
                 event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
                         ? " [RESERVE CHƯA ĐẠT]" : "");
-        systemAdmin.addActionLog(log);
-        System.out.println(log);
+        log(log);
     }
 
     @Override
     public void onAuctionEnded(AuctionEvent event) {
         String log;
         switch (event.getEventType()) {
-            case AUCTION_STARTED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên bắt đầu: %s", event.getAuction().getId());
-                break;
-            case AUCTION_ENDED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên kết thúc: %s | Winner: %s",
-                        event.getAuction().getId(),
-                        event.getBidder() != null ? event.getBidder().getUsername() : "Không có");
-                break;
-            case AUCTION_NO_WINNER:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên %s kết thúc — không có người đặt giá. Auto-cancel.",
+            case AUCTION_UPCOMING:
+                log = String.format("[SYSTEM] Phiên sắp bắt đầu: %s",
                         event.getAuction().getId());
                 break;
+
+            case AUCTION_STARTED:
+                log = String.format("[SYSTEM] Phiên bắt đầu: %s",
+                        event.getAuction().getId());
+                break;
+
+            case AUCTION_ENDED:
+                log = String.format("[SYSTEM] Phiên kết thúc: %s | Winner: %s | Giá: %.0f",
+                        event.getAuction().getId(),
+                        event.getBidder() != null ? event.getBidder().getUsername() : "Không có",
+                        event.getBidAmount());
+                break;
+
+            case AUCTION_NO_WINNER:
+                log = String.format(
+                        "[SYSTEM] Phiên %s kết thúc — không có người đặt giá. Auto-cancel.",
+                        event.getAuction().getId());
+                break;
+
             case RESERVE_NOT_MET_CLOSED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên %s kết thúc — giá cao nhất %.0f chưa đạt reserve. Auto-cancel.",
+                log = String.format(
+                        "[SYSTEM] Phiên %s kết thúc — giá cao nhất %.0f chưa đạt reserve."
+                                + " Auto-cancel.",
                         event.getAuction().getId(), event.getBidAmount());
                 break;
+
             case PAYMENT_COMPLETED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Thanh toán thành công: phiên %s",
-                        event.getAuction().getId());
+                log = String.format("[SYSTEM] Thanh toán thành công | Phiên: %s | Winner: %s",
+                        event.getAuction().getId(),
+                        event.getBidder() != null ? event.getBidder().getUsername() : "?");
                 break;
+
             case AUCTION_CANCELED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Phiên bị hủy: %s", event.getAuction().getId());
-                break;
-            case FRAUD_DETECTED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] GIAN LẶN phát hiện tại phiên %s: %s",
-                        event.getAuction().getId(),
-                        event.getMessage() != null ? event.getMessage() : "");
-                break;
-            case QUALITY_REPORT_APPROVED:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Báo cáo chất lượng được duyệt: phiên %s",
+                log = String.format("[SYSTEM] Phiên bị hủy: %s",
                         event.getAuction().getId());
                 break;
-            case SELLER_CANCEL_REQUEST:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Seller yêu cầu hủy phiên %s: %s",
+
+            case SECOND_CHANCE_OFFERED:
+                log = String.format(
+                        "[SYSTEM] Second Chance Offer tạo cho %s | Phiên: %s | Giá: %.0f",
+                        event.getBidder() != null ? event.getBidder().getUsername() : "?",
+                        event.getAuction().getId(),
+                        event.getBidAmount());
+                break;
+
+            case QUALITY_REPORT_APPROVED:
+                log = String.format(
+                        "[SYSTEM] Báo cáo chất lượng được duyệt | Phiên: %s",
+                        event.getAuction().getId());
+                break;
+
+            case FRAUD_DETECTED:
+                log = String.format(
+                        "[SYSTEM] GIAN LẬN phát hiện tại phiên %s: %s",
                         event.getAuction().getId(),
                         event.getMessage() != null ? event.getMessage() : "");
                 break;
+
+            case SELLER_CANCEL_REQUEST:
+                log = String.format(
+                        "[SYSTEM] Seller yêu cầu hủy phiên %s: %s",
+                        event.getAuction().getId(),
+                        event.getMessage() != null ? event.getMessage() : "");
+                break;
+
+            case SELLER_CANCEL_REQUEST_ACCEPTED:
+                log = String.format(
+                        "[SYSTEM] Yêu cầu hủy phiên %s được chấp thuận.",
+                        event.getAuction().getId());
+                break;
+
             default:
-                log = String.format("[GLOBAL - THÔNG BÁO tới SYSTEM] Event: %s | Phiên: %s",
+                log = String.format("[SYSTEM] Event: %s | Phiên: %s",
                         event.getEventType(), event.getAuction().getId());
                 break;
         }
-        systemAdmin.addActionLog(log);
-        System.out.println(log);
+        log(log);
+    }
+
+    // Private helper
+
+    private void log(String message) {
+        systemAdmin.addActionLog(message);
+        System.out.println(message);
     }
 }

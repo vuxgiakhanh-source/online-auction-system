@@ -170,6 +170,7 @@ public class QualityReport extends Entity {
         return status == ReportStatus.APPROVED
                 && sellerRefundDeadline != null
                 && LocalDateTime.now().isAfter(sellerRefundDeadline);
+        // TODO: notificationDao.save() - báo cho seller
     }
 
     // Setters - chỉ QualityReportService / PaymentService gọi
@@ -183,6 +184,7 @@ public class QualityReport extends Entity {
         this.status = ReportStatus.APPROVED;
         this.sellerRefundDeadline = LocalDateTime.now().plusHours(24);
         markUpdated();
+        // TODO: notificationDao.save() - báo cho seller, user
     }
 
     /**
@@ -192,6 +194,7 @@ public class QualityReport extends Entity {
     public void reject() {
         this.status = ReportStatus.REJECTED;
         markUpdated();
+        // TODO: notificationDao.save() - báo cho user
     }
 
     public void markRefundCompleted() {

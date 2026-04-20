@@ -77,6 +77,7 @@ public class AccountService implements IAccountService {
 
     // Gọi DAO để cập nhật DB
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
+    // TODO: notificationDao.save() - báo user
   }
 
 
@@ -143,6 +144,7 @@ public class AccountService implements IAccountService {
 
     // Gọi DAO để cập nhật DB
     sellerDAO.approveSellerRole(user.getId());
+    // TODO: notificationDao.save() - báo user
   }
 
   // Seller request hủy phiên

@@ -20,7 +20,8 @@ public class AuctionEvent {
     SECOND_CHANCE_OFFERED, // đề nghị mua thứ cấp cho runner-up
     QUALITY_REPORT_APPROVED, // báo cáo chất lượng được duyệt
     FRAUD_DETECTED, // gian lận phát hiện (chỉ gửi global/admin)
-    SELLER_CANCEL_REQUEST // seller yêu cầu hủy - gửi cho SystemAdmin xem xét
+    SELLER_CANCEL_REQUEST, // seller yêu cầu hủy - gửi cho SystemAdmin xem xét
+    SELLER_CANCEL_REQUEST_ACCEPTED // hệ thống chấp nhận yêu cầu hủy
   }
 
   private final AuctionEventType eventType;

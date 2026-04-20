@@ -33,7 +33,9 @@ public class BidderObserver implements AuctionObserver {
     } else if (event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
       System.out.printf("[THÔNG BÁO tới Bidder %s] Bid %.0f chưa đạt reserve price.%n",
               bidder.getUsername(), event.getBidAmount());
+      // TODO: notificationDao.save()
     }
+
   }
 
   @Override
@@ -41,34 +43,51 @@ public class BidderObserver implements AuctionObserver {
     switch (event.getEventType()) {
       case AUCTION_STARTED:
         System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên đã bắt đầu!%n", bidder.getUsername());
+        // TODO: notificationDao.save()
         break;
+
       case AUCTION_UPCOMING:
         // Chưa done, đang trong quá trình hoàn thiện
         System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên sắp bắt đầu — chuẩn bị sẵn sàng.%n",
                 bidder.getUsername());
+        // TODO: notificationDao.save()
         break;
+
       case AUCTION_ENDED:
         if (event.getBidder() != null
                 && event.getBidder().getUsername().equals(bidder.getUsername())) {
           System.out.printf("[THÔNG BÁO tới Bidder %s] Chúc mừng! Bạn thắng phiên với giá %.0f. Hãy thanh toán trong 24h.%n",
                   bidder.getUsername(), event.getBidAmount());
+          // TODO: notificationDao.save()
         } else {
           System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên kết thúc. Winner: %s.%n",
                   bidder.getUsername(),
                   event.getBidder() != null ? event.getBidder().getUsername() : "Không có");
+          // TODO: notificationDao.save()
         }
         break;
+
+      case AUCTION_NO_WINNER:
+        System.out.printf(
+                "[THÔNG BÁO tới Bidder %s] Phiên kết thúc không có ai đặt giá."
+                        + " Cọc sẽ được hoàn trả.%n",
+                bidder.getUsername());
+        // TODO: notificationDao.save()
+        break;
+      case RESERVE_NOT_MET_CLOSED:
+        System.out.printf(
+                "[THÔNG BÁO tới Bidder %s] Phiên kết thúc — giá cao nhất %.0f"
+                        + " chưa đạt reserve. Cọc sẽ được hoàn trả.%n",
+                bidder.getUsername(), event.getBidAmount());
+        // TODO: notificationDao.save()
+        break;
+
       case AUCTION_CANCELED:
         System.out.printf("[THÔNG BÁO tới Bidder %s] Phiên đấu giá đã bị hủy. Cọc sẽ được hoàn trả.%n",
                 bidder.getUsername());
+        // TODO: notificationDao.save()
         break;
-      case SECOND_CHANCE_OFFERED:
-        System.out.printf("[THÔNG BÁO tới Bidder %s] Bạn nhận được Second Chance Offer với giá %.0f! Có 24h để quyết định.%n",
-                bidder.getUsername(), event.getBidAmount());
-        break;
-      case PAYMENT_COMPLETED:
-        System.out.printf("[THÔNG BÁO tới Bidder %s] Thanh toán thành công!%n", bidder.getUsername());
-        break;
+
       default:
         break;
     }

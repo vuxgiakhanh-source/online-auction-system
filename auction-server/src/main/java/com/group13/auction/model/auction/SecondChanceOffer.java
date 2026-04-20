@@ -103,6 +103,7 @@ public class SecondChanceOffer extends Entity {
      * </ol>
      */
     public boolean isExpired() {
+        // TODO: notificationDao.save()
         return LocalDateTime.now().isAfter(deadline) && status == OfferStatus.PENDING;
     }
 

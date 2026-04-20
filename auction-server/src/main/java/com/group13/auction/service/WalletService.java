@@ -156,6 +156,7 @@ public class WalletService implements IWalletService {
         tx.printInfo();
         // Đã thực hiện TODO: financialTransactionDao.save(tx)
         financialTransactionDAO.saveTransaction(tx);
+        // TODO: notificationDao.save() - báo cho bidder
     }
 
     /**
@@ -182,6 +183,7 @@ public class WalletService implements IWalletService {
 
         // Đã thực hiện TODO: financialTransactionDao.save(tx)
         financialTransactionDAO.saveTransaction(tx);
+        // TODO: notificationDao.save() - báo cho user
     }
 
     // Payment transaction
@@ -256,6 +258,7 @@ public class WalletService implements IWalletService {
                 // Đã thực hiện TODO: finanacialTransactionDAO.save toàn bộ batch
                 financialTransactionDAO.saveTransaction(tx);
             }
+            // TODO: notificationDao.save() - báo cho seller
 
         } catch (Exception e) {
             // Rollback: khôi phục trạng thái ban đầu
@@ -265,6 +268,7 @@ public class WalletService implements IWalletService {
 
             System.err.printf("[WALLET] ROLLBACK giao dịch phiên %s | Lỗi: %s%n",
                     auctionId, e.getMessage());
+            // TODO: notificationDao.save() - báo cho bidder
             throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
                     "Giao dịch thất bại, đã rollback: " + e.getMessage());
         }
@@ -307,6 +311,7 @@ public class WalletService implements IWalletService {
 
         // Đã thực hiện TODO: financialTransactionDAO.save(txRefund)
         financialTransactionDAO.saveTransaction(txRefund);
+        // TODO: notificationDao.save() - báo cho user
     }
 
 
