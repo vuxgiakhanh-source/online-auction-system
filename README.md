@@ -13,6 +13,9 @@ phân tán như xử lý tranh chấp dữ liệu khi đấu giá đồng thời
 ưu hóa trải nghiệm người dùng qua kết nối Socket và áp dụng các 
 mẫu thiết kế (Design Patterns) để đảm bảo khả năng mở rộng hệ thống.
 > Add ảnh demo mô phỏng ứng dụng hoạt động
+
+---
+
 ## ✨ Đặc điểm kĩ thuật nổi bật
 Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
 * __Real-time Engine__: Sử dụng mô hình ___Observer Pattern___ kết hợp với 
@@ -33,6 +36,9 @@ logic nghiệp vụ phức tạp.
 
 * __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) 
 và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___.
+
+---
+
 ## 👷 Chức năng hệ thống
 ### Chức năng cốt lõi
 * __Quản lý đa vai trò__: Phân quyền chi tiết cho Bidder (Người mua), Seller 
@@ -58,8 +64,17 @@ phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho 
 
 * __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu
 giá theo thời gian thực.
+
+---
+
 ## 💡 Hướng dẫn cài đặt (Later)
+
+---
+
 ## 🔎 Cách sử dụng (Later)
+
+---
+
 ## ⚙️ Công nghệ & Công cụ sử dụng
 * __Ngôn ngữ__: Java
 
@@ -74,13 +89,18 @@ giá theo thời gian thực.
 
 
 * __Kiểm thử__: (Later)
+
+---
+
 ## 👥 Đội ngũ & Phân công nhiệm vụ (Project Roadmap)
-|                                              Thành viên                                               | Vai trò                                        | Nhiệm vụ chính                                                                                                          |               Tiến độ                | Trạng thái |
-|:-----------------------------------------------------------------------------------------------------:|:-----------------------------------------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------:| :---: |
-|             <img src="https://github.com/hchyy.png" width="50px;"/><br />**Hồ Huyền Chi**             | **___Trưởng nhóm___ <br> OOP design**          | • Code logic đấu giá chính <br> • Hỗ trợ design giao diện <br> • Review và Refactor code <br> • Viết tài liệu hướng dẫn | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|       <img src="https://github.com/thebrosaythree.png" width="50px;"/><br />**Bạch Quốc Thịnh**       | **___Thành viên___ <br> Backend**              | • Cài đặt DataBase và Backend <br> • Tích hợp API <br> • Cài đặt Anti-Snipping                                          | ![60%](https://geps.dev/progress/60) | 🏗️ *Processing* |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="50px;"/><br />**Vũ Gia Khánh** | **___Thành viên___ <br> Concurrency / Tester** | • Cài đặt Network và Concurrency <br> • Phát triển chức năng nâng cao <br> • Viết integration test                      | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|     <img src="https://github.com/identicons/bingbongg.png" width="50px;"/><br />**Trần Thảo Nhi**     | **___Thành viên___ <br> Frontend**             | • Đảm nhiệm toàn bộ Frontend và Client <br> • Viết tài liệu hướng dẫn                                                   | ![40%](https://geps.dev/progress/40) | 🏗️ *Processing* |
+|                                              Thành viên                                               | Vai trò                                      | Nhiệm vụ chính                                                                                                          |               Tiến độ                | Trạng thái |
+|:-----------------------------------------------------------------------------------------------------:|:---------------------------------------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------:| :---: |
+|             <img src="https://github.com/hchyy.png" width="50px;"/><br />**Hồ Huyền Chi**             | **__Trưởng nhóm__ <br> OOP design**          | • Code logic đấu giá chính <br> • Hỗ trợ design giao diện <br> • Review và Refactor code <br> • Viết tài liệu hướng dẫn | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
+|       <img src="https://github.com/thebrosaythree.png" width="50px;"/><br />**Bạch Quốc Thịnh**       | **__Thành viên__ <br> Backend**              | • Cài đặt DataBase và Backend <br> • Tích hợp API <br> • Cài đặt Anti-Snipping                                          | ![60%](https://geps.dev/progress/60) | 🏗️ *Processing* |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="50px;"/><br />**Vũ Gia Khánh** | **__Thành viên__ <br> Concurrency / Tester** | • Cài đặt Network và Concurrency <br> • Phát triển chức năng nâng cao <br> • Viết integration test                      | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
+|     <img src="https://github.com/identicons/bingbongg.png" width="50px;"/><br />**Trần Thảo Nhi**     | **__Thành viên__ <br> Frontend**             | • Đảm nhiệm toàn bộ Frontend và Client <br> • Viết tài liệu hướng dẫn                                                   | ![40%](https://geps.dev/progress/40) | 🏗️ *Processing* |
+
+---
 
 ## 📞 Liên hệ
 * [Hồ Huyền Chi : Core Logic (OOP)](https://www.facebook.com/hchy07/) - chidinhhoi1709@gmail.com
