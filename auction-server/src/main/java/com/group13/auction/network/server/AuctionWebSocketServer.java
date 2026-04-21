@@ -71,7 +71,13 @@ public class AuctionWebSocketServer extends WebSocketServer {
         // Đăng ký handlers theo thứ tự ưu tiên kiểm tra
         router.register(new AuthHandler(accountService, userService, sessionManager));
         router.register(new AuctionHandler(auctionService, accountService, sessionManager, itemFactory));
-        router.register(new BidHandler(bidService, sessionManager));
+
+        // FIX Bug #3: truyền đúng constructor 4-arg có ratingService.
+        // Trước đây dùng BidHandler(bidService, sessionManager) → ratingService = null
+        // → NullPointerException ngay khi bất kỳ user nào gọi joinAuction/placeBid.
+        router.register(new BidHandler(bidService, ratingService, sessionManager,
+                new com.group13.auction.dao.BidTransactionDAO()));
+
         router.register(new PaymentHandler(paymentService, accountService, sessionManager));
         router.register(new UserAdminHandler(accountService, ratingService,
                 qualityReportService, sessionManager));
@@ -102,7 +108,8 @@ public class AuctionWebSocketServer extends WebSocketServer {
     public void onMessage(WebSocket conn, String message) {
         ClientSession session = sessionManager.getByConnection(conn);
         if (session == null) {
-            log.warning("[SERVER] onMessage: không tìm thấy session cho connection " + conn.getRemoteSocketAddress());
+            log.warning("[SERVER] onMessage: không tìm thấy session cho connection "
+                    + conn.getRemoteSocketAddress());
             return;
         }
         router.route(session, message);
