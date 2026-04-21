@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.group13.auction</groupId>
-        <artifactId>network-layer</artifactId>
+        <artifactId>online-auction-system</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -24,10 +24,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
 </project>
