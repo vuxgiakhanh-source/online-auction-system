@@ -121,7 +121,7 @@ public class PaymentService implements IPaymentService {
 
     // Thực hiện TODO: query DB lấy danh sách bidder đã tham gia (những người có bid ACCEPTED)
     List<NormalUser> participants = bidTransactionDAO.findBiddersByAuction(auction.getId());
-    double depositAmount = auction.getItem().getStartingPrice() * 0.3;
+    long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
 
     for (NormalUser bidder : participants) {
       if (winnerId == null || !bidder.getId().equals(winnerId)) {
@@ -162,7 +162,7 @@ public class PaymentService implements IPaymentService {
 
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
 
-    System.out.printf("[PAYMENT] Runner-up %s chấp nhận Second Chance Offer | Giá: %.0f%n",
+    System.out.printf("[PAYMENT] Runner-up %s chấp nhận Second Chance Offer | Giá: %d%n",
             runnerUp.getUsername(), offer.getOfferPrice());
 
     // Thực hiện TODO: Cập nhật DB
@@ -198,7 +198,7 @@ public class PaymentService implements IPaymentService {
       NormalUser runnerUp = runnerUpBid.getBidder();
 
       if (runnerUp != null) {
-        double depositPaid = auction.getItem().getStartingPrice() * 0.3;
+        long depositPaid = auction.getItem().getStartingPrice() * 3 / 10;
         createSecondChanceOffer(runnerUp, auction, runnerUpBid.getAmount(), depositPaid);
       }
     } else {
@@ -206,14 +206,14 @@ public class PaymentService implements IPaymentService {
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
     }
 
-    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, null, 0);
+    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, null, 0L);
     // TODO: notificationDao.save() - báo cho runner-up
   }
 
   public SecondChanceOffer createSecondChanceOffer(NormalUser runnerUp,
-                                                   Auction auction, double offerPrice, double depositPaid) {
+                                                   Auction auction, long offerPrice, long depositPaid) {
     if (offerPrice < auction.getReserveStrategy().getReservePrice()) {
-      System.out.printf("[PAYMENT] Runner-up bid %.0f chưa đạt reserve. Hủy phiên.%n", offerPrice);
+      System.out.printf("[PAYMENT] Runner-up bid %d chưa đạt reserve. Hủy phiên.%n", offerPrice);
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
       return null;
     }
@@ -223,9 +223,9 @@ public class PaymentService implements IPaymentService {
 
     auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
             runnerUp, offerPrice,
-            String.format("Second Chance Offer: mua với giá %.0f trong 24h", offerPrice));
+            String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
 
-    System.out.printf("[PAYMENT] Second Chance Offer tạo cho %s | Giá: %.0f | Hạn: %s%n",
+    System.out.printf("[PAYMENT] Second Chance Offer tạo cho %s | Giá: %d | Hạn: %s%n",
             runnerUp.getUsername(), offerPrice, offer.getDeadline());
 
     // Thực hiện TODO: Lưu DB

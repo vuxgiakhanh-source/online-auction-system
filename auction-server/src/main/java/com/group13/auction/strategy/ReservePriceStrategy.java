@@ -14,7 +14,7 @@ import com.group13.auction.model.auction.Auction;
  */
 public class ReservePriceStrategy implements BidStrategy {
 
-  private final double reservePrice;
+  private final long reservePrice;
 
   /**
    * Khởi tạo ReservePriceStrategy.
@@ -22,7 +22,7 @@ public class ReservePriceStrategy implements BidStrategy {
    *
    * @param reservePrice giá sàn bí mật của Seller (> 0)
    */
-  public ReservePriceStrategy(double reservePrice) {
+  public ReservePriceStrategy(long reservePrice) {
     if (reservePrice <= 0) {
       throw new IllegalArgumentException("reservePrice phải lớn hơn 0.");
     }
@@ -34,8 +34,8 @@ public class ReservePriceStrategy implements BidStrategy {
    * Reserve price được kiểm tra riêng ở BidService.
    */
   @Override
-  public boolean isValidBid(Auction auction, double amount) {
-    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+  public boolean isValidBid(Auction auction, long amount) {
+    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     return amount >= auction.getCurrentPrice() + increment;
   }
 
@@ -46,7 +46,7 @@ public class ReservePriceStrategy implements BidStrategy {
                     + "Bước giá tối thiểu theo ngưỡng giá hiện tại.");
   }
 
-  public double getReservePrice() { return reservePrice; }
+  public long getReservePrice() { return reservePrice; }
 
   /**
    * Lấy bước giá tối thiểu tại mức giá đã cho.
@@ -54,7 +54,7 @@ public class ReservePriceStrategy implements BidStrategy {
    * @param currentPrice giá hiện tại để tính increment
    * @return bước giá tối thiểu
    */
-  public double getMinIncrement(double currentPrice) {
+  public long getMinIncrement(long currentPrice) {
     return BidIncrementCalculator.calculate(currentPrice);
   }
 }

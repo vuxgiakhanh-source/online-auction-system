@@ -101,8 +101,8 @@ public interface IAuctionService {
   void addObserver(Auction auction, AuctionObserver observer);
 
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
-              NormalUser bidder, double amount);
+              NormalUser bidder, long amount);
 
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
-              NormalUser bidder, double amount, String message);
+              NormalUser bidder, long amount, String message);
 }

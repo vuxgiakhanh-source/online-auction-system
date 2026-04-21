@@ -14,11 +14,11 @@ package com.group13.auction.strategy;
  */
 public final class BidIncrementCalculator {
 
-    private static final double TIER_LOW       = 1_000_000.0;
-    private static final double TIER_MID       = 10_000_000.0;
-    private static final double INCREMENT_LOW  = 50_000.0;
-    private static final double INCREMENT_MID  = 200_000.0;
-    private static final double INCREMENT_HIGH = 500_000.0;
+    private static final long TIER_LOW       = 1_000_000L;
+    private static final long TIER_MID       = 10_000_000L;
+    private static final long INCREMENT_LOW  = 50_000L;
+    private static final long INCREMENT_MID  = 200_000L;
+    private static final long INCREMENT_HIGH = 500_000L;
 
     private BidIncrementCalculator() {
         // Utility class, không cho phép khởi tạo
@@ -30,7 +30,7 @@ public final class BidIncrementCalculator {
      * @param currentPrice giá hiện tại của phiên đấu giá
      * @return bước giá tối thiểu tương ứng
      */
-    public static double calculate(double currentPrice) {
+    public static long calculate(long currentPrice) {
         if (currentPrice < TIER_LOW) {
             return INCREMENT_LOW;
         } else if (currentPrice <= TIER_MID) {

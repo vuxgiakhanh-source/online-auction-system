@@ -22,9 +22,9 @@ public class UserDTO {
     private String accountStatus;
 
     private double rating;
-    private double balance;
-    private double lockedDeposit;
-    private double availableBalance;
+    private long balance;
+    private long lockedDeposit;
+    private long availableBalance;
 
     /** true nếu user này đã từng bị penalize (ảnh hưởng auto-approve Seller). */
     private boolean hasEverBeenPenalized;
@@ -57,14 +57,14 @@ public class UserDTO {
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
 
-    public double getBalance() { return balance; }
-    public void setBalance(double balance) { this.balance = balance; }
+    public long getBalance() { return balance; }
+    public void setBalance(long balance) { this.balance = balance; }
 
-    public double getLockedDeposit() { return lockedDeposit; }
-    public void setLockedDeposit(double lockedDeposit) { this.lockedDeposit = lockedDeposit; }
+    public long getLockedDeposit() { return lockedDeposit; }
+    public void setLockedDeposit(long lockedDeposit) { this.lockedDeposit = lockedDeposit; }
 
-    public double getAvailableBalance() { return availableBalance; }
-    public void setAvailableBalance(double availableBalance) { this.availableBalance = availableBalance; }
+    public long getAvailableBalance() { return availableBalance; }
+    public void setAvailableBalance(long availableBalance) { this.availableBalance = availableBalance; }
 
     public boolean isHasEverBeenPenalized() { return hasEverBeenPenalized; }
     public void setHasEverBeenPenalized(boolean hasEverBeenPenalized) {

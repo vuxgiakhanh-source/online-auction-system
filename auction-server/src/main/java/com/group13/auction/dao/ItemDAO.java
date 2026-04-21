@@ -34,7 +34,7 @@ public class ItemDAO {
      * @return true nếu insert thành công
      */
     public boolean addItem(String itemId, String sellerId, String name,
-                           String description, double startingPrice, String categoryType) {
+                           String description, long startingPrice, String categoryType) {
         String sql = "INSERT INTO items (id, seller_id, name, description, starting_price, category_type) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -44,7 +44,7 @@ public class ItemDAO {
             pstmt.setString(2, sellerId);
             pstmt.setString(3, name);
             pstmt.setString(4, description);
-            pstmt.setDouble(5, startingPrice);
+            pstmt.setLong(5, startingPrice);
             pstmt.setString(6, categoryType);
 
             return pstmt.executeUpdate() > 0;
@@ -132,7 +132,7 @@ public class ItemDAO {
         String id           = rs.getString("id");
         String name         = rs.getString("name");
         String description  = rs.getString("description");
-        double startingPrice = rs.getDouble("starting_price");
+        long startingPrice = rs.getLong("starting_price");
         String categoryType = rs.getString("category_type");
         String sellerId     = rs.getString("seller_id");
 

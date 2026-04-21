@@ -44,7 +44,7 @@ public class ServerBroadcastNotifier {
      * @param bidderUsername username người bid
      * @param isAutoBid    true nếu là auto-bid
      */
-    public void notifyBidUpdate(Auction auction, double bidAmount,
+    public void notifyBidUpdate(Auction auction, long bidAmount,
                                 String bidderUsername, boolean isAutoBid) {
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount);
         PacketType type = auction.isReserveMet()
@@ -71,8 +71,8 @@ public class ServerBroadcastNotifier {
      * @param isLeading  có đang dẫn đầu không
      */
     public void notifyAutoBidTriggered(String userId, String auctionId,
-                                       double bidAmount, double newPrice,
-                                       double maxBid, boolean isLeading) {
+                                       long bidAmount, long newPrice,
+                                       long maxBid, boolean isLeading) {
         BidDTOs.AutoBidTriggeredDTO dto = new BidDTOs.AutoBidTriggeredDTO();
         dto.setAuctionId(auctionId);
         dto.setBidAmount(bidAmount);
@@ -87,7 +87,7 @@ public class ServerBroadcastNotifier {
      * Push AUTO_BID_EXHAUSTED_NOTIFY khi auto-bid đã cạn kiệt.
      */
     public void notifyAutoBidExhausted(String userId, String auctionId,
-                                       double maxBid, double currentPrice,
+                                       long maxBid, long currentPrice,
                                        String leadingUsername) {
         BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
         dto.setAuctionId(auctionId);
@@ -169,7 +169,7 @@ public class ServerBroadcastNotifier {
 
     /** Push DEPOSIT_REFUND_NOTIFY cho bidder thua khi phiên kết thúc. */
     public void notifyDepositRefund(String userId, String auctionId,
-                                    double refundAmount, double newBalance) {
+                                    long refundAmount, long newBalance) {
         PaymentDTOs.DepositRefundDTO dto = new PaymentDTOs.DepositRefundDTO();
         dto.setAuctionId(auctionId);
         dto.setRefundAmount(refundAmount);
@@ -179,7 +179,7 @@ public class ServerBroadcastNotifier {
 
     /** Push DEPOSIT_FORFEITED_NOTIFY cho winner không trả tiền. */
     public void notifyDepositForfeited(String userId, String auctionId,
-                                       double forfeitedAmount, double newBalance) {
+                                       long forfeitedAmount, long newBalance) {
         PaymentDTOs.DepositForfeitedDTO dto = new PaymentDTOs.DepositForfeitedDTO();
         dto.setAuctionId(auctionId);
         dto.setForfeitedAmount(forfeitedAmount);

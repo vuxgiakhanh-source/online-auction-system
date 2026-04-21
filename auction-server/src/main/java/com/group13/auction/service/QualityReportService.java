@@ -108,9 +108,9 @@ QualityReportService implements IQualityReportService {
         SystemAdmin.getInstance().autoBanIfNeeded(seller);
 
         // Hoàn tiền từ SystemBank + Seller về Winner
-        double finalPrice = auction.getWinner() != null
+        long finalPrice = auction.getWinner() != null
                 ? auction.getWinner().getFinalPrice()
-                : 0;
+                : 0L;
         if (finalPrice > 0) {
             walletService.executeRefundToWinner(winner, seller, finalPrice, auction.getId());
             report.markRefundCompleted();
@@ -119,13 +119,13 @@ QualityReportService implements IQualityReportService {
         // Notify Staff Admin theo dõi
         AuctionEvent event = new AuctionEvent(
                 AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
-                auction, winner, 0,
+                auction, winner, 0L,
                 String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
         AuctionManager.getInstance().notifyStaffObservers(event);
         AuctionManager.getInstance().notifyGlobalObservers(event);
 
         String log = String.format(
-                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %.0f",
+                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
                 admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
         admin.addActionLog(log);
         SystemAdmin.getInstance().addActionLog(log);

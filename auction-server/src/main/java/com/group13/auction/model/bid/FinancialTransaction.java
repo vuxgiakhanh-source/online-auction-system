@@ -25,21 +25,21 @@ public class FinancialTransaction extends Entity {
 
     private final String fromUserId;
     private final String toUserId;
-    private final double amount;
+    private final long amount;
     private final TransactionType type;
     private final String auctionId;
 
     // Static factory method
 
     public static FinancialTransaction create(String fromUserId, String toUserId,
-                                              double amount, TransactionType type,
+                                              long amount, TransactionType type,
                                               String auctionId) {
         return new FinancialTransaction(fromUserId, toUserId, amount, type, auctionId);
     }
 
     public static FinancialTransaction reconstitute(String id, LocalDateTime createdAt,
                                                     LocalDateTime updatedAt, String fromUserId, String toUserId,
-                                                    double amount, TransactionType type, String auctionId) {
+                                                    long amount, TransactionType type, String auctionId) {
         return new FinancialTransaction(id, createdAt, updatedAt,
                 fromUserId, toUserId, amount, type, auctionId);
     }
@@ -47,7 +47,7 @@ public class FinancialTransaction extends Entity {
     // Private constructors
 
     private FinancialTransaction(String fromUserId, String toUserId,
-                                 double amount, TransactionType type, String auctionId) {
+                                 long amount, TransactionType type, String auctionId) {
         super();
         this.fromUserId = fromUserId;
         this.toUserId = toUserId;
@@ -57,7 +57,7 @@ public class FinancialTransaction extends Entity {
     }
 
     private FinancialTransaction(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                                 String fromUserId, String toUserId, double amount,
+                                 String fromUserId, String toUserId, long amount,
                                  TransactionType type, String auctionId) {
         super(id, createdAt, updatedAt);
         this.fromUserId = fromUserId;
@@ -69,13 +69,13 @@ public class FinancialTransaction extends Entity {
 
     public String getFromUserId() { return fromUserId; }
     public String getToUserId() { return toUserId; }
-    public double getAmount() { return amount; }
+    public long getAmount() { return amount; }
     public TransactionType getType() { return type; }
     public String getAuctionId() { return auctionId; }
 
     @Override
     public void printInfo() {
-        System.out.printf("[FINANCIAL TRANSACTION] %s | %.0f | %s → %s | Auction: %s%n",
+        System.out.printf("[FINANCIAL TRANSACTION] %s | %d | %s → %s | Auction: %s%n",
                 type, amount, fromUserId, toUserId, auctionId);
     }
 }
