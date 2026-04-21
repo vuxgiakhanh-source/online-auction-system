@@ -126,7 +126,7 @@ public final class DTOMapper {
 
     // ── Bid ───────────────────────────────────────────────────────────────────
 
-    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, double newPrice) {
+    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, long newPrice) {
         BidDTOs.BidUpdateDTO dto = new BidDTOs.BidUpdateDTO();
         dto.setAuctionId(auction.getId());
         dto.setNewCurrentPrice(newPrice);
@@ -140,7 +140,7 @@ public final class DTOMapper {
         return dto;
     }
 
-    public static BidDTOs.BidChartPointDTO toBidChartPoint(String auctionId, double price,
+    public static BidDTOs.BidChartPointDTO toBidChartPoint(String auctionId, long price,
                                                            String bidderUsername, boolean isAutoBid) {
         BidDTOs.BidChartPointDTO dto = new BidDTOs.BidChartPointDTO();
         dto.setAuctionId(auctionId);

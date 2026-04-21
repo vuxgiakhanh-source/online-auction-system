@@ -23,9 +23,9 @@ import java.util.Set;
 public class NormalUser extends User {
 
     // Bidder state
-    private double balance;
+    private long balance;
     /** Số tiền bị khóa làm cọc cho các phiên đang tham gia. */
-    private double lockedDeposit;
+    private long lockedDeposit;
     private List<BidTransaction> bidHistory;
     private Set<String> joinedAuctionIds;
     private List<String> watchListAuctionIds;
@@ -84,8 +84,8 @@ public class NormalUser extends User {
             String email,
             AccountStatus accountStatus,
             double rating,
-            double balance,
-            double lockedDeposit,
+            long balance,
+            long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
             boolean hasEverBeenRestored,
@@ -100,8 +100,8 @@ public class NormalUser extends User {
 
     private NormalUser(String username, String password, String email) {
         super(username, password, email, UserRole.BIDDER);
-        this.balance = 0.0;
-        this.lockedDeposit = 0.0;
+        this.balance = 0L;
+        this.lockedDeposit = 0L;
         this.bidHistory = new ArrayList<>();
         this.joinedAuctionIds = new HashSet<>();
         this.watchListAuctionIds = new ArrayList<>();
@@ -125,8 +125,8 @@ public class NormalUser extends User {
             String email,
             AccountStatus accountStatus,
             double rating,
-            double balance,
-            double lockedDeposit,
+            long balance,
+            long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
             boolean hasEverBeenRestored,
@@ -169,16 +169,16 @@ public class NormalUser extends User {
 
     // Bidder getters / setters
 
-    public double getBalance() {
+    public long getBalance() {
         return balance;
     }
 
-    public double getLockedDeposit() {
+    public long getLockedDeposit() {
         return lockedDeposit;
     }
 
     /** Số dư khả dụng (không bị khóa). */
-    public double getAvailableBalance() {
+    public long getAvailableBalance() {
         return balance - lockedDeposit;
     }
 
@@ -212,7 +212,7 @@ public class NormalUser extends User {
         return joinedAuctionIds.contains(auctionId);
     }
 
-    public void setBalance(double balance) {
+    public void setBalance(long balance) {
         this.balance = balance;
         markUpdated();
     }
@@ -224,7 +224,7 @@ public class NormalUser extends User {
      *
      * @param amount số tiền cần khóa
      */
-    public void lockDeposit(double amount) {
+    public void lockDeposit(long amount) {
         this.lockedDeposit += amount;
         markUpdated();
     }
@@ -235,8 +235,8 @@ public class NormalUser extends User {
      *
      * @param amount số tiền giải phóng
      */
-    public void unlockDeposit(double amount) {
-        this.lockedDeposit = Math.max(0, this.lockedDeposit - amount);
+    public void unlockDeposit(long amount) {
+        this.lockedDeposit = Math.max(0L, this.lockedDeposit - amount);
         markUpdated();
     }
 
@@ -332,7 +332,7 @@ public class NormalUser extends User {
     }
 
     /** Chỉ được gọi trong WalletService hỗ trợ quá trình Rollback */
-    public void restoreBalances(double balance, double lockedDeposit) {
+    public void restoreBalances(long balance, long lockedDeposit) {
         this.balance = balance;
         this.lockedDeposit = lockedDeposit;
         markUpdated();
@@ -374,9 +374,9 @@ public class NormalUser extends User {
         System.out.printf("Username  : %s%n", getUsername());
         System.out.printf("Email     : %s%n", getEmail());
         System.out.printf("Roles     : %s%n", getRoles());
-        System.out.printf("Balance   : %.0f%n", balance);
-        System.out.printf("Locked    : %.0f%n", lockedDeposit);
-        System.out.printf("Available : %.0f%n", getAvailableBalance());
+        System.out.printf("Balance   : %d%n", balance);
+        System.out.printf("Locked    : %d%n", lockedDeposit);
+        System.out.printf("Available : %d%n", getAvailableBalance());
         System.out.printf("Rating    : %.1f%n", getRating());
         System.out.printf("Status    : %s%n", getAccountStatus());
         System.out.printf("Penalized : %s%n", hasEverBeenPenalized);

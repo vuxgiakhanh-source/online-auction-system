@@ -41,5 +41,5 @@ public interface IBidService {
    * @param strategy strategy kiểm tra tính hợp lệ
    */
   void placeBid(NormalUser bidder, Auction auction,
-                double amount, BidStrategy strategy);
+                long amount, BidStrategy strategy);
 }

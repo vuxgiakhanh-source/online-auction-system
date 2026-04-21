@@ -76,7 +76,7 @@ public class BidService implements IBidService {
     }
 
     // Trừ balance và lock deposit ngay lập tức (WalletService xử lý DB của phần này)
-    double depositAmount = auction.getItem().getStartingPrice() * 0.3;
+    long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
 
     bidder.addJoinedAuction(auction.getId());
@@ -84,7 +84,7 @@ public class BidService implements IBidService {
     auction.incrementViewerCount();
     auctionService.addObserver(auction, observer);
 
-    System.out.printf("[BID] %s tham gia phiên %s | Cọc khóa: %.0f%n",
+    System.out.printf("[BID] %s tham gia phiên %s | Cọc khóa: %d%n",
             bidder.getUsername(), auction.getId(), depositAmount);
 
     // Thực hiện TODO: auctionDAO.update(auction), userDAO.update(bidder)
@@ -113,7 +113,7 @@ public class BidService implements IBidService {
    */
   @Override
   public void placeBid(NormalUser bidder, Auction auction,
-                       double amount, BidStrategy strategy) {
+                       long amount, BidStrategy strategy) {
     if (!ratingService.isEligible(bidder)) {
       recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
     }
@@ -130,7 +130,7 @@ public class BidService implements IBidService {
     if (!strategy.isValidBid(auction, amount)) {
       recordAndThrow(bidder, auction, amount,
               new InvalidBidException(
-                      String.format("Bid %.0f không hợp lệ. Giá hiện tại: %.0f. %s",
+                      String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
                               amount, auction.getCurrentPrice(), strategy.describe()),
                       amount, auction.getCurrentPrice()));
     }
@@ -145,7 +145,7 @@ public class BidService implements IBidService {
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %.0f — chưa đạt reserve price (%.0f).%n",
+      System.out.printf("[BID] %s đặt giá %d — chưa đạt reserve price (%d).%n",
               bidder.getUsername(), amount,
               auction.getReserveStrategy().getReservePrice());
     } else {
@@ -153,7 +153,7 @@ public class BidService implements IBidService {
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %.0f thành công!%n",
+      System.out.printf("[BID] %s đặt giá %d thành công!%n",
               bidder.getUsername(), amount);
     }
 
@@ -181,13 +181,13 @@ public class BidService implements IBidService {
   // Private helpers
 
   private void recordAndThrow(NormalUser bidder, Auction auction,
-                              double amount, RuntimeException ex) {
+                              long amount, RuntimeException ex) {
     recordTransaction(bidder, auction, amount, BidResult.REJECTED);
     throw ex;
   }
 
   private BidTransaction recordTransaction(NormalUser bidder, Auction auction,
-                                           double amount, BidResult result) {
+                                           long amount, BidResult result) {
     BidTransaction tx = BidTransaction.create(bidder, auction.getId(), amount, result);
     bidder.addBidToHistory(tx);
 

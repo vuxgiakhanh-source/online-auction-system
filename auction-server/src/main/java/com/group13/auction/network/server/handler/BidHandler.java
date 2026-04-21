@@ -101,7 +101,7 @@ public class BidHandler implements PacketHandler {
             // Đăng ký session watching auction này
             sessionManager.addAuctionWatcher(session.getConnection(), auctionId);
 
-            double depositAmount = auction.getItem().getStartingPrice() * 0.3;
+            long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
             AuctionDTOs.JoinAuctionResponseDTO response = new AuctionDTOs.JoinAuctionResponseDTO();
             response.setAuction(DTOMapper.toAuctionDTO(auction));
             response.setDepositAmount(depositAmount);
@@ -217,7 +217,7 @@ public class BidHandler implements PacketHandler {
             AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
 
             // Ngay lập tức tính và đặt bid nếu maxBid > giá hiện tại
-            double nextBid = strategy.calculateNextBid(auction);
+            long nextBid = strategy.calculateNextBid(auction);
             if (nextBid < 0) {
                 session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
                         ErrorDTO.of(ErrorDTO.MAX_BID_TOO_LOW,

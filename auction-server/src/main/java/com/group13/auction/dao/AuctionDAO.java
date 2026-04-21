@@ -29,15 +29,15 @@ public class AuctionDAO {
             pstmt.setTimestamp(3, Timestamp.valueOf(auction.getStartTime()));
             pstmt.setTimestamp(4, Timestamp.valueOf(auction.getEndTime()));
             pstmt.setString(5, auction.getStatus().name());
-            pstmt.setDouble(6, auction.getReserveStrategy().getReservePrice());
-            pstmt.setDouble(7, auction.getCurrentPrice());
+            pstmt.setLong(6, auction.getReserveStrategy().getReservePrice());
+            pstmt.setLong(7, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(8, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(8, java.sql.Types.VARCHAR);
             }
             // Legacy columns: giữ đồng bộ để các query/handler cũ vẫn hoạt động
-            pstmt.setDouble(9, auction.getCurrentPrice());
+            pstmt.setLong(9, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(10, auction.getCurrentLeader().getId());
             } else {
@@ -82,14 +82,14 @@ public class AuctionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auction.getStatus().name());
-            pstmt.setDouble(2, auction.getCurrentPrice()); // current_price
+            pstmt.setLong(2, auction.getCurrentPrice()); // current_price
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(3, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(3, java.sql.Types.VARCHAR);
             }
             // legacy current_highest_price
-            pstmt.setDouble(4, auction.getCurrentPrice());
+            pstmt.setLong(4, auction.getCurrentPrice());
 
             // Xử lý trường hợp không có người chiến thắng (NULL)
             if (auction.getCurrentLeader() != null) {
@@ -109,18 +109,17 @@ public class AuctionDAO {
 
     /**
      * Cập nhật giá cao nhất khi có người đặt giá hợp lệ (Bid).
-     * Hàm này bạn đã có, tôi chỉ sửa lại kiểu dữ liệu String cho khớp UUID.
      */
-    public boolean updateHighestPrice(String auctionId, double newPrice, String bidderId) {
+    public boolean updateHighestPrice(String auctionId, long newPrice, String bidderId) {
         String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setDouble(1, newPrice);
+            pstmt.setLong(1, newPrice);
             pstmt.setString(2, bidderId);
             // legacy columns
-            pstmt.setDouble(3, newPrice);
+            pstmt.setLong(3, newPrice);
             pstmt.setString(4, bidderId);
             pstmt.setString(5, auctionId);
 
@@ -184,7 +183,7 @@ public class AuctionDAO {
                     String statusStr = rs.getString("status");
                     String itemId = rs.getString("item_id");
                     String leaderId = rs.getString("current_leader_id");
-                    double currentPrice = rs.getDouble("current_price");
+                    long currentPrice = rs.getLong("current_price");
 
                     // 2. Xử lý thời gian an toàn
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
@@ -208,11 +207,11 @@ public class AuctionDAO {
 
                     // Đã thực hiện TODO: Đọc reserve_price từ DB và khởi tạo Strategy thực tế.
                     // Bảng auctions cần có cột reserve_price (BIGINT/DECIMAL, NOT NULL).
-                    double reservePrice = rs.getDouble("reserve_price");
+                    long reservePrice = rs.getLong("reserve_price");
                     // Nếu cột reserve_price chưa tồn tại hoặc = 0, dùng giá hiện tại làm fallback
                     // để tránh NullPointerException trong Auction.isReserveMet().
                     if (reservePrice <= 0) {
-                        reservePrice = currentPrice > 0 ? currentPrice : 1.0;
+                        reservePrice = currentPrice > 0 ? currentPrice : 1L;
                     }
                     com.group13.auction.strategy.ReservePriceStrategy reserveStrategy =
                             new com.group13.auction.strategy.ReservePriceStrategy(reservePrice);

@@ -22,8 +22,8 @@ public class AuctionWinnerDAO {
             pstmt.setString(1, winner.getId());
             pstmt.setString(2, winner.getAuctionId());
             pstmt.setString(3, winner.getWinner().getId());
-            pstmt.setDouble(4, winner.getFinalPrice());
-            pstmt.setDouble(5, winner.getDepositPaid());
+            pstmt.setLong(4, winner.getFinalPrice());
+            pstmt.setLong(5, winner.getDepositPaid());
             pstmt.setString(6, winner.getPaymentStatus().name());
 
             return pstmt.executeUpdate() > 0;

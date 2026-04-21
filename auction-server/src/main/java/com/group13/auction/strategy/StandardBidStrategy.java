@@ -19,8 +19,8 @@ public class StandardBidStrategy implements BidStrategy {
   public StandardBidStrategy() {}
 
   @Override
-  public boolean isValidBid(Auction auction, double amount) {
-    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+  public boolean isValidBid(Auction auction, long amount) {
+    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     return amount >= auction.getCurrentPrice() + increment;
   }
 
@@ -36,7 +36,7 @@ public class StandardBidStrategy implements BidStrategy {
    * @param currentPrice giá hiện tại để tính increment
    * @return bước giá tối thiểu
    */
-  public double getMinIncrement(double currentPrice) {
+  public long getMinIncrement(long currentPrice) {
     return BidIncrementCalculator.calculate(currentPrice);
   }
 }

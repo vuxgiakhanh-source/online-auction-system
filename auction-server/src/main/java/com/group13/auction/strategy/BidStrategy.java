@@ -13,7 +13,7 @@ public interface BidStrategy {
    * @param amount  số tiền muốn đặt
    * @return true nếu hợp lệ
    */
-  boolean isValidBid(Auction auction, double amount);
+  boolean isValidBid(Auction auction, long amount);
 
   /**
    * Mô tả strategy này để hiển thị cho người dùng.

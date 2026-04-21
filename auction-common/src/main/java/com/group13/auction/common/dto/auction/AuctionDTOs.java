@@ -18,7 +18,7 @@ public final class AuctionDTOs {
         private String name;
         private String description;
         private String category;        // "ELECTRONICS" | "ART" | "VEHICLE"
-        private double startingPrice;
+        private long startingPrice;
         private String sellerId;
         private String sellerUsername;
         /** Thông tin mở rộng theo loại sản phẩm (brand, medium, mileage, v.v.) */
@@ -34,8 +34,8 @@ public final class AuctionDTOs {
         public void setDescription(String description) { this.description = description; }
         public String getCategory() { return category; }
         public void setCategory(String category) { this.category = category; }
-        public double getStartingPrice() { return startingPrice; }
-        public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
+        public long getStartingPrice() { return startingPrice; }
+        public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
         public String getSellerId() { return sellerId; }
         public void setSellerId(String sellerId) { this.sellerId = sellerId; }
         public String getSellerUsername() { return sellerUsername; }
@@ -56,8 +56,8 @@ public final class AuctionDTOs {
         private LocalDateTime endTime;
         /** Null nếu anti-sniping chưa kích hoạt. */
         private LocalDateTime extendedEndTime;
-        private double currentPrice;
-        private double reservePrice;
+        private long currentPrice;
+        private long reservePrice;
         /** "OPEN" | "RUNNING" | "FINISHED" | "PAID" | "CANCELED" | "RESERVE_NOT_MET" */
         private String status;
         private String currentLeaderId;
@@ -79,10 +79,10 @@ public final class AuctionDTOs {
         public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
         public LocalDateTime getExtendedEndTime() { return extendedEndTime; }
         public void setExtendedEndTime(LocalDateTime extendedEndTime) { this.extendedEndTime = extendedEndTime; }
-        public double getCurrentPrice() { return currentPrice; }
-        public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
-        public double getReservePrice() { return reservePrice; }
-        public void setReservePrice(double reservePrice) { this.reservePrice = reservePrice; }
+        public long getCurrentPrice() { return currentPrice; }
+        public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
+        public long getReservePrice() { return reservePrice; }
+        public void setReservePrice(long reservePrice) { this.reservePrice = reservePrice; }
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
         public String getCurrentLeaderId() { return currentLeaderId; }
@@ -137,8 +137,8 @@ public final class AuctionDTOs {
         private String itemDescription;
         /** "ELECTRONICS" | "ART" | "VEHICLE" */
         private String itemCategory;
-        private double startingPrice;
-        private double reservePrice;
+        private long startingPrice;
+        private long reservePrice;
         private LocalDateTime startTime;
         private LocalDateTime endTime;
         /** Thông tin extra theo loại item (brand, mileage, medium, v.v.) */
@@ -152,10 +152,10 @@ public final class AuctionDTOs {
         public void setItemDescription(String itemDescription) { this.itemDescription = itemDescription; }
         public String getItemCategory() { return itemCategory; }
         public void setItemCategory(String itemCategory) { this.itemCategory = itemCategory; }
-        public double getStartingPrice() { return startingPrice; }
-        public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
-        public double getReservePrice() { return reservePrice; }
-        public void setReservePrice(double reservePrice) { this.reservePrice = reservePrice; }
+        public long getStartingPrice() { return startingPrice; }
+        public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
+        public long getReservePrice() { return reservePrice; }
+        public void setReservePrice(long reservePrice) { this.reservePrice = reservePrice; }
         public LocalDateTime getStartTime() { return startTime; }
         public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
         public LocalDateTime getEndTime() { return endTime; }
@@ -192,7 +192,7 @@ public final class AuctionDTOs {
     public static class UpdateAuctionDTO {
         private String auctionId;
         private LocalDateTime newEndTime;
-        private Double newReservePrice;
+        private Long newReservePrice;
 
         public UpdateAuctionDTO() {}
 
@@ -200,8 +200,8 @@ public final class AuctionDTOs {
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
         public LocalDateTime getNewEndTime() { return newEndTime; }
         public void setNewEndTime(LocalDateTime newEndTime) { this.newEndTime = newEndTime; }
-        public Double getNewReservePrice() { return newReservePrice; }
-        public void setNewReservePrice(Double newReservePrice) { this.newReservePrice = newReservePrice; }
+        public Long getNewReservePrice() { return newReservePrice; }
+        public void setNewReservePrice(Long newReservePrice) { this.newReservePrice = newReservePrice; }
     }
 
     /** Payload của CANCEL_AUCTION_REQUEST. */
@@ -243,7 +243,7 @@ public final class AuctionDTOs {
     public static class AuctionUpdateDTO {
         private String auctionId;
         private String newStatus;
-        private double finalPrice;
+        private long finalPrice;
         private String winnerId;
         private String winnerUsername;
         /** Lý do hủy nếu bị cancel. */
@@ -257,8 +257,8 @@ public final class AuctionDTOs {
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
         public String getNewStatus() { return newStatus; }
         public void setNewStatus(String newStatus) { this.newStatus = newStatus; }
-        public double getFinalPrice() { return finalPrice; }
-        public void setFinalPrice(double finalPrice) { this.finalPrice = finalPrice; }
+        public long getFinalPrice() { return finalPrice; }
+        public void setFinalPrice(long finalPrice) { this.finalPrice = finalPrice; }
         public String getWinnerId() { return winnerId; }
         public void setWinnerId(String winnerId) { this.winnerId = winnerId; }
         public String getWinnerUsername() { return winnerUsername; }
@@ -312,17 +312,17 @@ public final class AuctionDTOs {
     /** Payload của JOIN_AUCTION_SUCCESS. */
     public static class JoinAuctionResponseDTO {
         private AuctionDTO auction;
-        private double depositAmount;
-        private double newAvailableBalance;
+        private long depositAmount;
+        private long newAvailableBalance;
 
         public JoinAuctionResponseDTO() {}
 
         public AuctionDTO getAuction() { return auction; }
         public void setAuction(AuctionDTO auction) { this.auction = auction; }
-        public double getDepositAmount() { return depositAmount; }
-        public void setDepositAmount(double depositAmount) { this.depositAmount = depositAmount; }
-        public double getNewAvailableBalance() { return newAvailableBalance; }
-        public void setNewAvailableBalance(double newAvailableBalance) { this.newAvailableBalance = newAvailableBalance; }
+        public long getDepositAmount() { return depositAmount; }
+        public void setDepositAmount(long depositAmount) { this.depositAmount = depositAmount; }
+        public long getNewAvailableBalance() { return newAvailableBalance; }
+        public void setNewAvailableBalance(long newAvailableBalance) { this.newAvailableBalance = newAvailableBalance; }
     }
 
     /** Payload của AUCTION_UPCOMING_END_NOTIFY. */

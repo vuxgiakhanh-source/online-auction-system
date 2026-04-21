@@ -21,12 +21,12 @@ public class AuctionWinner extends Entity {
 
   private final NormalUser winner;
   private final String auctionId;
-  private final double finalPrice;
+  private final long finalPrice;
   /**
    * Số tiền cọc winner đã đặt khi joinAuction.
    * Cọc được tính vào finalPrice - winner chỉ cần trả phần còn lại.
    */
-  private final double depositPaid;
+  private final long depositPaid;
   private final LocalDateTime deadline;
   private PaymentStatus paymentStatus;
 
@@ -47,7 +47,7 @@ public class AuctionWinner extends Entity {
    * @return AuctionWinner mới
    */
   public static AuctionWinner create(NormalUser winner, String auctionId,
-                                     double finalPrice, double depositPaid,
+                                     long finalPrice, long depositPaid,
                                      boolean isSecondOffer) {
     return new AuctionWinner(winner, auctionId, finalPrice, depositPaid, isSecondOffer);
   }
@@ -57,7 +57,7 @@ public class AuctionWinner extends Entity {
    */
   public static AuctionWinner reconstitute(String id, LocalDateTime createdAt,
                                            LocalDateTime updatedAt, NormalUser winner, String auctionId,
-                                           double finalPrice, double depositPaid, LocalDateTime deadline,
+                                           long finalPrice, long depositPaid, LocalDateTime deadline,
                                            PaymentStatus paymentStatus, boolean isSecondOffer) {
     return new AuctionWinner(id, createdAt, updatedAt, winner, auctionId,
             finalPrice, depositPaid, deadline, paymentStatus, isSecondOffer);
@@ -66,7 +66,7 @@ public class AuctionWinner extends Entity {
   // Private constructors
 
   private AuctionWinner(NormalUser winner, String auctionId,
-                        double finalPrice, double depositPaid,
+                        long finalPrice, long depositPaid,
                         boolean isSecondOffer) {
     super();
     this.winner = winner;
@@ -80,7 +80,7 @@ public class AuctionWinner extends Entity {
 
   private AuctionWinner(String id, LocalDateTime createdAt,
                         LocalDateTime updatedAt, NormalUser winner, String auctionId,
-                        double finalPrice, double depositPaid, LocalDateTime deadline,
+                        long finalPrice, long depositPaid, LocalDateTime deadline,
                         PaymentStatus paymentStatus, boolean isSecondOffer) {
     super(id, createdAt, updatedAt);
     this.winner = winner;
@@ -96,14 +96,14 @@ public class AuctionWinner extends Entity {
 
   public NormalUser getWinner() { return winner; }
   public String getAuctionId() { return auctionId; }
-  public double getFinalPrice() { return finalPrice; }
-  public double getDepositPaid() { return depositPaid; }
+  public long getFinalPrice() { return finalPrice; }
+  public long getDepositPaid() { return depositPaid; }
   public LocalDateTime getDeadline() { return deadline; }
   public PaymentStatus getPaymentStatus() { return paymentStatus; }
 
   /** Số tiền còn phải trả sau khi trừ cọc. */
-  public double getRemainingAmount() {
-    return Math.max(0, finalPrice - depositPaid);
+  public long getRemainingAmount() {
+    return Math.max(0L, finalPrice - depositPaid);
   }
   public boolean getIsSecondOffer() {
     return this.isSecondOffer;
@@ -142,9 +142,9 @@ public class AuctionWinner extends Entity {
     System.out.println("THÔNG TIN WINNER CỦA PHIÊN");
     System.out.printf("Winner : %s%n", winner.getUsername());
     System.out.printf("Auction ID : %s%n", auctionId);
-    System.out.printf("Giá cuối : %.0f%n", finalPrice);
-    System.out.printf("Đã cọc : %.0f%n", depositPaid);
-    System.out.printf("Còn lại : %.0f%n", getRemainingAmount());
+    System.out.printf("Giá cuối : %d%n", finalPrice);
+    System.out.printf("Đã cọc : %d%n", depositPaid);
+    System.out.printf("Còn lại : %d%n", getRemainingAmount());
     System.out.printf("Hạn TT : %s%n", deadline);
     System.out.printf("TT Status : %s%n", paymentStatus);
     System.out.println("======================================");

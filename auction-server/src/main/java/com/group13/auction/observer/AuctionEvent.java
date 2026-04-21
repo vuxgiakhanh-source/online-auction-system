@@ -28,7 +28,7 @@ public class AuctionEvent {
   private final AuctionEventType eventType;
   private final Auction auction;
   private final NormalUser bidder; // null nếu không liên quan đến bidder
-  private final double bidAmount; // 0 nếu không liên quan đến bid
+  private final long bidAmount; // 0 nếu không liên quan đến bid
   /** Thông điệp tùy theo đối tượng nhận. */
   private final String message;
 
@@ -41,7 +41,7 @@ public class AuctionEvent {
    * @param bidAmount số tiền (0 nếu không liên quan)
    */
   public AuctionEvent(AuctionEventType eventType, Auction auction,
-                      NormalUser bidder, double bidAmount) {
+                      NormalUser bidder, long bidAmount) {
     this(eventType, auction, bidder, bidAmount, null);
   }
 
@@ -49,7 +49,7 @@ public class AuctionEvent {
    * Khởi tạo AuctionEvent với custom message.
    */
   public AuctionEvent(AuctionEventType eventType, Auction auction,
-                      NormalUser bidder, double bidAmount, String message) {
+                      NormalUser bidder, long bidAmount, String message) {
     this.eventType = eventType;
     this.auction = auction;
     this.bidder = bidder;
@@ -60,6 +60,6 @@ public class AuctionEvent {
   public AuctionEventType getEventType() { return eventType; }
   public Auction getAuction() { return auction; }
   public NormalUser getBidder() { return bidder; }
-  public double getBidAmount() { return bidAmount; }
+  public long getBidAmount() { return bidAmount; }
   public String getMessage() { return message; }
 }

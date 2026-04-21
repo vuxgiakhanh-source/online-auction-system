@@ -30,6 +30,7 @@ public class AccountService implements IAccountService {
 
   private final IRatingService ratingService;
   private final AdminFactory adminFactory;
+  private final WalletService walletService;
 
   private final UserDAO userDAO;
   private final SellerDAO sellerDAO;
@@ -56,6 +57,16 @@ public class AccountService implements IAccountService {
     this.adminDAO = adminDAO;
     this.auctionDAO = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
+    // PaymentHandler cần deposit/withdraw; WalletService chịu trách nhiệm validate và persist số dư.
+    this.walletService = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
+  }
+
+  public void deposit(NormalUser user, long amount) {
+    walletService.deposit(user, amount);
+  }
+
+  public void withdraw(NormalUser user, long amount) {
+    walletService.withdraw(user, amount);
   }
 
   // Ban
@@ -176,7 +187,7 @@ public class AccountService implements IAccountService {
     // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
             AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
-            auction, null, 0,
+            auction, null, 0L,
             String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);

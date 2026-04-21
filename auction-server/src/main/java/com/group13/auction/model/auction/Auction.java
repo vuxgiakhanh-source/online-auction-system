@@ -33,7 +33,7 @@ public class Auction extends Entity {
   private final ReservePriceStrategy reserveStrategy;
   private final List<String> bidTransactionIds;
   private final List<AuctionObserver> observers;
-  private double currentPrice;
+  private long currentPrice;
   private NormalUser currentLeader;
 
   /**
@@ -77,7 +77,7 @@ public class Auction extends Entity {
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          double currentPrice,
+          long currentPrice,
           AuctionStatus status,
           ReservePriceStrategy reserveStrategy) {
     return new Auction(
@@ -112,7 +112,7 @@ public class Auction extends Entity {
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          double currentPrice,
+          long currentPrice,
           AuctionStatus status,
           ReservePriceStrategy reserveStrategy) {
     super(id, createdAt, updatedAt);
@@ -171,7 +171,7 @@ public class Auction extends Entity {
     return originalEndTime;
   }
 
-  public double getCurrentPrice() {
+  public long getCurrentPrice() {
     return currentPrice;
   }
 
@@ -273,7 +273,7 @@ public class Auction extends Entity {
    * <p>Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
    * bên trong {@code placeBid()} sau khi strategy đã validate bid thành công.
    */
-  public void setCurrentPrice(double price) {
+  public void setCurrentPrice(long price) {
     this.currentPrice = price;
     markUpdated();
   }
@@ -347,7 +347,7 @@ public class Auction extends Entity {
     System.out.println("THÔNG TIN PHIÊN ĐẤU GIÁ");
     System.out.printf("ID      : %s%n", getId());
     System.out.printf("Item    : %s%n", item.getName());
-    System.out.printf("Giá     : %.0f%n", currentPrice);
+    System.out.printf("Giá     : %d%n", currentPrice);
     System.out.printf("Status  : %s%n", getStatus());
     System.out.printf(
             "Leader  : %s%n", currentLeader != null ? currentLeader.getUsername() : "Chưa có");

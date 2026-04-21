@@ -23,8 +23,8 @@ public class SecondChanceOfferDAO {
             pstmt.setString(1, offer.getId());
             pstmt.setString(2, offer.getAuctionId());
             pstmt.setString(3, offer.getRunnerUp().getId());
-            pstmt.setDouble(4, offer.getOfferPrice());
-            pstmt.setDouble(5, offer.getDepositPaid());
+            pstmt.setLong(4, offer.getOfferPrice());
+            pstmt.setLong(5, offer.getDepositPaid());
             pstmt.setString(6, offer.getStatus().name());
             pstmt.setTimestamp(7, Timestamp.valueOf(offer.getDeadline()));
 

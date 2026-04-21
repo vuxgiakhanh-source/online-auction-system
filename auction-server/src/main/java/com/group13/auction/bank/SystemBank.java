@@ -21,17 +21,17 @@ public class SystemBank {
 
     private static final SystemBank INSTANCE = new SystemBank();
 
-    private static final double PRICE_TIER_LOW = 1000000.0;
-    private static final double PRICE_TIER_MID = 10000000.0;
+    private static final long PRICE_TIER_LOW = 1_000_000L;
+    private static final long PRICE_TIER_MID = 10_000_000L;
     private static final double TAX_RATE_LOW = 0.05;
     private static final double TAX_RATE_MID = 0.03;
     private static final double TAX_RATE_HIGH = 0.02;
 
     /** Số dư tổng trong ngân hàng hệ thống (tiền thuế tích lũy + cọc bị tịch thu). */
-    private double totalBalance;
+    private long totalBalance;
 
     private SystemBank() {
-        this.totalBalance = 0.0;
+        this.totalBalance = 0L;
     }
 
     public static SystemBank getInstance() { return INSTANCE; }
@@ -44,7 +44,7 @@ public class SystemBank {
      * @param salePrice giá bán cuối cùng
      * @return số tiền thuế
      */
-    public double calculateTax(double salePrice) {
+    public long calculateTax(long salePrice) {
         double rate;
         if (salePrice < PRICE_TIER_LOW) {
             rate = TAX_RATE_LOW;
@@ -55,7 +55,7 @@ public class SystemBank {
         else {
             rate = TAX_RATE_HIGH;
         }
-        return salePrice * rate;
+        return Math.round(salePrice * rate);
     }
 
     /**
@@ -64,7 +64,7 @@ public class SystemBank {
      * @param salePrice giá bán cuối cùng
      * @return tiền seller nhận
      */
-    public double calculateSellerPayout(double salePrice) {
+    public long calculateSellerPayout(long salePrice) {
         return salePrice - calculateTax(salePrice);
     }
 
@@ -76,9 +76,9 @@ public class SystemBank {
      *
      * @param amount số tiền nhận
      */
-    public void receive(double amount) {
+    public void receive(long amount) {
         this.totalBalance += amount;
-        System.out.printf("[BANK] Tiếp nhận %.0f | Tổng quỹ: %.0f%n",
+        System.out.printf("[BANK] Tiếp nhận %d | Tổng quỹ: %d%n",
                 amount, totalBalance);
     }
 
@@ -89,11 +89,11 @@ public class SystemBank {
      * @param salePrice giá bán cuối cùng
      * @return số tiền chuyển cho seller
      */
-    public double payoutToSeller(double salePrice) {
-        double tax = calculateTax(salePrice);
-        double payout = salePrice - tax;
+    public long payoutToSeller(long salePrice) {
+        long tax = calculateTax(salePrice);
+        long payout = salePrice - tax;
         this.totalBalance -= payout;
-        System.out.printf("[BANK] Chuyển cho seller %.0f | Thuế giữ lại: %.0f | Tổng quỹ: %.0f%n",
+        System.out.printf("[BANK] Chuyển cho seller %d | Thuế giữ lại: %d | Tổng quỹ: %d%n",
                 payout, tax, totalBalance);
         return payout;
     }
@@ -103,9 +103,9 @@ public class SystemBank {
      *
      * @param amount số tiền hoàn trả
      */
-    public void refundToWinner(double amount) {
+    public void refundToWinner(long amount) {
         this.totalBalance -= amount;
-        System.out.printf("[BANK] Hoàn tiền cho winner %.0f | Tổng quỹ: %.0f%n",
+        System.out.printf("[BANK] Hoàn tiền cho winner %d | Tổng quỹ: %d%n",
                 amount, totalBalance);
     }
 
@@ -115,11 +115,11 @@ public class SystemBank {
      *
      * @param depositAmount số tiền cọc bị tịch thu
      */
-    public void receiveForfeittedDeposit(double depositAmount) {
+    public void receiveForfeittedDeposit(long depositAmount) {
         this.totalBalance += depositAmount;
-        System.out.printf("[BANK] Tịch thu cọc %.0f từ winner vi phạm | Tổng quỹ: %.0f%n",
+        System.out.printf("[BANK] Tịch thu cọc %d từ winner vi phạm | Tổng quỹ: %d%n",
                 depositAmount, totalBalance);
     }
 
-    public double getTotalBalance() { return totalBalance; }
+    public long getTotalBalance() { return totalBalance; }
 }

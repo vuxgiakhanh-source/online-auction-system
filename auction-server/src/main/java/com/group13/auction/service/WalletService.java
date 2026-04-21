@@ -58,7 +58,7 @@ public class WalletService implements IWalletService {
      * @throws IllegalArgumentException nếu amount <= 0
      */
     @Override
-    public void deposit(NormalUser user, double amount) {
+    public void deposit(NormalUser user, long amount) {
         if (!ratingService.isEligible(user)) {
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
@@ -67,7 +67,7 @@ public class WalletService implements IWalletService {
         }
         user.setBalance(user.getBalance() + amount);
         System.out.printf(
-                "[ACCOUNT] %s nạp %.0f | Số dư mới: %.0f%n",
+                "[ACCOUNT] %s nạp %d | Số dư mới: %d%n",
                 user.getUsername(), amount, user.getBalance());
 
         // Gọi DAO để cộng tiền dưới DB
@@ -86,7 +86,8 @@ public class WalletService implements IWalletService {
      * @throws IllegalStateException nếu tài khoản không đủ điều kiện
      * @throws IllegalArgumentException nếu amount <= 0 hoặc vượt số dư khả dụng
      */
-    public void withdraw(NormalUser user, double amount) {
+    @Override
+    public void withdraw(NormalUser user, long amount) {
         if (!ratingService.isEligible(user)) {
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
@@ -96,13 +97,13 @@ public class WalletService implements IWalletService {
         if (user.getAvailableBalance() < amount) {
             throw new IllegalArgumentException(
                     String.format(
-                            "Số dư khả dụng không đủ. Khả dụng: %.0f, Yêu cầu: %.0f",
+                            "Số dư khả dụng không đủ. Khả dụng: %d, Yêu cầu: %d",
                             user.getAvailableBalance(), amount));
         }
 
         user.setBalance(user.getBalance() - amount);
         System.out.printf(
-                "[ACCOUNT] %s rút %.0f | Số dư mới: %.0f%n",
+                "[ACCOUNT] %s rút %d | Số dư mới: %d%n",
                 user.getUsername(), amount, user.getBalance());
 
         // Đã thực hiện TODO: persist số dư mới xuống DB
@@ -118,7 +119,7 @@ public class WalletService implements IWalletService {
      * Ngăn dùng cùng một số tiền cọc cho nhiều phiên vượt khả năng chi trả.
      */
     @Override
-    public void lockDeposit(NormalUser bidder, double depositAmount, String auctionId) {
+    public void lockDeposit(NormalUser bidder, long depositAmount, String auctionId) {
         if (bidder.getAvailableBalance() < depositAmount) {
             throw new AuctionBusinessException(AuctionBusinessException.Reason.INSUFFICIENT_DEPOSIT);
         }
@@ -144,7 +145,7 @@ public class WalletService implements IWalletService {
      * Hoàn cọc cho bidder không thắng khi phiên kết thúc.
      */
     @Override
-    public void unlockDeposit(NormalUser bidder, double depositAmount, String auctionId) {
+    public void unlockDeposit(NormalUser bidder, long depositAmount, String auctionId) {
         bidder.unlockDeposit(depositAmount);
         userDAO.updateBalances(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
 
@@ -164,7 +165,7 @@ public class WalletService implements IWalletService {
      * Theo luật đấu giá: winner không thanh toán mất cọc.
      */
     @Override
-    public void forfeitDeposit(NormalUser winner, double depositAmount, String auctionId) {
+    public void forfeitDeposit(NormalUser winner, long depositAmount, String auctionId) {
         // Xóa lockedDeposit của winner, tiền không trả về balance
         winner.unlockDeposit(depositAmount);
         userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
@@ -178,7 +179,7 @@ public class WalletService implements IWalletService {
                 TransactionType.DEPOSIT_FORFEIT, auctionId);
         transactionLog.add(tx);
         tx.printInfo();
-        System.out.printf("[WALLET] Tịch thu cọc %.0f của %s — chuyển vào SystemBank.%n",
+        System.out.printf("[WALLET] Tịch thu cọc %d của %s — chuyển vào SystemBank.%n",
                 depositAmount, winner.getUsername());
 
         // Đã thực hiện TODO: financialTransactionDao.save(tx)
@@ -194,21 +195,21 @@ public class WalletService implements IWalletService {
      */
     @Override
     public void executePaymentTransaction(NormalUser winner, NormalUser seller,
-                                          double finalPrice, double depositPaid, String auctionId) {
+                                          long finalPrice, long depositPaid, String auctionId) {
 
-        double remaining = finalPrice - depositPaid;
+        long remaining = finalPrice - depositPaid;
 
         // b1: Kiểm tra số dư winner
         if (winner.getAvailableBalance() < remaining) {
             throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
-                    String.format("Cần %.0f, khả dụng: %.0f", remaining, winner.getAvailableBalance()));
+                    String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
         }
 
         // b2: Rollback state để xử lí lỗi
-        double originalWinnerBalance = winner.getBalance();
-        double originalWinnerLocked = winner.getLockedDeposit();
-        double originalSellerBalance = seller.getBalance();
-        double originalSellerLocked = seller.getLockedDeposit();
+        long originalWinnerBalance = winner.getBalance();
+        long originalWinnerLocked = winner.getLockedDeposit();
+        long originalSellerBalance = seller.getBalance();
+        long originalSellerLocked = seller.getLockedDeposit();
 
         // Danh sách lưu trữ các transaction trong phiên giao dịch này để lưu DB hàng loạt
         List<FinancialTransaction> batchTx = new ArrayList<>();
@@ -238,7 +239,7 @@ public class WalletService implements IWalletService {
                     TransactionType.TAX_COLLECTED, auctionId);
             batchTx.add(txTax);
 
-            double payout = systemBank.payoutToSeller(finalPrice);
+            long payout = systemBank.payoutToSeller(finalPrice);
             seller.setBalance(seller.getBalance() + payout);
 
             FinancialTransaction txPayout = FinancialTransaction.create(
@@ -249,7 +250,7 @@ public class WalletService implements IWalletService {
             // Cập nhật DB cho Seller (Cộng balance)
             userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
 
-            System.out.printf("[WALLET] Giao dịch thành công | Winner: %s | Seller: %s | Giá: %.0f | Payout: %.0f%n",
+            System.out.printf("[WALLET] Giao dịch thành công | Winner: %s | Seller: %s | Giá: %d | Payout: %d%n",
                     winner.getUsername(), seller.getUsername(), finalPrice, payout);
 
             // Lưu toàn bộ batch lịch sử xuống DB
@@ -289,17 +290,17 @@ public class WalletService implements IWalletService {
      */
     @Override
     public void executeRefundToWinner(NormalUser winner, NormalUser seller,
-                                      double finalPrice, String auctionId) {
+                                      long finalPrice, String auctionId) {
 
-        double tax = systemBank.calculateTax(finalPrice);
-        double sellerPayout = finalPrice - tax;
+        long tax = systemBank.calculateTax(finalPrice);
+        long sellerPayout = finalPrice - tax;
 
         // Seller hoàn phần thực nhận (trừ thuế)
         if (seller.getBalance() < sellerPayout) {
             System.err.printf("[WALLET] Seller %s không đủ tiền hoàn trả!%n", seller.getUsername());
         }
 
-        seller.setBalance(Math.max(0, seller.getBalance() - sellerPayout));
+        seller.setBalance(Math.max(0L, seller.getBalance() - sellerPayout));
         userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
 
         // SystemBank hoàn phần thuế đã thu
@@ -315,7 +316,7 @@ public class WalletService implements IWalletService {
         transactionLog.add(txRefund);
         txRefund.printInfo();
 
-        System.out.printf("[WALLET] Hoàn tiền 100%% (%.0f) cho winner %s.%n",
+        System.out.printf("[WALLET] Hoàn tiền 100%% (%d) cho winner %s.%n",
                 finalPrice, winner.getUsername());
 
         // Đã thực hiện TODO: financialTransactionDAO.save(txRefund)
