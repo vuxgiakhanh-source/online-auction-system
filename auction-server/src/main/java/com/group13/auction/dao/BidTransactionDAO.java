@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BidTransactionDAO {
-
+    private final UserDAO userDAO = new UserDAO();
     public BidTransactionDAO() {}
 
     /**
@@ -95,7 +95,6 @@ public class BidTransactionDAO {
                     java.time.LocalDateTime bidTime = (bidTimeTs != null) ?
                             bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
-                    // 2. Lấy đối tượng NormalUser từ Database
                     // 2. Lấy đối tượng NormalUser từ Database
                     UserDAO userDAO = new UserDAO();
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
