@@ -5,36 +5,70 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <StackPane prefHeight="720.0" prefWidth="1280.0"
            stylesheets="@../../css/app.css"
-           styleClass="auth-root"
+           styleClass="screen-root"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.group13.auction.ui.controller.auth.RegisterController">
-    <children>
-        <VBox alignment="CENTER" maxWidth="560.0" prefWidth="560.0" spacing="18.0" styleClass="auth-card">
-            <padding>
-                <Insets top="34.0" right="48.0" bottom="34.0" left="48.0"/>
-            </padding>
+    <Pane styleClass="background-layer"/>
 
-            <Label styleClass="brand-logo auth-brand" text="OmniBid"/>
-            <Label styleClass="brand-tagline" text="Connected Biding Solutions"/>
+    <VBox alignment="CENTER" fillWidth="false">
+        <StackPane maxWidth="780.0" minHeight="560.0" prefHeight="560.0" prefWidth="780.0"
+                   styleClass="glass-panel">
+            <VBox alignment="TOP_CENTER" fillWidth="false" prefWidth="780.0" spacing="18.0">
+                <padding>
+                    <Insets bottom="32.0" left="56.0" right="56.0" top="28.0"/>
+                </padding>
+                <HBox alignment="CENTER" prefWidth="668.0" spacing="18.0">
+                    <!-- TODO: Chừa chỗ để sau này chèn logo cái búa bên trái chữ OmniBid. -->
+                    <Region minHeight="96.0" minWidth="96.0" prefHeight="96.0" prefWidth="96.0"/>
 
-            <StackPane>
-                <children>
-                    <Button mnemonicParsing="false" onAction="#handleGoToLogin" styleClass="auth-tab-link" translateX="-88.0" text="Đăng nhập"/>
-                    <Button mnemonicParsing="false" onAction="#handleCurrentTab" styleClass="auth-tab secondary" translateX="52.0" text="Đăng ký"/>
-                </children>
-            </StackPane>
+                    <VBox alignment="CENTER_LEFT">
+                        <Label text="OmniBid"
+                               styleClass="brand-title"/>
+                        <Label text="Connected Bidding Solutions"
+                               styleClass="brand-subtitle"/>
+                    </VBox>
+                </HBox>
 
-            <TextField fx:id="emailField" maxWidth="420.0" promptText="Email" styleClass="auth-input"/>
-            <TextField fx:id="usernameField" maxWidth="420.0" promptText="Tên đăng nhập" styleClass="auth-input"/>
-            <PasswordField fx:id="passwordField" maxWidth="420.0" promptText="Mật khẩu" styleClass="auth-input"/>
-            <Button mnemonicParsing="false" onAction="#handleRegister" prefWidth="280.0" styleClass="submit-button" text="Sign up"/>
-        </VBox>
-    </children>
+                <HBox alignment="CENTER" spacing="18.0">
+                    <Button mnemonicParsing="false" onAction="#handleGoToLogin"
+                            styleClass="ghost-tab" text="Đăng nhập"/>
+                    <Button mnemonicParsing="false" onAction="#handleSignUp"
+                            styleClass="ghost-tab" text="Đăng ký" visible="false" managed="false"/>
+                    <Button mnemonicParsing="false" onAction="#handleClearForm"
+                            styleClass="active-tab" text="Đăng ký"/>
+                </HBox>
+
+                <VBox alignment="CENTER" fillWidth="false" spacing="14.0">
+                    <TextField fx:id="emailField" promptText="Email"
+                               styleClass="auth-input"/>
+                    <TextField fx:id="usernameField" promptText="Tên đăng nhập"
+                               styleClass="auth-input"/>
+                    <PasswordField fx:id="passwordField" promptText="Mật khẩu"
+                                   styleClass="auth-input"/>
+                </VBox>
+
+                <Button mnemonicParsing="false" onAction="#handleSignUp"
+                        styleClass="primary-action-button" text="Sign up"/>
+            </VBox>
+        </StackPane>
+    </VBox>
+
+    <VBox alignment="BOTTOM_RIGHT" maxHeight="200.0" maxWidth="160.0" pickOnBounds="false"
+          spacing="8.0" StackPane.alignment="BOTTOM_RIGHT">
+        <padding>
+            <Insets bottom="12.0" right="18.0"/>
+        </padding>
+        <!-- TODO: Chừa chỗ để sau này chèn sticker/linh vật ở góc dưới cùng bên phải. -->
+        <Region minHeight="64.0" minWidth="96.0" prefHeight="64.0" prefWidth="96.0"/>
+        <Label styleClass="signature-label" text="by CKNT team"/>
+    </VBox>
 </StackPane>
-

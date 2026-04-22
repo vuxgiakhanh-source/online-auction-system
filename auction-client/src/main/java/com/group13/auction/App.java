@@ -20,6 +20,8 @@ public final class App extends Application {
         primaryStage.setTitle(UiConstants.APP_TITLE);
         primaryStage.setMinWidth(UiConstants.MIN_WIDTH);
         primaryStage.setMinHeight(UiConstants.MIN_HEIGHT);
+        primaryStage.setWidth(UiConstants.DEFAULT_WIDTH);
+        primaryStage.setHeight(UiConstants.DEFAULT_HEIGHT);
 
         navigator.goTo(ViewPath.HOME_LANDING_VIEW);
         primaryStage.show();

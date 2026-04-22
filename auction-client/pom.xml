@@ -15,33 +15,43 @@
     <artifactId>auction-client</artifactId>
     <packaging>jar</packaging>
     <name>auction-client</name>
+    <description>JavaFX client for the Online Auction System</description>
 
     <properties>
-        <javafx.version>21.0.2</javafx.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <main.class>com.group13.auction.App</main.class>
 
-        <!-- Tạm thời cho phép bỏ qua checkstyle khi chạy gấp deadline -->
-        <checkstyle.skip>true</checkstyle.skip>
+        <!-- JavaFX -->
+        <javafx.version>21.0.2</javafx.version>
+
+        <!-- Main class -->
+        <main.class>com.group13.auction.Launcher</main.class>
+
+        <!-- Build / quality -->
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <checkstyle.skip>false</checkstyle.skip>
     </properties>
 
     <dependencies>
+        <!-- Shared DTOs and protocol -->
         <dependency>
             <groupId>com.group13.auction</groupId>
             <artifactId>auction-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Networking -->
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
         </dependency>
 
+        <!-- JSON -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>
 
+        <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -54,6 +64,7 @@
             <version>${javafx.version}</version>
         </dependency>
 
+        <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -63,30 +74,43 @@
 
     <build>
         <plugins>
+            <!-- Compile with the project Java version from parent -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${maven.compiler.release}</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
+            <!-- JUnit 5 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
             </plugin>
 
+            <!-- Run JavaFX app -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>${main.class}</mainClass>
+                    <launcher>auction-client</launcher>
+                    <stripDebug>true</stripDebug>
+                    <noManPages>true</noManPages>
+                    <noHeaderFiles>true</noHeaderFiles>
                 </configuration>
             </plugin>
 
+            <!-- Enforce Java/Maven version -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -112,6 +136,7 @@
                 </executions>
             </plugin>
 
+            <!-- Google Java Style -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -121,6 +146,7 @@
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <skip>${checkstyle.skip}</skip>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -131,6 +157,20 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Package test jar if later needed by CI/tools -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
