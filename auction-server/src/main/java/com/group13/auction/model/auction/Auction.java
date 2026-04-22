@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Phiên đấu giá - chỉ lưu data và trạng thái. */
 public class Auction extends Entity {
@@ -25,27 +28,31 @@ public class Auction extends Entity {
   private final Item item;
   private final LocalDateTime startTime;
   private final LocalDateTime originalEndTime;
-  private LocalDateTime endTime;
+  private volatile LocalDateTime endTime;
   /**
    * Reserve price strategy - thiết lập khi tạo auction.
    * Seller phải chỉ định giá sàn ngay từ đầu.
    */
   private final ReservePriceStrategy reserveStrategy;
+  
+  // FIX: Sử dụng CopyOnWriteArrayList để tránh ConcurrentModificationException
   private final List<String> bidTransactionIds;
   private final List<AuctionObserver> observers;
-  private long currentPrice;
-  private NormalUser currentLeader;
+  
+  // FIX: Sử dụng AtomicLong để thread-safe giá đấu
+  private final AtomicLong currentPrice;
+  private volatile NormalUser currentLeader;
 
   /**
    * State object hiện tại.
    * Mọi chuyển trạng thái đều đi qua state object, không if-else.
    */
-  private AuctionState state;
+  private volatile AuctionState state;
 
-  private AuctionWinner winner;
+  private volatile AuctionWinner winner;
 
   /** Số người xem (watchlist) hiện tại, dùng để sort. */
-  private int viewerCount;
+  private final AtomicInteger viewerCount;
 
   // Static factory method
 
@@ -93,16 +100,16 @@ public class Auction extends Entity {
           ReservePriceStrategy reserveStrategy) {
     super();
     this.item = item;
-    this.currentPrice = item.getStartingPrice();
+    this.currentPrice = new AtomicLong(item.getStartingPrice());
     this.startTime = startTime;
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reserveStrategy = reserveStrategy;
     this.state = OpenState.INSTANCE;
-    this.bidTransactionIds = new ArrayList<>();
-    this.observers = new ArrayList<>();
+    this.bidTransactionIds = new CopyOnWriteArrayList<>();
+    this.observers = new CopyOnWriteArrayList<>();
     this.winner = null;
-    this.viewerCount = 0;
+    this.viewerCount = new AtomicInteger(0);
   }
 
   private Auction(
@@ -117,16 +124,16 @@ public class Auction extends Entity {
           ReservePriceStrategy reserveStrategy) {
     super(id, createdAt, updatedAt);
     this.item = item;
-    this.currentPrice = currentPrice;
+    this.currentPrice = new AtomicLong(currentPrice);
     this.startTime = startTime;
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reserveStrategy = reserveStrategy;
     this.state = resolveState(status);
-    this.bidTransactionIds = new ArrayList<>();
-    this.observers = new ArrayList<>();
+    this.bidTransactionIds = new CopyOnWriteArrayList<>();
+    this.observers = new CopyOnWriteArrayList<>();
     this.winner = null;
-    this.viewerCount = 0;
+    this.viewerCount = new AtomicInteger(0);
   }
 
   /**
@@ -172,7 +179,7 @@ public class Auction extends Entity {
   }
 
   public long getCurrentPrice() {
-    return currentPrice;
+    return currentPrice.get();
   }
 
   public NormalUser getCurrentLeader() {
@@ -197,7 +204,7 @@ public class Auction extends Entity {
   }
 
   public int getViewerCount() {
-    return viewerCount;
+    return viewerCount.get();
   }
 
   public boolean isAcceptingBids() {
@@ -210,7 +217,7 @@ public class Auction extends Entity {
    * @return true nếu currentPrice >= reservePrice
    */
   public boolean isReserveMet() {
-    return currentPrice >= reserveStrategy.getReservePrice();
+    return currentPrice.get() >= reserveStrategy.getReservePrice();
   }
 
   public List<String> getBidTransactionIds() {
@@ -228,7 +235,7 @@ public class Auction extends Entity {
    *
    * @throws IllegalStateException nếu phiên không ở OPEN
    */
-  public void transitionToRunning() {
+  public synchronized void transitionToRunning() {
     this.state = state.start();
     markUpdated();
   }
@@ -240,7 +247,7 @@ public class Auction extends Entity {
    * @param hasWinner true nếu có currentLeader và reserve đã OK
    * @throws IllegalStateException nếu phiên không ở RUNNING
    */
-  public void transitionToClose(boolean hasWinner) {
+  public synchronized void transitionToClose(boolean hasWinner) {
     this.state = state.close(hasWinner);
     markUpdated();
   }
@@ -250,7 +257,7 @@ public class Auction extends Entity {
    *
    * @throws IllegalStateException nếu trạng thái hiện tại không hủy được
    */
-  public void transitionToCancel() {
+  public synchronized void transitionToCancel() {
     this.state = state.cancel();
     markUpdated();
   }
@@ -260,7 +267,7 @@ public class Auction extends Entity {
    *
    * @throws IllegalStateException nếu phiên không ở FINISHED
    */
-  public void transitionToPaid() {
+  public synchronized void transitionToPaid() {
     this.state = state.markPaid();
     markUpdated();
   }
@@ -274,7 +281,7 @@ public class Auction extends Entity {
    * bên trong {@code placeBid()} sau khi strategy đã validate bid thành công.
    */
   public void setCurrentPrice(long price) {
-    this.currentPrice = price;
+    this.currentPrice.set(price);
     markUpdated();
   }
 
@@ -339,7 +346,7 @@ public class Auction extends Entity {
    * Phục vụ cho quá trình sort.
    */
   public void incrementViewerCount() {
-    this.viewerCount++;
+    this.viewerCount.incrementAndGet();
   }
 
   @Override
@@ -347,11 +354,11 @@ public class Auction extends Entity {
     System.out.println("THÔNG TIN PHIÊN ĐẤU GIÁ");
     System.out.printf("ID      : %s%n", getId());
     System.out.printf("Item    : %s%n", item.getName());
-    System.out.printf("Giá     : %d%n", currentPrice);
+    System.out.printf("Giá     : %d%n", currentPrice.get());
     System.out.printf("Status  : %s%n", getStatus());
     System.out.printf(
             "Leader  : %s%n", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
-    System.out.printf("Viewers : %d%n", viewerCount);
+    System.out.printf("Viewers : %d%n", viewerCount.get());
     System.out.println("==========================================");
   }
 }

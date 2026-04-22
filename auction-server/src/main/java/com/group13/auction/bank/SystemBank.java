@@ -1,5 +1,7 @@
 package com.group13.auction.bank;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Ngân hàng hệ thống — nơi lưu thuế và trung gian chuyển tiền.
  *
@@ -28,11 +30,9 @@ public class SystemBank {
     private static final double TAX_RATE_HIGH = 0.02;
 
     /** Số dư tổng trong ngân hàng hệ thống (tiền thuế tích lũy + cọc bị tịch thu). */
-    private long totalBalance;
+    private final AtomicLong totalBalance = new AtomicLong(0L);
 
-    private SystemBank() {
-        this.totalBalance = 0L;
-    }
+    private SystemBank() {}
 
     public static SystemBank getInstance() { return INSTANCE; }
 
@@ -76,10 +76,10 @@ public class SystemBank {
      *
      * @param amount số tiền nhận
      */
-    public void receive(long amount) {
-        this.totalBalance += amount;
+    public synchronized void receive(long amount) {
+        long current = totalBalance.addAndGet(amount);
         System.out.printf("[BANK] Tiếp nhận %d | Tổng quỹ: %d%n",
-                amount, totalBalance);
+                amount, current);
     }
 
     /**
@@ -89,12 +89,12 @@ public class SystemBank {
      * @param salePrice giá bán cuối cùng
      * @return số tiền chuyển cho seller
      */
-    public long payoutToSeller(long salePrice) {
+    public synchronized long payoutToSeller(long salePrice) {
         long tax = calculateTax(salePrice);
         long payout = salePrice - tax;
-        this.totalBalance -= payout;
+        long current = totalBalance.addAndGet(-payout);
         System.out.printf("[BANK] Chuyển cho seller %d | Thuế giữ lại: %d | Tổng quỹ: %d%n",
-                payout, tax, totalBalance);
+                payout, tax, current);
         return payout;
     }
 
@@ -103,10 +103,10 @@ public class SystemBank {
      *
      * @param amount số tiền hoàn trả
      */
-    public void refundToWinner(long amount) {
-        this.totalBalance -= amount;
+    public synchronized void refundToWinner(long amount) {
+        long current = totalBalance.addAndGet(-amount);
         System.out.printf("[BANK] Hoàn tiền cho winner %d | Tổng quỹ: %d%n",
-                amount, totalBalance);
+                amount, current);
     }
 
     /**
@@ -115,11 +115,11 @@ public class SystemBank {
      *
      * @param depositAmount số tiền cọc bị tịch thu
      */
-    public void receiveForfeittedDeposit(long depositAmount) {
-        this.totalBalance += depositAmount;
+    public synchronized void receiveForfeittedDeposit(long depositAmount) {
+        long current = totalBalance.addAndGet(+depositAmount);
         System.out.printf("[BANK] Tịch thu cọc %d từ winner vi phạm | Tổng quỹ: %d%n",
-                depositAmount, totalBalance);
+                depositAmount, current);
     }
 
-    public long getTotalBalance() { return totalBalance; }
+    public long getTotalBalance() { return totalBalance.get(); }
 }
