@@ -1,5 +1,7 @@
 package com.group13.auction.core.navigation;
 
+import com.group13.auction.config.ViewPath;
+
 /**
  * Điều hướng giữa các màn hình JavaFX.
  */
@@ -38,5 +40,33 @@ public final class Navigator {
      */
     public void goTo(String viewPath) {
         sceneManager.switchTo(viewPath);
+    }
+
+    /**
+     * Chuyển tới trang landing.
+     */
+    public void goToLanding() {
+        goTo(ViewPath.LANDING_VIEW);
+    }
+
+    /**
+     * Chuyển tới trang đăng nhập.
+     */
+    public void goToLogin() {
+        goTo(ViewPath.LOGIN_VIEW);
+    }
+
+    /**
+     * Chuyển tới trang đăng ký.
+     */
+    public void goToRegister() {
+        goTo(ViewPath.REGISTER_VIEW);
+    }
+
+    /**
+     * Chuyển tới trang chủ.
+     */
+    public void goToMainLayout() {
+        goTo(ViewPath.MAIN_LAYOUT_VIEW);
     }
 }
