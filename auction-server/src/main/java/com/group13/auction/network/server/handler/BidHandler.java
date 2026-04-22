@@ -31,6 +31,7 @@ import com.group13.auction.strategy.StandardBidStrategy;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
@@ -484,7 +485,13 @@ public class BidHandler implements PacketHandler {
             Auction auction  = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
 
-            List<BidTransaction> txList = bidTransactionDAO.findBidHistoryByAuction(auctionId);
+            List<BidTransaction> txList = AuctionManager.getInstance().getAllUsers().stream()
+                    .filter(NormalUser.class::isInstance)
+                    .map(NormalUser.class::cast)
+                    .flatMap(user -> user.getBidHistory().stream())
+                    .filter(tx -> auctionId.equals(tx.getAuctionId()))
+                    .sorted(Comparator.comparing(BidTransaction::getTimestamp))
+                    .toList();
             List<BidDTOs.BidChartPointDTO> points = new ArrayList<>();
             for (BidTransaction tx : txList) {
                 BidDTOs.BidChartPointDTO point = new BidDTOs.BidChartPointDTO();
