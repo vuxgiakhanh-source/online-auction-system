@@ -1,48 +1,53 @@
 package com.group13.auction.core.navigation;
 
-import com.group13.auction.config.UiConstants;
-import com.group13.auction.util.ResourceUtil;
 import java.io.IOException;
+import java.net.URL;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
- * Loads FXML views and installs them on the primary stage.
+ * Quản lý việc load FXML và chuyển Scene cho ứng dụng JavaFX.
  */
 public final class SceneManager {
 
     private final Stage primaryStage;
 
     /**
-     * Creates a scene manager bound to the given stage.
+     * Khởi tạo scene manager với stage chính của ứng dụng.
      *
-     * @param primaryStage primary application stage
+     * @param primaryStage stage chính
      */
     public SceneManager(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
 
     /**
-     * Replaces the current scene content with the provided FXML view.
+     * Chuyển đến màn hình có đường dẫn FXML tương ứng.
      *
-     * @param fxmlPath classpath path to the FXML file
+     * @param fxmlPath đường dẫn tuyệt đối trong resources
      */
-    public void setRoot(String fxmlPath) {
+    public void switchTo(String fxmlPath) {
         try {
-            FXMLLoader loader = new FXMLLoader(ResourceUtil.requireResource(fxmlPath));
-            Parent root = loader.load();
-            Scene scene = primaryStage.getScene();
+            URL resource = getClass().getResource(fxmlPath);
+            if (resource == null) {
+                throw new IllegalArgumentException("Không tìm thấy FXML: " + fxmlPath);
+            }
 
+            FXMLLoader loader = new FXMLLoader(resource);
+            Parent root = loader.load();
+
+            Scene scene = primaryStage.getScene();
             if (scene == null) {
-                scene = new Scene(root, UiConstants.DEFAULT_WIDTH, UiConstants.DEFAULT_HEIGHT);
+                scene = new Scene(root);
                 primaryStage.setScene(scene);
             } else {
                 scene.setRoot(root);
             }
         } catch (IOException exception) {
-            throw new IllegalStateException("Failed to load view: " + fxmlPath, exception);
+            throw new IllegalStateException(
+                    "Không thể load màn hình từ FXML: " + fxmlPath, exception);
         }
     }
 }

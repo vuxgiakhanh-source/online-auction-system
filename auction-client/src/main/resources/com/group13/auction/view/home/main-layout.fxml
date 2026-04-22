@@ -1,83 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Priority?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="720.0" prefWidth="1280.0"
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
             stylesheets="@../../css/app.css"
-            styleClass="landing-root"
+            styleClass="screen-root"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.group13.auction.ui.controller.home.MainLayoutController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="top-bar">
-            <padding>
-                <Insets top="14.0" right="26.0" bottom="14.0" left="26.0"/>
-            </padding>
-            <Label styleClass="brand-logo" text="OmniBid"/>
-            <Label styleClass="nav-link" text="TRANG CHỦ"/>
-            <Label styleClass="nav-separator" text="|"/>
-            <Label styleClass="nav-link" text="ĐANG DIỄN RA"/>
-            <Label styleClass="nav-separator" text="|"/>
-            <Label styleClass="nav-link" text="XẾP HẠNG"/>
-            <Label styleClass="nav-separator" text="|"/>
-            <Label styleClass="nav-link" text="KHÁM PHÁ"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <TextField promptText="" prefWidth="160.0" styleClass="search-field"/>
-            <Button mnemonicParsing="false" onAction="#handleGoToLogin" styleClass="nav-button muted" text="Đăng nhập"/>
-            <Button mnemonicParsing="false" onAction="#handleGoToRegister" styleClass="nav-button primary" text="Đăng ký"/>
-        </HBox>
-    </top>
 
-    <center>
-        <VBox alignment="TOP_CENTER" spacing="24.0">
-            <padding>
-                <Insets top="58.0" right="40.0" bottom="40.0" left="40.0"/>
-            </padding>
-
-            <Label maxWidth="860.0" styleClass="hero-title" text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN&#10;duy nhất bạn cần" textAlignment="CENTER" wrapText="true"/>
-            <Label maxWidth="760.0" styleClass="hero-subtitle" text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo.&#10;Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định." textAlignment="CENTER" wrapText="true"/>
-            <Button mnemonicParsing="false" onAction="#handleStart" styleClass="hero-button" text="BẮT ĐẦU →"/>
-
-            <HBox alignment="CENTER" spacing="34.0">
-                <VBox alignment="CENTER" spacing="12.0">
-                    <StackPane prefHeight="150.0" prefWidth="150.0" styleClass="feature-circle">
-                        <Label styleClass="feature-icon" text="🤝"/>
-                    </StackPane>
-                    <Label styleClass="feature-title" text="GIAO DỊCH AN TÂM"/>
-                    <Label styleClass="feature-subtitle" text="Bảo mật &amp; Minh bạch"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="12.0">
-                    <StackPane prefHeight="150.0" prefWidth="150.0" styleClass="feature-circle">
-                        <Label styleClass="feature-icon" text="⚖"/>
-                    </StackPane>
-                    <Label styleClass="feature-title" text="MỨC GIÁ TỐI ƯU"/>
-                    <Label styleClass="feature-subtitle" text="Do bạn quyết định"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="12.0">
-                    <StackPane prefHeight="150.0" prefWidth="150.0" styleClass="feature-circle">
-                        <Label styleClass="feature-icon" text="⌂"/>
-                    </StackPane>
-                    <Label styleClass="feature-title" text="TIỆN LỢI TẠI GIA"/>
-                    <Label styleClass="feature-subtitle" text="Thực hiện tại bất cứ đâu"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="12.0">
-                    <StackPane prefHeight="150.0" prefWidth="150.0" styleClass="feature-circle">
-                        <Label styleClass="feature-icon" text="🤖"/>
-                    </StackPane>
-                    <Label styleClass="feature-title" text="AUTO-BID THÔNG MINH"/>
-                    <Label styleClass="feature-subtitle" text="Tự động giữ vị trí dẫn đầu"/>
-                </VBox>
-            </HBox>
-        </VBox>
-    </center>
-</BorderPane>
-
+</AnchorPane>

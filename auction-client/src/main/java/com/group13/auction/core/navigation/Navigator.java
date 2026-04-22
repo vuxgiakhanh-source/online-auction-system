@@ -1,7 +1,7 @@
 package com.group13.auction.core.navigation;
 
 /**
- * Thin navigation facade used by controllers or the application bootstrap.
+ * Điều hướng giữa các màn hình JavaFX.
  */
 public final class Navigator {
 
@@ -10,9 +10,9 @@ public final class Navigator {
     private final SceneManager sceneManager;
 
     /**
-     * Creates and registers the global navigator.
+     * Tạo navigator mới và gán làm instance dùng chung.
      *
-     * @param sceneManager scene manager used to switch views
+     * @param sceneManager bộ quản lý scene
      */
     public Navigator(SceneManager sceneManager) {
         this.sceneManager = sceneManager;
@@ -20,23 +20,23 @@ public final class Navigator {
     }
 
     /**
-     * Returns the global navigator instance.
+     * Lấy navigator toàn cục của ứng dụng.
      *
-     * @return navigator instance
+     * @return navigator đang được dùng
      */
     public static Navigator getInstance() {
         if (instance == null) {
-            throw new IllegalStateException("Navigator has not been initialized.");
+            throw new IllegalStateException("Navigator chưa được khởi tạo.");
         }
         return instance;
     }
 
     /**
-     * Navigates to the target FXML view.
+     * Chuyển tới view theo đường dẫn FXML.
      *
-     * @param fxmlPath classpath path to the target FXML file
+     * @param viewPath đường dẫn tuyệt đối tới file FXML
      */
-    public void goTo(String fxmlPath) {
-        sceneManager.setRoot(fxmlPath);
+    public void goTo(String viewPath) {
+        sceneManager.switchTo(viewPath);
     }
 }

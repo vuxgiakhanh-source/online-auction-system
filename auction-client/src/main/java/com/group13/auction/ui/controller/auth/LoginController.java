@@ -7,33 +7,38 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
 /**
- * Controller for the login page.
+ * Controller cho màn hình đăng nhập.
  */
 public final class LoginController {
 
-    @FXML private TextField usernameField;
-    @FXML private PasswordField passwordField;
+    @FXML
+    private TextField usernameField;
 
     @FXML
-    private void handleLogin() {
-        // UI-only flow for deadline support. Real authentication will be wired later.
-        usernameField.getText();
-        passwordField.getText();
-    }
+    private PasswordField passwordField;
 
+    /**
+     * Chuyển sang màn hình đăng ký.
+     */
     @FXML
-    private void handleGoToRegister() {
+    public void handleGoToRegister() {
         Navigator.getInstance().goTo(ViewPath.REGISTER_VIEW);
     }
 
+    /**
+     * Tạm thời cho phép vào trang chủ khi nhấn nút Sign in.
+     */
     @FXML
-    private void handleCurrentTab() {
-        // No-op. The login tab is already active.
-    }
-
-    @FXML
-    private void handleBackToHome() {
+    public void handleSignIn() {
         Navigator.getInstance().goTo(ViewPath.HOME_LANDING_VIEW);
     }
-}
 
+    /**
+     * Xóa dữ liệu đang nhập trong form đăng nhập.
+     */
+    @FXML
+    public void handleClearForm() {
+        usernameField.clear();
+        passwordField.clear();
+    }
+}
