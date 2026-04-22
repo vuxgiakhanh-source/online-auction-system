@@ -303,12 +303,12 @@ public class BidHandler implements PacketHandler {
             if (bidder == null) return;
 
             AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
-            double nextBid = strategy.calculateNextBid(auction);
+            long nextBid = strategy.calculateNextBid(auction);
 
             if (nextBid < 0) {
                 session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
                         ErrorDTO.of(ErrorDTO.MAX_BID_TOO_LOW,
-                                String.format("maxBid %.0f quá thấp, phải > giá hiện tại %.0f + bước giá.",
+                                String.format("maxBid %d quá thấp, phải > giá hiện tại %d + bước giá.",
                                         req.getMaxBid(), auction.getCurrentPrice()),
                                 requestId)));
                 return;
@@ -389,7 +389,7 @@ public class BidHandler implements PacketHandler {
             if (req.getMaxBid() <= existing.getMaxBid()) {
                 session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
                         ErrorDTO.of("INVALID_MAX_BID",
-                                String.format("maxBid mới (%.0f) phải lớn hơn maxBid hiện tại (%.0f).",
+                                String.format("maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d).",
                                         req.getMaxBid(), existing.getMaxBid()),
                                 requestId)));
                 return;
@@ -405,7 +405,7 @@ public class BidHandler implements PacketHandler {
             reg.setRegisteredAt(LocalDateTime.now());
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_SUCCESS, reg, requestId));
 
-            System.out.printf("[BID HANDLER] %s cập nhật auto-bid: %.0f → %.0f%n",
+            System.out.printf("[BID HANDLER] %s cập nhật auto-bid: %d → %d%n",
                     bidder.getUsername(), existing.getMaxBid(), req.getMaxBid());
 
         } catch (Exception e) {
@@ -421,6 +421,9 @@ public class BidHandler implements PacketHandler {
     private void handleCancelAutoBid(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
+            ReentrantLock lock = lockRegistry.getLock(auctionId);
+            lock.lock();
+            try {
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
 
@@ -430,6 +433,9 @@ public class BidHandler implements PacketHandler {
                         bidder.getUsername(), auctionId);
             }
             session.send(Packet.of(PacketType.CANCEL_AUTO_BID_SUCCESS, auctionId, requestId));
+            } finally {
+                lock.unlock();
+            }
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.CANCEL_AUTO_BID_FAILED,
@@ -528,3 +534,4 @@ public class BidHandler implements PacketHandler {
         return (NormalUser) user;
     }
 }
+

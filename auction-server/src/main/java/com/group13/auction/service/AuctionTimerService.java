@@ -171,6 +171,7 @@ public class AuctionTimerService {
             }
 
             ReentrantLock lock = lockRegistry.getLock(auction.getId());
+            boolean releaseLock = false;
             lock.lock();
             try {
                 // CRITICAL DOUBLE-CHECK: Phiên có thể đã được gia hạn bởi BidService (Anti-sniping)
@@ -191,7 +192,7 @@ public class AuctionTimerService {
 
                 // --- RESOURCE CLEANUP ---
                 autoBidRegistry.clearAuction(auction.getId());
-                lockRegistry.release(auction.getId());
+                releaseLock = true;
 
                 log.info("[TIMER] Phiên đóng: " + auction.getId() + " | Status: " + auction.getStatus());
             } catch (Exception e) {
@@ -200,6 +201,9 @@ public class AuctionTimerService {
             } finally {
                 if (lock.isHeldByCurrentThread()) {
                     lock.unlock();
+                }
+                if (releaseLock) {
+                    lockRegistry.release(auction.getId());
                 }
             }
         }
