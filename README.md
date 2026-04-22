@@ -1,6 +1,33 @@
 ![Logo](OmniBid.png)
-# online-auction-system
 # 💸 OminiBid - Hệ thống đấu giá Online 💸
+
+## 🧾 Mục lục
+* [Giới thiệu](#-giới-thiệu)
+
+
+* [Đặc điểm kĩ thuật nổi bật](#-đặc-điểm-kĩ-thuật-nổi-bật)
+
+
+* [Chức năng hệ thống](#-chức-năng-hệ-thống)
+
+
+* [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt-later)
+
+
+* [Cách sử dụng](#-cách-sử-dụng-later)
+
+
+* [Công nghệ & Công cụ sử dụng](#-công-nghệ--công-cụ-sử-dụng)
+
+
+* [Đội ngũ & Phân công nhiệm vụ (Project Roadmap)](#-đội-ngũ--phân-công-nhiệm-vụ-project-roadmap)
+
+
+* [Liên hệ](#-liên-hệ)
+
+
+___
+
 ## 🚀 Giới thiệu
 **OmniBid** là một nền tảng đấu giá trực tuyến mạnh mẽ và hiện đại, 
 được xây dựng để cung cấp một môi trường giao dịch minh bạch, 
@@ -93,12 +120,12 @@ giá theo thời gian thực.
 ---
 
 ## 👥 Đội ngũ & Phân công nhiệm vụ (Project Roadmap)
-|                                              Thành viên                                               | Vai trò                                      | Nhiệm vụ chính                                                                                                          |               Tiến độ                | Trạng thái |
-|:-----------------------------------------------------------------------------------------------------:|:---------------------------------------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------:| :---: |
-|             <img src="https://github.com/hchyy.png" width="50px;"/><br />**Hồ Huyền Chi**             | **__Trưởng nhóm__ <br> OOP design**          | • Code logic đấu giá chính <br> • Hỗ trợ design giao diện <br> • Review và Refactor code <br> • Viết tài liệu hướng dẫn | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|       <img src="https://github.com/thebrosaythree.png" width="50px;"/><br />**Bạch Quốc Thịnh**       | **__Thành viên__ <br> Backend**              | • Cài đặt DataBase và Backend <br> • Tích hợp API <br> • Cài đặt Anti-Snipping                                          | ![60%](https://geps.dev/progress/60) | 🏗️ *Processing* |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="50px;"/><br />**Vũ Gia Khánh** | **__Thành viên__ <br> Concurrency / Tester** | • Cài đặt Network và Concurrency <br> • Phát triển chức năng nâng cao <br> • Viết integration test                      | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|     <img src="https://github.com/identicons/bingbongg.png" width="50px;"/><br />**Trần Thảo Nhi**     | **__Thành viên__ <br> Frontend**             | • Đảm nhiệm toàn bộ Frontend và Client <br> • Viết tài liệu hướng dẫn                                                   | ![40%](https://geps.dev/progress/40) | 🏗️ *Processing* |
+|                                                    Thành viên                                                    | Vai trò                                       | Nhiệm vụ chính                                                                                                          |               Tiến độ                | Trạng thái |
+|:----------------------------------------------------------------------------------------------------------------:|:----------------------------------------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------:| :---: |
+|                  <img src="https://github.com/hchyy.png" width="50px;"/><br />**Hồ Huyền Chi**                   | **__Trưởng nhóm__ <br> OOP design**           | • Code logic đấu giá chính <br> • Hỗ trợ design giao diện <br> • Review và Refactor code <br> • Viết tài liệu hướng dẫn | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
+|      <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="50px;"/><br />**Vũ Gia Khánh**       | **__Thành viên__ <br> Concurrency / Testing** | • Cài đặt Network và Concurrency <br> • Phát triển chức năng nâng cao <br> • Viết test                                  | ![50%](https://geps.dev/progress/60) | 🏗️ *Processing* |
+|            <img src="https://github.com/thebrosaythree.png" width="50px;"/><br />**Bạch Quốc Thịnh**             | **__Thành viên__ <br> Backend**               | • Cài đặt DataBase và Backend <br> • Tích hợp API <br> • Cài đặt Anti-Snipping                                          | ![60%](https://geps.dev/progress/50) | 🏗️ *Processing* |
+|          <img src="https://github.com/identicons/bingbongg.png" width="50px;"/><br />**Trần Thảo Nhi**           | **__Thành viên__ <br> Frontend**              | • Đảm nhiệm toàn bộ Frontend và Client <br> • Viết tài liệu hướng dẫn                                                   | ![40%](https://geps.dev/progress/40) | 🏗️ *Processing* |
 
 ---
 
