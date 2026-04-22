@@ -54,11 +54,11 @@ public class AutoBidRegistry {
      * @param auctionId ID phiên đấu giá
      * @param maxBid    giá tối đa người dùng sẵn sàng trả
      */
-    public void register(String userId, String auctionId, double maxBid) {
+    public void register(String userId, String auctionId, long maxBid) {
         String key = buildKey(userId, auctionId);
         AutoBidEntry entry = new AutoBidEntry(userId, auctionId, maxBid, LocalDateTime.now());
         registry.put(key, entry);
-        System.out.printf("[AUTO-BID REGISTRY] Đăng ký: userId=%s, auction=%s, maxBid=%.0f%n",
+        System.out.printf("[AUTO-BID REGISTRY] Đăng ký: userId=%s, auction=%s, maxBid=%d%n",
                 userId, auctionId, maxBid);
     }
 
@@ -157,11 +157,11 @@ public class AutoBidRegistry {
     public static final class AutoBidEntry {
         private final String userId;
         private final String auctionId;
-        private final double maxBid;
+        private final long maxBid;
         private final LocalDateTime registeredAt;
 
         public AutoBidEntry(String userId, String auctionId,
-                            double maxBid, LocalDateTime registeredAt) {
+                            long maxBid, LocalDateTime registeredAt) {
             this.userId = userId;
             this.auctionId = auctionId;
             this.maxBid = maxBid;
@@ -170,7 +170,7 @@ public class AutoBidRegistry {
 
         public String getUserId()              { return userId; }
         public String getAuctionId()           { return auctionId; }
-        public double getMaxBid()              { return maxBid; }
+        public long getMaxBid()                { return maxBid; }
         public LocalDateTime getRegisteredAt() { return registeredAt; }
 
         /**
@@ -186,16 +186,17 @@ public class AutoBidRegistry {
          * @param currentPrice giá hiện tại của phiên
          * @return giá cần đặt để vượt, hoặc -1 nếu maxBid không đủ
          */
-        public double calculateNextBid(double currentPrice) {
-            double increment = BidIncrementCalculator.calculate(currentPrice);
-            double next = currentPrice + increment;
+        public long calculateNextBid(long currentPrice) {
+            long increment = BidIncrementCalculator.calculate(currentPrice);
+            long next = currentPrice + increment;
             return (next > maxBid) ? -1 : next;
         }
 
         @Override
         public String toString() {
-            return String.format("AutoBidEntry{user=%s, auction=%s, maxBid=%.0f, at=%s}",
+            return String.format("AutoBidEntry{user=%s, auction=%s, maxBid=%d, at=%s}",
                     userId, auctionId, maxBid, registeredAt);
         }
     }
 }
+

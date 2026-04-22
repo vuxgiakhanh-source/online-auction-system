@@ -84,10 +84,9 @@ public class AutoBidProcessor {
         Collection<AutoBidRegistry.AutoBidEntry> allEntries = registry.getEntriesForAuction(auctionId);
 
         // Tối đa N lần lặp = số auto-bid trong phiên (bounded, không infinite loop)
-        int maxIterations = allEntries.size();
         int iteration = 0;
 
-        while (iteration < maxIterations) {
+        while (!allEntries.isEmpty()) {
             iteration++;
 
             // Re-fetch snapshot mỗi vòng vì currentLeader có thể đã thay đổi
@@ -102,7 +101,7 @@ public class AutoBidProcessor {
             for (AutoBidRegistry.AutoBidEntry entry : entries) {
                 // Bỏ qua người đang dẫn đầu (họ không cần counter)
                 if (entry.getUserId().equals(leaderId)) continue;
-                long nextBid = Math.round(entry.calculateNextBid(auction.getCurrentPrice()));
+                long nextBid = entry.calculateNextBid(auction.getCurrentPrice());
                 if (nextBid > 0) {
                     candidates.add(entry);
                 }
@@ -116,12 +115,12 @@ public class AutoBidProcessor {
             // Sort: maxBid cao nhất trước (để người sẵn sàng trả nhiều hơn counter);
             // nếu maxBid bằng nhau → registeredAt sớm hơn được ưu tiên (đúng spec)
             candidates.sort(
-                    Comparator.comparingDouble(AutoBidRegistry.AutoBidEntry::getMaxBid).reversed()
+                    Comparator.comparingLong(AutoBidRegistry.AutoBidEntry::getMaxBid).reversed()
                             .thenComparing(AutoBidRegistry.AutoBidEntry::getRegisteredAt)
             );
 
             AutoBidRegistry.AutoBidEntry winner = candidates.get(0);
-            long nextBid = Math.round(winner.calculateNextBid(auction.getCurrentPrice()));
+            long nextBid = winner.calculateNextBid(auction.getCurrentPrice());
 
             // FIX Bug #1: xóa dòng dead code findUserByUsername(null).
             // Dùng findNormalUserById với fallback DB đúng cách.
@@ -135,7 +134,7 @@ public class AutoBidProcessor {
 
             // Đặt auto-bid (đã đang trong lock, không lock lại)
             try {
-                AutoBidStrategy strategy = new AutoBidStrategy(Math.round(winner.getMaxBid()));
+                AutoBidStrategy strategy = new AutoBidStrategy(winner.getMaxBid());
                 bidService.placeBid(autoBidder, auction, nextBid, strategy);
 
                 // Notify riêng cho người vừa được tự bid
@@ -153,7 +152,7 @@ public class AutoBidProcessor {
                         Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
                 System.out.printf(
-                        "[AUTO-BID PROCESSOR] %s tự counter-bid %.0f (phiên %s, vòng %d)%n",
+                        "[AUTO-BID PROCESSOR] %s tự counter-bid %d (phiên %s, vòng %d)%n",
                         autoBidder.getUsername(), nextBid, auctionId, iteration);
 
             } catch (Exception e) {
@@ -184,7 +183,7 @@ public class AutoBidProcessor {
         dto.setAuctionId(auction.getId());
         dto.setBidAmount(bidAmount);
         dto.setNewCurrentPrice(auction.getCurrentPrice());
-        dto.setRemainingMaxBid(Math.round(entry.getMaxBid()) - bidAmount);
+        dto.setRemainingMaxBid(entry.getMaxBid() - bidAmount);
         dto.setNowLeading(auction.getCurrentLeader() != null
                 && auction.getCurrentLeader().getId().equals(entry.getUserId()));
         dto.setTimestamp(LocalDateTime.now());
@@ -208,12 +207,12 @@ public class AutoBidProcessor {
             // Bỏ qua người đang dẫn đầu
             if (entry.getUserId().equals(leaderId)) continue;
 
-            long nextBid = Math.round(entry.calculateNextBid(auction.getCurrentPrice()));
+            long nextBid = entry.calculateNextBid(auction.getCurrentPrice());
             if (nextBid < 0) {
                 // maxBid đã cạn, không thể counter tiếp
                 BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
                 dto.setAuctionId(auctionId);
-                dto.setMaxBid(Math.round(entry.getMaxBid()));
+                dto.setMaxBid(entry.getMaxBid());
                 dto.setCurrentPrice(auction.getCurrentPrice());
                 dto.setLeadingBidderUsername(leader != null ? leader.getUsername() : "Unknown");
 
@@ -223,7 +222,7 @@ public class AutoBidProcessor {
                 registry.cancel(entry.getUserId(), auctionId);
 
                 System.out.printf(
-                        "[AUTO-BID PROCESSOR] %s đã cạn maxBid (%.0f) → xóa auto-bid entry.%n",
+                        "[AUTO-BID PROCESSOR] %s đã cạn maxBid (%d) → xóa auto-bid entry.%n",
                         entry.getUserId(), entry.getMaxBid());
             }
         }
@@ -253,3 +252,4 @@ public class AutoBidProcessor {
         return fromDb;
     }
 }
+
