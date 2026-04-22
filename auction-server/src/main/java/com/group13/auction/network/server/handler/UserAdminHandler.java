@@ -36,7 +36,6 @@ public class UserAdminHandler implements PacketHandler {
             PacketType.GET_MY_PROFILE,
             PacketType.GET_USER_PROFILE,
             PacketType.REQUEST_SELLER_ROLE,
-            PacketType.DELETE_ACCOUNT,
             // Admin
             PacketType.ADMIN_BAN_USER,
             PacketType.ADMIN_UNBAN_USER,
@@ -94,7 +93,6 @@ public class UserAdminHandler implements PacketHandler {
             case GET_MY_PROFILE          -> handleGetMyProfile(session, requestId);
             case GET_USER_PROFILE        -> handleGetUserProfile(session, payload, requestId);
             case REQUEST_SELLER_ROLE     -> handleRequestSellerRole(session, requestId);
-            case DELETE_ACCOUNT          -> handleDeleteAccount(session, requestId);
             // Admin user management
             case ADMIN_BAN_USER          -> handleBanUser(session, payload, requestId);
             case ADMIN_UNBAN_USER        -> handleUnbanUser(session, payload, requestId);
@@ -174,28 +172,6 @@ public class UserAdminHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.SELLER_ROLE_REQUIRED, e.getMessage())));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.REQUEST_SELLER_ROLE_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
-        }
-    }
-
-    // ── DELETE ACCOUNT ────────────────────────────────────────────────────────
-
-    private void handleDeleteAccount(ClientSession session, String requestId) {
-        try {
-            User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
-            if (!(user instanceof NormalUser normalUser)) {
-                session.send(Packet.of(PacketType.DELETE_ACCOUNT_FAILED,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Admin không thể tự xóa tài khoản qua API này.", requestId)));
-                return;
-            }
-            accountService.deleteAccount(normalUser);
-            sessionManager.deauthenticate(session.getConnection());
-            session.send(Packet.of(PacketType.DELETE_ACCOUNT_SUCCESS, null, requestId));
-        } catch (IllegalStateException e) {
-            session.send(Packet.of(PacketType.DELETE_ACCOUNT_FAILED,
-                    ErrorDTO.of(ErrorDTO.BALANCE_NOT_ZERO, e.getMessage(), requestId)));
-        } catch (Exception e) {
-            session.send(Packet.of(PacketType.DELETE_ACCOUNT_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }

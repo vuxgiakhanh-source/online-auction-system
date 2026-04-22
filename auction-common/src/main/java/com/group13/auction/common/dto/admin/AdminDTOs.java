@@ -80,6 +80,15 @@ public final class AdminDTOs {
         public int getShutdownInSeconds() { return shutdownInSeconds; }
         public void setShutdownInSeconds(int shutdownInSeconds) { this.shutdownInSeconds = shutdownInSeconds; }
     }
+    /** Payload của ACCOUNT_BANNED_NOTIFY — gửi về client bị ban. */
+    public static class AccountBannedDTO {
+        private String reason;
+
+        public AccountBannedDTO() {}
+
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+    }
 
     /** Payload của GET_NOTIFICATIONS_SUCCESS — một notification entry. */
     public static class NotificationDTO {
