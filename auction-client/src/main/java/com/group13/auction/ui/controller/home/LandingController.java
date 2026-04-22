@@ -1,5 +1,6 @@
 package com.group13.auction.ui.controller.home;
 
+import com.group13.auction.core.navigation.Navigator;
 import javafx.fxml.FXML;
 
 /**
@@ -8,11 +9,26 @@ import javafx.fxml.FXML;
 public class LandingController {
 
     /**
-     * Xử lý logout.
+     * Chuyển sang màn hình đăng nhập khi nhấn nút Bắt đầu.
      */
     @FXML
-    private void handleBackToLogin() {
-        System.out.println("Logout");
-        // TODO: quay về login
+    private void handleStart() {
+        Navigator.getInstance().goToLogin();
+    }
+
+    /**
+     * Chuyển sang màn hình đăng nhập từ top navigation.
+     */
+    @FXML
+    private void handleGoToLogin() {
+        Navigator.getInstance().goToLogin();
+    }
+
+    /**
+     * Chuyển sang màn hình đăng ký từ top navigation.
+     */
+    @FXML
+    private void handleGoToRegister() {
+        Navigator.getInstance().goToRegister();
     }
 }

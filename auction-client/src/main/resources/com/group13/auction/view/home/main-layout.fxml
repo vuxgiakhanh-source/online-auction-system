@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0"
             stylesheets="@../../css/app.css"
@@ -13,4 +13,19 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.group13.auction.ui.controller.home.MainLayoutController">
 
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox alignment="CENTER" spacing="12.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+        </padding>
+
+        <Label text="Trang chủ OmniBid" styleClass="home-title"/>
+        <Label text="Đây là trang chủ tạm thời sau khi đăng nhập hoặc đăng ký thành công."
+               styleClass="home-subtitle"/>
+    </VBox>
 </AnchorPane>

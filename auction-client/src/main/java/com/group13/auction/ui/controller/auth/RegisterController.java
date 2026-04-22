@@ -1,6 +1,5 @@
 package com.group13.auction.ui.controller.auth;
 
-import com.group13.auction.config.ViewPath;
 import com.group13.auction.core.navigation.Navigator;
 import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
@@ -25,7 +24,7 @@ public final class RegisterController {
      */
     @FXML
     public void handleGoToLogin() {
-        Navigator.getInstance().goTo(ViewPath.LOGIN_VIEW);
+        Navigator.getInstance().goToLogin();
     }
 
     /**
@@ -33,7 +32,7 @@ public final class RegisterController {
      */
     @FXML
     public void handleSignUp() {
-        Navigator.getInstance().goTo(ViewPath.HOME_LANDING_VIEW);
+        Navigator.getInstance().goToMainLayout();
     }
 
     /**

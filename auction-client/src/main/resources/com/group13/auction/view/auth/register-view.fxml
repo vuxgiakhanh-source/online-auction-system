@@ -30,11 +30,24 @@
                     <!-- TODO: Chừa chỗ để sau này chèn logo cái búa bên trái chữ OmniBid. -->
                     <Region minHeight="96.0" minWidth="96.0" prefHeight="96.0" prefWidth="96.0"/>
 
-                    <VBox alignment="CENTER_LEFT">
+                    <VBox alignment="CENTER" spacing="4.0"
+                          minWidth="520.0" prefWidth="520.0" maxWidth="520.0">
                         <Label text="OmniBid"
-                               styleClass="brand-title"/>
+                               styleClass="brand-title"
+                               minWidth="520.0"
+                               prefWidth="520.0"
+                               maxWidth="520.0"
+                               alignment="CENTER"
+                               textAlignment="CENTER"/>
+
                         <Label text="Connected Bidding Solutions"
-                               styleClass="brand-subtitle"/>
+                               styleClass="brand-subtitle"
+                               minWidth="520.0"
+                               prefWidth="520.0"
+                               maxWidth="520.0"
+                               alignment="CENTER"
+                               textAlignment="CENTER"
+                               textOverrun="CLIP"/>
                     </VBox>
                 </HBox>
 
