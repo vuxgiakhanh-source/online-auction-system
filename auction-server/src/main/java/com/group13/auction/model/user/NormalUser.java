@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Người dùng bình thường — có thể đảm nhận cả vai Bidder và Seller.
+ * Người dùng bình thường - có thể đảm nhận cả vai Bidder và Seller.
  *
  * <p>Khi mới tạo, mặc định có role BIDDER.
  * Muốn trở thành Seller, user phải gửi yêu cầu và được hệ thống phê duyệt
@@ -31,8 +31,6 @@ public class NormalUser extends User {
     
     // FIX: Dùng Concurrent Collections để tránh ConcurrentModificationException
     private List<BidTransaction> bidHistory;
-    private Set<String> joinedAuctionIds;
-    private List<String> watchListAuctionIds;
 
     // Seller state
     private List<Item> listedItems;
@@ -58,7 +56,7 @@ public class NormalUser extends User {
      * @param email địa chỉ email
      * @return NormalUser mới
      */
-    public static NormalUser create(String username, String password, String email) {
+    protected static NormalUser create(String username, String password, String email) {
         return new NormalUser(username, password, email);
     }
 
@@ -107,8 +105,6 @@ public class NormalUser extends User {
         this.balance = new AtomicLong(0L);
         this.lockedDeposit = new AtomicLong(0L);
         this.bidHistory = new CopyOnWriteArrayList<>();
-        this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
-        this.watchListAuctionIds = new CopyOnWriteArrayList<>();
         this.listedItems = new CopyOnWriteArrayList<>();
         this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.of(UserRole.BIDDER);
@@ -139,10 +135,7 @@ public class NormalUser extends User {
                 UserRole.BIDDER, accountStatus, rating, suspendedAt);
         this.balance = new AtomicLong(balance);
         this.lockedDeposit = new AtomicLong(lockedDeposit);
-        // Khởi tạo thread-safe; DAO sẽ inject dữ liệu thực sau khi gọi reconstitute()
         this.bidHistory = new CopyOnWriteArrayList<>();
-        this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
-        this.watchListAuctionIds = new CopyOnWriteArrayList<>();
         this.listedItems = new CopyOnWriteArrayList<>();
         this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.copyOf(roles);
@@ -204,18 +197,6 @@ public class NormalUser extends User {
         return Collections.unmodifiableList(bidHistory);
     }
 
-    public Set<String> getJoinedAuctionIds() {
-        return Collections.unmodifiableSet(joinedAuctionIds);
-    }
-
-    public List<String> getWatchListAuctionIds() {
-        return Collections.unmodifiableList(watchListAuctionIds);
-    }
-
-    public boolean hasJoined(String auctionId) {
-        return joinedAuctionIds.contains(auctionId);
-    }
-
     public void setBalance(long balance) {
         this.balance.set(balance);
         markUpdated();
@@ -274,17 +255,7 @@ public class NormalUser extends User {
         bidHistory.add(tx);
     }
 
-    public void addJoinedAuction(String auctionId) {
-        joinedAuctionIds.add(auctionId);
-    }
-
-    public void addToWatchList(String auctionId) {
-        if (!watchListAuctionIds.contains(auctionId)) {
-            watchListAuctionIds.add(auctionId);
-        }
-    }
-
-    // DAO injection setters (package-private — chỉ DAO trong cùng package hoặc DAO được phép gọi)
+    // DAO injection setters (DAO được phép gọi)
 
     /**
      * Inject lịch sử bid từ DB — chỉ UserDAO gọi sau reconstitute().
@@ -294,31 +265,6 @@ public class NormalUser extends User {
      */
     public void setBidHistory(List<BidTransaction> bidHistory) {
         this.bidHistory = bidHistory != null ? new CopyOnWriteArrayList<>(bidHistory) : new CopyOnWriteArrayList<>();
-    }
-
-    /**
-     * Inject danh sách auctionId đã join từ DB — chỉ UserDAO gọi sau reconstitute().
-     * Đã thực hiện TODO: UserDAO.findJoinedAuctionIdsByUserId(id) đã được triển khai
-     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
-     */
-    public void setJoinedAuctionIds(Set<String> joinedAuctionIds) {
-        if (this.joinedAuctionIds == null) {
-            this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
-        }
-        this.joinedAuctionIds.clear();
-        if (joinedAuctionIds != null) {
-            this.joinedAuctionIds.addAll(joinedAuctionIds);
-        }
-    }
-
-    /**
-     * Inject watchlist từ DB — chỉ UserDAO gọi sau reconstitute().
-     * Đã thực hiện TODO: UserDAO.findWatchListByUserId(id) đã được triển khai
-     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
-     */
-    public void setWatchListAuctionIds(List<String> watchListAuctionIds) {
-        this.watchListAuctionIds = watchListAuctionIds != null
-                ? new CopyOnWriteArrayList<>(watchListAuctionIds) : new CopyOnWriteArrayList<>();
     }
 
     // Seller getters / setters

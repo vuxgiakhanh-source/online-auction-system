@@ -9,6 +9,7 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.observer.AuctionEvent;
+import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IQualityReportService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
@@ -29,7 +30,7 @@ public class
 QualityReportService implements IQualityReportService {
 
     private final IRatingService ratingService;
-    private final IWalletService walletService;
+    private final IPaymentService paymentService;
 
     // Đã thực hiện TODO: inject QualityReportDAO và UserDAO
     private final QualityReportDAO qualityReportDAO;
@@ -39,15 +40,14 @@ QualityReportService implements IQualityReportService {
      * Constructor nhận dependency qua constructor (DIP).
      *
      * @param ratingService service quản lý rating
-     * @param walletService service quản lý tài chính
      */
     public QualityReportService(
             IRatingService ratingService,
-            IWalletService walletService,
+            IPaymentService paymentService,
             QualityReportDAO qualityReportDAO,
             UserDAO userDAO) {
         this.ratingService = ratingService;
-        this.walletService = walletService;
+        this.paymentService = paymentService;
         this.qualityReportDAO = qualityReportDAO;
         this.userDAO = userDAO;
     }
@@ -112,7 +112,7 @@ QualityReportService implements IQualityReportService {
                 ? auction.getWinner().getFinalPrice()
                 : 0L;
         if (finalPrice > 0) {
-            walletService.executeRefundToWinner(winner, seller, finalPrice, auction.getId());
+            paymentService.refundToWinnerFromBank(auction);
             report.markRefundCompleted();
         }
 
@@ -190,7 +190,7 @@ QualityReportService implements IQualityReportService {
         SystemAdmin.getInstance().addActionLog(log);
         System.out.println(log);
 
-        walletService.executeRefundToWinner(reporter, seller, auction.getWinner().getFinalPrice(), auction.getId());
+        paymentService.refundToWinnerFromBank(auction);
 
         // Thực hiện TODO: ban xuống DB
         userDAO.updateAccountStatus(seller.getId(), "BANNED");

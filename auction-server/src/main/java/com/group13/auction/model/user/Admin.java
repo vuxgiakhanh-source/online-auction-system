@@ -70,7 +70,7 @@ public class Admin extends User {
    * @param adminLevel cấp độ quyền ({@value #LEVEL_STAFF})
    * @return Admin mới
    */
-  public static Admin create(String username, String password, String email, String adminLevel) {
+  protected static Admin create(String username, String password, String email, String adminLevel) {
     return new Admin(username, password, email, adminLevel);
   }
 
@@ -84,14 +84,14 @@ public class Admin extends User {
 
   // Constructors, chỉ được new khi tạo SystemAdmin (trong test)
 
-  public Admin(String username, String password, String email, String adminLevel) {
+  protected Admin(String username, String password, String email, String adminLevel) {
     super(username, password, email, UserRole.ADMIN);
     this.adminLevel = adminLevel;
     this.actionLog = new ArrayList<>();
     // Admin luôn được set rating = 5.0 ngay khi tạo
   }
 
-  public Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
+  private Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
                String username, String hashedPassword, String email,
                AccountStatus accountStatus, double rating,
                String adminLevel, LocalDateTime suspendedAt) {

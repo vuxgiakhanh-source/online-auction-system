@@ -1,6 +1,7 @@
 package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.service.PaymentService;
 
 /**
  * Hợp đồng quản lý tài chính và cọc tập trung.
@@ -74,44 +75,21 @@ public interface IWalletService {
     void forfeitDeposit(NormalUser winner, long depositAmount, String auctionId);
 
     /**
-     * Thực hiện toàn bộ luồng giao dịch thanh toán sau khi phiên FINISHED.
-     * Winner → SystemBank → Seller (sau khi trừ thuế).
+     * Chuyển tiền từ Winner -> SystemBank (FUNDS_HELD).
+     * Seller CHƯA nhận tiền - chỉ nhận qua {@link PaymentService#releaseToSeller}.
      *
-     * <p>Nếu một bước lỗi → Rollback toàn bộ để tránh mất tiền.
+     * <p>Logic:
+     * <ol>
+     *   <li>Trừ phần {@code remaining = finalPrice - depositPaid} từ balance winner.</li>
+     *   <li>Giải phóng cọc (lockedDeposit) rồi trừ luôn khỏi balance - cọc chuyển vào bank.</li>
+     *   <li>Bank ghi nhận toàn bộ {@code finalPrice}.</li>
+     * </ol>
      *
-     * @param winner        winner thanh toán
-     * @param seller        seller nhận tiền
-     * @param finalPrice    giá bán cuối cùng
-     * @param depositPaid   cọc winner đã khóa trước đó (được tính vào finalPrice)
-     * @param auctionId     id phiên
-     * @throws com.group13.auction.exception.PaymentException nếu winner không đủ số dư
+     * @param winner người thắng
+     * @param finalPrice giá cuối cùng
+     * @param depositPaid số tiền cọc đã khóa trước
+     * @param auctionId id phiên
      */
-    void executePaymentTransaction(NormalUser winner, NormalUser seller,
-                                   long finalPrice, long depositPaid, String auctionId);
-
-    /**
-     * Hoàn tiền 100% cho winner khi seller vi phạm chất lượng hàng hóa.
-     * Seller hoàn phần thực nhận (sau thuế), SystemBank hoàn phần thuế đã thu.
-     *
-     * @param winner     winner nhận hoàn tiền
-     * @param seller     seller phải hoàn tiền
-     * @param finalPrice giá bán ban đầu (để tính lại thuế và payout)
-     * @param auctionId  id phiên
-     */
-    void executeRefundToWinner(NormalUser winner, NormalUser seller,
-                               long finalPrice, String auctionId);
-
-    /**
-     * Thực hiện giao dịch Second Chance Offer khi runner-up chấp nhận mua.
-     * Logic tương tự winner ban đầu nhưng với offerPrice (giá bid của runner-up).
-     *
-     * @param runnerUp    runner-up chấp nhận
-     * @param seller      seller nhận tiền
-     * @param offerPrice  giá mua theo second chance (giá bid cao nhất của runner-up)
-     * @param depositPaid cọc runner-up đã khóa khi joinAuction
-     * @param auctionId   id phiên
-     * @throws com.group13.auction.exception.PaymentException nếu runner-up không đủ số dư
-     */
-//    void executeSecondChancePayment(NormalUser runnerUp, NormalUser seller,
-//                                    double offerPrice, double depositPaid, String auctionId);
+    void executePaymentToBank(
+            NormalUser winner, long finalPrice, long depositPaid, String auctionId);
 }

@@ -23,11 +23,8 @@ public class AutoBidStrategy implements BidStrategy {
   /**
    * Khởi tạo AutoBidStrategy với lượng "nhỉnh hơn" tuỳ chỉnh.
    *
-   * <p>Ví dụ: currentPrice = 130, minIncrement = 20, extraIncrement = 1
-   * → nextBid = 130 + 20 + 1 = 151 (nhỉnh hơn người dẫn đầu 21 đơn vị).
-   *
-   * @param maxBid         giá tối đa sẵn sàng trả (> 0)
-   * @throws IllegalArgumentException nếu maxBid <= 0 hoặc extraIncrement < 0
+   * @param maxBid giá tối đa sẵn sàng trả (> 0)
+   * @throws IllegalArgumentException nếu maxBid <= 0
    */
   public AutoBidStrategy(long maxBid) {
     if (maxBid <= 0) {
@@ -55,7 +52,7 @@ public class AutoBidStrategy implements BidStrategy {
     long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     long next = auction.getCurrentPrice() + increment;
     if (next > maxBid) {
-      return -1; // vượt quá maxBid --- không tự bid nữa
+      return -1; // vượt quá maxBid - không tự bid nữa
     }
     return next;
   }

@@ -2,6 +2,7 @@ package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.strategy.BidStrategy;
 
@@ -20,7 +21,7 @@ public interface IBidService {
    * @param auction phiên muốn tham gia
    * @param observer observer của bidder để nhận notify
    */
-  void joinAuction(NormalUser bidder, Auction auction, AuctionObserver observer);
+  void joinAuction(User bidder, Auction auction, AuctionObserver observer);
 
   /**
    * Theo dõi phiên mà không tham gia đặt bid.
@@ -29,7 +30,7 @@ public interface IBidService {
    * @param auction phiên muốn theo dõi
    * @param observer observer để nhận notify
    */
-  void watchAuction(NormalUser bidder, Auction auction, AuctionObserver observer);
+  void watchAuction(User bidder, Auction auction, AuctionObserver observer);
 
   /**
    * Đặt giá cho một phiên đấu giá.

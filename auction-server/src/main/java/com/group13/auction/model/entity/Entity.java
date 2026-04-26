@@ -1,6 +1,7 @@
 package com.group13.auction.model.entity;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -38,10 +39,28 @@ public abstract class Entity {
     this.updatedAt = LocalDateTime.now();
   }
 
-  /** Getters */
+  // Getters
   public String getId() { return id; }
   public LocalDateTime getCreatedAt() { return createdAt; }
   public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+  /**
+   * Hai entity bằng nhau khi và chỉ khi cùng {@code id}.
+   * Tránh lỗi khi cùng một entity được load từ DB thành nhiều instance khác nhau
+   * {@code observers.contains(observer)}, {@code joinedAuctionIds.contains(id)}.
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof Entity)) return false;
+    Entity other = (Entity) o;
+    return Objects.equals(this.id, other.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
 
   public abstract void printInfo();
 }
