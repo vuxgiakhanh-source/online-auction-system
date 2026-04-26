@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Quản lý tài chính và cọc tập trung — Single Responsibility.
+ * Quản lý tài chính và cọc tập trung - Single Responsibility.
  *
  * <p>Mọi thao tác tiền tệ đều tạo {@link FinancialTransaction} để ghi log audit.
  *
@@ -172,8 +172,8 @@ public class WalletService implements IWalletService {
     }
 
     /**
-     * Tịch thu cọc của winner không thanh toán → chuyển vào SystemBank.
-     * Theo luật đấu giá: winner không thanh toán mất cọc.
+     * Tịch thu cọc của winner không thanh toán -> chuyển vào SystemBank.
+     * winner không thanh toán mất cọc.
      */
     @Override
     public void forfeitDeposit(NormalUser winner, long depositAmount, String auctionId) {
@@ -202,155 +202,82 @@ public class WalletService implements IWalletService {
     // Payment transaction
 
     /**
-     * Thực hiện toàn bộ luồng giao dịch thanh toán trong một khối chặt chẽ.
-     * Winner -> SystemBank -> Seller (sau thuế).
+     * Chuyển tiền từ Winner -> SystemBank (FUNDS_HELD).
+     * Seller CHƯA nhận tiền - chỉ nhận qua {@link PaymentService#releaseToSeller}.
+     *
+     * <p>Logic:
+     * <ol>
+     *   <li>Trừ phần {@code remaining = finalPrice - depositPaid} từ balance winner.</li>
+     *   <li>Giải phóng cọc (lockedDeposit) rồi trừ luôn khỏi balance - cọc chuyển vào bank.</li>
+     *   <li>Bank ghi nhận toàn bộ {@code finalPrice}.</li>
+     * </ol>
+     *
+     * @param winner người thắng
+     * @param finalPrice giá cuối cùng
+     * @param depositPaid số tiền cọc đã khóa trước
+     * @param auctionId id phiên
      */
-    @Override
-    public void executePaymentTransaction(NormalUser winner, NormalUser seller,
-                                          long finalPrice, long depositPaid, String auctionId) {
+    public void executePaymentToBank(
+            NormalUser winner, long finalPrice, long depositPaid, String auctionId) {
+        synchronized (winner) {
+            long remaining = finalPrice - depositPaid;
 
-        // Tránh Deadlock bằng cách luôn lock User có ID nhỏ hơn trước
-        NormalUser firstLock = (winner.getId().compareTo(seller.getId()) < 0) ? winner : seller;
-        NormalUser secondLock = (firstLock == winner) ? seller : winner;
-
-        synchronized (firstLock) {
-            synchronized (secondLock) {
-                long remaining = finalPrice - depositPaid;
-
-                // b1: Kiểm tra số dư winner
-                if (winner.getAvailableBalance() < remaining) {
-                    throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
-                            String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
-                }
-
-                // b2: Rollback state để xử lí lỗi
-                long originalWinnerBalance = winner.getBalance();
-                long originalWinnerLocked = winner.getLockedDeposit();
-                long originalSellerBalance = seller.getBalance();
-                long originalSellerLocked = seller.getLockedDeposit();
-
-                // Danh sách lưu trữ các transaction trong phiên giao dịch này để lưu DB hàng loạt
-                List<FinancialTransaction> batchTx = new ArrayList<>();
-
-                try {
-                    // b3: Trừ tiền Winner (Trừ cả cục finalPrice để tránh thất thoát tiền cọc)
-                    // Logic chuẩn: Trừ nốt phần còn lại, và GIẢI PHÓNG cọc (đã trừ cọc từ trước lúc join)
-                    winner.setBalance(winner.getBalance() - remaining);
-                    FinancialTransaction txPayment = FinancialTransaction.create(
-                            winner.getId(), "SYSTEM_BANK", remaining,
-                            TransactionType.PAYMENT_FROM_WINNER, auctionId);
-                    batchTx.add(txPayment);
-
-                    // b4: Mở khóa cọc
-                    winner.unlockDeposit(depositPaid);
-                    FinancialTransaction txUnlock = FinancialTransaction.create(
-                            "SYSTEM_LOCKED", winner.getId(), depositPaid,
-                            TransactionType.DEPOSIT_UNLOCK, auctionId);
-                    batchTx.add(txUnlock);
-                    
-                    // QUAN TRỌNG: Trừ tiền cọc khỏi balance của winner vì nó đã được chuyển đi
-                    winner.setBalance(winner.getBalance() - depositPaid);
-
-                    // Cập nhật DB cho Winner (Bao gồm trừ balance và unlock cọc)
-                    userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
-
-                    // b5: Tính toán và trả tiền cho Seller
-                    systemBank.receive(finalPrice);
-                    FinancialTransaction txTax = FinancialTransaction.create(
-                            winner.getId(), "SYSTEM_BANK", systemBank.calculateTax(finalPrice),
-                            TransactionType.TAX_COLLECTED, auctionId);
-                    batchTx.add(txTax);
-
-                    long payout = systemBank.payoutToSeller(finalPrice);
-                    seller.setBalance(seller.getBalance() + payout);
-
-                    FinancialTransaction txPayout = FinancialTransaction.create(
-                            "SYSTEM_BANK", seller.getId(), payout,
-                            TransactionType.PAYOUT_TO_SELLER, auctionId);
-                    batchTx.add(txPayout);
-
-                    // Cập nhật DB cho Seller (Cộng balance)
-                    userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
-
-                    System.out.printf("[WALLET] Giao dịch thành công | Winner: %s | Seller: %s | Giá: %d | Payout: %d%n",
-                            winner.getUsername(), seller.getUsername(), finalPrice, payout);
-
-                    // Lưu toàn bộ batch lịch sử xuống DB
-                    transactionLog.addAll(batchTx);
-                    for (FinancialTransaction tx : batchTx) {
-                        tx.printInfo();
-                        financialTransactionDAO.saveTransaction(tx);
-                    }
-
-                } catch (Exception e) {
-                    // Rollback: khôi phục trạng thái ban đầu
-                    winner.restoreBalances(originalWinnerBalance, originalWinnerLocked);
-                    seller.restoreBalances(originalSellerBalance, originalSellerLocked);
-
-                    // Sync DB về trạng thái gốc để đảm bảo nhất quán
-                    try {
-                        userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
-                        userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
-                    } catch (Exception syncEx) {
-                        System.err.printf("[WALLET] ROLLBACK DB thất bại phiên %s | Lỗi: %s%n",
-                                auctionId, syncEx.getMessage());
-                    }
-
-                    System.err.printf("[WALLET] ROLLBACK giao dịch phiên %s | Lỗi: %s%n",
-                            auctionId, e.getMessage());
-                    throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
-                            "Giao dịch thất bại, đã rollback: " + e.getMessage());
-                }
+            if (winner.getAvailableBalance() < remaining) {
+                throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
+                        String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
             }
-        }
-    }
 
-    /**
-     * Hoàn tiền cho winner khi hàng lỗi (seller vi phạm chất lượng).
-     * Hệ thống hoàn thuế + Seller hoàn phần tiền nhận = 100% trả lại cho Winner.
-     */
-    @Override
-    public void executeRefundToWinner(NormalUser winner, NormalUser seller,
-                                      long finalPrice, String auctionId) {
+            long originalBalance = winner.getBalance();
+            long originalLocked = winner.getLockedDeposit();
 
-        // Tránh Deadlock
-        NormalUser firstLock = (winner.getId().compareTo(seller.getId()) < 0) ? winner : seller;
-        NormalUser secondLock = (firstLock == winner) ? seller : winner;
+            List<FinancialTransaction> batchTx = new ArrayList<>();
+            try {
+                // Trừ phần còn lại
+                winner.setBalance(winner.getBalance() - remaining);
+                batchTx.add(FinancialTransaction.create(
+                        winner.getId(), "SYSTEM_BANK", remaining,
+                        TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
-        synchronized (firstLock) {
-            synchronized (secondLock) {
-                long tax = systemBank.calculateTax(finalPrice);
-                long sellerPayout = finalPrice - tax;
+                // Giải phóng cọc và trừ khỏi balance
+                winner.unlockDeposit(depositPaid);
+                winner.setBalance(winner.getBalance() - depositPaid);
+                batchTx.add(FinancialTransaction.create(
+                        "SYSTEM_LOCKED", winner.getId(), depositPaid,
+                        TransactionType.DEPOSIT_UNLOCK, auctionId));
 
-                // Seller hoàn phần thực nhận (trừ thuế)
-                if (seller.getBalance() < sellerPayout) {
-                    System.err.printf("[WALLET] Seller %s không đủ tiền hoàn trả!%n", seller.getUsername());
-                }
-
-                seller.setBalance(Math.max(0L, seller.getBalance() - sellerPayout));
-                userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
-
-                // SystemBank hoàn phần thuế đã thu
-                systemBank.refundToWinner(tax);
-
-                // Cộng toàn bộ finalPrice cho winner
-                winner.setBalance(winner.getBalance() + finalPrice);
+                // TODO: [DB] userDAO.updateBalances(winner)
                 userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
-                FinancialTransaction txRefund = FinancialTransaction.create(
-                        "SYSTEM_BANK", winner.getId(), finalPrice,
-                        TransactionType.REFUND_TO_WINNER, auctionId);
-                transactionLog.add(txRefund);
-                txRefund.printInfo();
+                // Bank giữ toàn bộ finalPrice
+                systemBank.receive(finalPrice);
+                batchTx.add(FinancialTransaction.create(
+                        winner.getId(), "SYSTEM_BANK", finalPrice,
+                        TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
-                System.out.printf("[WALLET] Hoàn tiền 100%% (%d) cho winner %s.%n",
-                        finalPrice, winner.getUsername());
+                System.out.printf(
+                        "[WALLET] Winner %s chuyển %d vào SystemBank (FUNDS_HELD).%n",
+                        winner.getUsername(), finalPrice);
 
-                financialTransactionDAO.saveTransaction(txRefund);
+                transactionLog.addAll(batchTx);
+                for (FinancialTransaction tx : batchTx) {
+                    tx.printInfo();
+                    financialTransactionDAO.saveTransaction(tx);
+                }
+
+            } catch (Exception e) {
+                winner.restoreBalances(originalBalance, originalLocked);
+                try {
+                    userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
+                } catch (Exception syncEx) {
+                    System.err.printf("[WALLET] ROLLBACK DB thất bại phiên %s | Lỗi: %s%n",
+                            auctionId, syncEx.getMessage());
+                }
+                System.err.printf("[WALLET] ROLLBACK phiên %s | Lỗi: %s%n", auctionId, e.getMessage());
+                throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
+                        "Giao dịch thất bại, đã rollback: " + e.getMessage());
             }
         }
     }
-
 
     /** @return lịch sử giao dịch (chỉ đọc) */
     public List<FinancialTransaction> getTransactionLog() {

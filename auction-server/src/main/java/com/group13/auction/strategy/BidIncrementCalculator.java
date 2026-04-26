@@ -14,10 +14,10 @@ package com.group13.auction.strategy;
  */
 public final class BidIncrementCalculator {
 
-    private static final long TIER_LOW       = 1_000_000L;
-    private static final long TIER_MID       = 10_000_000L;
-    private static final long INCREMENT_LOW  = 50_000L;
-    private static final long INCREMENT_MID  = 200_000L;
+    private static final long TIER_LOW = 1_000_000L;
+    private static final long TIER_MID = 10_000_000L;
+    private static final long INCREMENT_LOW = 50_000L;
+    private static final long INCREMENT_MID = 200_000L;
     private static final long INCREMENT_HIGH = 500_000L;
 
     private BidIncrementCalculator() {
