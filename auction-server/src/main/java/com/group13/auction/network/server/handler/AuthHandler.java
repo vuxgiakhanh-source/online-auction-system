@@ -81,7 +81,7 @@ public class AuthHandler implements PacketHandler {
 
             // Gọi service tạo user
             com.group13.auction.model.user.NormalUser newUser =
-                    userService.register(req.getUsername(), req.getPassword(), req.getEmail());
+                    userService.create(req.getUsername(), req.getPassword(), req.getEmail());
 
             // Tạo token session
             String token = UUID.randomUUID().toString();
