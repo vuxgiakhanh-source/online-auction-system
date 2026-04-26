@@ -119,4 +119,5 @@ public class BidTransactionDAO {
         }
         return null;
     }
+
 }
