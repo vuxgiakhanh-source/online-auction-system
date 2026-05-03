@@ -15,7 +15,8 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IRatingService;
-import com.group13.auction.strategy.ReservePriceStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,8 @@ import static com.group13.auction.model.user.Admin.CancelReason.SELLER_REQUEST;
  * Đã thực hiện TODO: inject AuctionDAO để persist xuống DB.
  */
 public class AuctionService implements IAuctionService {
+
+  private static final Logger log = LoggerFactory.getLogger(AuctionService.class);
 
   private final IRatingService ratingService;
   private final SystemAdmin system = SystemAdmin.getInstance();
@@ -91,8 +94,7 @@ public class AuctionService implements IAuctionService {
     Auction auction = Auction.create(item, startTime, endTime, reservePrice);
     seller.addAuctionId(auction.getId());
     AuctionManager.getInstance().registerAuction(auction);
-    System.out.printf("[AUCTION SERVICE] Tạo auction: %s (reserve: %d)%n",
-            auction.getId(), reservePrice);
+    log.info("Tạo auction: auctionId={} reserve={}", auction.getId(), reservePrice);
 
     // Đã thực hiện TODO: auctionDAO.save(auction)
     auctionDAO.createAuction(auction);
@@ -114,7 +116,7 @@ public class AuctionService implements IAuctionService {
   public void startAuction(Auction auction) {
     auction.transitionToRunning();
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_STARTED, null, 0L);
-    System.out.printf("[AUCTION SERVICE] Phiên bắt đầu: %s%n", auction.getId());
+    log.info("Phiên bắt đầu: auctionId={}", auction.getId());
 
     // Thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -144,7 +146,7 @@ public class AuctionService implements IAuctionService {
       // TH1.1: không có ai đặt giá -> SYSTEM auto-cancel
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0L);
       cancelAuction(auction, Admin.CancelReason.NO_WINNER);
-      System.out.println("[AUCTION SERVICE] Phiên đóng - không có ai đặt giá.");
+      log.info("Phiên đóng - không có ai đặt giá: auctionId={}", auction.getId());
 
     } else if (!auction.isReserveMet()) {
       // TH1.2: có leader nhưng chưa đạt reserve -> SYSTEM auto-cancel
@@ -152,9 +154,8 @@ public class AuctionService implements IAuctionService {
       notify(auction, AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
               leader, auction.getCurrentPrice());
       cancelAuction(auction, Admin.CancelReason.RESERVE_NOT_MET);
-      System.out.printf(
-              "[AUCTION SERVICE] Phiên đóng - giá cao nhất %d chưa đạt reserve %d.%n",
-              auction.getCurrentPrice(), auction.getReservePrice());
+      log.info("Phiên đóng - reserve chưa đạt: auctionId={} highestPrice={} reserve={}",
+              auction.getId(), auction.getCurrentPrice(), auction.getReservePrice());
 
     } else {
       // TH2: reserve met, có winner
@@ -176,15 +177,14 @@ public class AuctionService implements IAuctionService {
 
       // Tiền cọc của winner chuyển vào SystemBank ngay lập tức (FUNDS_HELD).
       systemBank.receive(depositPaid);
-      System.out.printf(
-              "[AUCTION SERVICE] Cọc %d của winner %s giữ tại SystemBank (FUNDS_HELD).%n",
-              depositPaid, winner.getUsername());
+      log.info("Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId={} winner={} deposit={}",
+              auction.getId(), winner.getUsername(), depositPaid);
       // TODO: [DB] financialTransactionDAO.saveDepositToBank(winner.getId(), depositPaid, auction.getId())
 
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_ENDED,
               winner, auction.getCurrentPrice());
-      System.out.printf("[AUCTION SERVICE] Winner: %s | Giá: %d%n",
-              winner.getUsername(), auction.getCurrentPrice());
+      log.info("Winner: auctionId={} winner={} price={}",
+              auction.getId(), winner.getUsername(), auction.getCurrentPrice());
     }
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
@@ -212,7 +212,7 @@ public class AuctionService implements IAuctionService {
 
     notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
             auction.getCurrentLeader(), auction.getCurrentPrice());
-    System.out.println("[AUCTION SERVICE] Giao dịch hoàn tất - PAID.");
+    log.info("Giao dịch hoàn tất - PAID: auctionId={}", auction.getId());
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -233,7 +233,7 @@ public class AuctionService implements IAuctionService {
     String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
             auction.getId(), reason);
     system.addActionLog(log);
-    System.out.println(log);
+    AuctionService.log.info("SYSTEM AUTO-CANCEL: auctionId={} reason={}", auction.getId(), reason);
 
     // Persist DB trước khi notify để đảm bảo nhất quán
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -270,12 +270,14 @@ public class AuctionService implements IAuctionService {
     String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
             staff.getUsername(), auction.getId(), reason);
     staff.addActionLog(staffLog);
-    System.out.println(staffLog);
+    log.info("STAFF CANCEL: staff={} auctionId={} reason={}",
+            staff.getUsername(), auction.getId(), reason);
 
     String auditLog = String.format("[AUDIT] Staff %s hủy phiên %s | Lý do: %s",
             staff.getUsername(), auction.getId(), reason);
     system.addActionLog(auditLog);
-    System.out.println(auditLog);
+    log.info("AUDIT: staff={} auctionId={} reason={}",
+            staff.getUsername(), auction.getId(), reason);
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());

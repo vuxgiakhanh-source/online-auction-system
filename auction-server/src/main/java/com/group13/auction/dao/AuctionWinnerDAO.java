@@ -1,11 +1,14 @@
 package com.group13.auction.dao;
 
 import com.group13.auction.model.auction.AuctionWinner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class AuctionWinnerDAO {
+    private static final Logger log = LoggerFactory.getLogger(AuctionWinnerDAO.class);
 
     public AuctionWinnerDAO() {}
 
@@ -28,7 +31,10 @@ public class AuctionWinnerDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu thông tin người thắng cuộc: " + e.getMessage());
+            log.error("Lỗi lưu thông tin người thắng cuộc: winnerId={}, auctionId={}",
+                    winner != null ? winner.getId() : null,
+                    winner != null ? winner.getAuctionId() : null,
+                    e);
             return false;
         }
     }
@@ -47,7 +53,7 @@ public class AuctionWinnerDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật trạng thái thanh toán: " + e.getMessage());
+            log.error("Lỗi cập nhật trạng thái thanh toán: winnerId={}, status={}", winnerId, status, e);
             return false;
         }
     }
@@ -71,7 +77,7 @@ public class AuctionWinnerDAO {
                 if (rs.next()) return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi kiểm tra pending payment: " + e.getMessage());
+            log.error("Lỗi kiểm tra pending payment: userId={}", userId, e);
         }
         return false;
     }

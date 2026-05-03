@@ -1,5 +1,8 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,6 +10,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class DatabaseConnection {
+    private static final Logger log = LoggerFactory.getLogger(DatabaseConnection.class);
     private static DatabaseConnection instance;
     
     // Lưu lại thông tin đăng nhập, KHÔNG lưu lại Connection
@@ -29,10 +33,10 @@ public class DatabaseConnection {
 
             // Nạp Driver 1 lần duy nhất khi khởi động hệ thống
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Cấu hình Database thuần Java đã sẵn sàng!");
+            log.info("Cấu hình Database thuần Java đã sẵn sàng!");
 
         } catch (Exception e) {
-            System.err.println("Lỗi khởi tạo Database Connection: " + e.getMessage());
+            log.error("Lỗi khởi tạo Database Connection", e);
             throw new RuntimeException(e);
         }
     }

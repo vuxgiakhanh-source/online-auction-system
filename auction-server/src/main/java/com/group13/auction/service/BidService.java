@@ -18,6 +18,8 @@ import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.strategy.BidStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
  * Đã thực hiện TODO: inject BidTransactionDAO, AuctionDAO, UserDAO.
  */
 public class BidService implements IBidService {
+  private static final Logger log = LoggerFactory.getLogger(BidService.class);
 
   private static final long ANTI_SNIPING_WINDOW_SECONDS = 30;
   private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
@@ -65,8 +68,7 @@ public class BidService implements IBidService {
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
     if (user.hasJoined(auction.getId())) {
-      System.out.printf("[BID] %s đã tham gia phiên %s trước đó.%n",
-              user.getUsername(), auction.getId());
+      log.info("{} đã tham gia phiên {} trước đó.", user.getUsername(), auction.getId());
       return;
     }
 
@@ -86,7 +88,7 @@ public class BidService implements IBidService {
     bidder.addToWatchList(auction.getId());
     auction.incrementViewerCount();
     auctionService.addObserver(auction.getId(), observer);
-    System.out.printf("[BID] %s theo dõi phiên %s.%n", bidder.getUsername(), auction.getId());
+    log.info("{} theo dõi phiên {}.", bidder.getUsername(), auction.getId());
 
     // Lưu trạng thái vào DB
     auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
@@ -129,16 +131,14 @@ public class BidService implements IBidService {
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %d — chưa đạt reserve price (%d).%n",
-              bidder.getUsername(), amount,
-              auction.getReservePrice());
+      log.info("{} đặt giá {} — chưa đạt reserve price ({}).",
+              bidder.getUsername(), amount, auction.getReservePrice());
     } else {
       BidTransaction tx = recordTransaction(bidder, auction, amount, BidResult.ACCEPTED);
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %d thành công!%n",
-              bidder.getUsername(), amount);
+      log.info("{} đặt giá {} thành công!", bidder.getUsername(), amount);
     }
 
     // Anti-sniping: nếu có bid hợp lệ trong N giây cuối thì gia hạn phiên thêm M giây
@@ -183,7 +183,7 @@ public class BidService implements IBidService {
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
 
     registerJoin(bidder, auction, observer);
-    System.out.printf("[BID] %s tham gia phiên %s | Cọc khóa: %d%n",
+    log.info("{} tham gia phiên {} | Cọc khóa: {}",
             bidder.getUsername(), auction.getId(), depositAmount);
   }
 
@@ -192,8 +192,7 @@ public class BidService implements IBidService {
    */
   private void joinAsAdmin(User admin, Auction auction, AuctionObserver observer) {
     registerJoin(admin, auction, observer);
-    System.out.printf("[BID] Admin %s join phiên %s (không cọc).%n",
-            admin.getUsername(), auction.getId());
+    log.info("Admin {} join phiên {} (không cọc).", admin.getUsername(), auction.getId());
   }
 
   /**
