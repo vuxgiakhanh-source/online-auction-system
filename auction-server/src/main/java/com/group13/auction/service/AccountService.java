@@ -9,13 +9,12 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
-import com.group13.auction.model.user.UserFactory;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.StaffObserver;
 import com.group13.auction.service.iservice.IAccountService;
 import com.group13.auction.service.iservice.IRatingService;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quản lý trạng thái tài khoản: ban, deposit, tạo admin STAFF, quản lý role.
@@ -27,6 +26,8 @@ import java.util.List;
  * <p>Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
  */
 public class AccountService implements IAccountService {
+
+  private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
   private final IRatingService ratingService;
   private final AdminFactory adminFactory;
@@ -84,7 +85,8 @@ public class AccountService implements IAccountService {
     String log = String.format(
             "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);
     admin.addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Ban user: admin={} target={} reason={}",
+            admin.getUsername(), target.getUsername(), reason);
 
     // Gọi DAO để cập nhật DB
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
@@ -123,7 +125,7 @@ public class AccountService implements IAccountService {
 
     String log = String.format("[SYSTEM] Tạo admin STAFF: %s", username);
     system.addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Tạo admin STAFF: username={}", username);
 
     return newAdmin;
   }
@@ -144,14 +146,14 @@ public class AccountService implements IAccountService {
               "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller.");
     }
     if (user.hasRole(User.UserRole.SELLER)) {
-      System.out.printf("[ACCOUNT] %s đã có role Seller.%n", user.getUsername());
+      log.info("{} đã có role Seller.", user.getUsername());
       return;
     }
 
     user.addRole(User.UserRole.SELLER);
     String log = String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
     SystemAdmin.getInstance().addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Auto-approve role Seller: user={}", user.getUsername());
 
     // Gọi DAO để cập nhật DB
     sellerDAO.approveSellerRole(user.getId());
@@ -192,8 +194,7 @@ public class AccountService implements IAccountService {
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);
 
-    System.out.printf(
-            "[ACCOUNT] Seller %s gửi yêu cầu hủy phiên %s | Lý do: %s%n",
+    log.info("Seller gửi yêu cầu hủy phiên: seller={} auctionId={} reason={}",
             seller.getUsername(), auction.getId(), reason);
   }
 }
