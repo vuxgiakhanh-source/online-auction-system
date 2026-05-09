@@ -91,19 +91,22 @@ public class AuctionHandler implements PacketHandler {
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
+            // FIX: CreateAuctionRequestDTO.startingPrice là double; ItemFactory.create() nhận long.
+            // Cast (long) để tránh compile error "incompatible types: possible lossy conversion".
             Item item = itemFactory.create(
                     req.getItemCategory(),
                     req.getItemName(),
                     req.getItemDescription(),
-                    req.getStartingPrice(),
+                    (long) req.getStartingPrice(),
                     seller,
                     req.getItemExtraFields());
 
+            // FIX: ReservePriceStrategy nhận long; req.getReservePrice() là double → cast.
             ReservePriceStrategy reserveStrategy =
-                    new ReservePriceStrategy(req.getReservePrice());
+                    new ReservePriceStrategy((long) req.getReservePrice());
 
             Auction auction = auctionService.createAuction(
-                    seller, item, req.getStartTime(), req.getEndTime(), reserveStrategy);
+                    seller, item, req.getStartTime(), req.getEndTime(), reserveStrategy.getReservePrice());
 
             session.send(Packet.of(PacketType.CREATE_AUCTION_SUCCESS,
                     DTOMapper.toAuctionDTO(auction), requestId));
@@ -197,6 +200,12 @@ public class AuctionHandler implements PacketHandler {
 
     // ── CANCEL REQUEST (Seller) ───────────────────────────────────────────────
 
+    /**
+     * Seller gửi yêu cầu hủy phiên.
+     *
+     * <p>Sau khi xử lý thành công, broadcast {@code SELLER_CANCEL_REQUEST_NOTIFY}
+     * tới tất cả Admin đang online để xét duyệt.
+     */
     private void handleCancelRequest(ClientSession session, JsonElement payload, String requestId) {
         try {
             AuctionDTOs.CancelAuctionRequestDTO req = PacketCodec.fromElement(
@@ -215,6 +224,15 @@ public class AuctionHandler implements PacketHandler {
             accountService.requestCancelAuction(seller, auction, req.getReason());
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
                     req.getAuctionId(), requestId));
+
+            // Notify toàn bộ Admin đang online để xét duyệt yêu cầu hủy
+            AuctionDTOs.SellerCancelRequestNotifyDTO notify = new AuctionDTOs.SellerCancelRequestNotifyDTO();
+            notify.setAuctionId(req.getAuctionId());
+            notify.setAuctionName(auction.getItem().getName());
+            notify.setSellerUsername(seller.getUsername());
+            notify.setReason(req.getReason());
+            notify.setRequestTime(java.time.LocalDateTime.now());
+            sessionManager.broadcastToAdmins(Packet.of(PacketType.SELLER_CANCEL_REQUEST_NOTIFY, notify));
 
         } catch (IllegalArgumentException | IllegalStateException e) {
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_FAILED,

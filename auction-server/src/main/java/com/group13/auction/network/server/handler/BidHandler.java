@@ -96,14 +96,8 @@ public class BidHandler implements PacketHandler {
         this.autoBidProcessor  = new AutoBidProcessor(bidService, sessionManager);
     }
 
-    /**
-     * Backward-compat constructor — giữ nguyên chữ ký cũ từ AuctionWebSocketServer.
-     * ratingService = null (BidderObserver sẽ nhận null, hoạt động bình thường
-     * vì ratingService chưa được dùng trong body observer).
-     */
-    public BidHandler(BidService bidService, SessionManager sessionManager) {
-        this(bidService, null, sessionManager, new BidTransactionDAO());
-    }
+    // Constructor cũ đã bị xóa để tránh NPE khi ratingService = null.
+    // Luôn dùng constructor 4-arg đầy đủ.
 
     @Override
     public boolean supports(PacketType type) { return SUPPORTED.contains(type); }
@@ -357,14 +351,16 @@ public class BidHandler implements PacketHandler {
     // ── UPDATE AUTO-BID ───────────────────────────────────────────────────────
 
     /**
-     * Cập nhật maxBid. Chỉ update registry, không đặt bid ngay.
+     * Cập nhật maxBid. Update registry và trigger autoBidProcessor nếu maxBid mới
+     * đủ vượt leader hiện tại để đặt counter-bid ngay.
      */
     private void handleUpdateAutoBid(ClientSession session, JsonElement payload, String requestId) {
         BidDTOs.AutoBidRequestDTO req;
         try {
             req = PacketCodec.fromElement(payload, BidDTOs.AutoBidRequestDTO.class);
         } catch (Exception e) {
-            session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
+            // FIX: dùng UPDATE_AUTO_BID_FAILED thay vì REGISTER_AUTO_BID_FAILED
+            session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
             return;
         }
@@ -377,7 +373,8 @@ public class BidHandler implements PacketHandler {
 
             AutoBidEntry existing = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
             if (existing == null) {
-                session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
+                // FIX: dùng UPDATE_AUTO_BID_FAILED
+                session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                         ErrorDTO.of("NO_AUTO_BID",
                                 "Chưa có auto-bid trong phiên này. Hãy dùng REGISTER_AUTO_BID trước.",
                                 requestId)));
@@ -388,7 +385,8 @@ public class BidHandler implements PacketHandler {
             if (auction == null) return;
 
             if (req.getMaxBid() <= existing.getMaxBid()) {
-                session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
+                // FIX: dùng UPDATE_AUTO_BID_FAILED
+                session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                         ErrorDTO.of("INVALID_MAX_BID",
                                 String.format("maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d).",
                                         req.getMaxBid(), existing.getMaxBid()),
@@ -396,6 +394,7 @@ public class BidHandler implements PacketHandler {
                 return;
             }
 
+            long oldMaxBid = existing.getMaxBid();
             autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
 
             BidDTOs.AutoBidRegistrationDTO reg = new BidDTOs.AutoBidRegistrationDTO();
@@ -404,13 +403,18 @@ public class BidHandler implements PacketHandler {
             reg.setCurrentSystemBid(auction.getCurrentPrice());
             reg.setActive(true);
             reg.setRegisteredAt(LocalDateTime.now());
-            session.send(Packet.of(PacketType.REGISTER_AUTO_BID_SUCCESS, reg, requestId));
+            // FIX: dùng UPDATE_AUTO_BID_SUCCESS thay vì REGISTER_AUTO_BID_SUCCESS
+            session.send(Packet.of(PacketType.UPDATE_AUTO_BID_SUCCESS, reg, requestId));
 
             System.out.printf("[BID HANDLER] %s cập nhật auto-bid: %d → %d%n",
-                    bidder.getUsername(), existing.getMaxBid(), req.getMaxBid());
+                    bidder.getUsername(), oldMaxBid, req.getMaxBid());
+
+            // FIX: trigger autoBidProcessor để đặt bid ngay nếu maxBid mới đủ vượt leader
+            autoBidProcessor.process(auction, bidder.getId());
 
         } catch (Exception e) {
-            session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
+            // FIX: dùng UPDATE_AUTO_BID_FAILED
+            session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         } finally {
             lock.unlock();
@@ -425,15 +429,15 @@ public class BidHandler implements PacketHandler {
             ReentrantLock lock = lockRegistry.getLock(auctionId);
             lock.lock();
             try {
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
+                NormalUser bidder = requireNormalUser(session, requestId);
+                if (bidder == null) return;
 
-            boolean cancelled = autoBidRegistry.cancel(bidder.getId(), auctionId);
-            if (!cancelled) {
-                System.out.printf("[BID HANDLER] %s cancel auto-bid nhưng không có entry (auction=%s).%n",
-                        bidder.getUsername(), auctionId);
-            }
-            session.send(Packet.of(PacketType.CANCEL_AUTO_BID_SUCCESS, auctionId, requestId));
+                boolean cancelled = autoBidRegistry.cancel(bidder.getId(), auctionId);
+                if (!cancelled) {
+                    System.out.printf("[BID HANDLER] %s cancel auto-bid nhưng không có entry (auction=%s).%n",
+                            bidder.getUsername(), auctionId);
+                }
+                session.send(Packet.of(PacketType.CANCEL_AUTO_BID_SUCCESS, auctionId, requestId));
             } finally {
                 lock.unlock();
             }
@@ -507,7 +511,7 @@ public class BidHandler implements PacketHandler {
             resp.setAuctionId(auctionId);
             resp.setPoints(points);
             resp.setStartingPrice(auction.getItem().getStartingPrice());
-            resp.setReservePrice(auction.getReserveStrategy().getReservePrice());
+            resp.setReservePrice(auction.getReservePrice());
 
             session.send(Packet.of(PacketType.GET_BID_HISTORY_SUCCESS, resp, requestId));
 
@@ -541,4 +545,3 @@ public class BidHandler implements PacketHandler {
         return (NormalUser) user;
     }
 }
-

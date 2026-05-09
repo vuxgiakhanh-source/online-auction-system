@@ -3,6 +3,7 @@ package com.group13.auction.network.client.session;
 import com.google.gson.JsonElement;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
@@ -284,6 +285,24 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 var shutdown = PacketCodec.fromElement(payload,
                         com.group13.auction.common.dto.admin.AdminDTOs.ServerShutdownDTO.class);
                 listeners.forEach(l -> l.onServerShutdown(shutdown));
+            }
+            case CANCEL_AUTO_BID_SUCCESS -> {
+                String auctionId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onCancelAutoBidSuccess(auctionId));
+            }
+            case CANCEL_AUTO_BID_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAutoBidFailed(err)); // tái dùng method đã có
+            }
+            case GET_AUTO_BID_STATUS_SUCCESS -> {
+                var dto = PacketCodec.fromElement(payload, BidDTOs.AutoBidRegistrationDTO.class);
+                listeners.forEach(l -> l.onAutoBidRegistered(dto)); // tái dùng
+            }
+            case LEAVE_AUCTION_SUCCESS ->
+                    listeners.forEach(l -> l.onLeaveAuctionSuccess());
+            case GET_BID_HISTORY_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onBidHistoryFailed(err));
             }
 
             default -> log.fine("[DISPATCHER] Unhandled packet type: " + type);
