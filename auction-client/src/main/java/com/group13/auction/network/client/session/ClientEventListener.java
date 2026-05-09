@@ -171,6 +171,8 @@ public interface ClientEventListener {
     default void onSecondChanceAcceptFailed(ErrorDTO error) {}
     /** Server xác nhận đã ghi nhận runner-up từ chối Second Chance (SECOND_CHANCE_DECLINE_SUCCESS). */
     default void onSecondChanceDeclineSuccess() {}
+    /** Server push khi Second Chance Offer hết hạn (SECOND_CHANCE_EXPIRED_NOTIFY). */
+    default void onSecondChanceExpiredNotify(String auctionId) {}
 
     // ── ADMIN — User management ───────────────────────────────────────────────
 

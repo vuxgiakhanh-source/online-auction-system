@@ -52,6 +52,9 @@ public class UserAdminHandler implements PacketHandler {
             PacketType.ADMIN_GET_QUALITY_REPORTS,
             PacketType.ADMIN_APPROVE_QUALITY_REPORT,
             PacketType.ADMIN_REJECT_QUALITY_REPORT,
+            // Notifications
+            PacketType.GET_NOTIFICATIONS,
+            PacketType.MARK_NOTIFICATION_READ,
             // Ping
             PacketType.PING
     );
@@ -109,6 +112,8 @@ public class UserAdminHandler implements PacketHandler {
             case ADMIN_GET_QUALITY_REPORTS     -> handleAdminGetReports(session, requestId);
             case ADMIN_APPROVE_QUALITY_REPORT  -> handleAdminApproveReport(session, payload, requestId);
             case ADMIN_REJECT_QUALITY_REPORT   -> handleAdminRejectReport(session, payload, requestId);
+            case GET_NOTIFICATIONS             -> handleGetNotifications(session, requestId);
+            case MARK_NOTIFICATION_READ        -> handleMarkNotificationRead(session, payload, requestId);
             default -> {}
         }
     }
@@ -350,8 +355,16 @@ public class UserAdminHandler implements PacketHandler {
             ReportDTOs.QualityReportRequestDTO req = PacketCodec.fromElement(
                     payload, ReportDTOs.QualityReportRequestDTO.class);
             // TODO: tạo QualityReport object và gọi qualityReportService.submitReport(report)
+            ReportDTOs.QualityReportDTO dto = new ReportDTOs.QualityReportDTO();
+            dto.setReportId(java.util.UUID.randomUUID().toString());
+            dto.setAuctionId(req.getAuctionId());
+            dto.setReporterUsername(session.getUsername());
+            dto.setDescription(req.getDescription());
+            dto.setEvidenceUrls(req.getEvidenceUrls());
+            dto.setStatus("PENDING");
+            dto.setCreatedAt(java.time.LocalDateTime.now());
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_SUCCESS,
-                    null, requestId));
+                    dto, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
@@ -378,8 +391,10 @@ public class UserAdminHandler implements PacketHandler {
         try {
             String reportId = PacketCodec.fromElement(payload, String.class);
             // TODO: gọi qualityReportService.approveReport(admin, report, auction)
+            ReportDTOs.QualityReportResultDTO result = new ReportDTOs.QualityReportResultDTO();
+            result.setReportId(reportId);
             session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_SUCCESS,
-                    null, requestId));
+                    result, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
@@ -397,6 +412,23 @@ public class UserAdminHandler implements PacketHandler {
             // TODO: gọi qualityReportService.rejectReport(admin, report)
             session.send(Packet.of(PacketType.ADMIN_REJECT_QUALITY_REPORT_SUCCESS,
                     null, requestId));
+        } catch (Exception e) {
+            session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+        }
+    }
+
+    private void handleGetNotifications(ClientSession session, String requestId) {
+        // TODO: load notifications from persistence when NotificationDAO is available.
+        session.send(Packet.of(PacketType.GET_NOTIFICATIONS_SUCCESS,
+                List.<AdminDTOs.NotificationDTO>of(), requestId));
+    }
+
+    private void handleMarkNotificationRead(ClientSession session, JsonElement payload, String requestId) {
+        try {
+            PacketCodec.fromElement(payload, String.class);
+            // TODO: persist read flag when NotificationDAO is available.
+            session.send(Packet.of(PacketType.MARK_NOTIFICATION_READ_SUCCESS, null, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));

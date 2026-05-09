@@ -6,9 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/auction/]xoa.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/model/user/UserFactoryTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
