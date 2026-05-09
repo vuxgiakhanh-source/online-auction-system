@@ -196,8 +196,12 @@ public class PaymentHandler implements PacketHandler {
 
             // TODO: lấy offer từ SecondChanceOfferDAO khi có registry
             // Tạm thời placeholder
+            PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
+            result.setAuctionId(auctionId);
+            result.setFinalPrice(auction.getCurrentPrice());
+            result.setPaymentStatus("PENDING");
             session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_SUCCESS,
-                    null, requestId));
+                    result, requestId));
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
