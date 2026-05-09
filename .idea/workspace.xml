@@ -6,11 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,6 +43,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -112,6 +109,22 @@
       <option name="RUN_TOOL" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.auction.AuctionStateMachineTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.auction.AuctionStateMachineTest$AuctionTransitionTest" />
+      <option name="METHOD_NAME" value="eachState_returnsDistinctAuctionStatus" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JetRunConfigurationType">
       <method v="2">
         <option name="Make" enabled="true" />
@@ -121,6 +134,11 @@
       <option name="filePath" />
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
