@@ -81,7 +81,7 @@ public final class DTOMapper {
         dto.setStartTime(auction.getStartTime());
         dto.setEndTime(auction.getEndTime());
         dto.setCurrentPrice(auction.getCurrentPrice());
-        dto.setReservePrice(auction.getReserveStrategy().getReservePrice());
+        dto.setReservePrice(auction.getReservePrice());
         dto.setStatus(auction.getStatus().name());
         dto.setReserveMet(auction.isReserveMet());
         dto.setViewerCount(auction.getViewerCount());
