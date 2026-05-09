@@ -21,9 +21,7 @@ import com.group13.auction.service.iservice.IWalletService;
  *
  * <ol>
  * <li>Winner gọi {@link #submitReport} -> report ở PENDING.</li>
- * <li>Admin gọi {@link #approveReport} -> trừ rating Seller, bắt đầu đếm 24h hoàn tiền,
- * notify Staff.</li>
- * <li>Seller hoàn tiền trong 24h; nếu không -> {@link #handleSellerRefundDefault} ban Seller.</li>
+ * <li>Admin gọi {@link #approveReport} -> trừ rating Seller, PaymentService hoàn tiền cho Winner
  * </ol>
  */
 public class
@@ -85,8 +83,8 @@ QualityReportService implements IQualityReportService {
      * <li>Notify Staff Admin để theo dõi.</li>
      * </ol>
      *
-     * @param admin admin thực hiện approve
-     * @param report report cần approve
+     * @param admin   admin thực hiện approve
+     * @param report  report cần approve
      * @param auction phiên liên quan (để lấy seller và notify)
      * @throws IllegalStateException nếu report không ở PENDING
      */
@@ -100,7 +98,7 @@ QualityReportService implements IQualityReportService {
         NormalUser winner = report.getReporter();
         NormalUser seller = auction.getItem().getSeller();
 
-        // Approve report (set deadline 24h cho Seller)
+        // Approve report
         report.approve();
 
         // Phạt rating Seller
@@ -141,7 +139,7 @@ QualityReportService implements IQualityReportService {
     /**
      * Admin reject QualityReport.
      *
-     * @param admin admin thực hiện reject
+     * @param admin  admin thực hiện reject
      * @param report report cần reject
      * @throws IllegalStateException nếu report không ở PENDING
      */
@@ -162,40 +160,5 @@ QualityReportService implements IQualityReportService {
 
         // Thực hiện TODO: qualityReportDAO.update(report)
         qualityReportDAO.updateReport(report);
-    }
-
-    /**
-     * Kiểm tra Seller đã quá hạn hoàn tiền chưa và xử lý nếu có.
-     *
-     * Nếu quá hạn -> cho Seller ăn ban vĩnh viễn.
-     *
-     * @param report report đã APPROVED
-     * @param auction phiên liên quan
-     */
-    @Override
-    public void handleSellerRefundDefault(QualityReport report, NormalUser reporter, Auction auction) {
-        if (!report.isSellerRefundOverdue()) {
-            return;
-        }
-        if (report.isRefundCompleted()) {
-            return;
-        }
-
-        NormalUser seller = auction.getItem().getSeller();
-        seller.setAccountStatus(NormalUser.AccountStatus.BANNED);
-
-        String log = String.format(
-                "[QUALITY] Seller %s bị BAN VĨNH VIỄN do không hoàn trả trong 24h | Phiên: %s",
-                seller.getUsername(), auction.getId());
-        SystemAdmin.getInstance().addActionLog(log);
-        System.out.println(log);
-
-        paymentService.refundToWinnerFromBank(auction);
-
-        // Thực hiện TODO: ban xuống DB
-        userDAO.updateAccountStatus(seller.getId(), "BANNED");
-
-        // Thực hiện TODO: qualityReportDAO.update(report) nếu cần ghi nhận trạng thái xử lý
-        // qualityReportDAO.updateReport(report); // Có thể bỏ comment dòng này nếu DB của bạn cần cập nhật thêm gì đó khi seller bị phạt.
     }
 }
