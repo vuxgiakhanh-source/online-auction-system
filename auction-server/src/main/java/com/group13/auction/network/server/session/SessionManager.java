@@ -168,8 +168,10 @@ public class SessionManager {
     public void broadcastToAuctionExcept(String auctionId, Packet<?> packet, String excludeUserId) {
         String json = PacketCodec.encode(packet);
         byConnection.values().forEach(session -> {
+            // FIX: kiểm tra getUserId() != null trước khi gọi equals()
+            // để tránh NPE khi session chưa authenticate
             if (session.isWatchingAuction(auctionId)
-                    && !session.getUserId().equals(excludeUserId)) {
+                    && (session.getUserId() == null || !session.getUserId().equals(excludeUserId))) {
                 session.sendRaw(json);
             }
         });

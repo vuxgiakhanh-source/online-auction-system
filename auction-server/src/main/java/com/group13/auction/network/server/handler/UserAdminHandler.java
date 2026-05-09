@@ -202,9 +202,11 @@ public class UserAdminHandler implements PacketHandler {
             UserDTO dto = DTOMapper.toUserDTO(target, false);
             session.send(Packet.of(PacketType.ADMIN_BAN_USER_SUCCESS, dto, requestId));
 
-            // Notify target nếu đang online
-            AdminDTOs.AccountBannedDTO bannedDTO = new AdminDTOs.AccountBannedDTO();
-            // bannedDTO.setReason(req.getReason());
+            // FIX: dùng RatingDTOs.AccountBannedDTO (class client đang deserialize)
+            // và set reason + bannedBy thay vì để rỗng
+            RatingDTOs.AccountBannedDTO bannedDTO = new RatingDTOs.AccountBannedDTO();
+            bannedDTO.setReason(req.getReason());
+            bannedDTO.setBannedBy(session.getUsername());
             sessionManager.sendToUser(req.getUserId(),
                     Packet.of(PacketType.ACCOUNT_BANNED_NOTIFY, bannedDTO));
 

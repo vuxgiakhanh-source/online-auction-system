@@ -7,7 +7,6 @@ import com.group13.auction.network.server.handler.*;
 import com.group13.auction.network.server.router.PacketRouter;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
-import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.*;
 import com.group13.auction.model.item.ItemFactory;
 import org.java_websocket.WebSocket;
