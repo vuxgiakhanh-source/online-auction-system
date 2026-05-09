@@ -29,11 +29,6 @@ public class QualityReport extends Entity {
     private final String description;
     /** Danh sách URL ảnh minh chứng — bắt buộc phải có ít nhất 1 ảnh. */
     private final List<String> imageUrls;
-    /**
-     * Hạn hoàn tiền của Seller — 24h kể từ khi Admin APPROVED.
-     * null cho đến khi report được approve.
-     */
-    private LocalDateTime sellerRefundDeadline;
     private ReportStatus status;
 
     /**
@@ -101,7 +96,6 @@ public class QualityReport extends Entity {
         this.description = description;
         this.imageUrls = new ArrayList<>(imageUrls);
         this.status = ReportStatus.PENDING;
-        this.sellerRefundDeadline = null;
         this.refundCompleted = false;
     }
 
@@ -122,7 +116,6 @@ public class QualityReport extends Entity {
         this.description = description;
         this.imageUrls = new ArrayList<>(imageUrls);
         this.status = status;
-        this.sellerRefundDeadline = sellerRefundDeadline;
         this.refundCompleted = refundCompleted;
     }
 
@@ -148,29 +141,8 @@ public class QualityReport extends Entity {
         return status;
     }
 
-    public LocalDateTime getSellerRefundDeadline() {
-        return sellerRefundDeadline;
-    }
-
     public boolean isRefundCompleted() {
         return refundCompleted;
-    }
-
-    /**
-     * Kiểm tra Seller đã quá hạn hoàn tiền chưa.
-     *
-     * <p>Đã thực hiện TODO: Logic scheduler nằm ở tầng Service/infrastructure.
-     * Model chỉ cung cấp hàm query thuần — kết quả trả về {@code true} thì
-     * {@link com.group13.auction.service.QualityReportService#handleSellerRefundDefault(QualityReport, NormalUser, Auction)}
-     * sẽ được gọi bởi scheduler bên ngoài (ví dụ: ScheduledExecutorService quét mỗi 5 phút).
-     *
-     * @return true nếu đã quá hạn 24h và report đang ở APPROVED
-     */
-    public boolean isSellerRefundOverdue() {
-        return status == ReportStatus.APPROVED
-                && sellerRefundDeadline != null
-                && LocalDateTime.now().isAfter(sellerRefundDeadline);
-        // TODO: notificationDao.save() - báo cho seller
     }
 
     // Setters - chỉ QualityReportService / PaymentService gọi
@@ -182,7 +154,6 @@ public class QualityReport extends Entity {
      */
     public void approve() {
         this.status = ReportStatus.APPROVED;
-        this.sellerRefundDeadline = LocalDateTime.now().plusHours(24);
         markUpdated();
         // TODO: notificationDao.save() - báo cho seller, user
     }

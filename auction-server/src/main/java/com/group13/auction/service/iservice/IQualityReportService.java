@@ -11,8 +11,7 @@ import com.group13.auction.model.user.NormalUser;
  * <ol>
  *   <li>Winner gọi {@link #submitReport} -> report ở PENDING.</li>
  *   <li>Admin gọi {@link #approveReport} or {@link #rejectReport}.</li>
- *   <li>Nếu approve -> trừ rating Seller, hoàn tiền winner, đếm 24h deadline hoàn trả.</li>
- *   <li>Scheduler gọi {@link #handleSellerRefundDefault} nếu Seller quá hạn -> ban vĩnh viễn.</li>
+ *   <li>Nếu approve -> trừ rating Seller, hoàn tiền winner.</li>
  * </ol>
  */
 public interface IQualityReportService {
@@ -47,16 +46,4 @@ public interface IQualityReportService {
      * @throws IllegalStateException nếu report không ở PENDING
      */
     void rejectReport(Admin admin, QualityReport report);
-
-    /**
-     * Xử lý trường hợp Seller quá hạn 24h không hoàn tiền.
-     *
-     * <p>Gọi từ Scheduler sau khi phát hiện {@link QualityReport#isSellerRefundOverdue()}
-     * trả về {@code true}. Seller bị ăn ban vĩnh viễn, hoàn tiền cho Winner.
-     *
-     * @param report report đã ở APPROVED
-     * @param reporter winner cần được hoàn tiền
-     * @param auction phiên liên quan (để lấy seller, finalPrice)
-     */
-    void handleSellerRefundDefault(QualityReport report, NormalUser reporter, Auction auction);
 }

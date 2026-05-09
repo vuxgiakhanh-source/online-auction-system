@@ -5,10 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/bank/SystemBank.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/bank/SystemBank.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestLauncher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestLauncher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/bid/QualityReport.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/bid/QualityReport.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/QualityReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/QualityReportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/iservice/IQualityReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/iservice/IQualityReportService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +64,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
+    "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.2",
     "settings.editor.selected.configurable": "ml.llm.AcpAgentsConfigurable",
