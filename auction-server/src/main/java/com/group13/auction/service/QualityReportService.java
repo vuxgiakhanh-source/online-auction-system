@@ -129,8 +129,8 @@ QualityReportService implements IQualityReportService {
         SystemAdmin.getInstance().addActionLog(log);
         System.out.println(log);
 
-        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
-        qualityReportDAO.updateReport(report);
+//        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
+//        qualityReportDAO.updateReport(report);
 
         // Thực hiện TODO: userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name())
         userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
@@ -158,7 +158,7 @@ QualityReportService implements IQualityReportService {
         admin.addActionLog(log);
         System.out.println(log);
 
-        // Thực hiện TODO: qualityReportDAO.update(report)
-        qualityReportDAO.updateReport(report);
+//        // Thực hiện TODO: qualityReportDAO.update(report)
+//        qualityReportDAO.updateReport(report);
     }
 }
