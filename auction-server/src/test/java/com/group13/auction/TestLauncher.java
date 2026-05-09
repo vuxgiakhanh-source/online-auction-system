@@ -1,9 +1,7 @@
 package com.group13.auction;
 
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -41,17 +39,36 @@ public final class TestLauncher {
                         .filters(includeClassNamePatterns(".*Test"))
                         .build();
 
-        SummaryGeneratingListener listener = new SummaryGeneratingListener();
+        SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
+
+        // Listener tùy chỉnh để in tên test đang chạy
+        TestExecutionListener printingListener = new TestExecutionListener() {
+            @Override
+            public void executionStarted(TestIdentifier testIdentifier) {
+                if (testIdentifier.isTest()) {
+                    System.out.println("▶ Running test: " + testIdentifier.getDisplayName());
+                }
+            }
+
+            @Override
+            public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult result) {
+                if (testIdentifier.isTest()) {
+                    String status = result.getStatus() == TestExecutionResult.Status.SUCCESSFUL ? "✓ OK" :
+                            (result.getStatus() == TestExecutionResult.Status.FAILED ? "✗ FAILED" : "○ SKIPPED");
+                    System.out.println("  └─ " + status);
+                }
+            }
+        };
 
         Launcher launcher = LauncherFactory.create();
         TestPlan plan = launcher.discover(request);
 
         System.out.printf("Tìm thấy %d test class(es)%n%n", countTestClasses(plan));
 
-        launcher.discover(request);
-        launcher.execute(request, listener);
+        launcher.registerTestExecutionListeners(printingListener, summaryListener);
+        launcher.execute(request);
 
-        TestExecutionSummary summary = listener.getSummary();
+        TestExecutionSummary summary = summaryListener.getSummary();
         summary.printFailuresTo(new PrintWriter(System.out, true));
 
         System.out.println();

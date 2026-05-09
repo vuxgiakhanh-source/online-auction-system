@@ -78,8 +78,8 @@ public class SystemBank {
      */
     public synchronized void receive(long amount) {
         long current = totalBalance.addAndGet(amount);
-        System.out.printf("[BANK] Tiếp nhận %d | Tổng quỹ: %d%n",
-                amount, current);
+//        System.out.printf("[BANK] Tiếp nhận %d | Tổng quỹ: %d%n",
+//                amount, current);
     }
 
     /**
@@ -93,8 +93,8 @@ public class SystemBank {
         long tax = calculateTax(salePrice);
         long payout = salePrice - tax;
         long current = totalBalance.addAndGet(-payout);
-        System.out.printf("[BANK] Chuyển cho seller %d | Thuế giữ lại: %d | Tổng quỹ: %d%n",
-                payout, tax, current);
+//        System.out.printf("[BANK] Chuyển cho seller %d | Thuế giữ lại: %d | Tổng quỹ: %d%n",
+//                payout, tax, current);
         return payout;
     }
 
@@ -105,8 +105,8 @@ public class SystemBank {
      */
     public synchronized void refundToWinner(long amount) {
         long current = totalBalance.addAndGet(-amount);
-        System.out.printf("[BANK] Hoàn tiền cho winner %d | Tổng quỹ: %d%n",
-                amount, current);
+//        System.out.printf("[BANK] Hoàn tiền cho winner %d | Tổng quỹ: %d%n",
+//                amount, current);
     }
 
     /**
@@ -117,8 +117,8 @@ public class SystemBank {
      */
     public synchronized void receiveForfeittedDeposit(long depositAmount) {
         long current = totalBalance.addAndGet(+depositAmount);
-        System.out.printf("[BANK] Tịch thu cọc %d từ winner vi phạm | Tổng quỹ: %d%n",
-                depositAmount, current);
+//        System.out.printf("[BANK] Tịch thu cọc %d từ winner vi phạm | Tổng quỹ: %d%n",
+//                depositAmount, current);
     }
 
     public long getTotalBalance() { return totalBalance.get(); }
