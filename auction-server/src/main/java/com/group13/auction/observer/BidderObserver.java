@@ -25,13 +25,13 @@ public class BidderObserver implements AuctionObserver {
   @Override
   public void onBidPlaced(AuctionEvent event) {
     if (event.getEventType() == AuctionEvent.AuctionEventType.BID_PLACED) {
-      System.out.printf("[THÔNG BÁO tới Bidder %s] Bid mới: %s đặt %.0f | Phiên: %s%n",
+      System.out.printf("[THÔNG BÁO tới Bidder %s] Bid mới: %s đặt %d | Phiên: %s%n",
               bidder.getUsername(),
               event.getBidder() != null ? event.getBidder().getUsername() : "?",
               event.getBidAmount(),
               event.getAuction().getId());
     } else if (event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
-      System.out.printf("[THÔNG BÁO tới Bidder %s] Bid %.0f chưa đạt reserve price.%n",
+      System.out.printf("[THÔNG BÁO tới Bidder %s] Bid %d chưa đạt reserve price.%n",
               bidder.getUsername(), event.getBidAmount());
       // TODO: notificationDao.save()
     }
@@ -64,7 +64,7 @@ public class BidderObserver implements AuctionObserver {
       case AUCTION_ENDED:
         if (event.getBidder() != null
                 && event.getBidder().getUsername().equals(bidder.getUsername())) {
-          System.out.printf("[THÔNG BÁO tới Bidder %s] Chúc mừng! Bạn thắng phiên với giá %.0f. Hãy thanh toán trong 24h.%n",
+          System.out.printf("[THÔNG BÁO tới Bidder %s] Chúc mừng! Bạn thắng phiên với giá %d. Hãy thanh toán trong 24h.%n",
                   bidder.getUsername(), event.getBidAmount());
           // TODO: notificationDao.save()
         } else {
@@ -85,7 +85,7 @@ public class BidderObserver implements AuctionObserver {
 
       case RESERVE_NOT_MET_CLOSED:
         System.out.printf(
-                "[THÔNG BÁO tới Bidder %s] Phiên kết thúc — giá cao nhất %.0f"
+                "[THÔNG BÁO tới Bidder %s] Phiên kết thúc — giá cao nhất %d"
                         + " chưa đạt reserve. Cọc sẽ được hoàn trả.%n",
                 bidder.getUsername(), event.getBidAmount());
         // TODO: notificationDao.save()
