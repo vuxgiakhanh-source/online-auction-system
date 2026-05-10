@@ -6,6 +6,7 @@ import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.ItemDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
@@ -54,6 +55,8 @@ public class AuctionHandler implements PacketHandler {
     private final ItemFactory itemFactory;
     // FIX Bug #1: cần ItemDAO để persist item trước khi tạo auction
     private final ItemDAO itemDAO;
+    // FIX Vấn đề 1: cần AuctionDAO để persist endTime khi UPDATE_AUCTION
+    private final AuctionDAO auctionDAO;
 
     public AuctionHandler(AuctionService auctionService,
                           AccountService accountService,
@@ -64,6 +67,7 @@ public class AuctionHandler implements PacketHandler {
         this.sessionManager = sessionManager;
         this.itemFactory = itemFactory;
         this.itemDAO = new ItemDAO();   // FIX Bug #1
+        this.auctionDAO = new AuctionDAO(); // FIX Vấn đề 1
     }
 
     @Override
@@ -201,6 +205,9 @@ public class AuctionHandler implements PacketHandler {
             AuctionDTOs.UpdateAuctionDTO req = PacketCodec.fromElement(
                     payload, AuctionDTOs.UpdateAuctionDTO.class);
 
+            NormalUser seller = requireNormalUser(session, requestId);
+            if (seller == null) return;
+
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
             if (auction == null) {
                 session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
@@ -213,10 +220,48 @@ public class AuctionHandler implements PacketHandler {
                                 "Chỉ có thể cập nhật phiên ở trạng thái OPEN.", requestId)));
                 return;
             }
-            // TODO: gọi auctionService.update(...) khi có method đó
+
+            // Kiểm tra seller có phải chủ phiên không
+            if (!seller.getAllAuctionIds().contains(auction.getId())) {
+                session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Bạn không phải chủ sở hữu phiên đấu giá này.", requestId)));
+                return;
+            }
+
+            boolean endTimeUpdated = false;
+
+            // Cập nhật endTime nếu được cung cấp và hợp lệ
+            if (req.getNewEndTime() != null) {
+                if (!req.getNewEndTime().isAfter(auction.getStartTime())) {
+                    session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
+                            ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                    "endTime mới phải sau startTime của phiên.", requestId)));
+                    return;
+                }
+                if (req.getNewEndTime().isAfter(auction.getEndTime())) {
+                    java.time.Duration extension = java.time.Duration.between(
+                            auction.getEndTime(), req.getNewEndTime());
+                    auction.extendEndTime(extension);
+                    endTimeUpdated = true;
+                }
+            }
+
+            // Persist endTime nếu có thay đổi
+            if (endTimeUpdated) {
+                auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+            }
+
+            // Lưu ý: reservePrice là final trong Auction model — không thể thay đổi in-memory
+            // sau khi tạo phiên (thiết kế có chủ đích để bảo toàn tính toàn vẹn của phiên).
+            // Nếu cần hỗ trợ update reservePrice, model cần thêm setter và AuctionDAO.updateReservePrice().
+
             session.send(Packet.of(PacketType.UPDATE_AUCTION_SUCCESS,
                     DTOMapper.toAuctionDTO(auction), requestId));
 
+        } catch (IllegalArgumentException e) {
+            session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId)));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
