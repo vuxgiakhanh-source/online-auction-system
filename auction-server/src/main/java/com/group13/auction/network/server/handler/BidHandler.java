@@ -80,14 +80,14 @@ public class BidHandler implements PacketHandler {
             PacketType.GET_BID_HISTORY
     );
 
-    private final BidService          bidService;
-    private final IRatingService      ratingService;
-    private final SessionManager      sessionManager;
+    private final BidService bidService;
+    private final IRatingService ratingService;
+    private final SessionManager sessionManager;
     // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
-    private final AutoBidRegistry     autoBidRegistry = AutoBidRegistry.getInstance();
-    private final AuctionLockRegistry lockRegistry    = AuctionLockRegistry.getInstance();
-    private final AutoBidProcessor    autoBidProcessor;
-    private final BidTransactionDAO   bidTransactionDAO;
+    private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
+    private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
+    private final AutoBidProcessor autoBidProcessor;
+    private final BidTransactionDAO bidTransactionDAO;
 
     /**
      * Constructor — BidTransactionDAO dùng cho GET_BID_HISTORY (query DB thay vì scan memory).
@@ -95,15 +95,17 @@ public class BidHandler implements PacketHandler {
      */
     public BidHandler(BidService bidService, IRatingService ratingService,
                       SessionManager sessionManager) {
-        this.bidService           = bidService;
-        this.ratingService        = ratingService;
-        this.sessionManager       = sessionManager;
-        this.autoBidProcessor     = new AutoBidProcessor(bidService, sessionManager);
-        this.bidTransactionDAO    = new BidTransactionDAO();
+        this.bidService = bidService;
+        this.ratingService = ratingService;
+        this.sessionManager = sessionManager;
+        this.autoBidProcessor = new AutoBidProcessor(bidService, sessionManager);
+        this.bidTransactionDAO = new BidTransactionDAO();
     }
 
     @Override
-    public boolean supports(PacketType type) { return SUPPORTED.contains(type); }
+    public boolean supports(PacketType type) {
+        return SUPPORTED.contains(type);
+    }
 
     @Override
     public void handle(ClientSession session, PacketType type,
@@ -115,16 +117,17 @@ public class BidHandler implements PacketHandler {
         }
 
         switch (type) {
-            case JOIN_AUCTION        -> handleJoin(session, payload, requestId);
-            case WATCH_AUCTION       -> handleWatch(session, payload, requestId);
-            case LEAVE_AUCTION       -> handleLeave(session, payload, requestId);
-            case PLACE_BID           -> handlePlaceBid(session, payload, requestId);
-            case REGISTER_AUTO_BID   -> handleRegisterAutoBid(session, payload, requestId);
-            case UPDATE_AUTO_BID     -> handleUpdateAutoBid(session, payload, requestId);
-            case CANCEL_AUTO_BID     -> handleCancelAutoBid(session, payload, requestId);
+            case JOIN_AUCTION -> handleJoin(session, payload, requestId);
+            case WATCH_AUCTION -> handleWatch(session, payload, requestId);
+            case LEAVE_AUCTION -> handleLeave(session, payload, requestId);
+            case PLACE_BID -> handlePlaceBid(session, payload, requestId);
+            case REGISTER_AUTO_BID -> handleRegisterAutoBid(session, payload, requestId);
+            case UPDATE_AUTO_BID -> handleUpdateAutoBid(session, payload, requestId);
+            case CANCEL_AUTO_BID -> handleCancelAutoBid(session, payload, requestId);
             case GET_AUTO_BID_STATUS -> handleGetAutoBidStatus(session, payload, requestId);
-            case GET_BID_HISTORY     -> handleGetBidHistory(session, payload, requestId);
-            default -> {}
+            case GET_BID_HISTORY -> handleGetBidHistory(session, payload, requestId);
+            default -> {
+            }
         }
     }
 
@@ -133,7 +136,7 @@ public class BidHandler implements PacketHandler {
     private void handleJoin(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
-            Auction auction  = requireAuction(session, auctionId, requestId);
+            Auction auction = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
 
             NormalUser bidder = requireNormalUser(session, requestId);
@@ -165,7 +168,7 @@ public class BidHandler implements PacketHandler {
     private void handleWatch(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
-            Auction auction  = requireAuction(session, auctionId, requestId);
+            Auction auction = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
 
             NormalUser user = requireNormalUser(session, requestId);
@@ -228,7 +231,17 @@ public class BidHandler implements PacketHandler {
             LocalDateTime endTimeAfter = auction.getEndTime();
             if (!endTimeAfter.equals(endTimeBefore)) {
                 update.setNewEndTime(endTimeAfter);
+
+                // FIX BUG #3: Broadcast AUCTION_EXTENDED_NOTIFY riêng để client
+                // cập nhật countdown timer ngay lập tức (không chờ BID_UPDATE)
+                AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
+                extDto.setAuctionId(req.getAuctionId());
+                extDto.setNewEndTime(endTimeAfter);
+                extDto.setExtendedBySeconds(60); // = BidService.ANTI_SNIPING_EXTENSION_SECONDS
+                sessionManager.broadcastToAuction(req.getAuctionId(),
+                        Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto));
             }
+
             PacketType broadcastType = auction.isReserveMet()
                     ? PacketType.BID_UPDATE
                     : PacketType.BID_RESERVE_NOT_MET_UPDATE;
@@ -257,6 +270,7 @@ public class BidHandler implements PacketHandler {
             lock.unlock();
         }
     }
+
 
     // ── REGISTER AUTO-BID ─────────────────────────────────────────────────────
 
@@ -457,15 +471,19 @@ public class BidHandler implements PacketHandler {
     private void handleGetBidHistory(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
-            Auction auction  = requireAuction(session, auctionId, requestId);
+            Auction auction = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
 
-            // FIX: Query trực tiếp từ DB để lấy đủ lịch sử, kể cả sau restart server.
-            // Trước đây scan AuctionManager.getAllUsers() in-memory — bỏ sót dữ liệu cũ.
+            // Query trực tiếp từ DB để lấy đủ lịch sử, kể cả sau restart server.
+            // findByAuctionId() đã được sửa để lọc REJECTED bids (Bug #1 fix).
             List<BidTransaction> txList = bidTransactionDAO.findByAuctionId(auctionId);
 
             List<BidDTOs.BidChartPointDTO> points = new ArrayList<>();
             for (BidTransaction tx : txList) {
+                // FIX BUG #1: Defensive check — lọc thêm ở tầng handler phòng trường hợp
+                // findByAuctionId() trả về cả REJECTED (ví dụ dùng phiên bản DAO cũ)
+                if (tx.getResult() == BidTransaction.BidResult.REJECTED) continue;
+
                 BidDTOs.BidChartPointDTO point = new BidDTOs.BidChartPointDTO();
                 point.setAuctionId(auctionId);
                 point.setPrice(tx.getAmount());
@@ -488,6 +506,7 @@ public class BidHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
+
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 

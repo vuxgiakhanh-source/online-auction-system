@@ -83,10 +83,14 @@ public class AutoBidProcessor {
         // Lấy snapshot để tránh ConcurrentModification khi iterate
         Collection<AutoBidRegistry.AutoBidEntry> allEntries = registry.getEntriesForAuction(auctionId);
 
-        // Tối đa N lần lặp = số auto-bid trong phiên (bounded, không infinite loop)
+        // FIX BUG #2: Giới hạn cứng số vòng lặp = số auto-bid * 2 + 2.
+        // Lý do: trường hợp ≥3 bidder có maxBid bằng nhau có thể dẫn đến vòng lặp không dừng
+        // nếu chỉ dựa vào điều kiện candidates.isEmpty().
+        // maxIterations đảm bảo process() luôn kết thúc trong thời gian hữu hạn.
+        int maxIterations = allEntries.size() * 2 + 2;
         int iteration = 0;
 
-        while (!allEntries.isEmpty()) {
+        while (iteration < maxIterations) {
             iteration++;
 
             // Re-fetch snapshot mỗi vòng vì currentLeader có thể đã thay đổi
@@ -252,4 +256,3 @@ public class AutoBidProcessor {
         return fromDb;
     }
 }
-
