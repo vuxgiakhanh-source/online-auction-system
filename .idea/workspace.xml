@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/StaffObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/StaffObserver.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,6 +80,7 @@
     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored.executor": "Run",
     "JUnit.RatingServiceTest.executor": "Run",
     "JUnit.SellerObserverTest.executor": "Run",
+    "JUnit.StaffObserverTest.executor": "Run",
     "JUnit.SystemAdminTest.executor": "Run",
     "JUnit.UserAndAccountServiceTest.executor": "Run",
     "JUnit.UserServiceTest.executor": "Run",
@@ -114,7 +115,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.SellerObserverTest">
+  <component name="RunManager" selected="Application.TestLauncher">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -150,17 +151,15 @@
       <option name="RUN_TOOL" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="AdminTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.TestLauncher" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.user.*" />
+          <option name="PATTERN" value="com.group13.auction.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.user.AdminTest" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -210,16 +209,16 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SystemAdminTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="StaffObserverTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.user.*" />
+          <option name="PATTERN" value="com.group13.auction.observer.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.user.SystemAdminTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.observer" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.observer.StaffObserverTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -236,11 +235,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.StaffObserverTest" />
         <item itemvalue="JUnit.SellerObserverTest" />
         <item itemvalue="JUnit.BidderObserverTest" />
         <item itemvalue="JUnit.AuctionEventTest" />
-        <item itemvalue="JUnit.SystemAdminTest" />
-        <item itemvalue="JUnit.AdminTest" />
       </list>
     </recent_temporary>
   </component>
