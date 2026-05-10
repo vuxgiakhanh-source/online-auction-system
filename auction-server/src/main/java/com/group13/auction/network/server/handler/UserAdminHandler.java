@@ -9,7 +9,11 @@ import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.QualityReportDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
+import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.bid.QualityReport;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
@@ -63,6 +67,10 @@ public class UserAdminHandler implements PacketHandler {
     private final RatingService ratingService;
     private final QualityReportService qualityReportService;
     private final SessionManager sessionManager;
+    // FIX Vấn đề 4: cần UserDAO để persist unban xuống DB
+    private final UserDAO userDAO;
+    // FIX Vấn đề 3: cần QualityReportDAO để load report từ DB cho admin
+    private final QualityReportDAO qualityReportDAO;
 
     public UserAdminHandler(AccountService accountService,
                             RatingService ratingService,
@@ -72,6 +80,8 @@ public class UserAdminHandler implements PacketHandler {
         this.ratingService = ratingService;
         this.qualityReportService = qualityReportService;
         this.sessionManager = sessionManager;
+        this.userDAO = new UserDAO();
+        this.qualityReportDAO = new QualityReportDAO();
     }
 
     @Override
@@ -236,7 +246,10 @@ public class UserAdminHandler implements PacketHandler {
                         ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId)));
                 return;
             }
+            // FIX Vấn đề 4: cập nhật in-memory VÀ persist xuống DB
             target.setAccountStatus(User.AccountStatus.ACTIVE);
+            userDAO.updateAccountStatus(target.getId(), User.AccountStatus.ACTIVE.name());
+
             session.send(Packet.of(PacketType.ADMIN_UNBAN_USER_SUCCESS,
                     DTOMapper.toUserDTO(target, false), requestId));
         } catch (Exception e) {
