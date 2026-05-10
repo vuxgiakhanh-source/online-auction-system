@@ -17,6 +17,7 @@ import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.service.iservice.IWalletService;
 import com.group13.auction.strategy.BidStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ public class BidService implements IBidService {
 
   private final IAuctionService auctionService;
   private final IRatingService ratingService;
-  private final WalletService walletService;
+  private final IWalletService walletService;
 
   // Thực hiện TODO: inject các DAO cần thiết
   private final BidTransactionDAO bidTransactionDAO;
@@ -49,7 +50,7 @@ public class BidService implements IBidService {
   public BidService(
           IAuctionService auctionService,
           IRatingService ratingService,
-          WalletService walletService,
+          IWalletService walletService,
           BidTransactionDAO bidTransactionDAO,
           AuctionDAO auctionDAO,
           UserDAO userDAO) {
@@ -102,7 +103,7 @@ public class BidService implements IBidService {
   public void placeBid(NormalUser bidder, Auction auction,
                        long amount, BidStrategy strategy) {
     if (!ratingService.isEligible(bidder)) {
-      recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
+      throw recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
     }
 
     if (!auction.isAcceptingBids()) {
@@ -110,12 +111,12 @@ public class BidService implements IBidService {
     }
 
     if (!bidder.hasJoined(auction.getId())) {
-      recordAndThrow(bidder, auction, amount,
+      throw recordAndThrow(bidder, auction, amount,
               new AuctionBusinessException(AuctionBusinessException.Reason.NOT_JOINED_AUCTION));
     }
 
     if (!strategy.isValidBid(auction, amount)) {
-      recordAndThrow(bidder, auction, amount,
+      throw recordAndThrow(bidder, auction, amount,
               new InvalidBidException(
                       String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
                               amount, auction.getCurrentPrice(), strategy.describe()),
@@ -210,10 +211,10 @@ public class BidService implements IBidService {
     userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
   }
 
-  private void recordAndThrow(NormalUser bidder, Auction auction,
+  private RuntimeException recordAndThrow(NormalUser bidder, Auction auction,
                               long amount, RuntimeException ex) {
     recordTransaction(bidder, auction, amount, BidResult.REJECTED);
-    throw ex;
+    return ex;
   }
 
   private BidTransaction recordTransaction(NormalUser bidder, Auction auction,

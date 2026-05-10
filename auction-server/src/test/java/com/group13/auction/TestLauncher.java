@@ -44,18 +44,19 @@ public final class TestLauncher {
         // Listener tùy chỉnh để in tên test đang chạy
         TestExecutionListener printingListener = new TestExecutionListener() {
             @Override
-            public void executionStarted(TestIdentifier testIdentifier) {
-                if (testIdentifier.isTest()) {
-                    System.out.println("▶ Running test: " + testIdentifier.getDisplayName());
-                }
-            }
-
-            @Override
             public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult result) {
                 if (testIdentifier.isTest()) {
-                    String status = result.getStatus() == TestExecutionResult.Status.SUCCESSFUL ? "✓ OK" :
-                            (result.getStatus() == TestExecutionResult.Status.FAILED ? "✗ FAILED" : "○ SKIPPED");
-                    System.out.println("  └─ " + status);
+                    // Chỉ xử lý nếu test không thành công
+                    if (result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
+                        String status = (result.getStatus() == TestExecutionResult.Status.FAILED) ? "❌ FAILED" : "⚪ SKIPPED";
+
+                        // In tên test và lỗi ra tại đây
+                        System.out.println("▶ Running test: " + testIdentifier.getDisplayName());
+                        System.out.println("  └ " + status);
+
+                        // Nếu muốn in chi tiết nguyên nhân lỗi (Stacktrace), có thể thêm:
+                        // result.getThrowable().ifPresent(t -> t.printStackTrace());
+                    }
                 }
             }
         };
