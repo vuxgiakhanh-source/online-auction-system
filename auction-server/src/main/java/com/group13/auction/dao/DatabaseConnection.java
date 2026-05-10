@@ -12,7 +12,7 @@ import java.util.Properties;
 public class DatabaseConnection {
     private static final Logger log = LoggerFactory.getLogger(DatabaseConnection.class);
     private static DatabaseConnection instance;
-    
+
     // Lưu lại thông tin đăng nhập, KHÔNG lưu lại Connection
     private String url;
     private String username;
@@ -21,9 +21,9 @@ public class DatabaseConnection {
     private DatabaseConnection() {
         try {
             Properties props = new Properties();
-            InputStream is = getClass().getClassLoader().getResourceAsStream("database.properties");
+            InputStream is = getClass().getClassLoader().getResourceAsStream("data.properties");
             if (is == null) {
-                throw new RuntimeException("Không tìm thấy database.properties");
+                throw new RuntimeException("Không tìm thấy data.properties");
             }
             props.load(is);
 

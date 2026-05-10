@@ -151,6 +151,22 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
+            // FIX Bug #3: chỉ winner hợp lệ mới được trigger thanh toán.
+            com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
+            if (auctionWinner == null) {
+                session.send(Packet.of(PacketType.PAYMENT_FAILED,
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên này chưa có winner.", requestId)));
+                return;
+            }
+            NormalUser caller = requireNormalUser(session, requestId);
+            if (caller == null) return;
+            if (!caller.getId().equals(auctionWinner.getWinner().getId())) {
+                session.send(Packet.of(PacketType.PAYMENT_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Chỉ winner của phiên mới được thanh toán.", requestId)));
+                return;
+            }
+
             paymentService.completePayment(auction);
 
             PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
@@ -194,14 +210,35 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
-            // TODO: lấy offer từ SecondChanceOfferDAO khi có registry
-            // Tạm thời placeholder
+            // FIX Bug #5: lấy offer thật từ SecondChanceOfferDAO, gọi service thật.
+            com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
+                    new com.group13.auction.dao.SecondChanceOfferDAO();
+            com.group13.auction.model.auction.SecondChanceOffer offer =
+                    offerDAO.findPendingOfferByAuctionId(auctionId);
+
+            if (offer == null) {
+                session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                "Không tìm thấy Second Chance Offer PENDING cho phiên này.", requestId)));
+                return;
+            }
+
+            NormalUser caller = requireNormalUser(session, requestId);
+            if (caller == null) return;
+            if (!caller.getId().equals(offer.getRunnerUp().getId())) {
+                session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Bạn không phải runner-up của offer này.", requestId)));
+                return;
+            }
+
+            paymentService.acceptSecondChanceOffer(offer, auction);
+
             PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
             result.setAuctionId(auctionId);
-            result.setFinalPrice(auction.getCurrentPrice());
+            result.setFinalPrice(offer.getOfferPrice());
             result.setPaymentStatus("PENDING");
-            session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_SUCCESS,
-                    result, requestId));
+            session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_SUCCESS, result, requestId));
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
@@ -215,10 +252,37 @@ public class PaymentHandler implements PacketHandler {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
             Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
-            if (auction != null) {
-                // TODO: paymentService.declineSecondChanceOffer(offer, auction)
+            if (auction == null) {
+                session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId)));
+                return;
             }
+
+            // FIX Bug #5: lấy offer thật, gọi declineSecondChanceOffer thật.
+            com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
+                    new com.group13.auction.dao.SecondChanceOfferDAO();
+            com.group13.auction.model.auction.SecondChanceOffer offer =
+                    offerDAO.findPendingOfferByAuctionId(auctionId);
+
+            if (offer == null) {
+                session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                "Không tìm thấy Second Chance Offer PENDING.", requestId)));
+                return;
+            }
+
+            NormalUser caller = requireNormalUser(session, requestId);
+            if (caller == null) return;
+            if (!caller.getId().equals(offer.getRunnerUp().getId())) {
+                session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Bạn không phải runner-up của offer này.", requestId)));
+                return;
+            }
+
+            paymentService.declineSecondChanceOffer(offer, auction);
             session.send(Packet.of(PacketType.SECOND_CHANCE_DECLINE_SUCCESS, null, requestId));
+
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));

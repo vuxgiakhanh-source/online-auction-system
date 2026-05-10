@@ -292,6 +292,12 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                         com.group13.auction.common.dto.admin.AdminDTOs.ServerShutdownDTO.class);
                 listeners.forEach(l -> l.onServerShutdown(shutdown));
             }
+            // FIX Bug #8: dispatch PONG → onPong(timestamp) thay vì rơi vào default silent log
+            case PONG -> {
+                long timestamp = payload != null && !payload.isJsonNull()
+                        ? payload.getAsLong() : System.currentTimeMillis();
+                listeners.forEach(l -> l.onPong(timestamp));
+            }
             case CANCEL_AUTO_BID_SUCCESS -> {
                 String auctionId = PacketCodec.fromElement(payload, String.class);
                 listeners.forEach(l -> l.onCancelAutoBidSuccess(auctionId));

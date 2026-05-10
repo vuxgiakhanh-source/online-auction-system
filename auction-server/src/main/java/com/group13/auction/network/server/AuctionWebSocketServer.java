@@ -19,19 +19,8 @@ import java.util.logging.Logger;
 /**
  * WebSocket Server chính của hệ thống đấu giá.
  *
- * <p>Kế thừa {@link WebSocketServer} từ thư viện java-websocket.
- * Tất cả logic xử lý được delegate sang {@link PacketRouter} → {@link PacketHandler}.
- *
- * <p>Luồng message:
- * <pre>
- * Client → onMessage → PacketRouter.route() → PacketHandler.handle() → session.send()
- * </pre>
- *
- * <p>Cách khởi động:
- * <pre>
- *   AuctionWebSocketServer server = new AuctionWebSocketServer(8080, services...);
- *   server.start();
- * </pre>
+ * FIX: AuctionHandler constructor đã nhận thêm ItemDAO nội bộ (không cần truyền từ ngoài).
+ *      Không cần thay đổi signature constructor của AuctionWebSocketServer.
  */
 public class AuctionWebSocketServer extends WebSocketServer {
 
@@ -40,19 +29,6 @@ public class AuctionWebSocketServer extends WebSocketServer {
     private final SessionManager sessionManager;
     private final PacketRouter router;
 
-    /**
-     * Constructor nhận toàn bộ service qua DI.
-     *
-     * @param port            cổng lắng nghe
-     * @param accountService  service quản lý tài khoản
-     * @param auctionService  service quản lý phiên
-     * @param bidService      service đặt giá
-     * @param paymentService  service thanh toán
-     * @param ratingService   service rating
-     * @param qualityReportService service báo cáo chất lượng
-     * @param userService     service đăng nhập/đăng ký
-     * @param itemFactory     factory tạo item
-     */
     public AuctionWebSocketServer(int port,
                                   AccountService accountService,
                                   AuctionService auctionService,
@@ -67,17 +43,18 @@ public class AuctionWebSocketServer extends WebSocketServer {
         this.sessionManager = SessionManager.getInstance();
         this.router = new PacketRouter();
 
-        // Đăng ký handlers theo thứ tự ưu tiên kiểm tra
         router.register(new AuthHandler(accountService, userService, sessionManager));
+
+        // AuctionHandler tự khởi tạo ItemDAO bên trong — không cần truyền thêm tham số.
+        // Item sẽ được persist vào DB TRƯỚC khi createAuction() chạy (fix FK constraint).
         router.register(new AuctionHandler(auctionService, accountService, sessionManager, itemFactory));
 
-        // FIX Bug #3: truyền đúng constructor 4-arg có ratingService.
-        // Trước đây dùng BidHandler(bidService, sessionManager) → ratingService = null
-        // → NullPointerException ngay khi bất kỳ user nào gọi joinAuction/placeBid.
-        router.register(new BidHandler(bidService, ratingService, sessionManager,
-                new com.group13.auction.dao.BidTransactionDAO()));
+        // FIX Bug #1: BidHandler không nhận BidTransactionDAO — BidService tự persist.
+        router.register(new BidHandler(bidService, ratingService, sessionManager));
 
         router.register(new PaymentHandler(paymentService, accountService, sessionManager));
+
+        // UserAdminHandler tự khởi tạo UserDAO bên trong — dùng cho ADMIN_UNBAN persist.
         router.register(new UserAdminHandler(accountService, ratingService,
                 qualityReportService, sessionManager));
 
@@ -129,17 +106,9 @@ public class AuctionWebSocketServer extends WebSocketServer {
     public void onStart() {
         log.info("[SERVER] ✅ AuctionWebSocketServer started on port "
                 + getPort() + " | " + java.time.LocalDateTime.now());
-        setConnectionLostTimeout(60); // 60s heartbeat timeout
+        setConnectionLostTimeout(60);
     }
 
-    // ── Server-side push utilities ────────────────────────────────────────────
-
-    /**
-     * Broadcast thông báo hệ thống tới toàn bộ client (bảo trì, shutdown, v.v.).
-     *
-     * @param message  nội dung thông báo
-     * @param severity "INFO" | "WARNING" | "CRITICAL"
-     */
     public void broadcastSystemAnnouncement(String message, String severity) {
         AdminDTOs.SystemAnnouncementDTO dto = new AdminDTOs.SystemAnnouncementDTO();
         dto.setMessage(message);
@@ -148,19 +117,13 @@ public class AuctionWebSocketServer extends WebSocketServer {
         log.info("[SERVER] System announcement sent: " + message);
     }
 
-    /**
-     * Thông báo server sắp shutdown.
-     *
-     * @param reason          lý do
-     * @param shutdownInSeconds thời gian còn lại tính bằng giây
-     */
     public void broadcastShutdownWarning(String reason, int shutdownInSeconds) {
         AdminDTOs.ServerShutdownDTO dto = new AdminDTOs.ServerShutdownDTO();
         dto.setReason(reason);
         dto.setShutdownInSeconds(shutdownInSeconds);
         sessionManager.broadcastAll(Packet.of(PacketType.SERVER_SHUTDOWN_NOTIFY, dto));
+        log.info("[SERVER] Shutdown warning sent: " + reason + " in " + shutdownInSeconds + "s");
     }
 
-    public SessionManager getSessionManager() { return sessionManager; }
     public PacketRouter getRouter() { return router; }
 }

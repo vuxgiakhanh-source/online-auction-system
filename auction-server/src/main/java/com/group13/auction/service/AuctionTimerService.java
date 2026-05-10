@@ -5,8 +5,10 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
+import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
 
@@ -34,7 +36,7 @@ import java.util.logging.Logger;
  * <ul>
  *   <li>Singleton eager init — thread-safe từ đầu.</li>
  *   <li>1 daemon thread, chu kỳ quét 1 giây (Precision: 1s) để đảm bảo độ chính xác.</li>
- *   <li><b>Per-auction Locking:</b> Sử dụng ReentrantLock để bọc chuỗi validate -> close 
+ *   <li><b>Per-auction Locking:</b> Sử dụng ReentrantLock để bọc chuỗi validate -> close
  *       nhằm ngăn chặn xung đột với Anti-sniping (gia hạn giờ ở giây cuối).</li>
  *   <li><b>Resource Cleanup:</b> Tự động giải phóng LockRegistry và AutoBidRegistry khi phiên kết thúc.</li>
  *   <li>Bắt exception per-auction: 1 phiên lỗi không dừng scheduler.</li>
@@ -56,6 +58,7 @@ public class AuctionTimerService {
 
     private ScheduledExecutorService scheduler;
     private AuctionService auctionService;
+    private IPaymentService paymentService;
     private SessionManager sessionManager;
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
@@ -71,14 +74,18 @@ public class AuctionTimerService {
      * Khởi động scheduler. Gọi một lần duy nhất khi server start.
      *
      * @param auctionService service xử lý nghiệp vụ phiên
+     * @param paymentService service hoàn cọc khi phiên bị hủy
      * @param sessionManager để broadcast kết quả tới client
      */
-    public synchronized void start(AuctionService auctionService, SessionManager sessionManager) {
+    public synchronized void start(AuctionService auctionService,
+                                   IPaymentService paymentService,
+                                   SessionManager sessionManager) {
         if (running) {
             log.warning("[TIMER] AuctionTimerService đã chạy, bỏ qua lệnh start.");
             return;
         }
         this.auctionService = auctionService;
+        this.paymentService = paymentService;
         this.sessionManager = sessionManager;
 
         // daemon=true: tự tắt khi JVM shutdown, không block server stop
@@ -137,7 +144,7 @@ public class AuctionTimerService {
             if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) {
                 continue;
             }
-            
+
             ReentrantLock lock = lockRegistry.getLock(auction.getId());
             lock.lock();
             try {
@@ -182,11 +189,35 @@ public class AuctionTimerService {
                     continue;
                 }
 
+                // Lưu trạng thái TRƯỚC khi đóng để phân nhánh broadcast chính xác
+                NormalUser leaderBeforeClose = auction.getCurrentLeader();
+                boolean reserveMetBeforeClose = auction.isReserveMet();
+
                 auctionService.closeAuction(auction);
 
-                PacketType packetType = (auction.getStatus() == Auction.AuctionStatus.CANCELED)
-                        ? PacketType.AUCTION_CANCELED_UPDATE
-                        : PacketType.AUCTION_ENDED_UPDATE;
+                // Phân nhánh packetType dựa trên trạng thái trước khi closeAuction() thay đổi
+                PacketType packetType;
+                if (auction.getStatus() == Auction.AuctionStatus.FINISHED) {
+                    // Có winner và đã đạt reserve
+                    packetType = PacketType.AUCTION_ENDED_UPDATE;
+                } else {
+                    // CANCELED — phân biệt nguyên nhân
+                    if (leaderBeforeClose == null) {
+                        packetType = PacketType.AUCTION_NO_WINNER_UPDATE;
+                    } else if (!reserveMetBeforeClose) {
+                        packetType = PacketType.AUCTION_RESERVE_NOT_MET_UPDATE;
+                    } else {
+                        packetType = PacketType.AUCTION_CANCELED_UPDATE;
+                    }
+
+                    // Hoàn cọc cho tất cả bidder đã tham gia
+                    try {
+                        paymentService.refundDeposits(auction);
+                    } catch (Exception refundEx) {
+                        log.severe("[TIMER] Lỗi hoàn cọc phiên " + auction.getId()
+                                + ": " + refundEx.getMessage());
+                    }
+                }
 
                 broadcastUpdate(auction, packetType);
 

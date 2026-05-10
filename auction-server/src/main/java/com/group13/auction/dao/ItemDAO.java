@@ -175,4 +175,23 @@ public class ItemDAO {
                 return null;
         }
     }
+
+    /**
+     * Xóa item theo ID — dùng để rollback khi createAuction() thất bại (FIX Bug #7).
+     * Ngăn item trở thành orphan record trong DB.
+     *
+     * @param itemId UUID của item cần xóa
+     * @return true nếu xóa thành công
+     */
+    public boolean deleteItem(String itemId) {
+        String sql = "DELETE FROM items WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi xóa item (rollback orphan): " + e.getMessage());
+            return false;
+        }
+    }
 }
