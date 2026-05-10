@@ -1,9 +1,11 @@
 package com.group13.auction.network.server;
 
+import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.dto.rating.RatingDTOs;
+import com.group13.auction.common.dto.report.ReportDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.server.session.SessionManager;
@@ -44,7 +46,7 @@ public class ServerBroadcastNotifier {
      * @param bidderUsername username người bid
      * @param isAutoBid    true nếu là auto-bid
      */
-    public void notifyBidUpdate(Auction auction, double bidAmount,
+    public void notifyBidUpdate(Auction auction, long bidAmount,
                                 String bidderUsername, boolean isAutoBid) {
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount);
         PacketType type = auction.isReserveMet()
@@ -71,8 +73,8 @@ public class ServerBroadcastNotifier {
      * @param isLeading  có đang dẫn đầu không
      */
     public void notifyAutoBidTriggered(String userId, String auctionId,
-                                       double bidAmount, double newPrice,
-                                       double maxBid, boolean isLeading) {
+                                       long bidAmount, long newPrice,
+                                       long maxBid, boolean isLeading) {
         BidDTOs.AutoBidTriggeredDTO dto = new BidDTOs.AutoBidTriggeredDTO();
         dto.setAuctionId(auctionId);
         dto.setBidAmount(bidAmount);
@@ -87,7 +89,7 @@ public class ServerBroadcastNotifier {
      * Push AUTO_BID_EXHAUSTED_NOTIFY khi auto-bid đã cạn kiệt.
      */
     public void notifyAutoBidExhausted(String userId, String auctionId,
-                                       double maxBid, double currentPrice,
+                                       long maxBid, long currentPrice,
                                        String leadingUsername) {
         BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
         dto.setAuctionId(auctionId);
@@ -169,7 +171,7 @@ public class ServerBroadcastNotifier {
 
     /** Push DEPOSIT_REFUND_NOTIFY cho bidder thua khi phiên kết thúc. */
     public void notifyDepositRefund(String userId, String auctionId,
-                                    double refundAmount, double newBalance) {
+                                    long refundAmount, long newBalance) {
         PaymentDTOs.DepositRefundDTO dto = new PaymentDTOs.DepositRefundDTO();
         dto.setAuctionId(auctionId);
         dto.setRefundAmount(refundAmount);
@@ -179,7 +181,7 @@ public class ServerBroadcastNotifier {
 
     /** Push DEPOSIT_FORFEITED_NOTIFY cho winner không trả tiền. */
     public void notifyDepositForfeited(String userId, String auctionId,
-                                       double forfeitedAmount, double newBalance) {
+                                       long forfeitedAmount, long newBalance) {
         PaymentDTOs.DepositForfeitedDTO dto = new PaymentDTOs.DepositForfeitedDTO();
         dto.setAuctionId(auctionId);
         dto.setForfeitedAmount(forfeitedAmount);
@@ -201,6 +203,19 @@ public class ServerBroadcastNotifier {
                 Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
     }
 
+    /** Push PAYMENT_EXPIRED_NOTIFY cho winner khi hết hạn thanh toán. */
+    public void notifyPaymentExpired(String winnerId,
+                                     PaymentDTOs.PaymentExpiredDTO expired) {
+        sessionManager.sendToUser(winnerId,
+                Packet.of(PacketType.PAYMENT_EXPIRED_NOTIFY, expired));
+    }
+
+    /** Push SECOND_CHANCE_EXPIRED_NOTIFY cho runner-up khi offer hết hạn. */
+    public void notifySecondChanceExpired(String runnerUpUserId, String auctionId) {
+        sessionManager.sendToUser(runnerUpUserId,
+                Packet.of(PacketType.SECOND_CHANCE_EXPIRED_NOTIFY, auctionId));
+    }
+
     // ── Account ───────────────────────────────────────────────────────────────
 
     /** Push ACCOUNT_SUSPENDED_NOTIFY tới user bị suspend. */
@@ -219,5 +234,36 @@ public class ServerBroadcastNotifier {
         dto.setNewRating(newRating);
         dto.setNewStatus(newStatus);
         sessionManager.sendToUser(userId, Packet.of(PacketType.ACCOUNT_RESTORED_NOTIFY, dto));
+    }
+
+    /** Push QUALITY_REPORT_APPROVED_NOTIFY cho winner khi report được duyệt. */
+    public void notifyQualityReportApproved(String winnerId,
+                                            ReportDTOs.QualityReportResultDTO result) {
+        sessionManager.sendToUser(winnerId,
+                Packet.of(PacketType.QUALITY_REPORT_APPROVED_NOTIFY, result));
+    }
+
+    /** Push QUALITY_REPORT_RECEIVED_NOTIFY cho seller khi có report mới. */
+    public void notifyQualityReportReceived(String sellerId,
+                                            ReportDTOs.QualityReportDTO report) {
+        sessionManager.sendToUser(sellerId,
+                Packet.of(PacketType.QUALITY_REPORT_RECEIVED_NOTIFY, report));
+    }
+
+    /** Push QUALITY_REPORT_REJECTED_NOTIFY cho seller khi report bị từ chối. */
+    public void notifyQualityReportRejected(String sellerId, String reportId) {
+        sessionManager.sendToUser(sellerId,
+                Packet.of(PacketType.QUALITY_REPORT_REJECTED_NOTIFY, reportId));
+    }
+
+    /** Push SELLER_REFUND_OVERDUE_NOTIFY khi seller quá hạn hoàn tiền. */
+    public void notifySellerRefundOverdue(String sellerId) {
+        sessionManager.sendToUser(sellerId,
+                Packet.of(PacketType.SELLER_REFUND_OVERDUE_NOTIFY, sellerId));
+    }
+
+    /** Push FRAUD_DETECTED_NOTIFY cho admin/staff khi phát hiện gian lận. */
+    public void notifyFraudDetected(AdminDTOs.FraudDetectedDTO fraud) {
+        sessionManager.broadcastToAdmins(Packet.of(PacketType.FRAUD_DETECTED_NOTIFY, fraud));
     }
 }

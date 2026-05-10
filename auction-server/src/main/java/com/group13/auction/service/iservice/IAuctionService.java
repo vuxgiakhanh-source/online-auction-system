@@ -6,7 +6,6 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
-import com.group13.auction.strategy.ReservePriceStrategy;
 import java.time.LocalDateTime;
 
 /**
@@ -16,18 +15,21 @@ public interface IAuctionService {
 
   /**
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
-   * Seller cung cấp reserveStrategy ngay khi tạo.
+   * Seller cung cấp reservePrice (giá sàn bí mật) ngay khi tạo.
    *
-   * @param seller seller tạo phiên
-   * @param item sản phẩm đưa ra đấu giá
-   * @param startTime thời điểm bắt đầu
-   * @param endTime thời điểm kết thúc
-   * @param reserveStrategy reserve price strategy
+   * @param seller       seller tạo phiên
+   * @param item         sản phẩm đưa ra đấu giá
+   * @param startTime    thời điểm bắt đầu
+   * @param endTime      thời điểm kết thúc
+   * @param reservePrice giá sàn bí mật (> 0)
    * @return Auction mới
    */
-  Auction createAuction(NormalUser seller, Item item,
-                        LocalDateTime startTime, LocalDateTime endTime,
-                        ReservePriceStrategy reserveStrategy);
+  Auction createAuction(
+          NormalUser seller,
+          Item item,
+          LocalDateTime startTime,
+          LocalDateTime endTime,
+          long reservePrice);
 
   /**
    * Bắt đầu phiên: OPEN -> RUNNING.
@@ -53,40 +55,33 @@ public interface IAuctionService {
   /**
    * SYSTEM tự động huỷ phiên đấu giá (no-winner / reserve-not-met / system-error).
    * Log được ghi vào SystemAdmin.
-   * Dùng khi không có staff cụ thể nào can thiệp.
    *
    * @param auction phiên cần huỷ
-   * @param reason lý do huỷ
+   * @param reason  lý do huỷ
    */
   void cancelAuction(Auction auction, Admin.CancelReason reason);
 
   /**
    * Admin STAFF huỷ phiên đấu giá.
    * Log được ghi vào cả SystemAdmin (audit trail) lẫn staff cụ thể.
-   * Dùng khi có SELLER_REQUEST hoặc cần staff đi kiểm tra.
    *
-   * @param staff admin STAFF đang xử lý
+   * @param staff   admin STAFF đang xử lý
    * @param auction phiên cần huỷ
-   * @param reason lý do huỷ
+   * @param reason  lý do huỷ
    * @throws IllegalArgumentException nếu {@code staff} là SystemAdmin
    */
   void cancelAuction(Admin staff, Auction auction, Admin.CancelReason reason);
 
   /**
-   * SystemAdmin auto duyệt yêu cầu hủy phiên của Seller,
-   * với điều kiện phiên chỉ đang ở trạng thái OPEN
-   * approve -> hủy
-   * reject -> phiên tiếp tục RUNNING
+   * SystemAdmin auto duyệt yêu cầu hủy phiên của Seller
+   * (phiên chỉ được phép ở trạng thái OPEN).
    *
    * @param auction phiên auction cần hủy
-   * <p>Lý do hủy (ở đây là Seller Request)
    */
-  public void autoHandleCancelRequest(Auction auction);
+  void autoHandleCancelRequest(Auction auction);
 
   /**
-   * Thông báo trước khi phiên bắt đầu (5-10 phút).
-   * Gọi từ scheduler.
-   * Chưa phát triển xong (Có thể bỏ nếu không đủ time)
+   * Thông báo trước khi phiên bắt đầu (5–10 phút). Gọi từ scheduler.
    *
    * @param auction phiên sắp bắt đầu
    */
@@ -95,14 +90,14 @@ public interface IAuctionService {
   /**
    * Đăng ký observer theo dõi phiên.
    *
-   * @param auction phiên muốn theo dõi
-   * @param observer observer cần thêm
+   * @param auctionId id phiên muốn theo dõi
+   * @param observer  observer cần thêm
    */
-  void addObserver(Auction auction, AuctionObserver observer);
+  void addObserver(String auctionId, AuctionObserver observer);
 
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
-              NormalUser bidder, double amount);
+              NormalUser bidder, long amount);
 
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
-              NormalUser bidder, double amount, String message);
+              NormalUser bidder, long amount, String message);
 }

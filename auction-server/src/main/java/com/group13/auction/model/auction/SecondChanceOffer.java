@@ -22,8 +22,8 @@ public class SecondChanceOffer extends Entity {
     private final NormalUser runnerUp;
     private final String auctionId;
     /** Giá mua = giá bid cao nhất của runner-up (không phải giá winner). */
-    private final double offerPrice;
-    private final double depositPaid;
+    private final long offerPrice;
+    private final long depositPaid;
     private final LocalDateTime deadline;
     private OfferStatus status;
 
@@ -39,13 +39,13 @@ public class SecondChanceOffer extends Entity {
      * @return SecondChanceOffer mới
      */
     public static SecondChanceOffer create(NormalUser runnerUp,
-                                           String auctionId, double offerPrice, double depositPaid) {
+                                           String auctionId, long offerPrice, long depositPaid) {
         return new SecondChanceOffer(runnerUp, auctionId, offerPrice, depositPaid);
     }
 
     public static SecondChanceOffer reconstitute(String id, LocalDateTime createdAt,
                                                  LocalDateTime updatedAt, NormalUser runnerUp, String auctionId,
-                                                 double offerPrice, double depositPaid, LocalDateTime deadline, OfferStatus status) {
+                                                 long offerPrice, long depositPaid, LocalDateTime deadline, OfferStatus status) {
         return new SecondChanceOffer(id, createdAt, updatedAt,
                 runnerUp, auctionId, offerPrice, depositPaid, deadline, status);
     }
@@ -53,7 +53,7 @@ public class SecondChanceOffer extends Entity {
     // Private constructors
 
     private SecondChanceOffer(NormalUser runnerUp, String auctionId,
-                              double offerPrice, double depositPaid) {
+                              long offerPrice, long depositPaid) {
         super();
         this.runnerUp = runnerUp;
         this.auctionId = auctionId;
@@ -64,7 +64,7 @@ public class SecondChanceOffer extends Entity {
     }
 
     private SecondChanceOffer(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                              NormalUser runnerUp, String auctionId, double offerPrice, double depositPaid,
+                              NormalUser runnerUp, String auctionId, long offerPrice, long depositPaid,
                               LocalDateTime deadline, OfferStatus status) {
         super(id, createdAt, updatedAt);
         this.runnerUp = runnerUp;
@@ -79,14 +79,14 @@ public class SecondChanceOffer extends Entity {
 
     public NormalUser getRunnerUp() { return runnerUp; }
     public String getAuctionId() { return auctionId; }
-    public double getOfferPrice() { return offerPrice; }
-    public double getDepositPaid() { return depositPaid; }
+    public long getOfferPrice() { return offerPrice; }
+    public long getDepositPaid() { return depositPaid; }
     public LocalDateTime getDeadline() { return deadline; }
     public OfferStatus getStatus() { return status; }
 
     /** Số tiền còn phải trả nếu chấp nhận (offerPrice - deposit đã khóa). */
-    public double getRemainingAmount() {
-        return Math.max(0, offerPrice - depositPaid);
+    public long getRemainingAmount() {
+        return Math.max(0L, offerPrice - depositPaid);
     }
 
     /**
@@ -119,9 +119,9 @@ public class SecondChanceOffer extends Entity {
         System.out.println("CƠ HỘI THỨ HAI DÀNH CHO RUNNER-UP");
         System.out.printf("Runner-up : %s%n", runnerUp.getUsername());
         System.out.printf("Auction ID: %s%n", auctionId);
-        System.out.printf("Giá mua : %.0f%n", offerPrice);
-        System.out.printf("Đã cọc : %.0f%n", depositPaid);
-        System.out.printf("Còn lại : %.0f%n", getRemainingAmount());
+        System.out.printf("Giá mua : %d%n", offerPrice);
+        System.out.printf("Đã cọc : %d%n", depositPaid);
+        System.out.printf("Còn lại : %d%n", getRemainingAmount());
         System.out.printf("Hạn chót : %s%n", deadline);
         System.out.printf("Trạng thái: %s%n", status);
         System.out.println("======================================");

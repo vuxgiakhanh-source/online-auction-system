@@ -32,7 +32,7 @@ public class UserDAO {
             return com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr);
         } catch (IllegalArgumentException ex) {
             // Fallback an toàn nếu DB chứa giá trị không mong đợi
-            return com.group13.auction.model.user.User.AccountStatus.ACTIVE;
+            return com.group13.auction.model.user.User.AccountStatus.BANNED;
         }
     }
 
@@ -93,11 +93,11 @@ public class UserDAO {
         }
     }
 
-    public boolean addBalance(String userId, double amount) {
+    public boolean addBalance(String userId, long amount) {
         String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setDouble(1, amount);
+            pstmt.setLong(1, amount);
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -148,9 +148,9 @@ public class UserDAO {
                     String username = rs.getString("username");
                     String passwordHash = rs.getString("password_hash");
                     String email = rs.getString("email");
-                    int rating = rs.getInt("rating");
-                    double balance = rs.getDouble("balance");
-                    double lockedBalance = rs.getDouble("locked_balance");
+                    double rating = rs.getDouble("rating");
+                    long balance = rs.getLong("balance");
+                    long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
 
@@ -169,7 +169,6 @@ public class UserDAO {
                     java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
                             java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
 
-                    // (Tùy chọn: Nếu bạn muốn check xem user có phải SELLER không, bạn có thể query thêm bảng sellers ở đây)
 
                     // 4. Hồi sinh Object
                     NormalUser user = NormalUser.reconstitute(
@@ -241,12 +240,12 @@ public class UserDAO {
     /**
      * Đồng bộ số dư (balance) và tiền cọc đang khóa (locked_balance) của User.
      */
-    public boolean updateBalances(String userId, double balance, double lockedBalance) {
+    public boolean updateBalances(String userId, long balance, long lockedBalance) {
         String sql = "UPDATE users SET balance = ?, locked_balance = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setDouble(1, balance);
-            pstmt.setDouble(2, lockedBalance);
+            pstmt.setLong(1, balance);
+            pstmt.setLong(2, lockedBalance);
             pstmt.setString(3, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -276,9 +275,9 @@ public class UserDAO {
                     String fetchedUsername = rs.getString("username"); // Lấy chính xác từ DB
                     String passwordHash = rs.getString("password_hash");
                     String email = rs.getString("email");
-                    int rating = rs.getInt("rating");
-                    double balance = rs.getDouble("balance");
-                    double lockedBalance = rs.getDouble("locked_balance");
+                    double rating = rs.getDouble("rating");
+                    long balance = rs.getLong("balance");
+                    long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
 

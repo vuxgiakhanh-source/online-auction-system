@@ -35,7 +35,7 @@ public class SellerObserver implements AuctionObserver {
                 "[THÔNG BÁO tới Seller %s] Bid %.0f chưa đạt reserve price (%.0f).%n",
                 seller.getUsername(),
                 event.getBidAmount(),
-                event.getAuction().getReserveStrategy().getReservePrice());
+                event.getAuction().getReservePrice());
         break;
 
       default:

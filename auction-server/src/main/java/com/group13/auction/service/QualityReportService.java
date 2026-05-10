@@ -9,6 +9,7 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.observer.AuctionEvent;
+import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IQualityReportService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
@@ -20,16 +21,14 @@ import com.group13.auction.service.iservice.IWalletService;
  *
  * <ol>
  * <li>Winner gọi {@link #submitReport} -> report ở PENDING.</li>
- * <li>Admin gọi {@link #approveReport} -> trừ rating Seller, bắt đầu đếm 24h hoàn tiền,
- * notify Staff.</li>
- * <li>Seller hoàn tiền trong 24h; nếu không -> {@link #handleSellerRefundDefault} ban Seller.</li>
+ * <li>Admin gọi {@link #approveReport} -> trừ rating Seller, PaymentService hoàn tiền cho Winner
  * </ol>
  */
 public class
 QualityReportService implements IQualityReportService {
 
     private final IRatingService ratingService;
-    private final IWalletService walletService;
+    private final IPaymentService paymentService;
 
     // Đã thực hiện TODO: inject QualityReportDAO và UserDAO
     private final QualityReportDAO qualityReportDAO;
@@ -39,15 +38,14 @@ QualityReportService implements IQualityReportService {
      * Constructor nhận dependency qua constructor (DIP).
      *
      * @param ratingService service quản lý rating
-     * @param walletService service quản lý tài chính
      */
     public QualityReportService(
             IRatingService ratingService,
-            IWalletService walletService,
+            IPaymentService paymentService,
             QualityReportDAO qualityReportDAO,
             UserDAO userDAO) {
         this.ratingService = ratingService;
-        this.walletService = walletService;
+        this.paymentService = paymentService;
         this.qualityReportDAO = qualityReportDAO;
         this.userDAO = userDAO;
     }
@@ -85,8 +83,8 @@ QualityReportService implements IQualityReportService {
      * <li>Notify Staff Admin để theo dõi.</li>
      * </ol>
      *
-     * @param admin admin thực hiện approve
-     * @param report report cần approve
+     * @param admin   admin thực hiện approve
+     * @param report  report cần approve
      * @param auction phiên liên quan (để lấy seller và notify)
      * @throws IllegalStateException nếu report không ở PENDING
      */
@@ -100,7 +98,7 @@ QualityReportService implements IQualityReportService {
         NormalUser winner = report.getReporter();
         NormalUser seller = auction.getItem().getSeller();
 
-        // Approve report (set deadline 24h cho Seller)
+        // Approve report
         report.approve();
 
         // Phạt rating Seller
@@ -108,31 +106,31 @@ QualityReportService implements IQualityReportService {
         SystemAdmin.getInstance().autoBanIfNeeded(seller);
 
         // Hoàn tiền từ SystemBank + Seller về Winner
-        double finalPrice = auction.getWinner() != null
+        long finalPrice = auction.getWinner() != null
                 ? auction.getWinner().getFinalPrice()
-                : 0;
+                : 0L;
         if (finalPrice > 0) {
-            walletService.executeRefundToWinner(winner, seller, finalPrice, auction.getId());
+            paymentService.refundToWinnerFromBank(auction);
             report.markRefundCompleted();
         }
 
         // Notify Staff Admin theo dõi
         AuctionEvent event = new AuctionEvent(
                 AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
-                auction, winner, 0,
+                auction, winner, 0L,
                 String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
         AuctionManager.getInstance().notifyStaffObservers(event);
         AuctionManager.getInstance().notifyGlobalObservers(event);
 
         String log = String.format(
-                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %.0f",
+                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
                 admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
         admin.addActionLog(log);
         SystemAdmin.getInstance().addActionLog(log);
         System.out.println(log);
 
-        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
-        qualityReportDAO.updateReport(report);
+//        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
+//        qualityReportDAO.updateReport(report);
 
         // Thực hiện TODO: userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name())
         userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
@@ -141,7 +139,7 @@ QualityReportService implements IQualityReportService {
     /**
      * Admin reject QualityReport.
      *
-     * @param admin admin thực hiện reject
+     * @param admin  admin thực hiện reject
      * @param report report cần reject
      * @throws IllegalStateException nếu report không ở PENDING
      */
@@ -160,42 +158,7 @@ QualityReportService implements IQualityReportService {
         admin.addActionLog(log);
         System.out.println(log);
 
-        // Thực hiện TODO: qualityReportDAO.update(report)
-        qualityReportDAO.updateReport(report);
-    }
-
-    /**
-     * Kiểm tra Seller đã quá hạn hoàn tiền chưa và xử lý nếu có.
-     *
-     * Nếu quá hạn -> cho Seller ăn ban vĩnh viễn.
-     *
-     * @param report report đã APPROVED
-     * @param auction phiên liên quan
-     */
-    @Override
-    public void handleSellerRefundDefault(QualityReport report, NormalUser reporter, Auction auction) {
-        if (!report.isSellerRefundOverdue()) {
-            return;
-        }
-        if (report.isRefundCompleted()) {
-            return;
-        }
-
-        NormalUser seller = auction.getItem().getSeller();
-        seller.setAccountStatus(NormalUser.AccountStatus.BANNED);
-
-        String log = String.format(
-                "[QUALITY] Seller %s bị BAN VĨNH VIỄN do không hoàn trả trong 24h | Phiên: %s",
-                seller.getUsername(), auction.getId());
-        SystemAdmin.getInstance().addActionLog(log);
-        System.out.println(log);
-
-        walletService.executeRefundToWinner(reporter, seller, auction.getWinner().getFinalPrice(), auction.getId());
-
-        // Thực hiện TODO: ban xuống DB
-        userDAO.updateAccountStatus(seller.getId(), "BANNED");
-
-        // Thực hiện TODO: qualityReportDAO.update(report) nếu cần ghi nhận trạng thái xử lý
-        // qualityReportDAO.updateReport(report); // Có thể bỏ comment dòng này nếu DB của bạn cần cập nhật thêm gì đó khi seller bị phạt.
+//        // Thực hiện TODO: qualityReportDAO.update(report)
+//        qualityReportDAO.updateReport(report);
     }
 }

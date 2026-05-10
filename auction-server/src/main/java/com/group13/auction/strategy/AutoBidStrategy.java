@@ -18,18 +18,15 @@ import com.group13.auction.model.auction.Auction;
  */
 public class AutoBidStrategy implements BidStrategy {
 
-  private final double maxBid;
+  private final long maxBid;
 
   /**
    * Khởi tạo AutoBidStrategy với lượng "nhỉnh hơn" tuỳ chỉnh.
    *
-   * <p>Ví dụ: currentPrice = 130, minIncrement = 20, extraIncrement = 1
-   * → nextBid = 130 + 20 + 1 = 151 (nhỉnh hơn người dẫn đầu 21 đơn vị).
-   *
-   * @param maxBid         giá tối đa sẵn sàng trả (> 0)
-   * @throws IllegalArgumentException nếu maxBid <= 0 hoặc extraIncrement < 0
+   * @param maxBid giá tối đa sẵn sàng trả (> 0)
+   * @throws IllegalArgumentException nếu maxBid <= 0
    */
-  public AutoBidStrategy(double maxBid) {
+  public AutoBidStrategy(long maxBid) {
     if (maxBid <= 0) {
       throw new IllegalArgumentException("maxBid phải lớn hơn 0.");
     }
@@ -37,8 +34,8 @@ public class AutoBidStrategy implements BidStrategy {
   }
 
   @Override
-  public boolean isValidBid(Auction auction, double amount) {
-    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+  public boolean isValidBid(Auction auction, long amount) {
+    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     return amount <= maxBid && amount >= auction.getCurrentPrice() + increment;
   }
 
@@ -51,11 +48,11 @@ public class AutoBidStrategy implements BidStrategy {
    * @param auction phiên đấu giá
    * @return mức giá cần đặt để vượt leader, hoặc -1 nếu vượt maxBid
    */
-  public double calculateNextBid(Auction auction) {
-    double increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
-    double next = auction.getCurrentPrice() + increment;
+  public long calculateNextBid(Auction auction) {
+    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+    long next = auction.getCurrentPrice() + increment;
     if (next > maxBid) {
-      return -1; // vượt quá maxBid --- không tự bid nữa
+      return -1; // vượt quá maxBid - không tự bid nữa
     }
     return next;
   }
@@ -64,10 +61,10 @@ public class AutoBidStrategy implements BidStrategy {
   public String describe() {
     return String.format(
             "Auto: Tự bid vượt người dẫn đầu (bước giá tự động theo ngưỡng"
-                    + "), tối đa %.0f.", maxBid);
+                    + "), tối đa %d.", maxBid);
   }
 
-  public double getMaxBid() { return maxBid; }
+  public long getMaxBid() { return maxBid; }
 
   /**
    * Lấy bước giá tối thiểu tại mức giá đã cho.
@@ -75,7 +72,7 @@ public class AutoBidStrategy implements BidStrategy {
    * @param currentPrice giá hiện tại để tính increment
    * @return bước giá tối thiểu
    */
-  public double getMinIncrement(double currentPrice) {
+  public long getMinIncrement(long currentPrice) {
     return BidIncrementCalculator.calculate(currentPrice);
   }
 }

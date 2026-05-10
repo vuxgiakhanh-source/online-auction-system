@@ -206,7 +206,7 @@ INSERT INTO admins (id, username, password_hash, email, level)
 VALUES (
     UUID(), 
     'superadmin', 
-    'chuoi_ma_hoa_cua_mat_khau', 
+    'omnibiddingForever', 
     'system@auction.internal', 
     'MASTER'
 );

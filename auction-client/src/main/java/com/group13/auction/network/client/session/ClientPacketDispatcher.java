@@ -1,13 +1,20 @@
 package com.group13.auction.network.client.session;
 
 import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
+import com.group13.auction.common.dto.rating.RatingDTOs;
+import com.group13.auction.common.dto.report.ReportDTOs;
+import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.client.handler.ServerResponseHandler;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -285,6 +292,208 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                         com.group13.auction.common.dto.admin.AdminDTOs.ServerShutdownDTO.class);
                 listeners.forEach(l -> l.onServerShutdown(shutdown));
             }
+            // FIX Bug #8: dispatch PONG → onPong(timestamp) thay vì rơi vào default silent log
+            case PONG -> {
+                long timestamp = payload != null && !payload.isJsonNull()
+                        ? payload.getAsLong() : System.currentTimeMillis();
+                listeners.forEach(l -> l.onPong(timestamp));
+            }
+            case CANCEL_AUTO_BID_SUCCESS -> {
+                String auctionId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onCancelAutoBidSuccess(auctionId));
+            }
+            case CANCEL_AUTO_BID_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAutoBidFailed(err)); // tái dùng method đã có
+            }
+            case GET_AUTO_BID_STATUS_SUCCESS -> {
+                var dto = PacketCodec.fromElement(payload, BidDTOs.AutoBidRegistrationDTO.class);
+                listeners.forEach(l -> l.onAutoBidRegistered(dto)); // tái dùng
+            }
+            case LEAVE_AUCTION_SUCCESS ->
+                    listeners.forEach(l -> l.onLeaveAuctionSuccess());
+            case GET_BID_HISTORY_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onBidHistoryFailed(err));
+            }
+            case GET_AUCTION_DETAIL_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAuctionDetailFailed(err));
+            }
+            case UPDATE_AUCTION_SUCCESS -> {
+                var auction = PacketCodec.fromElement(payload, AuctionDTOs.AuctionDTO.class);
+                listeners.forEach(l -> l.onAuctionUpdated(auction));
+            }
+            case UPDATE_AUCTION_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAuctionUpdateFailed(err));
+            }
+            case CANCEL_AUCTION_REQUEST_SUCCESS -> {
+                String auctionId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onCancelAuctionRequestSuccess(auctionId));
+            }
+            case CANCEL_AUCTION_REQUEST_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onCancelAuctionRequestFailed(err));
+            }
+            case SELLER_CANCEL_REQUEST_NOTIFY -> {
+                var dto = PacketCodec.fromElement(payload, AuctionDTOs.SellerCancelRequestNotifyDTO.class);
+                listeners.forEach(l -> l.onSellerCancelRequestNotify(dto));
+            }
+            case ADMIN_CANCEL_AUCTION_SUCCESS -> {
+                var auction = PacketCodec.fromElement(payload, AuctionDTOs.AuctionDTO.class);
+                listeners.forEach(l -> l.onAdminCancelAuctionSuccess(auction));
+            }
+            case ADMIN_CANCEL_AUCTION_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminCancelAuctionFailed(err));
+            }
+            case ADMIN_GET_ALL_AUCTIONS_SUCCESS -> {
+                var list = PacketCodec.fromElement(payload, AuctionDTOs.AuctionListDTO.class);
+                listeners.forEach(l -> l.onAdminAllAuctionsReceived(list));
+            }
+            case WATCH_AUCTION_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onWatchAuctionFailed(err));
+            }
+            case UPDATE_AUTO_BID_SUCCESS -> {
+                var dto = PacketCodec.fromElement(payload, BidDTOs.AutoBidRegistrationDTO.class);
+                listeners.forEach(l -> l.onUpdateAutoBidSuccess(dto));
+            }
+            case UPDATE_AUTO_BID_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onUpdateAutoBidFailed(err));
+            }
+            case SECOND_CHANCE_ACCEPT_SUCCESS -> {
+                var result = PacketCodec.fromElement(payload, PaymentDTOs.PaymentResultDTO.class);
+                listeners.forEach(l -> l.onSecondChanceAcceptSuccess(result));
+            }
+            case SECOND_CHANCE_ACCEPT_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onSecondChanceAcceptFailed(err));
+            }
+            case SECOND_CHANCE_DECLINE_SUCCESS ->
+                    listeners.forEach(l -> l.onSecondChanceDeclineSuccess());
+            case SECOND_CHANCE_EXPIRED_NOTIFY -> {
+                String auctionId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onSecondChanceExpiredNotify(auctionId));
+            }
+            case GET_USER_PROFILE_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onUserProfileFailed(err));
+            }
+            case REQUEST_SELLER_ROLE_SUCCESS ->
+                    listeners.forEach(l -> l.onRequestSellerRoleSuccess());
+            case REQUEST_SELLER_ROLE_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onRequestSellerRoleFailed(err));
+            }
+            case ADMIN_BAN_USER_SUCCESS -> {
+                var user = PacketCodec.fromElement(payload, UserDTO.class);
+                listeners.forEach(l -> l.onAdminBanUserSuccess(user));
+            }
+            case ADMIN_BAN_USER_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminBanUserFailed(err));
+            }
+            case ADMIN_UNBAN_USER_SUCCESS -> {
+                var user = PacketCodec.fromElement(payload, UserDTO.class);
+                listeners.forEach(l -> l.onAdminUnbanUserSuccess(user));
+            }
+            case ADMIN_UNBAN_USER_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminUnbanUserFailed(err));
+            }
+            case ADMIN_GET_ALL_USERS_SUCCESS -> {
+                List<UserDTO> users = PacketCodec.gson().fromJson(payload,
+                        new TypeToken<List<UserDTO>>() {}.getType());
+                listeners.forEach(l -> l.onAdminAllUsersReceived(users));
+            }
+            case ADMIN_CREATE_STAFF_SUCCESS -> {
+                var user = PacketCodec.fromElement(payload, UserDTO.class);
+                listeners.forEach(l -> l.onAdminCreateStaffSuccess(user));
+            }
+            case ADMIN_CREATE_STAFF_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminCreateStaffFailed(err));
+            }
+            case ADMIN_GET_ALL_STAFF_SUCCESS -> {
+                List<UserDTO> staff = PacketCodec.gson().fromJson(payload,
+                        new TypeToken<List<UserDTO>>() {}.getType());
+                listeners.forEach(l -> l.onAdminAllStaffReceived(staff));
+            }
+            case ADMIN_APPROVE_SELLER_ROLE_SUCCESS -> {
+                var user = PacketCodec.fromElement(payload, UserDTO.class);
+                listeners.forEach(l -> l.onAdminApproveSellerRoleSuccess(user));
+            }
+            case ADMIN_APPROVE_SELLER_ROLE_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminApproveSellerRoleFailed(err));
+            }
+            case RATE_SELLER_SUCCESS -> listeners.forEach(l -> l.onRateSellerSuccess());
+            case RATE_SELLER_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onRateSellerFailed(err));
+            }
+            case RATE_BIDDER_SUCCESS -> listeners.forEach(l -> l.onRateBidderSuccess());
+            case RATE_BIDDER_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onRateBidderFailed(err));
+            }
+            case GET_USER_RATINGS_SUCCESS -> {
+                var history = PacketCodec.fromElement(payload, RatingDTOs.RatingHistoryDTO.class);
+                listeners.forEach(l -> l.onUserRatingsReceived(history));
+            }
+            case SUBMIT_QUALITY_REPORT_SUCCESS -> {
+                var report = PacketCodec.fromElement(payload, ReportDTOs.QualityReportDTO.class);
+                listeners.forEach(l -> l.onSubmitQualityReportSuccess(report));
+            }
+            case SUBMIT_QUALITY_REPORT_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onSubmitQualityReportFailed(err));
+            }
+            case ADMIN_GET_QUALITY_REPORTS_SUCCESS -> {
+                List<ReportDTOs.QualityReportDTO> reports = PacketCodec.gson().fromJson(payload,
+                        new TypeToken<List<ReportDTOs.QualityReportDTO>>() {}.getType());
+                listeners.forEach(l -> l.onAdminQualityReportsReceived(reports));
+            }
+            case ADMIN_APPROVE_QUALITY_REPORT_SUCCESS -> {
+                var result = PacketCodec.fromElement(payload, ReportDTOs.QualityReportResultDTO.class);
+                listeners.forEach(l -> l.onAdminApproveQualityReportSuccess(result));
+            }
+            case ADMIN_APPROVE_QUALITY_REPORT_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onAdminApproveQualityReportFailed(err));
+            }
+            case ADMIN_REJECT_QUALITY_REPORT_SUCCESS ->
+                    listeners.forEach(l -> l.onAdminRejectQualityReportSuccess());
+            case QUALITY_REPORT_APPROVED_NOTIFY -> {
+                var result = PacketCodec.fromElement(payload, ReportDTOs.QualityReportResultDTO.class);
+                listeners.forEach(l -> l.onQualityReportApprovedNotify(result));
+            }
+            case QUALITY_REPORT_RECEIVED_NOTIFY -> {
+                var report = PacketCodec.fromElement(payload, ReportDTOs.QualityReportDTO.class);
+                listeners.forEach(l -> l.onQualityReportReceivedNotify(report));
+            }
+            case QUALITY_REPORT_REJECTED_NOTIFY -> {
+                String reportId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onQualityReportRejectedNotify(reportId));
+            }
+            case SELLER_REFUND_OVERDUE_NOTIFY -> {
+                String sellerId = PacketCodec.fromElement(payload, String.class);
+                listeners.forEach(l -> l.onSellerRefundOverdueNotify(sellerId));
+            }
+            case FRAUD_DETECTED_NOTIFY -> {
+                var fraud = PacketCodec.fromElement(payload, AdminDTOs.FraudDetectedDTO.class);
+                listeners.forEach(l -> l.onFraudDetectedNotify(fraud));
+            }
+            case GET_NOTIFICATIONS_SUCCESS -> {
+                List<AdminDTOs.NotificationDTO> notifications = PacketCodec.gson().fromJson(payload,
+                        new TypeToken<List<AdminDTOs.NotificationDTO>>() {}.getType());
+                listeners.forEach(l -> l.onNotificationsReceived(notifications));
+            }
+            case MARK_NOTIFICATION_READ_SUCCESS ->
+                    listeners.forEach(l -> l.onMarkNotificationReadSuccess());
 
             default -> log.fine("[DISPATCHER] Unhandled packet type: " + type);
         }

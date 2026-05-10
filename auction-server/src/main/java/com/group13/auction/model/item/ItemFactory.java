@@ -3,6 +3,7 @@ package com.group13.auction.model.item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.service.iservice.IRatingService;
+import java.util.Map;
 
 /**
  * Abstract Factory tạo Item - tập trung validate và khởi tạo.
@@ -17,6 +18,44 @@ public abstract class ItemFactory {
   }
 
   /**
+   * Facade tạo item theo category — phục vụ tầng network DTO.
+   *
+   * <p>Để tránh handler phải biết từng factory cụ thể, method này tự dispatch sang
+   * đúng factory dựa theo {@code itemCategory} và {@code extraFields}.
+   */
+  public Item create(String itemCategory,
+                     String name,
+                     String description,
+                     long startingPrice,
+                     NormalUser seller,
+                     Map<String, Object> extraFields) {
+    String cat = itemCategory != null ? itemCategory.trim().toUpperCase() : "OTHER";
+    Map<String, Object> fields = extraFields != null ? extraFields : Map.of();
+
+    return switch (cat) {
+      case "ELECTRONICS" -> new ElectronicsFactory(ratingService).createItem(
+              name, description, startingPrice, seller,
+              fields.get("brand"),
+              ((Number) fields.getOrDefault("warrantyMonths", 0)).intValue(),
+              fields.get("condition")
+      );
+      case "ART" -> new ArtFactory(ratingService).createItem(
+              name, description, startingPrice, seller,
+              fields.get("artist"),
+              ((Number) fields.getOrDefault("yearCreated", 0)).intValue(),
+              fields.get("medium")
+      );
+      case "VEHICLE" -> new VehicleFactory(ratingService).createItem(
+              name, description, startingPrice, seller,
+              fields.get("manufacturer"),
+              ((Number) fields.getOrDefault("year", 0)).intValue(),
+              ((Number) fields.getOrDefault("mileage", 0)).doubleValue()
+      );
+      default -> throw new IllegalArgumentException("Loại item không được hỗ trợ: " + itemCategory);
+    };
+  }
+
+  /**
    * Logic chung cho mọi loại Item.
    *
    * @param name tên sản phẩm
@@ -27,16 +66,16 @@ public abstract class ItemFactory {
    * @return gọi tới hàm createProduct()
    */
   public Item createItem(String name, String description,
-                         double startingPrice, NormalUser seller, Object... args) {
+                         long startingPrice, NormalUser seller, Object... args) {
     validateCommon(name, startingPrice, seller);
     return createProduct(name, description, startingPrice, seller, args);
   }
 
   /** Cho lớp con tự định nghĩa cách một đối tượng của chúng được tạo ra như thế nào. */
   protected abstract Item createProduct(String name, String description,
-                                        double startingPrice, NormalUser seller, Object... args);
+                                        long startingPrice, NormalUser seller, Object... args);
 
-  private void validateCommon(String name, double startingPrice, NormalUser seller) {
+  private void validateCommon(String name, long startingPrice, NormalUser seller) {
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Tên sản phẩm không được trống.");
     }

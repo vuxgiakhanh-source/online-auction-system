@@ -82,6 +82,7 @@ public class BidderObserver implements AuctionObserver {
                 bidder.getUsername());
         // TODO: notificationDao.save()
         break;
+
       case RESERVE_NOT_MET_CLOSED:
         System.out.printf(
                 "[THÔNG BÁO tới Bidder %s] Phiên kết thúc — giá cao nhất %.0f"
