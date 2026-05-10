@@ -23,7 +23,7 @@ public class SystemAdminObserver implements AuctionObserver {
     @Override
     public void onBidPlaced(AuctionEvent event) {
         String log = String.format(
-                "[SYSTEM] Bid mới: %s đặt %.0f | Phiên: %s%s",
+                "[SYSTEM] Bid mới: %s đặt %d | Phiên: %s%s",
                 event.getBidder() != null ? event.getBidder().getUsername() : "?",
                 event.getBidAmount(),
                 event.getAuction().getId(),
@@ -47,7 +47,7 @@ public class SystemAdminObserver implements AuctionObserver {
                 break;
 
             case AUCTION_ENDED:
-                log = String.format("[SYSTEM] Phiên kết thúc: %s | Winner: %s | Giá: %.0f",
+                log = String.format("[SYSTEM] Phiên kết thúc: %s | Winner: %s | Giá: %d",
                         event.getAuction().getId(),
                         event.getBidder() != null ? event.getBidder().getUsername() : "Không có",
                         event.getBidAmount());
@@ -61,7 +61,7 @@ public class SystemAdminObserver implements AuctionObserver {
 
             case RESERVE_NOT_MET_CLOSED:
                 log = String.format(
-                        "[SYSTEM] Phiên %s kết thúc — giá cao nhất %.0f chưa đạt reserve."
+                        "[SYSTEM] Phiên %s kết thúc — giá cao nhất %d chưa đạt reserve."
                                 + " Auto-cancel.",
                         event.getAuction().getId(), event.getBidAmount());
                 break;
@@ -79,7 +79,7 @@ public class SystemAdminObserver implements AuctionObserver {
 
             case SECOND_CHANCE_OFFERED:
                 log = String.format(
-                        "[SYSTEM] Second Chance Offer tạo cho %s | Phiên: %s | Giá: %.0f",
+                        "[SYSTEM] Second Chance Offer tạo cho %s | Phiên: %s | Giá: %d",
                         event.getBidder() != null ? event.getBidder().getUsername() : "?",
                         event.getAuction().getId(),
                         event.getBidAmount());
