@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,6 +47,8 @@
     "JUnit.AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException.executor": "Run",
     "JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates.executor": "Run",
     "JUnit.AccountServiceTest.executor": "Run",
+    "JUnit.AdminTest.executor": "Run",
+    "JUnit.AuctionEventTest.executor": "Run",
     "JUnit.AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws.executor": "Run",
     "JUnit.AuctionServiceTest$CloseAuction.invalidState_openAuction_throws.executor": "Run",
     "JUnit.AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows.executor": "Run",
@@ -70,11 +73,14 @@
     "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.executor": "Run",
     "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_callsStrategyWithCorrectArgs.executor": "Run",
     "JUnit.BidServiceTest$WatchAuction.executor": "Run",
+    "JUnit.BidderObserverTest.executor": "Run",
     "JUnit.PaymentServiceTest.executor": "Run",
     "JUnit.QualityReportServiceTest.executor": "Run",
     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored.executor": "Run",
     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored.executor": "Run",
     "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.SellerObserverTest.executor": "Run",
+    "JUnit.SystemAdminTest.executor": "Run",
     "JUnit.UserAndAccountServiceTest.executor": "Run",
     "JUnit.UserServiceTest.executor": "Run",
     "JUnit.WalletServiceTest.executor": "Run",
@@ -108,7 +114,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.QualityReportServiceTest">
+  <component name="RunManager" selected="JUnit.SellerObserverTest">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -144,77 +150,76 @@
       <option name="RUN_TOOL" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AdminTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="PATTERN" value="com.group13.auction.user.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AccountServiceTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest$AutoApproveSellerRole" />
-      <option name="METHOD_NAME" value="penalizedUser_throwsIllegalStateException" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AuctionTimerServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionTimerServiceTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.user" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.user.AdminTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="QualityReportServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionEventTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="PATTERN" value="com.group13.auction.observer.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.QualityReportServiceTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.observer" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.observer.AuctionEventTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="UserAndAccountServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidderObserverTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="PATTERN" value="com.group13.auction.observer.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.UserAndAccountServiceTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.observer" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.observer.BidderObserverTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="UserServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SellerObserverTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="PATTERN" value="com.group13.auction.observer.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.UserServiceTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.observer" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.observer.SellerObserverTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SystemAdminTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.user.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.user" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.user.SystemAdminTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -231,11 +236,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.QualityReportServiceTest" />
-        <item itemvalue="JUnit.AuctionTimerServiceTest" />
-        <item itemvalue="JUnit.UserServiceTest" />
-        <item itemvalue="JUnit.AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException" />
-        <item itemvalue="JUnit.UserAndAccountServiceTest" />
+        <item itemvalue="JUnit.SellerObserverTest" />
+        <item itemvalue="JUnit.BidderObserverTest" />
+        <item itemvalue="JUnit.AuctionEventTest" />
+        <item itemvalue="JUnit.SystemAdminTest" />
+        <item itemvalue="JUnit.AdminTest" />
       </list>
     </recent_temporary>
   </component>
