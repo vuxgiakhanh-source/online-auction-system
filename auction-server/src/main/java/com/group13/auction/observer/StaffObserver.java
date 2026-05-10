@@ -56,7 +56,7 @@ public class StaffObserver implements AuctionObserver {
 
             case RESERVE_NOT_MET_CLOSED:
                 log = String.format(
-                        "[THÔNG BÁO tới STAFF - %s] Phiên %s kết thúc — giá cao nhất %.0f"
+                        "[THÔNG BÁO tới STAFF - %s] Phiên %s kết thúc — giá cao nhất %d"
                                 + " chưa đạt reserve — auto-cancel.",
                         staff.getUsername(), event.getAuction().getId(), event.getBidAmount());
                 break;
@@ -87,7 +87,9 @@ public class StaffObserver implements AuctionObserver {
             default:
                 break;
         }
-        log(log);
+        if (log != null) {
+            log(log);
+        }
     }
     // Private helper
 
