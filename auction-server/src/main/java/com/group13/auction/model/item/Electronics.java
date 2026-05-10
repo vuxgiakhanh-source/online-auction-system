@@ -12,13 +12,13 @@ public class Electronics extends Item {
 
   // Static factory method
 
-  protected static Electronics create(String name, String description, double startingPrice,
+  protected static Electronics create(String name, String description, long startingPrice,
                                       NormalUser seller, String brand, int warrantyMonths, String condition) {
     return new Electronics(name, description, startingPrice, seller, brand, warrantyMonths, condition);
   }
 
   public static Electronics reconstitute(String id, LocalDateTime createdAt,
-                                         LocalDateTime updatedAt, String name, String description, double startingPrice,
+                                         LocalDateTime updatedAt, String name, String description, long startingPrice,
                                          NormalUser seller, String brand, int warrantyMonths, String condition) {
     return new Electronics(id, createdAt, updatedAt, name, description, startingPrice,
             seller, brand, warrantyMonths, condition);
@@ -27,7 +27,7 @@ public class Electronics extends Item {
   // Private Constructors: Ngăn chặn new cứng
 
   /** Khai sinh */
-  private Electronics(String name, String description, double startingPrice,
+  private Electronics(String name, String description, long startingPrice,
                       NormalUser seller, String brand, int warrantyMonths, String condition) {
     super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
     this.brand = brand;
@@ -37,7 +37,7 @@ public class Electronics extends Item {
 
   /** Hồi sinh từ DB */
   private Electronics(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                      String name, String description, double startingPrice, NormalUser seller,
+                      String name, String description, long startingPrice, NormalUser seller,
                       String brand, int warrantyMonths, String condition) {
     super(id, createdAt, updatedAt, name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
     this.brand = brand;
@@ -57,7 +57,7 @@ public class Electronics extends Item {
     System.out.printf("Hãng : %s%n", brand);
     System.out.printf("Bảo hành : %d tháng%n", warrantyMonths);
     System.out.printf("Tình trạng : %s%n", condition);
-    System.out.printf("Giá khởi điểm: %.0f%n", getStartingPrice());
+    System.out.printf("Giá khởi điểm: %d%n", getStartingPrice());
     System.out.println("======================================");
   }
 }

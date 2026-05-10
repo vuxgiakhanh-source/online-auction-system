@@ -4,7 +4,6 @@ import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionObserver;
-import com.group13.auction.strategy.ReservePriceStrategy;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,13 +26,12 @@ public class Auction extends Entity {
   private final LocalDateTime originalEndTime;
   private LocalDateTime endTime;
   /**
-   * Reserve price strategy - thiết lập khi tạo auction.
-   * Seller phải chỉ định giá sàn ngay từ đầu.
+   * Giá sàn bí mật do Seller đặt khi tạo auction.
+   * Phiên chỉ có winner khi {@code currentPrice >= reservePrice}.
    */
-  private final ReservePriceStrategy reserveStrategy;
+  private final long reservePrice;
   private final List<String> bidTransactionIds;
-  private final List<AuctionObserver> observers;
-  private double currentPrice;
+  private long currentPrice;
   private NormalUser currentLeader;
 
   /**
@@ -51,20 +49,19 @@ public class Auction extends Entity {
 
   /**
    * Khai sinh Auction mới ở trạng thái OPEN.
-   * Có thể set lịch trước nhiều ngày.
    *
-   * @param item sản phẩm đưa ra đấu giá
-   * @param startTime thời điểm bắt đầu (có thể là tương lai)
-   * @param endTime thời điểm kết thúc
-   * @param reserveStrategy reserve price strategy
-   * @return 1 Auction mới
+   * @param item         sản phẩm đưa ra đấu giá
+   * @param startTime    thời điểm bắt đầu (có thể là tương lai)
+   * @param endTime      thời điểm kết thúc
+   * @param reservePrice giá sàn bí mật của Seller (> 0)
+   * @return Auction mới
    */
   public static Auction create(
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          ReservePriceStrategy reserveStrategy) {
-    return new Auction(item, startTime, endTime, reserveStrategy);
+          long reservePrice) {
+    return new Auction(item, startTime, endTime, reservePrice);
   }
 
   /**
@@ -77,11 +74,11 @@ public class Auction extends Entity {
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          double currentPrice,
+          long currentPrice,
           AuctionStatus status,
-          ReservePriceStrategy reserveStrategy) {
+          long reservePrice) {
     return new Auction(
-            id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reserveStrategy);
+            id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
   }
 
   // Private constructors
@@ -90,17 +87,16 @@ public class Auction extends Entity {
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          ReservePriceStrategy reserveStrategy) {
+          long reservePrice) {
     super();
     this.item = item;
     this.currentPrice = item.getStartingPrice();
     this.startTime = startTime;
     this.originalEndTime = endTime;
     this.endTime = endTime;
-    this.reserveStrategy = reserveStrategy;
+    this.reservePrice = reservePrice;
     this.state = OpenState.INSTANCE;
     this.bidTransactionIds = new ArrayList<>();
-    this.observers = new ArrayList<>();
     this.winner = null;
     this.viewerCount = 0;
   }
@@ -112,19 +108,18 @@ public class Auction extends Entity {
           Item item,
           LocalDateTime startTime,
           LocalDateTime endTime,
-          double currentPrice,
+          long currentPrice,
           AuctionStatus status,
-          ReservePriceStrategy reserveStrategy) {
+          long reservePrice) {
     super(id, createdAt, updatedAt);
     this.item = item;
     this.currentPrice = currentPrice;
     this.startTime = startTime;
     this.originalEndTime = endTime;
     this.endTime = endTime;
-    this.reserveStrategy = reserveStrategy;
+    this.reservePrice = reservePrice;
     this.state = resolveState(status);
     this.bidTransactionIds = new ArrayList<>();
-    this.observers = new ArrayList<>();
     this.winner = null;
     this.viewerCount = 0;
   }
@@ -171,7 +166,7 @@ public class Auction extends Entity {
     return originalEndTime;
   }
 
-  public double getCurrentPrice() {
+  public long getCurrentPrice() {
     return currentPrice;
   }
 
@@ -192,8 +187,8 @@ public class Auction extends Entity {
     return winner;
   }
 
-  public ReservePriceStrategy getReserveStrategy() {
-    return reserveStrategy;
+  public long getReservePrice() {
+    return reservePrice;
   }
 
   public int getViewerCount() {
@@ -210,15 +205,11 @@ public class Auction extends Entity {
    * @return true nếu currentPrice >= reservePrice
    */
   public boolean isReserveMet() {
-    return currentPrice >= reserveStrategy.getReservePrice();
+    return currentPrice >= getReservePrice();
   }
 
   public List<String> getBidTransactionIds() {
     return Collections.unmodifiableList(bidTransactionIds);
-  }
-
-  public List<AuctionObserver> getObservers() {
-    return Collections.unmodifiableList(observers);
   }
 
   // State transitions - chỉ AuctionService gọi
@@ -268,24 +259,18 @@ public class Auction extends Entity {
   // Setters - chỉ AuctionService / BidService gọi
 
   /**
-   * Cập nhật giá hiện tại khi có bid mới hợp lệ được chấp nhận.
+   * Cập nhật giá và leader trong một thao tác atomic.
    *
    * <p>Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
    * bên trong {@code placeBid()} sau khi strategy đã validate bid thành công.
-   */
-  public void setCurrentPrice(double price) {
-    this.currentPrice = price;
-    markUpdated();
-  }
-
-  /**
-   * Cập nhật người đang dẫn đầu phiên (người vừa đặt giá cao nhất).
    *
-   * <p>Chỉ {@link com.group13.auction.service.BidService} được gọi method này
-   * bên trong {@code placeBid()} ngay sau {@code setCurrentPrice()}.
+   * @param newPrice  giá mới (đã validated)
+   * @param newLeader người vừa đặt giá cao nhất
    */
-  public void setCurrentLeader(NormalUser leader) {
-    this.currentLeader = leader;
+  public void updateBid(long newPrice, NormalUser newLeader) {
+    this.currentPrice = newPrice;
+    this.currentLeader = newLeader;
+    markUpdated();
   }
 
   /**
@@ -323,18 +308,6 @@ public class Auction extends Entity {
   }
 
   /**
-   * Đăng ký observer để nhận notify về sự kiện trong phiên này.
-   *
-   * <p>Chỉ {@link com.group13.auction.service.BidService} gọi qua
-   * {@code auctionService.addObserver()}.
-   */
-  public void addObserver(AuctionObserver observer) {
-    if (observer != null && !observers.contains(observer)) {
-      observers.add(observer);
-    }
-  }
-
-  /**
    * Tăng số người xem khi có bidder join hoặc watch.
    * Phục vụ cho quá trình sort.
    */
@@ -347,7 +320,7 @@ public class Auction extends Entity {
     System.out.println("THÔNG TIN PHIÊN ĐẤU GIÁ");
     System.out.printf("ID      : %s%n", getId());
     System.out.printf("Item    : %s%n", item.getName());
-    System.out.printf("Giá     : %.0f%n", currentPrice);
+    System.out.printf("Giá     : %d%n", currentPrice);
     System.out.printf("Status  : %s%n", getStatus());
     System.out.printf(
             "Leader  : %s%n", currentLeader != null ? currentLeader.getUsername() : "Chưa có");

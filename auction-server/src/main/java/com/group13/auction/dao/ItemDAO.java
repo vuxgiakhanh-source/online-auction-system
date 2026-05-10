@@ -34,7 +34,7 @@ public class ItemDAO {
      * @return true nếu insert thành công
      */
     public boolean addItem(String itemId, String sellerId, String name,
-                           String description, double startingPrice, String categoryType) {
+                           String description, long startingPrice, String categoryType) {
         String sql = "INSERT INTO items (id, seller_id, name, description, starting_price, category_type) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -44,7 +44,7 @@ public class ItemDAO {
             pstmt.setString(2, sellerId);
             pstmt.setString(3, name);
             pstmt.setString(4, description);
-            pstmt.setDouble(5, startingPrice);
+            pstmt.setLong(5, startingPrice);
             pstmt.setString(6, categoryType);
 
             return pstmt.executeUpdate() > 0;
@@ -132,7 +132,7 @@ public class ItemDAO {
         String id           = rs.getString("id");
         String name         = rs.getString("name");
         String description  = rs.getString("description");
-        double startingPrice = rs.getDouble("starting_price");
+        long startingPrice = rs.getLong("starting_price");
         String categoryType = rs.getString("category_type");
         String sellerId     = rs.getString("seller_id");
 
@@ -173,6 +173,25 @@ public class ItemDAO {
             default:
                 System.err.println("Loại item không được hỗ trợ: " + categoryType);
                 return null;
+        }
+    }
+
+    /**
+     * Xóa item theo ID — dùng để rollback khi createAuction() thất bại (FIX Bug #7).
+     * Ngăn item trở thành orphan record trong DB.
+     *
+     * @param itemId UUID của item cần xóa
+     * @return true nếu xóa thành công
+     */
+    public boolean deleteItem(String itemId) {
+        String sql = "DELETE FROM items WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, itemId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi xóa item (rollback orphan): " + e.getMessage());
+            return false;
         }
     }
 }

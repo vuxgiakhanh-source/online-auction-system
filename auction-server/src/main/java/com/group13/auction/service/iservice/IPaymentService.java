@@ -2,6 +2,7 @@ package com.group13.auction.service.iservice;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.service.QualityReportService;
 
 /**
  * Hợp đồng xử lý thanh toán sau khi phiên đấu giá kết thúc.
@@ -32,6 +33,14 @@ public interface IPaymentService {
    * @param auction phiên hết hạn thanh toán
    */
   void expirePayment(Auction auction);
+
+  /**
+   * Report thành công -> SystemBank hoàn toàn bộ tiền lại cho Winner.
+   * Chỉ {@link QualityReportService} gọi sau khi Admin approve report.
+   *
+   * @param auction phiên đấu giá
+   */
+  void refundToWinnerFromBank(Auction auction);
 
   /**
    * Hoàn lại cọc cho tất cả người đã join phiên (trừ winner).

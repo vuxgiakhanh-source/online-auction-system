@@ -9,6 +9,9 @@ import com.group13.auction.observer.AuctionObserver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -40,22 +43,22 @@ public class AuctionManager {
    * Danh sách tất cả auction - lọc theo status khi cần.
    * ĐÃ THỰC HIỆN TODO: sau này sync với DB qua AuctionDAO.
    *
-   * FIX: dùng synchronizedList để tránh race condition khi nhiều thread add/remove
+   * FIX: sử dụng ConcurrentHashMap làm Identity Map để đảm bảo 1 instance duy nhất per ID.
    */
-  private final List<Auction> allAuctions;
+  private final Map<String, Auction> allAuctions;
 
   /**
    * Danh sách tất cả user đã đăng ký.
    * ĐÃ THỰC HIỆN TODO: sau này sync với DB qua UserDAO.
    *
-   * FIX: thread-safe collection
+   * FIX: sử dụng ConcurrentHashMap làm Identity Map để đảm bảo an toàn cho synchronized(user).
    */
-  private final List<User> allUsers;
+  private final Map<String, User> allUsers;
 
   /**
    * Global observers - SystemAdmin observer nhận toàn bộ event hệ thống.
    *
-   * FIX: thread-safe collection cho observer
+   * FIX: sử dụng CopyOnWriteArrayList để tránh ConcurrentModificationException khi notify.
    */
   private final List<AuctionObserver> globalObservers;
 
@@ -70,10 +73,10 @@ public class AuctionManager {
     this.auctionDAO = new AuctionDAO();
     this.userDAO = new UserDAO();
 
-    this.allAuctions = Collections.synchronizedList(new ArrayList<>());
-    this.allUsers = Collections.synchronizedList(new ArrayList<>());
-    this.globalObservers = Collections.synchronizedList(new ArrayList<>());
-    this.staffObservers = Collections.synchronizedList(new ArrayList<>());
+    this.allAuctions = new ConcurrentHashMap<>();
+    this.allUsers = new ConcurrentHashMap<>();
+    this.globalObservers = new CopyOnWriteArrayList<>();
+    this.staffObservers = new CopyOnWriteArrayList<>();
   }
 
   /**
@@ -92,19 +95,17 @@ public class AuctionManager {
    * Gọi khi ứng dụng bắt đầu khởi động để nạp dữ liệu từ Database lên In-Memory
    */
   public void loadDataFromDatabase() {
-    synchronized (allAuctions) {
-      allAuctions.clear();
-      List<Auction> dbAuctions = auctionDAO.findAll(); // Cần đảm bảo AuctionDAO có hàm findAll()
-      if (dbAuctions != null) {
-        allAuctions.addAll(dbAuctions);
+    List<Auction> dbAuctions = auctionDAO.findAll();
+    if (dbAuctions != null) {
+      for (Auction a : dbAuctions) {
+        allAuctions.put(a.getId(), a);
       }
     }
 
-    synchronized (allUsers) {
-      allUsers.clear();
-      List<User> dbUsers = userDAO.findAll(); // Cần đảm bảo UserDAO có hàm findAll()
-      if (dbUsers != null) {
-        allUsers.addAll(dbUsers);
+    List<User> dbUsers = userDAO.findAll();
+    if (dbUsers != null) {
+      for (User u : dbUsers) {
+        allUsers.put(u.getId(), u);
       }
     }
     System.out.println("[MANAGER] Đã đồng bộ dữ liệu từ Database lên bộ nhớ thành công.");
@@ -121,11 +122,7 @@ public class AuctionManager {
    */
   public void addToUserList(User user) {
     if (user == null) return;
-    synchronized (allUsers) {
-      if (allUsers.stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-        allUsers.add(user);
-      }
-    }
+    allUsers.putIfAbsent(user.getId(), user);
   }
 
   /**
@@ -140,9 +137,9 @@ public class AuctionManager {
     }
 
     // Gọi DAO để lưu user xuống DB
-    userDAO.save(user); // Cần đảm bảo UserDAO có hàm save(User user)
+    userDAO.save(user);
 
-    allUsers.add(user);
+    allUsers.putIfAbsent(user.getId(), user);
     System.out.println("[MANAGER] Đăng ký thành công: " + user.getUsername());
   }
 
@@ -153,22 +150,22 @@ public class AuctionManager {
    * @param username tên đăng nhập cần tìm
    * @return User nếu tìm thấy, null nếu không
    *
-   * FIX: phải synchronized khi iterate (stream)
+   * FIX: sử dụng Identity Map (kiểm tra RAM trước, fallback DB sau).
    */
   public User findUserByUsername(String username) {
-    // Ưu tiên truy vấn từ Database trước như TODO yêu cầu
-    User dbUser = userDAO.findUserByUsername(username);
-    if (dbUser != null) {
-      return dbUser;
+    // Ưu tiên tìm trong RAM trước để đảm bảo tính duy nhất của instance
+    for (User u : allUsers.values()) {
+        if (u.getUsername().equals(username)) return u;
     }
 
-    // Fallback: Tìm trong memory nếu DB không có (hoặc chưa sync kịp)
-    synchronized (allUsers) {
-      return allUsers.stream()
-              .filter(u -> u.getUsername().equals(username))
-              .findFirst()
-              .orElse(null);
+    // Fallback: Truy vấn từ Database
+    User dbUser = userDAO.findUserByUsername(username);
+    if (dbUser != null) {
+      User existing = allUsers.putIfAbsent(dbUser.getId(), dbUser);
+      return (existing != null) ? existing : dbUser;
     }
+
+    return null;
   }
 
   // Auction management
@@ -178,21 +175,14 @@ public class AuctionManager {
    *
    * @param auction phiên cần đưa vào registry
    *
-   * FIX:
-   * check + add phải nằm trong cùng 1 synchronized block (atomic)
+   * FIX: sử dụng putIfAbsent để đảm bảo tính nguyên tử.
    */
   public void registerAuction(Auction auction) {
     if (auction == null) {
       throw new IllegalArgumentException("Auction không được null.");
     }
 
-    synchronized (allAuctions) {
-      if (allAuctions.stream().anyMatch(a -> a.getId().equals(auction.getId()))) {
-        return;
-      }
-      allAuctions.add(auction);
-    }
-
+    allAuctions.putIfAbsent(auction.getId(), auction);
     System.out.println("[MANAGER] Đăng ký auction: " + auction.getId());
   }
 
@@ -202,15 +192,11 @@ public class AuctionManager {
    * Đăng ký global observer (SystemAdmin).
    * Chỉ SystemAdminObserver được thêm vào đây.
    *
-   * FIX: cần synchronized vì có contains + add
+   * FIX: không cần synchronized vì dùng CopyOnWriteArrayList.
    */
   public void addGlobalObserver(AuctionObserver observer) {
-    if (observer == null) return;
-
-    synchronized (globalObservers) {
-      if (!globalObservers.contains(observer)) {
-        globalObservers.add(observer);
-      }
+    if (observer != null && !globalObservers.contains(observer)) {
+      globalObservers.add(observer);
     }
   }
 
@@ -228,12 +214,8 @@ public class AuctionManager {
    * @param observer StaffObserver của Staff Admin
    */
   public void addStaffObserver(AuctionObserver observer) {
-    if (observer == null) return;
-
-    synchronized (staffObservers) {
-      if (!staffObservers.contains(observer)) {
-        staffObservers.add(observer);
-      }
+    if (observer != null && !staffObservers.contains(observer)) {
+      staffObservers.add(observer);
     }
   }
 
@@ -241,15 +223,13 @@ public class AuctionManager {
    * Fan-out event tới global observer (SystemAdmin).
    * SystemAdmin nhận tất cả event.
    *
-   * FIX: phải synchronized khi iterate
+   * FIX: iteration an toàn trên CopyOnWriteArrayList.
    */
   public void notifyGlobalObservers(AuctionEvent event) {
     if (event == null) return;
 
-    synchronized (globalObservers) {
-      for (AuctionObserver observer : globalObservers) {
-        dispatchEvent(observer, event);
-      }
+    for (AuctionObserver observer : globalObservers) {
+      dispatchEvent(observer, event);
     }
   }
 
@@ -258,7 +238,7 @@ public class AuctionManager {
    * Staff chỉ nhận event: AUCTION_CANCELED, FRAUD_DETECTED, QUALITY_REPORT_APPROVED,
    * SELLER_CANCEL_REQUEST (event liên quan đến việc cần can thiệp thủ công).
    *
-   * FIX: phải synchronized khi iterate
+   * FIX: iteration an toàn trên CopyOnWriteArrayList.
    */
   public void notifyStaffObservers(AuctionEvent event) {
     if (event == null) return;
@@ -272,10 +252,8 @@ public class AuctionManager {
 
     if (!isStaffRelevant) return;
 
-    synchronized (staffObservers) {
-      for (AuctionObserver observer : staffObservers) {
-        dispatchEvent(observer, event);
-      }
+    for (AuctionObserver observer : staffObservers) {
+      dispatchEvent(observer, event);
     }
   }
 
@@ -295,59 +273,47 @@ public class AuctionManager {
    * Lấy tất cả auction đang RUNNING.
    * Dành cho "đang diễn ra"
    *
-   * FIX: synchronized khi stream
+   * FIX: stream an toàn trên ConcurrentHashMap.values().
    */
   public List<Auction> getRunningAuctions() {
-    synchronized (allAuctions) {
-      return allAuctions.stream()
-              .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
-              .collect(Collectors.collectingAndThen(
-                      Collectors.toList(), Collections::unmodifiableList));
-    }
+    return allAuctions.values().stream()
+            .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
+            .collect(Collectors.collectingAndThen(
+                    Collectors.toList(), Collections::unmodifiableList));
   }
 
   /**
    * Lấy auction theo trạng thái.
    *
-   * FIX: synchronized khi stream
+   * FIX: stream an toàn trên ConcurrentHashMap.values().
    */
   public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
-    synchronized (allAuctions) {
-      return allAuctions.stream()
-              .filter(a -> a.getStatus() == status)
-              .collect(Collectors.collectingAndThen(
-                      Collectors.toList(), Collections::unmodifiableList));
-    }
+    return allAuctions.values().stream()
+            .filter(a -> a.getStatus() == status)
+            .collect(Collectors.collectingAndThen(
+                    Collectors.toList(), Collections::unmodifiableList));
   }
 
   /**
    * Tìm auction theo id.
    *
-   * FIX: synchronized khi stream
+   * FIX: tìm kiếm O(1) qua Map.
    */
   public Auction findAuctionById(String id) {
-    synchronized (allAuctions) {
-      return allAuctions.stream()
-              .filter(a -> a.getId().equals(id))
-              .findFirst()
-              .orElse(null);
-    }
+    if (id == null) return null;
+    return allAuctions.get(id);
   }
 
   /** @return toàn bộ auction (read-only)
    *
-   * FIX: trả về bản copy để tránh bị modify khi đang dùng
+   * FIX: trả về bản copy an toàn từ Map values.
    */
   public List<Auction> getAllAuctions() {
-    synchronized (allAuctions) {
-      return Collections.unmodifiableList(new ArrayList<>(allAuctions));
-    }
+    return Collections.unmodifiableList(new ArrayList<>(allAuctions.values()));
   }
 
   /** @return toàn bộ user (chỉ đọc) */
   public List<User> getAllUsers() {
-    synchronized (allUsers) {
-      return Collections.unmodifiableList(new ArrayList<>(allUsers));
-    }
+    return Collections.unmodifiableList(new ArrayList<>(allUsers.values()));
   }
 }

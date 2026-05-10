@@ -4,6 +4,11 @@ import com.group13.auction.model.entity.Entity;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Lớp abstract người dùng — chỉ lưu data, không chứa nghiệp vụ.
@@ -46,11 +51,13 @@ public abstract class User extends Entity {
    */
   private LocalDateTime suspendedAt;
 
+  private Set<String> joinedAuctionIds;
+  private List<String> watchListAuctionIds;
+
   // Constructor khai sinh
 
   /** Khai sinh — hash password tại đây, rating mặc định 3.0. */
-  protected User(String username, String password,
-                 String email, UserRole role) {
+  protected User(String username, String password, String email, UserRole role) {
     super();
     this.username = username;
     this.hashedPassword = hashPassword(password);
@@ -59,6 +66,8 @@ public abstract class User extends Entity {
     this.accountStatus = AccountStatus.ACTIVE;
     this.rating = RATING_DEFAULT;
     this.suspendedAt = null;
+    this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
+    this.watchListAuctionIds = new CopyOnWriteArrayList<>();
   }
 
   // Constructor hồi sinh
@@ -67,10 +76,17 @@ public abstract class User extends Entity {
    * Hồi sinh từ DB — password đã hash
    * Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con
    */
-  protected User(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                 String username, String hashedPassword, String email,
-                 UserRole role, AccountStatus accountStatus, double rating,
-                 LocalDateTime suspendedAt) {
+  protected User(
+          String id,
+          LocalDateTime createdAt,
+          LocalDateTime updatedAt,
+          String username,
+          String hashedPassword,
+          String email,
+          UserRole role,
+          AccountStatus accountStatus,
+          double rating,
+          LocalDateTime suspendedAt) {
     super(id, createdAt, updatedAt);
     this.username = username;
     this.hashedPassword = hashedPassword;
@@ -79,6 +95,8 @@ public abstract class User extends Entity {
     this.accountStatus = accountStatus;
     this.rating = rating;
     this.suspendedAt = suspendedAt;
+    this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
+    this.watchListAuctionIds = new CopyOnWriteArrayList<>();
   }
 
   // Hash mật khẩu
@@ -106,6 +124,71 @@ public abstract class User extends Entity {
   public String getHashedPassword() { return hashedPassword; }
   public LocalDateTime getSuspendedAt() { return suspendedAt; }
 
+  public Set<String> getJoinedAuctionIds() {
+    return Collections.unmodifiableSet(joinedAuctionIds);
+  }
+
+  public List<String> getWatchListAuctionIds() {
+    return Collections.unmodifiableList(watchListAuctionIds);
+  }
+
+  /**
+   * Kiểm tra user đã join phiên chưa.
+   *
+   * @param auctionId id phiên cần kiểm tra
+   * @return true nếu đã join
+   */
+  public boolean hasJoined(String auctionId) {
+    return joinedAuctionIds.contains(auctionId);
+  }
+
+  /**
+   * Đánh dấu user đã join phiên.
+   * Chỉ {@link com.group13.auction.service.BidService} gọi — sau khi cọc đã được xử lý.
+   *
+   * @param auctionId id phiên
+   */
+  public void addJoinedAuction(String auctionId) {
+    joinedAuctionIds.add(auctionId);
+  }
+
+  /**
+   * Thêm phiên vào watchList (idempotent).
+   * Chỉ {@link com.group13.auction.service.BidService} gọi.
+   *
+   * @param auctionId id phiên
+   */
+  public void addToWatchList(String auctionId) {
+    if (!watchListAuctionIds.contains(auctionId)) {
+      watchListAuctionIds.add(auctionId);
+    }
+  }
+
+  // DAO injection setters
+
+  /**
+   * Inject danh sách auctionId đã join từ DB — chỉ DAO gọi sau reconstitute().
+   *
+   * @param ids tập id từ DB
+   */
+  public void setJoinedAuctionIds(Set<String> ids) {
+    this.joinedAuctionIds.clear();
+    if (ids != null) {
+      this.joinedAuctionIds.addAll(ids);
+    }
+  }
+
+  /**
+   * Inject watchlist từ DB — chỉ DAO gọi sau reconstitute().
+   *
+   * @param ids danh sách id từ DB
+   */
+  public void setWatchListAuctionIds(List<String> ids) {
+    this.watchListAuctionIds = ids != null
+            ? new CopyOnWriteArrayList<>(ids)
+            : new CopyOnWriteArrayList<>();
+  }
+
   // Setter AccountStatus - chỉ AccountService / RatingService gọi
 
   /**
@@ -113,6 +196,9 @@ public abstract class User extends Entity {
    * Khi chuyển sang SUSPENDED, ghi nhận thời điểm suspend.
    */
   public void setAccountStatus(AccountStatus status) {
+    if (status == null) {
+      throw new NullPointerException("Status không được null.");
+    }
     if (status == AccountStatus.SUSPENDED && this.accountStatus != AccountStatus.SUSPENDED) {
       this.suspendedAt = LocalDateTime.now();
     }

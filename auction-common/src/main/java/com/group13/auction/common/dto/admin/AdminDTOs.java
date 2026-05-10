@@ -80,6 +80,8 @@ public final class AdminDTOs {
         public int getShutdownInSeconds() { return shutdownInSeconds; }
         public void setShutdownInSeconds(int shutdownInSeconds) { this.shutdownInSeconds = shutdownInSeconds; }
     }
+    // REMOVED: AccountBannedDTO đã bị xóa khỏi AdminDTOs để tránh duplicate.
+    // Sử dụng RatingDTOs.AccountBannedDTO (có cả reason + bannedBy) cho packet ACCOUNT_BANNED_NOTIFY.
 
     /** Payload của GET_NOTIFICATIONS_SUCCESS — một notification entry. */
     public static class NotificationDTO {

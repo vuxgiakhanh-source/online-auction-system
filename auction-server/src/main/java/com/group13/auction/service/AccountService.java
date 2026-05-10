@@ -9,13 +9,12 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
-import com.group13.auction.model.user.UserFactory;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.StaffObserver;
 import com.group13.auction.service.iservice.IAccountService;
 import com.group13.auction.service.iservice.IRatingService;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quản lý trạng thái tài khoản: ban, deposit, tạo admin STAFF, quản lý role.
@@ -28,8 +27,11 @@ import java.util.List;
  */
 public class AccountService implements IAccountService {
 
+  private static final Logger log = LoggerFactory.getLogger(AccountService.class);
+
   private final IRatingService ratingService;
   private final AdminFactory adminFactory;
+  private final WalletService walletService;
 
   private final UserDAO userDAO;
   private final SellerDAO sellerDAO;
@@ -56,6 +58,16 @@ public class AccountService implements IAccountService {
     this.adminDAO = adminDAO;
     this.auctionDAO = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
+    // PaymentHandler cần deposit/withdraw; WalletService chịu trách nhiệm validate và persist số dư.
+    this.walletService = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
+  }
+
+  public void deposit(NormalUser user, long amount) {
+    walletService.deposit(user, amount);
+  }
+
+  public void withdraw(NormalUser user, long amount) {
+    walletService.withdraw(user, amount);
   }
 
   // Ban
@@ -73,7 +85,8 @@ public class AccountService implements IAccountService {
     String log = String.format(
             "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);
     admin.addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Ban user: admin={} target={} reason={}",
+            admin.getUsername(), target.getUsername(), reason);
 
     // Gọi DAO để cập nhật DB
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
@@ -112,7 +125,7 @@ public class AccountService implements IAccountService {
 
     String log = String.format("[SYSTEM] Tạo admin STAFF: %s", username);
     system.addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Tạo admin STAFF: username={}", username);
 
     return newAdmin;
   }
@@ -133,14 +146,14 @@ public class AccountService implements IAccountService {
               "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller.");
     }
     if (user.hasRole(User.UserRole.SELLER)) {
-      System.out.printf("[ACCOUNT] %s đã có role Seller.%n", user.getUsername());
+      log.info("{} đã có role Seller.", user.getUsername());
       return;
     }
 
     user.addRole(User.UserRole.SELLER);
     String log = String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
     SystemAdmin.getInstance().addActionLog(log);
-    System.out.println(log);
+    AccountService.log.info("Auto-approve role Seller: user={}", user.getUsername());
 
     // Gọi DAO để cập nhật DB
     sellerDAO.approveSellerRole(user.getId());
@@ -176,13 +189,12 @@ public class AccountService implements IAccountService {
     // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
             AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
-            auction, null, 0,
+            auction, null, 0L,
             String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);
 
-    System.out.printf(
-            "[ACCOUNT] Seller %s gửi yêu cầu hủy phiên %s | Lý do: %s%n",
+    log.info("Seller gửi yêu cầu hủy phiên: seller={} auctionId={} reason={}",
             seller.getUsername(), auction.getId(), reason);
   }
 }

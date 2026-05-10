@@ -17,7 +17,10 @@ import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.service.iservice.IWalletService;
 import com.group13.auction.strategy.BidStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -27,13 +30,14 @@ import java.time.LocalDateTime;
  * Đã thực hiện TODO: inject BidTransactionDAO, AuctionDAO, UserDAO.
  */
 public class BidService implements IBidService {
+  private static final Logger log = LoggerFactory.getLogger(BidService.class);
 
   private static final long ANTI_SNIPING_WINDOW_SECONDS = 30;
   private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
   private final IAuctionService auctionService;
   private final IRatingService ratingService;
-  private final WalletService walletService;
+  private final IWalletService walletService;
 
   // Thực hiện TODO: inject các DAO cần thiết
   private final BidTransactionDAO bidTransactionDAO;
@@ -43,9 +47,13 @@ public class BidService implements IBidService {
   /**
    * Cập nhật constructor để nhận thêm các DAO.
    */
-  public BidService(IAuctionService auctionService, IRatingService ratingService,
-                    WalletService walletService, BidTransactionDAO bidTransactionDAO,
-                    AuctionDAO auctionDAO, UserDAO userDAO) {
+  public BidService(
+          IAuctionService auctionService,
+          IRatingService ratingService,
+          IWalletService walletService,
+          BidTransactionDAO bidTransactionDAO,
+          AuctionDAO auctionDAO,
+          UserDAO userDAO) {
     this.auctionService = auctionService;
     this.ratingService = ratingService;
     this.walletService = walletService;
@@ -56,52 +64,32 @@ public class BidService implements IBidService {
 
   /**
    * Bidder tham gia phiên đấu giá.
+   * Admin không đóng cọc - chỉ join để theo dõi, không đặt giá
    */
   @Override
-  public void joinAuction(NormalUser bidder, Auction auction, AuctionObserver observer) {
-    if (!ratingService.isEligible(bidder)) {
-      throw buildIneligibleException(bidder);
-    }
-
-    if (bidder.hasRole(User.UserRole.SELLER)
-            && bidder.getAllAuctionIds().contains(auction.getId())) {
-      throw new AuctionBusinessException(
-              AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
-    }
-
-    if (bidder.hasJoined(auction.getId())) {
-      System.out.printf("[BID] %s đã tham gia phiên %s trước đó.%n",
-              bidder.getUsername(), auction.getId());
+  public void joinAuction(User user, Auction auction, AuctionObserver observer) {
+    if (user.hasJoined(auction.getId())) {
+      log.info("{} đã tham gia phiên {} trước đó.", user.getUsername(), auction.getId());
       return;
     }
 
-    // Trừ balance và lock deposit ngay lập tức (WalletService xử lý DB của phần này)
-    double depositAmount = auction.getItem().getStartingPrice() * 0.3;
-    walletService.lockDeposit(bidder, depositAmount, auction.getId());
-
-    bidder.addJoinedAuction(auction.getId());
-    bidder.addToWatchList(auction.getId());
-    auction.incrementViewerCount();
-    auctionService.addObserver(auction, observer);
-
-    System.out.printf("[BID] %s tham gia phiên %s | Cọc khóa: %.0f%n",
-            bidder.getUsername(), auction.getId(), depositAmount);
-
-    // Thực hiện TODO: auctionDAO.update(auction), userDAO.update(bidder)
-    // Lưu ý: Cần có hàm tương ứng trong UserDAO để lưu trạng thái Joined/Watchlist
-    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
-    userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "JOINED");
+    if (user instanceof NormalUser) {
+      joinAsNormalUser((NormalUser) user, auction, observer);
+    } else {
+      // Admin role — join để theo dõi, không cọc, không validate rating
+      joinAsAdmin(user, auction, observer);
+    }
   }
 
   /**
    * Theo dõi phiên mà không tham gia đặt bid.
    */
   @Override
-  public void watchAuction(NormalUser bidder, Auction auction, AuctionObserver observer) {
+  public void watchAuction(User bidder, Auction auction, AuctionObserver observer) {
     bidder.addToWatchList(auction.getId());
     auction.incrementViewerCount();
-    auctionService.addObserver(auction, observer);
-    System.out.printf("[BID] %s theo dõi phiên %s.%n", bidder.getUsername(), auction.getId());
+    auctionService.addObserver(auction.getId(), observer);
+    log.info("{} theo dõi phiên {}.", bidder.getUsername(), auction.getId());
 
     // Lưu trạng thái vào DB
     auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
@@ -113,9 +101,9 @@ public class BidService implements IBidService {
    */
   @Override
   public void placeBid(NormalUser bidder, Auction auction,
-                       double amount, BidStrategy strategy) {
+                       long amount, BidStrategy strategy) {
     if (!ratingService.isEligible(bidder)) {
-      recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
+      throw recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
     }
 
     if (!auction.isAcceptingBids()) {
@@ -123,21 +111,20 @@ public class BidService implements IBidService {
     }
 
     if (!bidder.hasJoined(auction.getId())) {
-      recordAndThrow(bidder, auction, amount,
+      throw recordAndThrow(bidder, auction, amount,
               new AuctionBusinessException(AuctionBusinessException.Reason.NOT_JOINED_AUCTION));
     }
 
     if (!strategy.isValidBid(auction, amount)) {
-      recordAndThrow(bidder, auction, amount,
+      throw recordAndThrow(bidder, auction, amount,
               new InvalidBidException(
-                      String.format("Bid %.0f không hợp lệ. Giá hiện tại: %.0f. %s",
+                      String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
                               amount, auction.getCurrentPrice(), strategy.describe()),
                       amount, auction.getCurrentPrice()));
     }
 
     // Cập nhật trạng thái phiên
-    auction.setCurrentPrice(amount);
-    auction.setCurrentLeader(bidder);
+    auction.updateBid(amount, bidder);
 
     if (!auction.isReserveMet()) {
       BidTransaction tx = recordTransaction(bidder, auction, amount,
@@ -145,16 +132,14 @@ public class BidService implements IBidService {
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %.0f — chưa đạt reserve price (%.0f).%n",
-              bidder.getUsername(), amount,
-              auction.getReserveStrategy().getReservePrice());
+      log.info("{} đặt giá {} — chưa đạt reserve price ({}).",
+              bidder.getUsername(), amount, auction.getReservePrice());
     } else {
       BidTransaction tx = recordTransaction(bidder, auction, amount, BidResult.ACCEPTED);
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
-      System.out.printf("[BID] %s đặt giá %.0f thành công!%n",
-              bidder.getUsername(), amount);
+      log.info("{} đặt giá {} thành công!", bidder.getUsername(), amount);
     }
 
     // Anti-sniping: nếu có bid hợp lệ trong N giây cuối thì gia hạn phiên thêm M giây
@@ -180,14 +165,60 @@ public class BidService implements IBidService {
 
   // Private helpers
 
-  private void recordAndThrow(NormalUser bidder, Auction auction,
-                              double amount, RuntimeException ex) {
+  /**
+   * Logic join cho NormalUser: validate rating, chặn seller tự bid,
+   * đóng cọc 30% giá khởi điểm.
+   */
+  private void joinAsNormalUser(NormalUser bidder, Auction auction, AuctionObserver observer) {
+    if (!ratingService.isEligible(bidder)) {
+      throw buildIneligibleException(bidder);
+    }
+
+    if (bidder.hasRole(User.UserRole.SELLER)
+            && bidder.getAllAuctionIds().contains(auction.getId())) {
+      throw new AuctionBusinessException(
+              AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
+    }
+
+    long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
+    walletService.lockDeposit(bidder, depositAmount, auction.getId());
+
+    registerJoin(bidder, auction, observer);
+    log.info("{} tham gia phiên {} | Cọc khóa: {}",
+            bidder.getUsername(), auction.getId(), depositAmount);
+  }
+
+  /**
+   * Logic join cho Admin: không cọc, không validate rating.
+   */
+  private void joinAsAdmin(User admin, Auction auction, AuctionObserver observer) {
+    registerJoin(admin, auction, observer);
+    log.info("Admin {} join phiên {} (không cọc).", admin.getUsername(), auction.getId());
+  }
+
+  /**
+   * Các bước join chung cho mọi loại user: đánh dấu joined, thêm watchList,
+   * tăng viewerCount, đăng ký observer, persist DB.
+   */
+  private void registerJoin(User user, Auction auction, AuctionObserver observer) {
+    user.addJoinedAuction(auction.getId());
+    user.addToWatchList(auction.getId());
+    auction.incrementViewerCount();
+    auctionService.addObserver(auction.getId(), observer);
+
+    // TODO: [DB] auctionDAO.updateViewerCount / userDAO.saveUserAuctionActivity
+    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
+    userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+  }
+
+  private RuntimeException recordAndThrow(NormalUser bidder, Auction auction,
+                              long amount, RuntimeException ex) {
     recordTransaction(bidder, auction, amount, BidResult.REJECTED);
-    throw ex;
+    return ex;
   }
 
   private BidTransaction recordTransaction(NormalUser bidder, Auction auction,
-                                           double amount, BidResult result) {
+                                           long amount, BidResult result) {
     BidTransaction tx = BidTransaction.create(bidder, auction.getId(), amount, result);
     bidder.addBidToHistory(tx);
 

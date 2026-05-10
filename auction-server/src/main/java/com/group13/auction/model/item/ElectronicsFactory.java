@@ -12,7 +12,7 @@ public class ElectronicsFactory extends ItemFactory {
      * @param args args[0]: brand (String), args[1]: warrantyMonths (int), args[2]: condition (String)
      */
     @Override
-    protected Item createProduct(String name, String description, double startingPrice,
+    protected Item createProduct(String name, String description, long startingPrice,
                                  NormalUser seller, Object... args) {
         String brand = (String) args[0];
         int warrantyMonths = (int) args[1];

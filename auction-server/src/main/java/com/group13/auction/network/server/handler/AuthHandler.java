@@ -9,11 +9,15 @@ import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.UserDAO;
+import com.group13.auction.manager.AuctionManager;
+import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.NormalUserFactory;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
+import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.AccountService;
 import com.group13.auction.service.UserService;
-import com.group13.auction.network.server.util.DTOMapper;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -28,6 +32,11 @@ import java.util.UUID;
  *   <li>Gọi Service.</li>
  *   <li>Serialize kết quả và gửi về.</li>
  * </ol>
+ *
+ * <p>Register dùng {@link UserDAO} + {@link NormalUserFactory} trực tiếp vì
+ * {@link UserService} chỉ cung cấp {@code login()}.
+ * {@link AuctionManager#registerUser(com.group13.auction.model.user.User)} được gọi sau khi lưu DB
+ * để đồng bộ in-memory registry.
  */
 public class AuthHandler implements PacketHandler {
 
@@ -40,13 +49,23 @@ public class AuthHandler implements PacketHandler {
     private final AccountService accountService;
     private final UserService userService;
     private final SessionManager sessionManager;
+    /** Dùng cho REGISTER: kiểm tra duplicate và lưu user mới vào DB. */
+    private final UserDAO userDAO;
 
+    /**
+     * Constructor đầy đủ — tự khởi tạo {@link UserDAO} để xử lý đăng ký.
+     *
+     * @param accountService service tài khoản
+     * @param userService    service xác thực (login)
+     * @param sessionManager quản lý session
+     */
     public AuthHandler(AccountService accountService,
                        UserService userService,
                        SessionManager sessionManager) {
         this.accountService = accountService;
         this.userService = userService;
         this.sessionManager = sessionManager;
+        this.userDAO = new UserDAO();
     }
 
     @Override
@@ -67,6 +86,16 @@ public class AuthHandler implements PacketHandler {
 
     // ── REGISTER ──────────────────────────────────────────────────────────────
 
+    /**
+     * Tạo tài khoản mới:
+     * <ol>
+     *   <li>Validate input.</li>
+     *   <li>Kiểm tra duplicate username / email qua {@link UserDAO}.</li>
+     *   <li>Tạo {@link NormalUser} qua {@link NormalUserFactory} (hash password).</li>
+     *   <li>Lưu DB + đăng ký {@link AuctionManager} in-memory.</li>
+     *   <li>Authenticate session và trả {@code REGISTER_SUCCESS}.</li>
+     * </ol>
+     */
     private void handleRegister(ClientSession session, JsonElement payload, String requestId) {
         try {
             RegisterRequestDTO req = PacketCodec.fromElement(payload, RegisterRequestDTO.class);
@@ -79,9 +108,37 @@ public class AuthHandler implements PacketHandler {
                 return;
             }
 
-            // Gọi service tạo user
-            com.group13.auction.model.user.NormalUser newUser =
-                    userService.register(req.getUsername(), req.getPassword(), req.getEmail());
+            // Kiểm tra trùng username
+            if (userDAO.existsByUsername(req.getUsername())) {
+                session.send(Packet.of(PacketType.REGISTER_FAILED,
+                        ErrorDTO.of(ErrorDTO.DUPLICATE_USERNAME,
+                                "Username '" + req.getUsername() + "' đã tồn tại.", requestId)));
+                return;
+            }
+
+            // Kiểm tra trùng email
+            if (userDAO.existsByEmail(req.getEmail())) {
+                session.send(Packet.of(PacketType.REGISTER_FAILED,
+                        ErrorDTO.of(ErrorDTO.DUPLICATE_EMAIL,
+                                "Email '" + req.getEmail() + "' đã được sử dụng.", requestId)));
+                return;
+            }
+
+            // Tạo NormalUser qua factory (hash password trong constructor)
+            NormalUser newUser = new NormalUserFactory()
+                    .createUser(req.getUsername(), req.getPassword(), req.getEmail());
+
+            // FIX Bug #2: lưu vào DB một lần duy nhất, kiểm tra kết quả.
+            // AuctionManager.registerUser() lại gọi userDAO.save() lần nữa → duplicate insert.
+            // Dùng addToUserList() thay thế để chỉ thêm vào in-memory.
+            boolean saved = userDAO.save(newUser);
+            if (!saved) {
+                session.send(Packet.of(PacketType.REGISTER_FAILED,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Không thể lưu tài khoản vào cơ sở dữ liệu.", requestId)));
+                return;
+            }
+            AuctionManager.getInstance().addToUserList(newUser);
 
             // Tạo token session
             String token = UUID.randomUUID().toString();
@@ -98,8 +155,8 @@ public class AuthHandler implements PacketHandler {
             String code = e.getMessage().contains("username")
                     ? ErrorDTO.DUPLICATE_USERNAME
                     : e.getMessage().contains("email")
-                    ? ErrorDTO.DUPLICATE_EMAIL
-                    : ErrorDTO.VALIDATION_ERROR;
+                      ? ErrorDTO.DUPLICATE_EMAIL
+                      : ErrorDTO.VALIDATION_ERROR;
             session.send(Packet.of(PacketType.REGISTER_FAILED,
                     ErrorDTO.of(code, e.getMessage(), requestId)));
         } catch (Exception e) {

@@ -12,13 +12,13 @@ public class Vehicle extends Item {
 
   // Static factory method
 
-  protected static Vehicle create(String name, String description, double startingPrice,
+  protected static Vehicle create(String name, String description, long startingPrice,
                                   NormalUser seller, String manufacturer, int year, double mileage) {
     return new Vehicle(name, description, startingPrice, seller, manufacturer, year, mileage);
   }
 
   public static Vehicle reconstitute(String id, LocalDateTime createdAt,
-                                     LocalDateTime updatedAt, String name, String description, double startingPrice,
+                                     LocalDateTime updatedAt, String name, String description, long startingPrice,
                                      NormalUser seller, String manufacturer, int year, double mileage) {
     return new Vehicle(id, createdAt, updatedAt, name, description, startingPrice,
             seller, manufacturer, year, mileage);
@@ -27,7 +27,7 @@ public class Vehicle extends Item {
   // Private Constructors: Ngăn chặn new cứng
 
   /** Khai sinh */
-  private Vehicle(String name, String description, double startingPrice,
+  private Vehicle(String name, String description, long startingPrice,
                   NormalUser seller, String manufacturer, int year, double mileage) {
     super(name, description, startingPrice, ItemCategory.VEHICLE, seller);
     this.manufacturer = manufacturer;
@@ -37,7 +37,7 @@ public class Vehicle extends Item {
 
   /** Hồi sinh từ DB */
   private Vehicle(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                  String name, String description, double startingPrice, NormalUser seller,
+                  String name, String description, long startingPrice, NormalUser seller,
                   String manufacturer, int year, double mileage) {
     super(id, createdAt, updatedAt, name, description, startingPrice, ItemCategory.VEHICLE, seller);
     this.manufacturer = manufacturer;
@@ -57,7 +57,7 @@ public class Vehicle extends Item {
     System.out.printf("Hãng : %s%n", manufacturer);
     System.out.printf("Năm sản xuất : %d%n", year);
     System.out.printf("Số km : %.0f%n", mileage);
-    System.out.printf("Giá khởi điểm: %.0f%n", getStartingPrice());
+    System.out.printf("Giá khởi điểm: %d%n", getStartingPrice());
     System.out.println("======================================");
   }
 }

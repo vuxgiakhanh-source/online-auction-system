@@ -1,6 +1,8 @@
 package com.group13.auction.dao;
 
 import com.group13.auction.model.auction.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class AuctionDAO {
+    private static final Logger log = LoggerFactory.getLogger(AuctionDAO.class);
 
     public AuctionDAO() {
         // Constructor rỗng, lấy Connection cục bộ trong từng hàm
@@ -29,15 +32,15 @@ public class AuctionDAO {
             pstmt.setTimestamp(3, Timestamp.valueOf(auction.getStartTime()));
             pstmt.setTimestamp(4, Timestamp.valueOf(auction.getEndTime()));
             pstmt.setString(5, auction.getStatus().name());
-            pstmt.setDouble(6, auction.getReserveStrategy().getReservePrice());
-            pstmt.setDouble(7, auction.getCurrentPrice());
+            pstmt.setLong(6, auction.getReservePrice());
+            pstmt.setLong(7, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(8, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(8, java.sql.Types.VARCHAR);
             }
             // Legacy columns: giữ đồng bộ để các query/handler cũ vẫn hoạt động
-            pstmt.setDouble(9, auction.getCurrentPrice());
+            pstmt.setLong(9, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(10, auction.getCurrentLeader().getId());
             } else {
@@ -47,7 +50,7 @@ public class AuctionDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi tạo phiên đấu giá: " + e.getMessage());
+            log.error("Lỗi tạo phiên đấu giá: auctionId={}", auction != null ? auction.getId() : null, e);
             return false;
         }
     }
@@ -66,7 +69,7 @@ public class AuctionDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật trạng thái phiên: " + e.getMessage());
+            log.error("Lỗi cập nhật trạng thái phiên: auctionId={}, status={}", auctionId, status, e);
             return false;
         }
     }
@@ -82,14 +85,14 @@ public class AuctionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auction.getStatus().name());
-            pstmt.setDouble(2, auction.getCurrentPrice()); // current_price
+            pstmt.setLong(2, auction.getCurrentPrice()); // current_price
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(3, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(3, java.sql.Types.VARCHAR);
             }
             // legacy current_highest_price
-            pstmt.setDouble(4, auction.getCurrentPrice());
+            pstmt.setLong(4, auction.getCurrentPrice());
 
             // Xử lý trường hợp không có người chiến thắng (NULL)
             if (auction.getCurrentLeader() != null) {
@@ -102,31 +105,30 @@ public class AuctionDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật kết quả phiên: " + e.getMessage());
+            log.error("Lỗi cập nhật kết quả phiên: auctionId={}", auction != null ? auction.getId() : null, e);
             return false;
         }
     }
 
     /**
      * Cập nhật giá cao nhất khi có người đặt giá hợp lệ (Bid).
-     * Hàm này bạn đã có, tôi chỉ sửa lại kiểu dữ liệu String cho khớp UUID.
      */
-    public boolean updateHighestPrice(String auctionId, double newPrice, String bidderId) {
+    public boolean updateHighestPrice(String auctionId, long newPrice, String bidderId) {
         String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setDouble(1, newPrice);
+            pstmt.setLong(1, newPrice);
             pstmt.setString(2, bidderId);
             // legacy columns
-            pstmt.setDouble(3, newPrice);
+            pstmt.setLong(3, newPrice);
             pstmt.setString(4, bidderId);
             pstmt.setString(5, auctionId);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật giá đấu: " + e.getMessage());
+            log.error("Lỗi cập nhật giá đấu: auctionId={}, newPrice={}, bidderId={}", auctionId, newPrice, bidderId, e);
             return false;
         }
     }
@@ -145,7 +147,7 @@ public class AuctionDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật số lượt xem phiên đấu giá: " + e.getMessage());
+            log.error("Lỗi cập nhật số lượt xem phiên đấu giá: auctionId={}, count={}", auctionId, count, e);
             return false;
         }
     }
@@ -161,7 +163,7 @@ public class AuctionDAO {
             pstmt.setString(2, auctionId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật end_time của phiên: " + e.getMessage());
+            log.error("Lỗi cập nhật end_time của phiên: auctionId={}, endTime={}", auctionId, endTime, e);
             return false;
         }
     }
@@ -184,11 +186,14 @@ public class AuctionDAO {
                     String statusStr = rs.getString("status");
                     String itemId = rs.getString("item_id");
                     String leaderId = rs.getString("current_leader_id");
-                    double currentPrice = rs.getDouble("current_price");
+                    long currentPrice = rs.getLong("current_price");
 
                     // 2. Xử lý thời gian an toàn
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+                    java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+                    java.time.LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : createdAt;
 
                     java.sql.Timestamp startTs = rs.getTimestamp("start_time");
                     java.time.LocalDateTime startTime = (startTs != null) ? startTs.toLocalDateTime() : null;
@@ -208,38 +213,45 @@ public class AuctionDAO {
 
                     // Đã thực hiện TODO: Đọc reserve_price từ DB và khởi tạo Strategy thực tế.
                     // Bảng auctions cần có cột reserve_price (BIGINT/DECIMAL, NOT NULL).
-                    double reservePrice = rs.getDouble("reserve_price");
+                    long reservePrice = rs.getLong("reserve_price");
                     // Nếu cột reserve_price chưa tồn tại hoặc = 0, dùng giá hiện tại làm fallback
                     // để tránh NullPointerException trong Auction.isReserveMet().
                     if (reservePrice <= 0) {
-                        reservePrice = currentPrice > 0 ? currentPrice : 1.0;
+                        reservePrice = currentPrice > 0 ? currentPrice : 1L;
                     }
-                    com.group13.auction.strategy.ReservePriceStrategy reserveStrategy =
-                            new com.group13.auction.strategy.ReservePriceStrategy(reservePrice);
 
                     // 4. HỒI SINH AUCTION BẰNG RECONSTITUTE
+                    com.group13.auction.model.auction.Auction.AuctionStatus status = com.group13.auction.model.auction.Auction.AuctionStatus.OPEN;
+                    if (statusStr != null && !statusStr.trim().isEmpty()) {
+                        try {
+                            status = com.group13.auction.model.auction.Auction.AuctionStatus.valueOf(statusStr.trim().toUpperCase());
+                        } catch (IllegalArgumentException ignored) {
+                            // fallback OPEN
+                        }
+                    }
                     com.group13.auction.model.auction.Auction auction = com.group13.auction.model.auction.Auction.reconstitute(
                             id,
                             createdAt,
-                            createdAt, // Dùng tạm createdAt cho updatedAt
+                            updatedAt,
                             item,
                             startTime,
                             endTime,
                             currentPrice,
-                            com.group13.auction.model.auction.Auction.AuctionStatus.valueOf(statusStr),
-                            reserveStrategy
+                            status,
+                            reservePrice
                     );
 
                     // 5. Nạp thêm các thuộc tính không có trong hàm reconstitute
                     if (currentLeader != null) {
-                        auction.setCurrentLeader(currentLeader);
+                        // reconstitute() không nhận currentLeader, nên nạp lại sau
+                        auction.updateBid(currentPrice, currentLeader);
                     }
 
                     return auction;
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi tìm Auction theo ID: " + e.getMessage());
+            log.error("Lỗi tìm Auction theo ID: auctionId={}", auctionId, e);
         }
         return null;
     }
@@ -267,7 +279,7 @@ public class AuctionDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi lấy danh sách Auction: " + e.getMessage());
+            log.error("Lỗi lấy danh sách Auction", e);
         }
         return auctions;
     }
@@ -298,7 +310,7 @@ public class AuctionDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi tìm phiên chưa kết thúc của seller: " + e.getMessage());
+            log.error("Lỗi tìm phiên chưa kết thúc của seller: sellerId={}", sellerId, e);
         }
         return ids;
     }
@@ -326,7 +338,7 @@ public class AuctionDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi lấy danh sách auctionId của seller: " + e.getMessage());
+            log.error("Lỗi lấy danh sách auctionId của seller: sellerId={}", sellerId, e);
         }
         return ids;
     }

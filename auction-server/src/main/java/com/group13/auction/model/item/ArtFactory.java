@@ -12,7 +12,7 @@ public class ArtFactory extends ItemFactory {
      * @param args args[0]: artist (String), args[1]: yearCreated (int), args[2]: medium (String)
      */
     @Override
-    protected Item createProduct(String name, String description, double startingPrice,
+    protected Item createProduct(String name, String description, long startingPrice,
                                  NormalUser seller, Object... args) {
         String artist = (String) args[0];
         int yearCreated = (int) args[1];

@@ -13,46 +13,46 @@ public final class PaymentDTOs {
 
     /** Payload của DEPOSIT. */
     public static class DepositRequestDTO {
-        private double amount;
+        private long amount;
 
         public DepositRequestDTO() {}
-        public DepositRequestDTO(double amount) { this.amount = amount; }
+        public DepositRequestDTO(long amount) { this.amount = amount; }
 
-        public double getAmount() { return amount; }
-        public void setAmount(double amount) { this.amount = amount; }
+        public long getAmount() { return amount; }
+        public void setAmount(long amount) { this.amount = amount; }
     }
 
     /** Payload của WITHDRAW. */
     public static class WithdrawRequestDTO {
-        private double amount;
+        private long amount;
 
         public WithdrawRequestDTO() {}
-        public WithdrawRequestDTO(double amount) { this.amount = amount; }
+        public WithdrawRequestDTO(long amount) { this.amount = amount; }
 
-        public double getAmount() { return amount; }
-        public void setAmount(double amount) { this.amount = amount; }
+        public long getAmount() { return amount; }
+        public void setAmount(long amount) { this.amount = amount; }
     }
 
     /** Payload của DEPOSIT_SUCCESS, WITHDRAW_SUCCESS, GET_WALLET_BALANCE_SUCCESS. */
     public static class WalletBalanceResponseDTO {
-        private double balance;
-        private double lockedDeposit;
-        private double availableBalance;
+        private long balance;
+        private long lockedDeposit;
+        private long availableBalance;
 
         public WalletBalanceResponseDTO() {}
 
-        public WalletBalanceResponseDTO(double balance, double lockedDeposit, double availableBalance) {
+        public WalletBalanceResponseDTO(long balance, long lockedDeposit, long availableBalance) {
             this.balance = balance;
             this.lockedDeposit = lockedDeposit;
             this.availableBalance = availableBalance;
         }
 
-        public double getBalance() { return balance; }
-        public void setBalance(double balance) { this.balance = balance; }
-        public double getLockedDeposit() { return lockedDeposit; }
-        public void setLockedDeposit(double lockedDeposit) { this.lockedDeposit = lockedDeposit; }
-        public double getAvailableBalance() { return availableBalance; }
-        public void setAvailableBalance(double availableBalance) { this.availableBalance = availableBalance; }
+        public long getBalance() { return balance; }
+        public void setBalance(long balance) { this.balance = balance; }
+        public long getLockedDeposit() { return lockedDeposit; }
+        public void setLockedDeposit(long lockedDeposit) { this.lockedDeposit = lockedDeposit; }
+        public long getAvailableBalance() { return availableBalance; }
+        public void setAvailableBalance(long availableBalance) { this.availableBalance = availableBalance; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -73,10 +73,10 @@ public final class PaymentDTOs {
     /** Payload của PAYMENT_SUCCESS và PAYMENT_COMPLETED_NOTIFY. */
     public static class PaymentResultDTO {
         private String auctionId;
-        private double finalPrice;
-        private double depositDeducted;
-        private double remainingToPay;
-        private double newBalance;
+        private long finalPrice;
+        private long depositDeducted;
+        private long remainingToPay;
+        private long newBalance;
         /** "COMPLETED" | "PENDING" (second chance đã accept, chờ thanh toán tiếp) */
         private String paymentStatus;
         private LocalDateTime paidAt;
@@ -85,14 +85,14 @@ public final class PaymentDTOs {
 
         public String getAuctionId() { return auctionId; }
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
-        public double getFinalPrice() { return finalPrice; }
-        public void setFinalPrice(double finalPrice) { this.finalPrice = finalPrice; }
-        public double getDepositDeducted() { return depositDeducted; }
-        public void setDepositDeducted(double depositDeducted) { this.depositDeducted = depositDeducted; }
-        public double getRemainingToPay() { return remainingToPay; }
-        public void setRemainingToPay(double remainingToPay) { this.remainingToPay = remainingToPay; }
-        public double getNewBalance() { return newBalance; }
-        public void setNewBalance(double newBalance) { this.newBalance = newBalance; }
+        public long getFinalPrice() { return finalPrice; }
+        public void setFinalPrice(long finalPrice) { this.finalPrice = finalPrice; }
+        public long getDepositDeducted() { return depositDeducted; }
+        public void setDepositDeducted(long depositDeducted) { this.depositDeducted = depositDeducted; }
+        public long getRemainingToPay() { return remainingToPay; }
+        public void setRemainingToPay(long remainingToPay) { this.remainingToPay = remainingToPay; }
+        public long getNewBalance() { return newBalance; }
+        public void setNewBalance(long newBalance) { this.newBalance = newBalance; }
         public String getPaymentStatus() { return paymentStatus; }
         public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
         public LocalDateTime getPaidAt() { return paidAt; }
@@ -102,15 +102,15 @@ public final class PaymentDTOs {
     /** Payload của PAYMENT_EXPIRED_NOTIFY. */
     public static class PaymentExpiredDTO {
         private String auctionId;
-        private double depositForfeited;
+        private long depositForfeited;
         private double ratingPenalty;
 
         public PaymentExpiredDTO() {}
 
         public String getAuctionId() { return auctionId; }
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
-        public double getDepositForfeited() { return depositForfeited; }
-        public void setDepositForfeited(double depositForfeited) { this.depositForfeited = depositForfeited; }
+        public long getDepositForfeited() { return depositForfeited; }
+        public void setDepositForfeited(long depositForfeited) { this.depositForfeited = depositForfeited; }
         public double getRatingPenalty() { return ratingPenalty; }
         public void setRatingPenalty(double ratingPenalty) { this.ratingPenalty = ratingPenalty; }
     }
@@ -122,33 +122,33 @@ public final class PaymentDTOs {
     /** Payload của DEPOSIT_REFUND_NOTIFY (gửi cho bidder thua). */
     public static class DepositRefundDTO {
         private String auctionId;
-        private double refundAmount;
-        private double newBalance;
+        private long refundAmount;
+        private long newBalance;
 
         public DepositRefundDTO() {}
 
         public String getAuctionId() { return auctionId; }
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
-        public double getRefundAmount() { return refundAmount; }
-        public void setRefundAmount(double refundAmount) { this.refundAmount = refundAmount; }
-        public double getNewBalance() { return newBalance; }
-        public void setNewBalance(double newBalance) { this.newBalance = newBalance; }
+        public long getRefundAmount() { return refundAmount; }
+        public void setRefundAmount(long refundAmount) { this.refundAmount = refundAmount; }
+        public long getNewBalance() { return newBalance; }
+        public void setNewBalance(long newBalance) { this.newBalance = newBalance; }
     }
 
     /** Payload của DEPOSIT_FORFEITED_NOTIFY (gửi cho winner không trả tiền). */
     public static class DepositForfeitedDTO {
         private String auctionId;
-        private double forfeitedAmount;
-        private double newBalance;
+        private long forfeitedAmount;
+        private long newBalance;
 
         public DepositForfeitedDTO() {}
 
         public String getAuctionId() { return auctionId; }
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
-        public double getForfeitedAmount() { return forfeitedAmount; }
-        public void setForfeitedAmount(double forfeitedAmount) { this.forfeitedAmount = forfeitedAmount; }
-        public double getNewBalance() { return newBalance; }
-        public void setNewBalance(double newBalance) { this.newBalance = newBalance; }
+        public long getForfeitedAmount() { return forfeitedAmount; }
+        public void setForfeitedAmount(long forfeitedAmount) { this.forfeitedAmount = forfeitedAmount; }
+        public long getNewBalance() { return newBalance; }
+        public void setNewBalance(long newBalance) { this.newBalance = newBalance; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -160,8 +160,8 @@ public final class PaymentDTOs {
         private String offerId;
         private String auctionId;
         private String auctionItemName;
-        private double offerPrice;
-        private double depositRequired;
+        private long offerPrice;
+        private long depositRequired;
         private LocalDateTime deadline;
 
         public SecondChanceOfferDTO() {}
@@ -172,10 +172,10 @@ public final class PaymentDTOs {
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
         public String getAuctionItemName() { return auctionItemName; }
         public void setAuctionItemName(String auctionItemName) { this.auctionItemName = auctionItemName; }
-        public double getOfferPrice() { return offerPrice; }
-        public void setOfferPrice(double offerPrice) { this.offerPrice = offerPrice; }
-        public double getDepositRequired() { return depositRequired; }
-        public void setDepositRequired(double depositRequired) { this.depositRequired = depositRequired; }
+        public long getOfferPrice() { return offerPrice; }
+        public void setOfferPrice(long offerPrice) { this.offerPrice = offerPrice; }
+        public long getDepositRequired() { return depositRequired; }
+        public void setDepositRequired(long depositRequired) { this.depositRequired = depositRequired; }
         public LocalDateTime getDeadline() { return deadline; }
         public void setDeadline(LocalDateTime deadline) { this.deadline = deadline; }
     }

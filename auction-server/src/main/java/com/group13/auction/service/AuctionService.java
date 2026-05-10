@@ -1,6 +1,8 @@
 package com.group13.auction.service;
 
+import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
@@ -13,8 +15,14 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IRatingService;
-import com.group13.auction.strategy.ReservePriceStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.group13.auction.model.user.Admin.CancelReason.SELLER_REQUEST;
 
@@ -28,9 +36,17 @@ import static com.group13.auction.model.user.Admin.CancelReason.SELLER_REQUEST;
  */
 public class AuctionService implements IAuctionService {
 
+  private static final Logger log = LoggerFactory.getLogger(AuctionService.class);
+
   private final IRatingService ratingService;
   private final SystemAdmin system = SystemAdmin.getInstance();
-  private final AuctionDAO auctionDAO; // Thực hiện TODO: inject AuctionDAO
+  private final AuctionDAO auctionDAO;
+  private final SystemBank systemBank = SystemBank.getInstance();
+
+  /**
+   * Map<auctionId, observers> - tập trung quản lý observer.
+   */
+  private final Map<String, List<AuctionObserver>> observersMap = new ConcurrentHashMap<>();
 
   public AuctionService(IRatingService ratingService, AuctionDAO auctionDAO) {
     this.ratingService = ratingService;
@@ -47,15 +63,19 @@ public class AuctionService implements IAuctionService {
    * @param item sản phẩm đưa ra đấu giá
    * @param startTime thời điểm bắt đầu
    * @param endTime thời điểm kết thúc
-   * @param reserveStrategy reserve price strategy
+   * @param reservePrice giá sàn bí mật của Seller (>0)
    * @return Auction mới ở trạng thái OPEN
    * @throws IllegalStateException nếu seller không đủ điều kiện
    * @throws IllegalArgumentException nếu endTime trước startTime hoặc thiếu role SELLER
    */
   @Override
-  public Auction createAuction(NormalUser seller, Item item,
-                               LocalDateTime startTime, LocalDateTime endTime,
-                               ReservePriceStrategy reserveStrategy) {
+  public Auction createAuction(
+          NormalUser seller,
+          Item item,
+          LocalDateTime startTime,
+          LocalDateTime endTime,
+          long reservePrice) {
+
     if (!seller.hasRole(User.UserRole.SELLER)) {
       throw new IllegalArgumentException(
               "User chưa có role Seller. Cần được hệ thống phê duyệt trước.");
@@ -67,16 +87,14 @@ public class AuctionService implements IAuctionService {
     if (!endTime.isAfter(startTime)) {
       throw new IllegalArgumentException("endTime phải sau startTime.");
     }
-    if (reserveStrategy == null) {
-      throw new IllegalArgumentException(
-              "ReservePriceStrategy không được null - bắt buộc thiết lập khi tạo auction.");
+    if (reservePrice <= 0) {
+      throw new IllegalArgumentException("reservePrice phải lớn hơn 0.");
     }
 
-    Auction auction = Auction.create(item, startTime, endTime, reserveStrategy);
+    Auction auction = Auction.create(item, startTime, endTime, reservePrice);
     seller.addAuctionId(auction.getId());
     AuctionManager.getInstance().registerAuction(auction);
-    System.out.printf("[AUCTION SERVICE] Tạo auction: %s (reserve: %.0f)%n",
-            auction.getId(), reserveStrategy.getReservePrice());
+    log.info("Tạo auction: auctionId={} reserve={}", auction.getId(), reservePrice);
 
     // Đã thực hiện TODO: auctionDAO.save(auction)
     auctionDAO.createAuction(auction);
@@ -96,14 +114,14 @@ public class AuctionService implements IAuctionService {
    */
   @Override
   public void startAuction(Auction auction) {
-    // State object tự ném IllegalStateException nếu không hợp lệ
     auction.transitionToRunning();
-    notify(auction, AuctionEvent.AuctionEventType.AUCTION_STARTED, null, 0);
-    System.out.printf("[AUCTION SERVICE] Phiên bắt đầu: %s%n", auction.getId());
+    notify(auction, AuctionEvent.AuctionEventType.AUCTION_STARTED, null, 0L);
+    log.info("Phiên bắt đầu: auctionId={}", auction.getId());
 
     // Thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
+  
 
   /**
    * Đóng phiên khi hết giờ.
@@ -126,9 +144,9 @@ public class AuctionService implements IAuctionService {
   public void closeAuction(Auction auction) {
     if (auction.getCurrentLeader() == null) {
       // TH1.1: không có ai đặt giá -> SYSTEM auto-cancel
-      notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0);
+      notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0L);
       cancelAuction(auction, Admin.CancelReason.NO_WINNER);
-      System.out.println("[AUCTION SERVICE] Phiên đóng - không có ai đặt giá.");
+      log.info("Phiên đóng - không có ai đặt giá: auctionId={}", auction.getId());
 
     } else if (!auction.isReserveMet()) {
       // TH1.2: có leader nhưng chưa đạt reserve -> SYSTEM auto-cancel
@@ -136,24 +154,37 @@ public class AuctionService implements IAuctionService {
       notify(auction, AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
               leader, auction.getCurrentPrice());
       cancelAuction(auction, Admin.CancelReason.RESERVE_NOT_MET);
-      System.out.printf(
-              "[AUCTION SERVICE] Phiên đóng - giá cao nhất %.0f chưa đạt reserve %.0f.%n",
-              auction.getCurrentPrice(),
-              auction.getReserveStrategy().getReservePrice());
+      log.info("Phiên đóng - reserve chưa đạt: auctionId={} highestPrice={} reserve={}",
+              auction.getId(), auction.getCurrentPrice(), auction.getReservePrice());
 
     } else {
       // TH2: reserve met, có winner
       NormalUser winner = auction.getCurrentLeader();
-      // TODO: Query từ DAO (deposit đã lock thực tế của Winner). Thịnh sửa dòng 148
-      double depositPaid = auction.getItem().getStartingPrice() * 0.3;
-      auction.setWinner(
-              AuctionWinner.create(winner, auction.getId(),
-                      auction.getCurrentPrice(), depositPaid, false));
+
+      // Lấy đúng tiền cọc đã lock của winner cho phiên này từ DB (audit trail).
+      // Fallback về 30% startingPrice nếu thiếu dữ liệu legacy.
+      FinancialTransactionDAO financialTransactionDAO = new FinancialTransactionDAO();
+      long depositPaid = financialTransactionDAO.findLockedDepositAmount(
+              winner.getId(), auction.getId());
+      if (depositPaid <= 0) {
+        depositPaid = auction.getItem().getStartingPrice() * 3 / 10;
+      }
+
+      AuctionWinner auctionWinner = AuctionWinner.create(
+              winner, auction.getId(), auction.getCurrentPrice(), depositPaid, false);
+      auction.setWinner(auctionWinner);
       auction.transitionToClose(true);
+
+      // Tiền cọc của winner chuyển vào SystemBank ngay lập tức (FUNDS_HELD).
+      systemBank.receive(depositPaid);
+      log.info("Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId={} winner={} deposit={}",
+              auction.getId(), winner.getUsername(), depositPaid);
+      // TODO: [DB] financialTransactionDAO.saveDepositToBank(winner.getId(), depositPaid, auction.getId())
+
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_ENDED,
               winner, auction.getCurrentPrice());
-      System.out.printf("[AUCTION SERVICE] Winner: %s | Giá: %.0f%n",
-              winner.getUsername(), auction.getCurrentPrice());
+      log.info("Winner: auctionId={} winner={} price={}",
+              auction.getId(), winner.getUsername(), auction.getCurrentPrice());
     }
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
@@ -162,6 +193,7 @@ public class AuctionService implements IAuctionService {
 
   /**
    * Đánh dấu thanh toán thành công: FINISHED -> PAID.
+   * Tiền đã vào SystemBank (FUNDS_HELD); kích hoạt đếm 7 ngày "nhận hàng".
    * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần đánh dấu
@@ -170,9 +202,17 @@ public class AuctionService implements IAuctionService {
   @Override
   public void markAsPaid(Auction auction) {
     auction.transitionToPaid();
+
+    // Kích hoạt deadline nhận hàng 7 ngày
+    AuctionWinner auctionWinner = auction.getWinner();
+    if (auctionWinner != null) {
+      auctionWinner.markFundsHeld();
+      // TODO: [DB] auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(), ...)
+    }
+
     notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
             auction.getCurrentLeader(), auction.getCurrentPrice());
-    System.out.println("[AUCTION SERVICE] Giao dịch hoàn tất - PAID.");
+    log.info("Giao dịch hoàn tất - PAID: auctionId={}", auction.getId());
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -181,7 +221,7 @@ public class AuctionService implements IAuctionService {
   /**
    * SYSTEM tự động huỷ phiên - không cần staff cụ thể.
    * Log được ghi vào {@link SystemAdmin}.
-   * Khi: no-winner, reserve-not-met, system-error.
+   * Khi no-winner, reserve-not-met, system-error.
    * Đã thực hiện TODO: auctionDAO.update(auction).
    *
    * @param auction phiên cần huỷ
@@ -193,16 +233,16 @@ public class AuctionService implements IAuctionService {
     String log = String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s",
             auction.getId(), reason);
     system.addActionLog(log);
-    System.out.println(log);
+    AuctionService.log.info("SYSTEM AUTO-CANCEL: auctionId={} reason={}", auction.getId(), reason);
 
     // Persist DB trước khi notify để đảm bảo nhất quán
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
 
-    notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0);
+    notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0L);
 
     // Notify staff về việc hủy
     AuctionManager.getInstance().notifyStaffObservers(
-            new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0));
+            new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -230,12 +270,14 @@ public class AuctionService implements IAuctionService {
     String staffLog = String.format("[STAFF CANCEL] %s hủy phiên %s | Lý do: %s",
             staff.getUsername(), auction.getId(), reason);
     staff.addActionLog(staffLog);
-    System.out.println(staffLog);
+    log.info("STAFF CANCEL: staff={} auctionId={} reason={}",
+            staff.getUsername(), auction.getId(), reason);
 
     String auditLog = String.format("[AUDIT] Staff %s hủy phiên %s | Lý do: %s",
             staff.getUsername(), auction.getId(), reason);
     system.addActionLog(auditLog);
-    System.out.println(auditLog);
+    log.info("AUDIT: staff={} auctionId={} reason={}",
+            staff.getUsername(), auction.getId(), reason);
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
@@ -264,32 +306,48 @@ public class AuctionService implements IAuctionService {
    */
   @Override
   public void notifyUpcoming(Auction auction) {
-    notify(auction, AuctionEvent.AuctionEventType.AUCTION_UPCOMING, null, 0);
+    notify(auction, AuctionEvent.AuctionEventType.AUCTION_UPCOMING, null, 0L);
   }
 
   /**
    * Đăng ký observer theo dõi phiên.
    *
-   * @param auction phiên muốn theo dõi
+   * @param auctionId phiên muốn theo dõi
    * @param observer observer cần thêm
    */
   @Override
-  public void addObserver(Auction auction, AuctionObserver observer) {
-    auction.addObserver(observer);
+  public void addObserver(String auctionId, AuctionObserver observer) {
+    if (auctionId == null || observer == null) return;
+    observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
+    List<AuctionObserver> observers = observersMap.get(auctionId);
+    if (!observers.contains(observer)) {
+      observers.add(observer);
+    }
   }
+
+  /** Lấy danh sách observer của một phiên (chỉ đọc). */
+  public List<AuctionObserver> getObservers(String auctionId) {
+    List<AuctionObserver> list = observersMap.get(auctionId);
+    if (list == null) return Collections.emptyList();
+    return Collections.unmodifiableList(list);
+  }
+
 
   @Override
   public void notify(Auction auction, AuctionEvent.AuctionEventType type,
-                     NormalUser bidder, double amount) {
+                     NormalUser bidder, long amount) {
     notify(auction, type, bidder, amount, null);
   }
 
   @Override
   public void notify(Auction auction, AuctionEvent.AuctionEventType type,
-                     NormalUser bidder, double amount, String message) {
+                     NormalUser bidder, long amount, String message) {
     AuctionEvent event = new AuctionEvent(type, auction, bidder, amount, message);
-    // Notify observers cho auction cụ thể
-    for (AuctionObserver observer : auction.getObservers()) {
+
+    // Notify observers cụ thể của phiên
+    List<AuctionObserver> observers = observersMap.getOrDefault(
+            auction.getId(), Collections.emptyList());
+    for (AuctionObserver observer : observers) {
       if (type == AuctionEvent.AuctionEventType.BID_PLACED
               || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
         observer.onBidPlaced(event);
@@ -297,9 +355,8 @@ public class AuctionService implements IAuctionService {
         observer.onAuctionEnded(event);
       }
     }
-    // Truyền tin nhắn tới global observers (SystemAdmin)
+    // Global (SystemAdmin) và Staff observers
     AuctionManager.getInstance().notifyGlobalObservers(event);
-    // Truyền tin nhắn tới staff observers (chỉ event liên quan)
     AuctionManager.getInstance().notifyStaffObservers(event);
   }
 }

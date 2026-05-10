@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BidTransactionDAO {
-
+    private final UserDAO userDAO = new UserDAO();
     public BidTransactionDAO() {}
 
     /**
@@ -27,7 +27,7 @@ public class BidTransactionDAO {
             pstmt.setString(1, tx.getId());
             pstmt.setString(2, tx.getAuctionId());
             pstmt.setString(3, tx.getBidder().getId());
-            pstmt.setDouble(4, tx.getAmount());
+            pstmt.setLong(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());
 
             return pstmt.executeUpdate() > 0;
@@ -87,7 +87,7 @@ public class BidTransactionDAO {
                     String id = rs.getString("id");
                     String fetchedAuctionId = rs.getString("auction_id");
                     String bidderId = rs.getString("bidder_id");
-                    double amount = rs.getDouble("bid_amount");
+                    long amount = rs.getLong("bid_amount");
                     String resultStr = rs.getString("result");
 
                     // Lấy thời gian (nếu DB lưu là TIMESTAMP)
@@ -95,7 +95,6 @@ public class BidTransactionDAO {
                     java.time.LocalDateTime bidTime = (bidTimeTs != null) ?
                             bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
-                    // 2. Lấy đối tượng NormalUser từ Database
                     // 2. Lấy đối tượng NormalUser từ Database
                     UserDAO userDAO = new UserDAO();
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
@@ -120,4 +119,5 @@ public class BidTransactionDAO {
         }
         return null;
     }
+
 }

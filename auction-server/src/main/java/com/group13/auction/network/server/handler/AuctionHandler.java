@@ -6,6 +6,7 @@ import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.ItemDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Item;
@@ -29,6 +30,11 @@ import java.util.stream.Collectors;
  * CREATE_AUCTION, GET_AUCTION_LIST, GET_AUCTION_DETAIL,
  * UPDATE_AUCTION, CANCEL_AUCTION_REQUEST, ADMIN_CANCEL_AUCTION,
  * ADMIN_GET_ALL_AUCTIONS.
+ *
+ * FIX (Bug #1): Inject ItemDAO; gọi itemDAO.addItem() trước khi createAuction()
+ *               để tránh FK constraint violation trong bảng auctions(item_id).
+ * FIX (Bug #2): Throw RuntimeException thay vì return false khi DAO fail,
+ *               đảm bảo handler luôn gửi FAILED về client thay vì SUCCESS giả.
  */
 public class AuctionHandler implements PacketHandler {
 
@@ -46,6 +52,8 @@ public class AuctionHandler implements PacketHandler {
     private final AccountService accountService;
     private final SessionManager sessionManager;
     private final ItemFactory itemFactory;
+    // FIX Bug #1: cần ItemDAO để persist item trước khi tạo auction
+    private final ItemDAO itemDAO;
 
     public AuctionHandler(AuctionService auctionService,
                           AccountService accountService,
@@ -55,6 +63,7 @@ public class AuctionHandler implements PacketHandler {
         this.accountService = accountService;
         this.sessionManager = sessionManager;
         this.itemFactory = itemFactory;
+        this.itemDAO = new ItemDAO();   // FIX Bug #1
     }
 
     @Override
@@ -95,15 +104,34 @@ public class AuctionHandler implements PacketHandler {
                     req.getItemCategory(),
                     req.getItemName(),
                     req.getItemDescription(),
-                    req.getStartingPrice(),
+                    (long) req.getStartingPrice(),
                     seller,
                     req.getItemExtraFields());
 
+            // ── FIX Bug #1: persist Item vào DB TRƯỚC khi tạo Auction ────────
+            // AuctionDAO.createAuction() INSERT với item_id là FK → nếu item chưa
+            // có trong bảng items thì SQLException: FK constraint violation.
+            boolean itemSaved = itemDAO.addItem(
+                    item.getId(),
+                    seller.getId(),
+                    item.getName(),
+                    item.getDescription(),
+                    item.getStartingPrice(),
+                    req.getItemCategory().trim().toUpperCase());
+
+            if (!itemSaved) {
+                session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Không thể lưu sản phẩm vào cơ sở dữ liệu.", requestId)));
+                return;
+            }
+            // ─────────────────────────────────────────────────────────────────
+
             ReservePriceStrategy reserveStrategy =
-                    new ReservePriceStrategy(req.getReservePrice());
+                    new ReservePriceStrategy((long) req.getReservePrice());
 
             Auction auction = auctionService.createAuction(
-                    seller, item, req.getStartTime(), req.getEndTime(), reserveStrategy);
+                    seller, item, req.getStartTime(), req.getEndTime(), reserveStrategy.getReservePrice());
 
             session.send(Packet.of(PacketType.CREATE_AUCTION_SUCCESS,
                     DTOMapper.toAuctionDTO(auction), requestId));
@@ -216,6 +244,14 @@ public class AuctionHandler implements PacketHandler {
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
                     req.getAuctionId(), requestId));
 
+            AuctionDTOs.SellerCancelRequestNotifyDTO notify = new AuctionDTOs.SellerCancelRequestNotifyDTO();
+            notify.setAuctionId(req.getAuctionId());
+            notify.setAuctionName(auction.getItem().getName());
+            notify.setSellerUsername(seller.getUsername());
+            notify.setReason(req.getReason());
+            notify.setRequestTime(java.time.LocalDateTime.now());
+            sessionManager.broadcastToAdmins(Packet.of(PacketType.SELLER_CANCEL_REQUEST_NOTIFY, notify));
+
         } catch (IllegalArgumentException | IllegalStateException e) {
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_FAILED,
                     ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId)));
@@ -245,12 +281,21 @@ public class AuctionHandler implements PacketHandler {
             }
 
             Admin.CancelReason reason = Admin.CancelReason.valueOf(req.getReason());
-            auctionService.cancelAuction(auction, reason);
+
+            // FIX Bug #3: dùng overload cancelAuction(staff, auction, reason) để ghi audit log
+            // thay vì cancelAuction(auction, reason) vốn chỉ dành cho system auto-cancel.
+            com.group13.auction.model.user.User adminUser =
+                    AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            if (!(adminUser instanceof Admin)) {
+                session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không tìm thấy tài khoản Admin.", requestId)));
+                return;
+            }
+            auctionService.cancelAuction((Admin) adminUser, auction, reason);
 
             session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_SUCCESS,
                     DTOMapper.toAuctionDTO(auction), requestId));
 
-            // Broadcast cho tất cả đang xem phiên
             AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, req.getReason());
             sessionManager.broadcastToAuction(req.getAuctionId(),
                     Packet.of(PacketType.AUCTION_CANCELED_UPDATE, update));

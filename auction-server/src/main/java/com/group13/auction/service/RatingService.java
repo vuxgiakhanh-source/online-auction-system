@@ -127,7 +127,15 @@ public class RatingService implements IRatingService {
     // TODO: notificationDao.save() - báo cho seller
   }
 
+  /** method dùng cho hầu như quá trình build
+   * @param user user cần kiểm tra restore
+   */
+  public void checkAndRestoreSuspended(User user) {
+    checkAndRestoreSuspended(user, LocalDateTime.now());
+  }
+
   /**
+   * (Dành cho Test)
    * Auto-restore rating cho tài khoản SUSPENDED sau 3 tháng.
    *(Miễn chưa từng được restore)
    *
@@ -137,8 +145,7 @@ public class RatingService implements IRatingService {
    *
    * @param user user cần kiểm tra restore
    */
-  @Override
-  public void checkAndRestoreSuspended(User user) {
+  public void checkAndRestoreSuspended(User user, LocalDateTime currentTime) {
     if (user.getAccountStatus() != AccountStatus.SUSPENDED) {
       return;
     }
@@ -161,7 +168,7 @@ public class RatingService implements IRatingService {
     }
 
     LocalDateTime restoreThreshold = user.getSuspendedAt().plusMonths(SUSPEND_RESTORE_MONTHS);
-    if (!LocalDateTime.now().isAfter(restoreThreshold)) {
+    if (!currentTime.isAfter(restoreThreshold)) {
       return; // Chưa đủ 3 tháng
     }
 

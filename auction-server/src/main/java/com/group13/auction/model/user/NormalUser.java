@@ -6,12 +6,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Người dùng bình thường — có thể đảm nhận cả vai Bidder và Seller.
+ * Người dùng bình thường - có thể đảm nhận cả vai Bidder và Seller.
  *
  * <p>Khi mới tạo, mặc định có role BIDDER.
  * Muốn trở thành Seller, user phải gửi yêu cầu và được hệ thống phê duyệt
@@ -22,13 +24,13 @@ import java.util.Set;
  */
 public class NormalUser extends User {
 
-    // Bidder state
-    private double balance;
+    // Bidder state (FIX: Dùng AtomicLong để thread-safe)
+    private final AtomicLong balance;
     /** Số tiền bị khóa làm cọc cho các phiên đang tham gia. */
-    private double lockedDeposit;
+    private final AtomicLong lockedDeposit;
+    
+    // FIX: Dùng Concurrent Collections để tránh ConcurrentModificationException
     private List<BidTransaction> bidHistory;
-    private Set<String> joinedAuctionIds;
-    private List<String> watchListAuctionIds;
 
     // Seller state
     private List<Item> listedItems;
@@ -54,7 +56,7 @@ public class NormalUser extends User {
      * @param email địa chỉ email
      * @return NormalUser mới
      */
-    public static NormalUser create(String username, String password, String email) {
+    protected static NormalUser create(String username, String password, String email) {
         return new NormalUser(username, password, email);
     }
 
@@ -84,8 +86,8 @@ public class NormalUser extends User {
             String email,
             AccountStatus accountStatus,
             double rating,
-            double balance,
-            double lockedDeposit,
+            long balance,
+            long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
             boolean hasEverBeenRestored,
@@ -100,13 +102,11 @@ public class NormalUser extends User {
 
     private NormalUser(String username, String password, String email) {
         super(username, password, email, UserRole.BIDDER);
-        this.balance = 0.0;
-        this.lockedDeposit = 0.0;
-        this.bidHistory = new ArrayList<>();
-        this.joinedAuctionIds = new HashSet<>();
-        this.watchListAuctionIds = new ArrayList<>();
-        this.listedItems = new ArrayList<>();
-        this.allAuctionIds = new ArrayList<>();
+        this.balance = new AtomicLong(0L);
+        this.lockedDeposit = new AtomicLong(0L);
+        this.bidHistory = new CopyOnWriteArrayList<>();
+        this.listedItems = new CopyOnWriteArrayList<>();
+        this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.of(UserRole.BIDDER);
         this.hasEverBeenPenalized = false;
         this.hasEverBeenRestored = false;
@@ -125,22 +125,19 @@ public class NormalUser extends User {
             String email,
             AccountStatus accountStatus,
             double rating,
-            double balance,
-            double lockedDeposit,
+            long balance,
+            long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
             boolean hasEverBeenRestored,
             LocalDateTime suspendedAt) {
         super(id, createdAt, updatedAt, username, hashedPassword, email,
                 UserRole.BIDDER, accountStatus, rating, suspendedAt);
-        this.balance = balance;
-        this.lockedDeposit = lockedDeposit;
-        // Khởi tạo rỗng; DAO sẽ inject dữ liệu thực sau khi gọi reconstitute()
-        this.bidHistory = new ArrayList<>();
-        this.joinedAuctionIds = new HashSet<>();
-        this.watchListAuctionIds = new ArrayList<>();
-        this.listedItems = new ArrayList<>();
-        this.allAuctionIds = new ArrayList<>();
+        this.balance = new AtomicLong(balance);
+        this.lockedDeposit = new AtomicLong(lockedDeposit);
+        this.bidHistory = new CopyOnWriteArrayList<>();
+        this.listedItems = new CopyOnWriteArrayList<>();
+        this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.copyOf(roles);
         this.hasEverBeenPenalized = hasEverBeenPenalized;
         this.hasEverBeenRestored = hasEverBeenRestored;
@@ -169,17 +166,17 @@ public class NormalUser extends User {
 
     // Bidder getters / setters
 
-    public double getBalance() {
-        return balance;
+    public long getBalance() {
+        return balance.get();
     }
 
-    public double getLockedDeposit() {
-        return lockedDeposit;
+    public long getLockedDeposit() {
+        return lockedDeposit.get();
     }
 
     /** Số dư khả dụng (không bị khóa). */
-    public double getAvailableBalance() {
-        return balance - lockedDeposit;
+    public long getAvailableBalance() {
+        return balance.get() - lockedDeposit.get();
     }
 
     public boolean isHasEverBeenPenalized() {
@@ -200,20 +197,8 @@ public class NormalUser extends User {
         return Collections.unmodifiableList(bidHistory);
     }
 
-    public Set<String> getJoinedAuctionIds() {
-        return Collections.unmodifiableSet(joinedAuctionIds);
-    }
-
-    public List<String> getWatchListAuctionIds() {
-        return Collections.unmodifiableList(watchListAuctionIds);
-    }
-
-    public boolean hasJoined(String auctionId) {
-        return joinedAuctionIds.contains(auctionId);
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
+    public void setBalance(long balance) {
+        this.balance.set(balance);
         markUpdated();
     }
 
@@ -224,8 +209,8 @@ public class NormalUser extends User {
      *
      * @param amount số tiền cần khóa
      */
-    public void lockDeposit(double amount) {
-        this.lockedDeposit += amount;
+    public void lockDeposit(long amount) {
+        this.lockedDeposit.addAndGet(amount);
         markUpdated();
     }
 
@@ -235,8 +220,15 @@ public class NormalUser extends User {
      *
      * @param amount số tiền giải phóng
      */
-    public void unlockDeposit(double amount) {
-        this.lockedDeposit = Math.max(0, this.lockedDeposit - amount);
+    public void unlockDeposit(long amount) {
+        // Đảm bảo không bao giờ âm lockedDeposit
+        while (true) {
+            long current = lockedDeposit.get();
+            long next = Math.max(0L, current - amount);
+            if (lockedDeposit.compareAndSet(current, next)) {
+                break;
+            }
+        }
         markUpdated();
     }
 
@@ -263,17 +255,7 @@ public class NormalUser extends User {
         bidHistory.add(tx);
     }
 
-    public void addJoinedAuction(String auctionId) {
-        joinedAuctionIds.add(auctionId);
-    }
-
-    public void addToWatchList(String auctionId) {
-        if (!watchListAuctionIds.contains(auctionId)) {
-            watchListAuctionIds.add(auctionId);
-        }
-    }
-
-    // DAO injection setters (package-private — chỉ DAO trong cùng package hoặc DAO được phép gọi)
+    // DAO injection setters (DAO được phép gọi)
 
     /**
      * Inject lịch sử bid từ DB — chỉ UserDAO gọi sau reconstitute().
@@ -282,26 +264,7 @@ public class NormalUser extends User {
      * caller cần gọi thủ công nếu cần đầy đủ lịch sử bid.
      */
     public void setBidHistory(List<BidTransaction> bidHistory) {
-        this.bidHistory = bidHistory != null ? new ArrayList<>(bidHistory) : new ArrayList<>();
-    }
-
-    /**
-     * Inject danh sách auctionId đã join từ DB — chỉ UserDAO gọi sau reconstitute().
-     * Đã thực hiện TODO: UserDAO.findJoinedAuctionIdsByUserId(id) đã được triển khai
-     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
-     */
-    public void setJoinedAuctionIds(Set<String> joinedAuctionIds) {
-        this.joinedAuctionIds = joinedAuctionIds != null ? new HashSet<>(joinedAuctionIds) : new HashSet<>();
-    }
-
-    /**
-     * Inject watchlist từ DB — chỉ UserDAO gọi sau reconstitute().
-     * Đã thực hiện TODO: UserDAO.findWatchListByUserId(id) đã được triển khai
-     * và được tự động gọi trong UserDAO.findNormalUserById() / findUserByUsername().
-     */
-    public void setWatchListAuctionIds(List<String> watchListAuctionIds) {
-        this.watchListAuctionIds = watchListAuctionIds != null
-                ? new ArrayList<>(watchListAuctionIds) : new ArrayList<>();
+        this.bidHistory = bidHistory != null ? new CopyOnWriteArrayList<>(bidHistory) : new CopyOnWriteArrayList<>();
     }
 
     // Seller getters / setters
@@ -332,9 +295,9 @@ public class NormalUser extends User {
     }
 
     /** Chỉ được gọi trong WalletService hỗ trợ quá trình Rollback */
-    public void restoreBalances(double balance, double lockedDeposit) {
-        this.balance = balance;
-        this.lockedDeposit = lockedDeposit;
+    public void restoreBalances(long balance, long lockedDeposit) {
+        this.balance.set(balance);
+        this.lockedDeposit.set(lockedDeposit);
         markUpdated();
     }
 
@@ -374,9 +337,9 @@ public class NormalUser extends User {
         System.out.printf("Username  : %s%n", getUsername());
         System.out.printf("Email     : %s%n", getEmail());
         System.out.printf("Roles     : %s%n", getRoles());
-        System.out.printf("Balance   : %.0f%n", balance);
-        System.out.printf("Locked    : %.0f%n", lockedDeposit);
-        System.out.printf("Available : %.0f%n", getAvailableBalance());
+        System.out.printf("Balance   : %d%n", balance.get());
+        System.out.printf("Locked    : %d%n", lockedDeposit.get());
+        System.out.printf("Available : %d%n", getAvailableBalance());
         System.out.printf("Rating    : %.1f%n", getRating());
         System.out.printf("Status    : %s%n", getAccountStatus());
         System.out.printf("Penalized : %s%n", hasEverBeenPenalized);

@@ -1,10 +1,13 @@
 package com.group13.auction.dao;
 
 import com.group13.auction.model.auction.SecondChanceOffer;
+import com.group13.auction.dao.UserDAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class SecondChanceOfferDAO {
 
@@ -23,8 +26,8 @@ public class SecondChanceOfferDAO {
             pstmt.setString(1, offer.getId());
             pstmt.setString(2, offer.getAuctionId());
             pstmt.setString(3, offer.getRunnerUp().getId());
-            pstmt.setDouble(4, offer.getOfferPrice());
-            pstmt.setDouble(5, offer.getDepositPaid());
+            pstmt.setLong(4, offer.getOfferPrice());
+            pstmt.setLong(5, offer.getDepositPaid());
             pstmt.setString(6, offer.getStatus().name());
             pstmt.setTimestamp(7, Timestamp.valueOf(offer.getDeadline()));
 
@@ -52,5 +55,54 @@ public class SecondChanceOfferDAO {
             System.err.println("Lỗi cập nhật trạng thái Second Chance Offer: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Tìm SecondChanceOffer đang PENDING cho một phiên đấu giá (FIX Bug #5).
+     * PaymentHandler dùng để lấy offer thật trước khi accept/decline.
+     *
+     * @param auctionId UUID của auction
+     * @return SecondChanceOffer đang PENDING, hoặc null nếu không có
+     */
+    public SecondChanceOffer findPendingOfferByAuctionId(String auctionId) {
+        String sql = "SELECT id, runner_up_id, auction_id, offer_price, deposit_paid, " +
+                "status, deadline, created_at FROM second_chance_offers " +
+                "WHERE auction_id = ? AND status = 'PENDING' " +
+                "ORDER BY deadline DESC LIMIT 1";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String offerId     = rs.getString("id");
+                    String runnerUpId  = rs.getString("runner_up_id");
+                    long offerPrice    = rs.getLong("offer_price");
+                    long depositPaid   = rs.getLong("deposit_paid");
+                    Timestamp deadlineTs  = rs.getTimestamp("deadline");
+                    Timestamp createdTs   = rs.getTimestamp("created_at");
+
+                    LocalDateTime deadline  = deadlineTs  != null ? deadlineTs.toLocalDateTime()  : LocalDateTime.now().plusHours(24);
+                    LocalDateTime createdAt = createdTs   != null ? createdTs.toLocalDateTime()   : LocalDateTime.now();
+
+                    com.group13.auction.model.user.NormalUser runnerUp =
+                            new UserDAO().findNormalUserById(runnerUpId);
+                    if (runnerUp == null) return null;
+
+                    return SecondChanceOffer.reconstitute(
+                            offerId,
+                            createdAt,
+                            createdAt,
+                            runnerUp,
+                            auctionId,
+                            offerPrice,
+                            depositPaid,
+                            deadline,
+                            SecondChanceOffer.OfferStatus.PENDING);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi tìm Second Chance Offer PENDING: " + e.getMessage());
+        }
+        return null;
     }
 }

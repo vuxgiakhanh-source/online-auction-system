@@ -105,18 +105,6 @@ public enum PacketType {
      *  Payload: {@code ErrorDTO}. */
     WITHDRAW_FAILED,
 
-    // ── Xóa tài khoản ───────────────────────────────────────────────────────
-
-    /** Client yêu cầu xóa tài khoản của chính mình. Payload: rỗng. */
-    DELETE_ACCOUNT,
-
-    /** Server xác nhận đã xóa tài khoản (soft-delete). Payload: rỗng. */
-    DELETE_ACCOUNT_SUCCESS,
-
-    /** Server từ chối xóa (còn số dư, còn phiên đang chạy, còn cọc, v.v.).
-     *  Payload: {@code ErrorDTO}. */
-    DELETE_ACCOUNT_FAILED,
-
     // ══════════════════════════════════════════════════════════════════════════
     // ADMIN — Quản lý tài khoản (chỉ Admin/SystemAdmin)
     // ══════════════════════════════════════════════════════════════════════════
