@@ -6,22 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-<<<<<<< HEAD
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" afterDir="false" />
-=======
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" afterDir="false" />
->>>>>>> c31a800 (test: add Account/Payment tests and update fixture)
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +47,10 @@
     "Application.TestLauncher.executor": "Run",
     "JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates.executor": "Run",
     "JUnit.AccountServiceTest.executor": "Run",
+    "JUnit.AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws.executor": "Run",
+    "JUnit.AuctionServiceTest$CloseAuction.invalidState_openAuction_throws.executor": "Run",
+    "JUnit.AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows.executor": "Run",
+    "JUnit.AuctionServiceTest.executor": "Run",
     "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
     "JUnit.BidServiceTest$JoinAuctionNormalUser.executor": "Run",
     "JUnit.BidServiceTest$JoinAuctionSellerBidOwnItem.executor": "Run",
@@ -115,7 +105,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.AccountServiceTest">
+  <component name="RunManager" selected="Application.TestLauncher">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -164,7 +154,7 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AccountServiceTest$BanUser.nullReason_exceptionPropagates" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -172,15 +162,15 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AccountServiceTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest$BanUser" />
-      <option name="METHOD_NAME" value="nullReason_exceptionPropagates" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$CloseAuction" />
+      <option name="METHOD_NAME" value="invalidState_alreadyCanceled_throws" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AccountServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionServiceTest$CloseAuction.invalidState_openAuction_throws" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -188,14 +178,15 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$CloseAuction" />
+      <option name="METHOD_NAME" value="invalidState_openAuction_throws" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PaymentServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -203,14 +194,15 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.PaymentServiceTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$StateConsistency" />
+      <option name="METHOD_NAME" value="duplicateClose_secondCallThrows" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="RatingServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -219,7 +211,7 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.RatingServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -236,11 +228,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.AccountServiceTest" />
-        <item itemvalue="JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates" />
-        <item itemvalue="JUnit.PaymentServiceTest" />
         <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.RatingServiceTest" />
+        <item itemvalue="JUnit.AuctionServiceTest" />
+        <item itemvalue="JUnit.AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws" />
+        <item itemvalue="JUnit.AuctionServiceTest$CloseAuction.invalidState_openAuction_throws" />
+        <item itemvalue="JUnit.AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows" />
       </list>
     </recent_temporary>
   </component>

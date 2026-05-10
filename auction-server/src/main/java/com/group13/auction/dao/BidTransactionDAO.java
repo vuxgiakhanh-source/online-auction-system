@@ -68,7 +68,57 @@ public class BidTransactionDAO {
     }
 
     /**
-     * 3. Tìm lượt đặt giá HỢP LỆ cao nhất, ngoại trừ người thắng cuộc (winner).
+     * 3. Lấy toàn bộ lịch sử đặt giá theo auctionId, sắp xếp theo thời gian tăng dần.
+     * Dùng cho GET_BID_HISTORY — query thẳng DB để lấy đủ lịch sử kể cả sau restart server.
+     *
+     * @param auctionId id phiên đấu giá
+     * @return danh sách BidTransaction, sắp xếp theo bid_time ASC; rỗng nếu không có
+     */
+    public List<BidTransaction> findByAuctionId(String auctionId) {
+        List<BidTransaction> result = new ArrayList<>();
+        String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
+                "FROM bid_transactions WHERE auction_id = ? ORDER BY bid_time ASC";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String id             = rs.getString("id");
+                    String fetchedAuction = rs.getString("auction_id");
+                    String bidderId       = rs.getString("bidder_id");
+                    long   amount         = rs.getLong("bid_amount");
+                    String resultStr      = rs.getString("result");
+
+                    java.sql.Timestamp ts = rs.getTimestamp("bid_time");
+                    java.time.LocalDateTime bidTime = (ts != null)
+                            ? ts.toLocalDateTime()
+                            : java.time.LocalDateTime.now();
+
+                    NormalUser bidder = userDAO.findNormalUserById(bidderId);
+
+                    BidTransaction tx = BidTransaction.reconstitute(
+                            id,
+                            bidTime,
+                            bidTime,
+                            bidder,
+                            fetchedAuction,
+                            amount,
+                            bidTime,
+                            BidTransaction.BidResult.valueOf(resultStr)
+                    );
+                    result.add(tx);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi lấy lịch sử bid theo auctionId: " + e.getMessage());
+        }
+        return result;
+    }
+
+    /**
+     * 4. Tìm lượt đặt giá HỢP LỆ cao nhất, ngoại trừ người thắng cuộc (winner).
      * Dùng để tìm Runner-up (người về nhì) cho Second Chance Offer.
      */
     public BidTransaction findHighestValidBidExcept(String auctionId, String excludedBidderId) {
