@@ -11,9 +11,11 @@ import com.group13.auction.model.item.Item;
 import com.group13.auction.model.item.Vehicle;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.NormalUserFactory;
+import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.service.iservice.IRatingService;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -633,6 +635,43 @@ public final class TestFixture {
     // =========================================================================
     // SystemBank utility
     // =========================================================================
+
+    /**
+     * Bootstrap SystemAdmin Singleton cho unit test — không chạm DB.
+     *
+     * <p>Tạo instance qua private constructor bằng reflection rồi inject thẳng vào
+     * field {@code INSTANCE}. Phải gọi trong {@code @BeforeEach} của mọi test class
+     * mà SUT gọi {@code SystemAdmin.getInstance()} (ví dụ: {@code expirePayment}).
+     *
+     * <p>Gọi {@link #resetSystemAdmin()} trong {@code @AfterEach} để cô lập test.
+     *
+     * @throws Exception nếu reflection thất bại
+     */
+    public static void bootstrapSystemAdmin() throws Exception {
+        Field instanceField = SystemAdmin.class.getDeclaredField("INSTANCE");
+        instanceField.setAccessible(true);
+
+        if (instanceField.get(null) == null) {
+            // Tạo instance qua private constructor (username, password, email)
+            Constructor<SystemAdmin> ctor = SystemAdmin.class
+                    .getDeclaredConstructor(String.class, String.class, String.class);
+            ctor.setAccessible(true);
+            SystemAdmin admin = ctor.newInstance("SYSTEM", "test-password", "system@test.com");
+            instanceField.set(null, admin);
+        }
+    }
+
+    /**
+     * Reset SystemAdmin Singleton về null sau mỗi test.
+     * Cần thiết để tránh state rò rỉ giữa các test.
+     *
+     * @throws Exception nếu reflection thất bại
+     */
+    public static void resetSystemAdmin() throws Exception {
+        Field instanceField = SystemAdmin.class.getDeclaredField("INSTANCE");
+        instanceField.setAccessible(true);
+        instanceField.set(null, null);
+    }
 
     /**
      * Reset totalBalance của SystemBank về 0 qua reflection.
