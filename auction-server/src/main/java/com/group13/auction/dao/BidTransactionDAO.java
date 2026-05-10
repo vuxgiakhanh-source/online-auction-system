@@ -51,7 +51,7 @@ public class BidTransactionDAO {
 
             pstmt.setString(1, auctionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                UserDAO userDAO = new UserDAO(); // Dùng UserDAO để lấy thông tin chi tiết của User
+                UserDAO userDAO = new UserDAO();
 
                 while (rs.next()) {
                     String bidderId = rs.getString("bidder_id");
@@ -68,16 +68,21 @@ public class BidTransactionDAO {
     }
 
     /**
-     * 3. Lấy toàn bộ lịch sử đặt giá theo auctionId, sắp xếp theo thời gian tăng dần.
-     * Dùng cho GET_BID_HISTORY — query thẳng DB để lấy đủ lịch sử kể cả sau restart server.
+     * 3. Lấy toàn bộ lịch sử đặt giá HỢP LỆ theo auctionId, sắp xếp theo thời gian tăng dần.
+     * Dùng cho GET_BID_HISTORY (vẽ line chart).
      *
-     * @param auctionId id phiên đấu giá
-     * @return danh sách BidTransaction, sắp xếp theo bid_time ASC; rỗng nếu không có
+     * FIX BUG #1: Thêm WHERE result != 'REJECTED' để không đưa bid bị từ chối lên chart.
+     * Bid REJECTED là bid không hợp lệ (giá thấp hơn giá hiện tại, phiên đã đóng...)
+     * — hiển thị chúng sẽ làm đường giá bị tụt xuống một cách sai.
      */
     public List<BidTransaction> findByAuctionId(String auctionId) {
         List<BidTransaction> result = new ArrayList<>();
+
+        // FIX BUG #1: Thêm "AND result != 'REJECTED'" — chỉ lấy bid hợp lệ để vẽ chart
         String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
-                "FROM bid_transactions WHERE auction_id = ? ORDER BY bid_time ASC";
+                "FROM bid_transactions " +
+                "WHERE auction_id = ? AND result != 'REJECTED' " +
+                "ORDER BY bid_time ASC";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -128,36 +133,29 @@ public class BidTransactionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auctionId);
-            // Xử lý trường hợp không có winner (truyền chuỗi rỗng để SQL vẫn chạy đúng)
             pstmt.setString(2, excludedBidderId != null ? excludedBidderId : "");
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // 1. Rút trích dữ liệu thô từ Database
                     String id = rs.getString("id");
                     String fetchedAuctionId = rs.getString("auction_id");
                     String bidderId = rs.getString("bidder_id");
                     long amount = rs.getLong("bid_amount");
                     String resultStr = rs.getString("result");
 
-                    // Lấy thời gian (nếu DB lưu là TIMESTAMP)
                     java.sql.Timestamp bidTimeTs = rs.getTimestamp("bid_time");
                     java.time.LocalDateTime bidTime = (bidTimeTs != null) ?
                             bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
-                    // 2. Lấy đối tượng NormalUser từ Database
                     UserDAO userDAO = new UserDAO();
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
 
-                    // KHÔNG CẦN gọi AuctionDAO nữa để tránh rườm rà
-
-                    // 3. Gọi hàm HỒI SINH (reconstitute)
                     return BidTransaction.reconstitute(
                             id,
                             bidTime,
                             bidTime,
                             bidder,
-                            null,  // <-- TRUYỀN NULL VÀO ĐÂY LÀ XONG!
+                            null,
                             amount,
                             bidTime,
                             BidTransaction.BidResult.valueOf(resultStr)
@@ -169,5 +167,4 @@ public class BidTransactionDAO {
         }
         return null;
     }
-
 }
