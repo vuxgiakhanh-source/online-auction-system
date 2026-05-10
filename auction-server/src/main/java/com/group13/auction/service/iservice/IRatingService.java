@@ -3,6 +3,8 @@ package com.group13.auction.service.iservice;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
+import java.time.LocalDateTime;
+
 /**
  * Hợp đồng quản lý rating — chỉ hệ thống mới được thay đổi rating.
  * Không expose setter rating ra ngoài.

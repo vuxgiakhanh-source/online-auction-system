@@ -196,6 +196,9 @@ public abstract class User extends Entity {
    * Khi chuyển sang SUSPENDED, ghi nhận thời điểm suspend.
    */
   public void setAccountStatus(AccountStatus status) {
+    if (status == null) {
+      throw new NullPointerException("Status không được null.");
+    }
     if (status == AccountStatus.SUSPENDED && this.accountStatus != AccountStatus.SUSPENDED) {
       this.suspendedAt = LocalDateTime.now();
     }
