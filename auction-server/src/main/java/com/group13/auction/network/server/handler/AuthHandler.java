@@ -128,11 +128,17 @@ public class AuthHandler implements PacketHandler {
             NormalUser newUser = new NormalUserFactory()
                     .createUser(req.getUsername(), req.getPassword(), req.getEmail());
 
-            // Lưu vào DB
-            userDAO.save(newUser);
-
-            // Đăng ký vào AuctionManager in-memory
-            AuctionManager.getInstance().registerUser(newUser);
+            // FIX Bug #2: lưu vào DB một lần duy nhất, kiểm tra kết quả.
+            // AuctionManager.registerUser() lại gọi userDAO.save() lần nữa → duplicate insert.
+            // Dùng addToUserList() thay thế để chỉ thêm vào in-memory.
+            boolean saved = userDAO.save(newUser);
+            if (!saved) {
+                session.send(Packet.of(PacketType.REGISTER_FAILED,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Không thể lưu tài khoản vào cơ sở dữ liệu.", requestId)));
+                return;
+            }
+            AuctionManager.getInstance().addToUserList(newUser);
 
             // Tạo token session
             String token = UUID.randomUUID().toString();

@@ -61,6 +61,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>Xử lý trong {@link BidService#placeBid()} — nếu có bid trong X giây cuối
  * thì phiên được gia hạn thêm Y giây. {@code newEndTime} được nhúng vào
  * {@code BidUpdateDTO} broadcast ngay.
+ *
+ * FIX Bug #1: Xóa field bidTransactionDAO vì BidService đã tự persist
+ *             qua bidTransactionDAO.saveTransaction(tx) bên trong placeBid().
+ *             Handler không cần và không nên truy cập DAO layer trực tiếp.
  */
 public class BidHandler implements PacketHandler {
 
@@ -79,25 +83,24 @@ public class BidHandler implements PacketHandler {
     private final BidService          bidService;
     private final IRatingService      ratingService;
     private final SessionManager      sessionManager;
-    private final BidTransactionDAO   bidTransactionDAO;
+    // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
     private final AutoBidRegistry     autoBidRegistry = AutoBidRegistry.getInstance();
     private final AuctionLockRegistry lockRegistry    = AuctionLockRegistry.getInstance();
     private final AutoBidProcessor    autoBidProcessor;
+    private final BidTransactionDAO   bidTransactionDAO;
 
     /**
-     * Constructor đầy đủ — dùng khi muốn truyền ratingService vào BidderObserver.
+     * Constructor — BidTransactionDAO dùng cho GET_BID_HISTORY (query DB thay vì scan memory).
+     * BidService đã inject BidTransactionDAO riêng và tự persist mỗi bid.
      */
     public BidHandler(BidService bidService, IRatingService ratingService,
-                      SessionManager sessionManager, BidTransactionDAO bidTransactionDAO) {
-        this.bidService        = bidService;
-        this.ratingService     = ratingService;
-        this.sessionManager    = sessionManager;
-        this.bidTransactionDAO = bidTransactionDAO;
-        this.autoBidProcessor  = new AutoBidProcessor(bidService, sessionManager);
+                      SessionManager sessionManager) {
+        this.bidService           = bidService;
+        this.ratingService        = ratingService;
+        this.sessionManager       = sessionManager;
+        this.autoBidProcessor     = new AutoBidProcessor(bidService, sessionManager);
+        this.bidTransactionDAO    = new BidTransactionDAO();
     }
-
-    // Constructor cũ đã bị xóa để tránh NPE khi ratingService = null.
-    // Luôn dùng constructor 4-arg đầy đủ.
 
     @Override
     public boolean supports(PacketType type) { return SUPPORTED.contains(type); }
@@ -191,19 +194,6 @@ public class BidHandler implements PacketHandler {
 
     // ── PLACE BID ─────────────────────────────────────────────────────────────
 
-    /**
-     * Đặt giá thủ công — toàn bộ critical section nằm trong per-auction lock.
-     *
-     * <h3>Quy trình:</h3>
-     * <ol>
-     *   <li>Acquire lock (block nếu thread khác đang bid cùng phiên).</li>
-     *   <li>{@link BidService#placeBid()} — validate + update price + anti-sniping.</li>
-     *   <li>PLACE_BID_SUCCESS về cho người bid.</li>
-     *   <li>Broadcast BID_UPDATE kèm newEndTime nếu anti-sniping kích hoạt.</li>
-     *   <li>{@link AutoBidProcessor#process()} trigger counter-bid chain.</li>
-     *   <li>Release lock trong finally.</li>
-     * </ol>
-     */
     private void handlePlaceBid(ClientSession session, JsonElement payload, String requestId) {
         BidDTOs.BidRequestDTO req;
         try {
@@ -226,7 +216,6 @@ public class BidHandler implements PacketHandler {
             LocalDateTime endTimeBefore = auction.getEndTime();
             bidService.placeBid(bidder, auction, req.getAmount(), new StandardBidStrategy());
 
-            // Phản hồi riêng cho người vừa bid
             BidDTOs.BidResultDTO result = new BidDTOs.BidResultDTO();
             result.setAuctionId(req.getAuctionId());
             result.setAmount(req.getAmount());
@@ -235,7 +224,6 @@ public class BidHandler implements PacketHandler {
             result.setTimestamp(LocalDateTime.now());
             session.send(Packet.of(PacketType.PLACE_BID_SUCCESS, result, requestId));
 
-            // Broadcast BID_UPDATE — kèm newEndTime nếu anti-sniping kích hoạt
             BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, req.getAmount());
             LocalDateTime endTimeAfter = auction.getEndTime();
             if (!endTimeAfter.equals(endTimeBefore)) {
@@ -246,13 +234,11 @@ public class BidHandler implements PacketHandler {
                     : PacketType.BID_RESERVE_NOT_MET_UPDATE;
             sessionManager.broadcastToAuction(req.getAuctionId(), Packet.of(broadcastType, update));
 
-            // Chart point (isAutoBid = false)
             BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
                     req.getAuctionId(), req.getAmount(), bidder.getUsername(), false);
             sessionManager.broadcastToAuction(req.getAuctionId(),
                     Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
-            // ★ Trigger auto-bid chain (trong lock để đảm bảo atomicity)
             autoBidProcessor.process(auction, bidder.getId());
 
         } catch (AuctionClosedException e) {
@@ -274,10 +260,6 @@ public class BidHandler implements PacketHandler {
 
     // ── REGISTER AUTO-BID ─────────────────────────────────────────────────────
 
-    /**
-     * Đăng ký auto-bid: lưu registry → đặt bid đầu tiên → trigger counter chain.
-     * Chạy trong per-auction lock.
-     */
     private void handleRegisterAutoBid(ClientSession session, JsonElement payload, String requestId) {
         BidDTOs.AutoBidRequestDTO req;
         try {
@@ -334,7 +316,6 @@ public class BidHandler implements PacketHandler {
             sessionManager.broadcastToAuction(req.getAuctionId(),
                     Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
-            // ★ Trigger counter-bid nếu có người khác bị vượt
             autoBidProcessor.process(auction, bidder.getId());
 
         } catch (AuctionBusinessException e) {
@@ -350,16 +331,11 @@ public class BidHandler implements PacketHandler {
 
     // ── UPDATE AUTO-BID ───────────────────────────────────────────────────────
 
-    /**
-     * Cập nhật maxBid. Update registry và trigger autoBidProcessor nếu maxBid mới
-     * đủ vượt leader hiện tại để đặt counter-bid ngay.
-     */
     private void handleUpdateAutoBid(ClientSession session, JsonElement payload, String requestId) {
         BidDTOs.AutoBidRequestDTO req;
         try {
             req = PacketCodec.fromElement(payload, BidDTOs.AutoBidRequestDTO.class);
         } catch (Exception e) {
-            // FIX: dùng UPDATE_AUTO_BID_FAILED thay vì REGISTER_AUTO_BID_FAILED
             session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
             return;
@@ -373,7 +349,6 @@ public class BidHandler implements PacketHandler {
 
             AutoBidEntry existing = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
             if (existing == null) {
-                // FIX: dùng UPDATE_AUTO_BID_FAILED
                 session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                         ErrorDTO.of("NO_AUTO_BID",
                                 "Chưa có auto-bid trong phiên này. Hãy dùng REGISTER_AUTO_BID trước.",
@@ -385,7 +360,6 @@ public class BidHandler implements PacketHandler {
             if (auction == null) return;
 
             if (req.getMaxBid() <= existing.getMaxBid()) {
-                // FIX: dùng UPDATE_AUTO_BID_FAILED
                 session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                         ErrorDTO.of("INVALID_MAX_BID",
                                 String.format("maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d).",
@@ -403,17 +377,14 @@ public class BidHandler implements PacketHandler {
             reg.setCurrentSystemBid(auction.getCurrentPrice());
             reg.setActive(true);
             reg.setRegisteredAt(LocalDateTime.now());
-            // FIX: dùng UPDATE_AUTO_BID_SUCCESS thay vì REGISTER_AUTO_BID_SUCCESS
             session.send(Packet.of(PacketType.UPDATE_AUTO_BID_SUCCESS, reg, requestId));
 
             System.out.printf("[BID HANDLER] %s cập nhật auto-bid: %d → %d%n",
                     bidder.getUsername(), oldMaxBid, req.getMaxBid());
 
-            // FIX: trigger autoBidProcessor để đặt bid ngay nếu maxBid mới đủ vượt leader
             autoBidProcessor.process(auction, bidder.getId());
 
         } catch (Exception e) {
-            // FIX: dùng UPDATE_AUTO_BID_FAILED
             session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         } finally {
@@ -489,13 +460,10 @@ public class BidHandler implements PacketHandler {
             Auction auction  = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
 
-            List<BidTransaction> txList = AuctionManager.getInstance().getAllUsers().stream()
-                    .filter(NormalUser.class::isInstance)
-                    .map(NormalUser.class::cast)
-                    .flatMap(user -> user.getBidHistory().stream())
-                    .filter(tx -> auctionId.equals(tx.getAuctionId()))
-                    .sorted(Comparator.comparing(BidTransaction::getTimestamp))
-                    .toList();
+            // FIX: Query trực tiếp từ DB để lấy đủ lịch sử, kể cả sau restart server.
+            // Trước đây scan AuctionManager.getAllUsers() in-memory — bỏ sót dữ liệu cũ.
+            List<BidTransaction> txList = bidTransactionDAO.findByAuctionId(auctionId);
+
             List<BidDTOs.BidChartPointDTO> points = new ArrayList<>();
             for (BidTransaction tx : txList) {
                 BidDTOs.BidChartPointDTO point = new BidDTOs.BidChartPointDTO();

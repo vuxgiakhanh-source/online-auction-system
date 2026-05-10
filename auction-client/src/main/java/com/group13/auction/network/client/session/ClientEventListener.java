@@ -265,4 +265,8 @@ public interface ClientEventListener {
     default void onSystemError(ErrorDTO error) {}
     default void onSystemAnnouncement(AdminDTOs.SystemAnnouncementDTO dto) {}
     default void onServerShutdown(AdminDTOs.ServerShutdownDTO dto) {}
+
+    // FIX Bug #8: thêm onPong để ClientPacketDispatcher có thể dispatch PONG về UI
+    /** Server phản hồi PONG sau khi client gửi PING. timestamp là echo của client. */
+    default void onPong(long timestamp) {}
 }
