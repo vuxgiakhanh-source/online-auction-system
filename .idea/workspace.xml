@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,7 +13,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="163" />
+    <option name="cachedIndexableFilesCount" value="170" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -45,6 +43,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.TestLauncher.executor": "Run",
+    "JUnit.AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException.executor": "Run",
     "JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates.executor": "Run",
     "JUnit.AccountServiceTest.executor": "Run",
     "JUnit.AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws.executor": "Run",
@@ -52,6 +51,7 @@
     "JUnit.AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows.executor": "Run",
     "JUnit.AuctionServiceTest.executor": "Run",
     "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
+    "JUnit.AuctionTimerServiceTest.executor": "Run",
     "JUnit.BidServiceTest$JoinAuctionNormalUser.executor": "Run",
     "JUnit.BidServiceTest$JoinAuctionSellerBidOwnItem.executor": "Run",
     "JUnit.BidServiceTest$PlaceBidAntiSniping.executor": "Run",
@@ -71,9 +71,12 @@
     "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_callsStrategyWithCorrectArgs.executor": "Run",
     "JUnit.BidServiceTest$WatchAuction.executor": "Run",
     "JUnit.PaymentServiceTest.executor": "Run",
+    "JUnit.QualityReportServiceTest.executor": "Run",
     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored.executor": "Run",
     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored.executor": "Run",
     "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.UserAndAccountServiceTest.executor": "Run",
+    "JUnit.UserServiceTest.executor": "Run",
     "JUnit.WalletServiceTest.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
@@ -105,7 +108,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Application.TestLauncher">
+  <component name="RunManager" selected="JUnit.QualityReportServiceTest">
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -141,20 +144,7 @@
       <option name="RUN_TOOL" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.TestLauncher" />
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -162,47 +152,15 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$CloseAuction" />
-      <option name="METHOD_NAME" value="invalidState_alreadyCanceled_throws" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.service.AccountServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest$AutoApproveSellerRole" />
+      <option name="METHOD_NAME" value="penalizedUser_throwsIllegalStateException" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionServiceTest$CloseAuction.invalidState_openAuction_throws" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$CloseAuction" />
-      <option name="METHOD_NAME" value="invalidState_openAuction_throws" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.service.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AuctionServiceTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest$StateConsistency" />
-      <option name="METHOD_NAME" value="duplicateClose_secondCallThrows" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AuctionServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionTimerServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -211,7 +169,52 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="com.group13.auction.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AuctionTimerServiceTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="QualityReportServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.QualityReportServiceTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="UserAndAccountServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.UserAndAccountServiceTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="UserServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.UserServiceTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -228,11 +231,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.AuctionServiceTest" />
-        <item itemvalue="JUnit.AuctionServiceTest$CloseAuction.invalidState_alreadyCanceled_throws" />
-        <item itemvalue="JUnit.AuctionServiceTest$CloseAuction.invalidState_openAuction_throws" />
-        <item itemvalue="JUnit.AuctionServiceTest$StateConsistency.duplicateClose_secondCallThrows" />
+        <item itemvalue="JUnit.QualityReportServiceTest" />
+        <item itemvalue="JUnit.AuctionTimerServiceTest" />
+        <item itemvalue="JUnit.UserServiceTest" />
+        <item itemvalue="JUnit.AccountServiceTest$AutoApproveSellerRole.penalizedUser_throwsIllegalStateException" />
+        <item itemvalue="JUnit.UserAndAccountServiceTest" />
       </list>
     </recent_temporary>
   </component>
