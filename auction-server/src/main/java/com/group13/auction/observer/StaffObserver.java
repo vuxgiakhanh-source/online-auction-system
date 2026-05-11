@@ -1,6 +1,8 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.Admin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Observer dành cho Staff Admin - nhận notify về các event cần can thiệp thủ công.
@@ -17,6 +19,8 @@ import com.group13.auction.model.user.Admin;
  * Dữ liệu log luôn có thể truy xuất sau này từ actionLog.
  */
 public class StaffObserver implements AuctionObserver {
+
+    private static final Logger logger = LoggerFactory.getLogger(StaffObserver.class);
 
     private final Admin staff;
 
@@ -95,6 +99,7 @@ public class StaffObserver implements AuctionObserver {
 
     private void log(String message) {
         staff.addActionLog(message);
-        System.out.println(message);
+        logger.info("Staff observer notification: staffId={}, username={}, message={}",
+                staff.getId(), staff.getUsername(), message);
     }
 }

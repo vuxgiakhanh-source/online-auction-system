@@ -3,6 +3,8 @@ package com.group13.auction.dao;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.auction.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BidTransactionDAO {
+    private static final Logger log = LoggerFactory.getLogger(BidTransactionDAO.class);
+
     private final UserDAO userDAO = new UserDAO();
     public BidTransactionDAO() {}
 
@@ -30,10 +34,17 @@ public class BidTransactionDAO {
             pstmt.setLong(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());
 
-            return pstmt.executeUpdate() > 0;
+            boolean saved = pstmt.executeUpdate() > 0;
+            log.debug("Bid transaction saved: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
+                    tx.getId(), tx.getAuctionId(), tx.getBidder().getId(), tx.getAmount(), tx.getResult());
+            return saved;
 
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu lịch sử Bid: " + e.getMessage());
+            log.error("Failed to save bid transaction: txId={}, auctionId={}, bidderId={}",
+                    tx != null ? tx.getId() : null,
+                    tx != null ? tx.getAuctionId() : null,
+                    tx != null && tx.getBidder() != null ? tx.getBidder().getId() : null,
+                    e);
             return false;
         }
     }
@@ -62,8 +73,9 @@ public class BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy danh sách bidder: " + e.getMessage());
+            log.error("Failed to find bidders by auction: auctionId={}", auctionId, e);
         }
+        log.debug("Bidders loaded by auction: auctionId={}, count={}", auctionId, bidders.size());
         return bidders;
     }
 
@@ -117,8 +129,9 @@ public class BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy lịch sử bid theo auctionId: " + e.getMessage());
+            log.error("Failed to find bid history by auction: auctionId={}", auctionId, e);
         }
+        log.debug("Bid history loaded: auctionId={}, count={}", auctionId, result.size());
         return result;
     }
 
@@ -163,8 +176,10 @@ public class BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi tìm Runner-up: " + e.getMessage());
+            log.error("Failed to find highest valid bid except bidder: auctionId={}, excludedBidderId={}",
+                    auctionId, excludedBidderId, e);
         }
+        log.debug("No runner-up bid found: auctionId={}, excludedBidderId={}", auctionId, excludedBidderId);
         return null;
     }
 }

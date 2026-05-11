@@ -7,10 +7,11 @@ import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.server.handler.PacketHandler;
 import com.group13.auction.network.server.session.ClientSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Router nhận raw JSON từ WebSocket, deserialize, tìm đúng {@link PacketHandler} và dispatch.
@@ -21,7 +22,7 @@ import java.util.logging.Logger;
  */
 public class PacketRouter {
 
-    private static final Logger log = Logger.getLogger(PacketRouter.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PacketRouter.class);
 
     private final List<PacketHandler> handlers = new ArrayList<>();
 
@@ -57,8 +58,8 @@ public class PacketRouter {
             requestId = obj.has("requestId") && !obj.get("requestId").isJsonNull()
                     ? obj.get("requestId").getAsString() : null;
         } catch (Exception e) {
-            log.warning("[ROUTER] Malformed packet từ " + session.getUsername()
-                    + ": " + e.getMessage());
+            log.warn("Malformed packet: username={}, messageLength={}",
+                    session.getUsername(), message != null ? message.length() : 0, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
                             "Packet không hợp lệ: " + e.getMessage())));
@@ -72,8 +73,8 @@ public class PacketRouter {
                     handler.handle(session, type, payload, requestId);
                 } catch (Exception e) {
                     // Lỗi không xử lý được — log + gửi SYSTEM_ERROR về client
-                    log.severe("[ROUTER] Unhandled exception khi xử lý "
-                            + type + " từ " + session.getUsername() + ": " + e.getMessage());
+                    log.error("Unhandled exception while routing packet: type={}, username={}, requestId={}",
+                            type, session.getUsername(), requestId, e);
                     session.send(Packet.of(PacketType.SYSTEM_ERROR,
                             ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
                                     "Lỗi hệ thống khi xử lý " + type, requestId)));
@@ -83,7 +84,8 @@ public class PacketRouter {
         }
 
         // Không có handler nào nhận
-        log.warning("[ROUTER] Không có handler cho PacketType: " + type);
+        log.warn("No handler registered for packet type: type={}, username={}, requestId={}",
+                type, session.getUsername(), requestId);
         session.send(Packet.of(PacketType.SYSTEM_ERROR,
                 ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
                         "PacketType không được hỗ trợ: " + type, requestId)));

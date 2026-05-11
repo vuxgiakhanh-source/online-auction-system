@@ -3,6 +3,8 @@ package com.group13.auction.network.server.session;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import org.java_websocket.WebSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
  * <p>Thread-safety: ConcurrentHashMap trên tất cả map.
  */
 public class SessionManager {
+
+    private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
 
     private static final SessionManager INSTANCE = new SessionManager();
 
@@ -48,7 +52,8 @@ public class SessionManager {
     public ClientSession register(WebSocket connection) {
         ClientSession session = new ClientSession(connection);
         byConnection.put(connection, session);
-        System.out.println("[SESSION] New connection: " + connection.getRemoteSocketAddress());
+        log.info("Session registered: remoteAddress={}, connectedCount={}",
+                connection.getRemoteSocketAddress(), byConnection.size());
         return session;
     }
 
@@ -61,7 +66,8 @@ public class SessionManager {
         ClientSession session = byConnection.remove(connection);
         if (session != null && session.getUserId() != null) {
             byUserId.remove(session.getUserId());
-            System.out.println("[SESSION] Disconnected: " + session.getUsername());
+            log.info("Session unregistered: userId={}, username={}, connectedCount={}",
+                    session.getUserId(), session.getUsername(), byConnection.size());
         }
     }
 
@@ -82,12 +88,12 @@ public class SessionManager {
         if (oldSession != null && oldSession != session) {
             oldSession.close(1000, "Logged in from another location");
             byConnection.remove(oldSession.getConnection());
-            System.out.println("[SESSION] Replaced old session for userId=" + userId);
+            log.info("Existing session replaced by new login: userId={}, username={}", userId, username);
         }
 
         session.authenticate(userId, username, role);
         byUserId.put(userId, session);
-        System.out.println("[SESSION] Authenticated: " + username + " (" + role + ")");
+        log.info("Session authenticated: userId={}, username={}, role={}", userId, username, role);
     }
 
     /**

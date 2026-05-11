@@ -5,6 +5,8 @@ import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.observer.SystemAdminObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +31,8 @@ import java.util.List;
  * </ul>
  */
 public class SystemAdmin extends Admin {
+
+    private static final Logger log = LoggerFactory.getLogger(SystemAdmin.class);
 
     /** Ngưỡng rating tối thiểu của Normal User để được hoạt động. */
     public static final double MIN_ELIGIBLE_RATING = 2.0;
@@ -69,7 +73,7 @@ public class SystemAdmin extends Admin {
             if (existing != null) {
                 // Đã tồn tại trong DB → hồi sinh, không tạo lại
                 INSTANCE = new SystemAdmin("SYSTEM", password, "system@auction.com");
-                System.out.println("[SYSTEM] SystemAdmin đã tồn tại trong DB — load lên bộ nhớ.");
+                log.info("SystemAdmin loaded from database: username={}", INSTANCE.getUsername());
             } else {
                 // Lần đầu boot → tạo mới và seed xuống DB
                 INSTANCE = new SystemAdmin("SYSTEM", password, "system@auction.com");
@@ -81,9 +85,11 @@ public class SystemAdmin extends Admin {
                         LEVEL_MASTER
                 );
                 if (saved) {
-                    System.out.println("[SYSTEM] SystemAdmin khởi tạo lần đầu và đã lưu vào DB.");
+                    log.info("SystemAdmin bootstrapped and saved: userId={}, username={}",
+                            INSTANCE.getId(), INSTANCE.getUsername());
                 } else {
-                    System.err.println("[SYSTEM] Cảnh báo: không thể lưu SystemAdmin vào DB!");
+                    log.error("SystemAdmin bootstrap save failed: userId={}, username={}",
+                            INSTANCE.getId(), INSTANCE.getUsername());
                 }
             }
 
@@ -143,14 +149,15 @@ public class SystemAdmin extends Admin {
                     "[SYSTEM AUTO-BAN] %s bị ban — rating %.1f < %.1f",
                     user.getUsername(), user.getRating(), MIN_ELIGIBLE_RATING);
             addActionLog(log);
-            System.out.println(log);
+            SystemAdmin.log.warn("User auto-banned by system: userId={}, username={}, rating={}, threshold={}",
+                    user.getId(), user.getUsername(), user.getRating(), MIN_ELIGIBLE_RATING);
 
             // Đã thực hiện TODO: persist trạng thái xuống DB
             if (userDAO != null) {
                 boolean updated = userDAO.updateAccountStatus(user.getId(), AccountStatus.BANNED.name());
                 if (!updated) {
-                    System.err.printf("[SYSTEM] Cảnh báo: không thể persist ban cho %s vào DB!%n",
-                            user.getUsername());
+                    SystemAdmin.log.error("Failed to persist system ban: userId={}, username={}",
+                            user.getId(), user.getUsername());
                 }
             }
         }
@@ -172,30 +179,28 @@ public class SystemAdmin extends Admin {
         String staffLog = String.format("[STAFF BAN] %s ban %s | Lý do: %s",
                 staff.getUsername(), user.getUsername(), reason);
         staff.addActionLog(staffLog);
-        System.out.println(staffLog);
+        log.warn("User banned by staff: staffId={}, staffUsername={}, userId={}, username={}, reason={}",
+                staff.getId(), staff.getUsername(), user.getId(), user.getUsername(), reason);
 
         String auditLog = String.format("[AUDIT] Staff %s ban %s | Lý do: %s",
                 staff.getUsername(), user.getUsername(), reason);
         this.addActionLog(auditLog);
-        System.out.println(auditLog);
+        log.info("Staff ban audit recorded: staffId={}, userId={}, reason={}",
+                staff.getId(), user.getId(), reason);
 
         // Đã thực hiện TODO: persist trạng thái xuống DB
         if (userDAO != null) {
             boolean updated = userDAO.updateAccountStatus(user.getId(), AccountStatus.BANNED.name());
             if (!updated) {
-                System.err.printf("[SYSTEM] Cảnh báo: không thể persist ban cho %s vào DB!%n",
-                        user.getUsername());
+                log.error("Failed to persist staff ban: userId={}, username={}, staffId={}",
+                        user.getId(), user.getUsername(), staff.getId());
             }
         }
     }
 
     @Override
     public void printInfo() {
-        System.out.println("THÔNG TIN SYSTEM ADMIN");
-        System.out.printf("Username : %s%n", getUsername());
-        System.out.printf("Email    : %s%n", getEmail());
-        System.out.printf("Level    : %s [SYSTEM — DUY NHẤT]%n", getAdminLevel());
-        System.out.printf("Hành động: %d lần%n", getActionLog().size());
-        System.out.println("======================================");
+        log.info("SystemAdmin info: userId={}, username={}, email={}, level={}, actionCount={}",
+                getId(), getUsername(), getEmail(), getAdminLevel(), getActionLog().size());
     }
 }

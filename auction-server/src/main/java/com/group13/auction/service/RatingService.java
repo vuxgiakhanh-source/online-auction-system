@@ -5,6 +5,8 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.iservice.IRatingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 
 /**
@@ -20,6 +22,8 @@ import java.time.LocalDateTime;
  *
  */
 public class RatingService implements IRatingService {
+
+  private static final Logger log = LoggerFactory.getLogger(RatingService.class);
 
   private static final double MIN_RATING_ELIGIBLE = 2.0;
   private static final double MIN_RATING_SELLER = 2.0;
@@ -66,9 +70,8 @@ public class RatingService implements IRatingService {
   @Override
   public void rewardBidder(NormalUser bidder) {
     bidder.adjustRating(REWARD_BIDDER_PAYMENT);
-    System.out.printf(
-            "[RATING] %s +%.1f → %.1f%n",
-            bidder.getUsername(), REWARD_BIDDER_PAYMENT, bidder.getRating());
+    log.info("Bidder rating rewarded: userId={}, username={}, delta={}, rating={}",
+            bidder.getId(), bidder.getUsername(), REWARD_BIDDER_PAYMENT, bidder.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(bidder.getId(), bidder.getRating());
@@ -78,9 +81,8 @@ public class RatingService implements IRatingService {
   @Override
   public void rewardSeller(User seller) {
     seller.adjustRating(REWARD_SELLER_SALE);
-    System.out.printf(
-            "[RATING] %s +%.1f → %.1f%n",
-            seller.getUsername(), REWARD_SELLER_SALE, seller.getRating());
+    log.info("Seller rating rewarded: userId={}, username={}, delta={}, rating={}",
+            seller.getId(), seller.getUsername(), REWARD_SELLER_SALE, seller.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(seller.getId(), seller.getRating());
@@ -93,9 +95,8 @@ public class RatingService implements IRatingService {
   public void penalizeLatePayment(NormalUser bidder) {
     bidder.adjustRating(-PENALTY_LATE_PAYMENT);
     bidder.markPenalized();
-    System.out.printf(
-            "[RATING] %s -%.1f → %.1f (vi phạm thanh toán)%n",
-            bidder.getUsername(), PENALTY_LATE_PAYMENT, bidder.getRating());
+    log.warn("Bidder rating penalized for late payment: userId={}, username={}, delta={}, rating={}",
+            bidder.getId(), bidder.getUsername(), -PENALTY_LATE_PAYMENT, bidder.getRating());
 
     autoSuspendIfNeeded(bidder);
 
@@ -115,9 +116,8 @@ public class RatingService implements IRatingService {
       isPenalized = true;
     }
 
-    System.out.printf(
-            "[RATING] %s -%.1f → %.1f (vi phạm chất lượng)%n",
-            seller.getUsername(), PENALTY_SELLER_QUALITY, seller.getRating());
+    log.warn("Seller rating penalized for quality issue: userId={}, username={}, delta={}, rating={}",
+            seller.getId(), seller.getUsername(), -PENALTY_SELLER_QUALITY, seller.getRating());
 
     autoSuspendIfNeeded(seller);
 
@@ -161,9 +161,8 @@ public class RatingService implements IRatingService {
 
     // Guard: chỉ restore 1 lần duy nhất
     if (normalUser.isHasEverBeenRestored()) {
-      System.out.printf(
-              "[RATING] %s đã từng được auto-restore — không restore thêm.%n",
-              user.getUsername());
+      log.info("Suspended user already restored once, skipping restore: userId={}, username={}",
+              user.getId(), user.getUsername());
       return;
     }
 
@@ -177,13 +176,11 @@ public class RatingService implements IRatingService {
 
     if (user.getRating() > AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.ACTIVE);
-      System.out.printf(
-              "[RATING] %s được khôi phục sau %d tháng | Rating: %.1f → ACTIVE%n",
-              user.getUsername(), SUSPEND_RESTORE_MONTHS, user.getRating());
+      log.info("Suspended user restored: userId={}, username={}, months={}, rating={}, status={}",
+              user.getId(), user.getUsername(), SUSPEND_RESTORE_MONTHS, user.getRating(), user.getAccountStatus());
     } else {
-      System.out.printf(
-              "[RATING] %s: cộng %.1f nhưng rating %.1f vẫn <= %.1f — giữ SUSPENDED%n",
-              user.getUsername(), RESTORE_DELTA, user.getRating(), AUTO_SUSPEND_THRESHOLD);
+      log.info("Suspended user restore delta applied but status remains suspended: userId={}, username={}, delta={}, rating={}, threshold={}",
+              user.getId(), user.getUsername(), RESTORE_DELTA, user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
 
     // Đánh dấu đã restore 1 lần
@@ -203,9 +200,8 @@ public class RatingService implements IRatingService {
     if (user.getAccountStatus() == AccountStatus.ACTIVE
             && user.getRating() <= AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.SUSPENDED);
-      System.out.printf(
-              "[RATING] %s bị SUSPEND — rating %.1f <= %.1f%n",
-              user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
+      log.warn("User auto-suspended because rating is below threshold: userId={}, username={}, rating={}, threshold={}",
+              user.getId(), user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
     // TODO: notificationDao.save() - báo cho user
   }

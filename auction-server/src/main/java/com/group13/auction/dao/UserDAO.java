@@ -1,5 +1,8 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
+    private static final Logger log = LoggerFactory.getLogger(UserDAO.class);
+
 
     public UserDAO() {}
 
@@ -54,7 +59,7 @@ public class UserDAO {
 
             if (pstmt.executeUpdate() > 0) return userId;
         } catch (SQLException e) {
-            System.err.println("Lỗi đăng ký người dùng: " + e.getMessage());
+            log.error("Lỗi đăng ký người dùng", e);
         }
         return null;
     }
@@ -75,7 +80,7 @@ public class UserDAO {
                 if (rs.next()) return rs.getString("id");
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi xác thực: " + e.getMessage());
+            log.error("Lỗi xác thực", e);
         }
         return null;
     }
@@ -88,7 +93,7 @@ public class UserDAO {
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật trạng thái: " + e.getMessage());
+            log.error("Lỗi cập nhật trạng thái", e);
             return false;
         }
     }
@@ -101,7 +106,7 @@ public class UserDAO {
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi nạp tiền: " + e.getMessage());
+            log.error("Lỗi nạp tiền", e);
             return false;
         }
     }
@@ -123,7 +128,7 @@ public class UserDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu hoạt động tham gia/theo dõi của người dùng: " + e.getMessage());
+            log.error("Lỗi lưu hoạt động tham gia/theo dõi của người dùng", e);
             return false;
         }
     }
@@ -199,7 +204,7 @@ public class UserDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi tìm User theo ID: " + e.getMessage());
+            log.error("Lỗi tìm User theo ID", e);
         }
         return null;
     }
@@ -215,7 +220,7 @@ public class UserDAO {
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật rating: " + e.getMessage());
+            log.error("Lỗi cập nhật rating", e);
             return false;
         }
     }
@@ -232,7 +237,7 @@ public class UserDAO {
             pstmt.setString(3, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật điểm và trạng thái vi phạm: " + e.getMessage());
+            log.error("Lỗi cập nhật điểm và trạng thái vi phạm", e);
             return false;
         }
     }
@@ -249,7 +254,7 @@ public class UserDAO {
             pstmt.setString(3, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật số dư tài khoản: " + e.getMessage());
+            log.error("Lỗi cập nhật số dư tài khoản", e);
             return false;
         }
     }
@@ -320,7 +325,7 @@ public class UserDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi tìm User theo username: " + e.getMessage());
+            log.error("Lỗi tìm User theo username", e);
         }
 
         // Nếu không có dòng nào trong DB khớp với username, trả về null
@@ -348,7 +353,7 @@ public class UserDAO {
                 }
             }
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi lấy danh sách User: " + e.getMessage());
+            log.error("Lỗi lấy danh sách User", e);
         }
         return users;
     }
@@ -373,7 +378,7 @@ public class UserDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi lưu User mới: " + e.getMessage());
+            log.error("Lỗi lưu User mới", e);
             return false;
         }
     }
@@ -391,7 +396,7 @@ public class UserDAO {
             return pstmt.executeUpdate() > 0;
 
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi xóa User: " + e.getMessage());
+            log.error("Lỗi xóa User", e);
             return false;
         }
     }
@@ -405,7 +410,7 @@ public class UserDAO {
                 return rs.next();
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi kiểm tra username tồn tại: " + e.getMessage());
+            log.error("Lỗi kiểm tra username tồn tại", e);
             return false;
         }
     }
@@ -419,7 +424,7 @@ public class UserDAO {
                 return rs.next();
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi kiểm tra email tồn tại: " + e.getMessage());
+            log.error("Lỗi kiểm tra email tồn tại", e);
             return false;
         }
     }
@@ -445,7 +450,8 @@ public class UserDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy lịch sử activity (" + activityType + "): " + e.getMessage());
+            log.error("Failed to load user activity history: userId={}, activityType={}",
+                    userId, activityType, e);
         }
         return ids;
     }
@@ -480,7 +486,7 @@ public class UserDAO {
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
         } catch (java.sql.SQLException e) {
-            System.err.println("Lỗi cập nhật cờ hasEverBeenRestored: " + e.getMessage());
+            log.error("Lỗi cập nhật cờ hasEverBeenRestored", e);
             return false;
         }
     }

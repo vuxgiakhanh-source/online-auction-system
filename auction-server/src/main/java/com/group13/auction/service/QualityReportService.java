@@ -13,6 +13,8 @@ import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IQualityReportService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * QualityReport: submit, approve, reject và hoàn tiền cho winner.
@@ -26,6 +28,8 @@ import com.group13.auction.service.iservice.IWalletService;
  */
 public class
 QualityReportService implements IQualityReportService {
+
+    private static final Logger log = LoggerFactory.getLogger(QualityReportService.class);
 
     private final IRatingService ratingService;
     private final IPaymentService paymentService;
@@ -60,11 +64,12 @@ QualityReportService implements IQualityReportService {
     @Override
     public QualityReport submitReport(QualityReport report) {
         if (report == null) {
+            log.warn("Quality report submit rejected because report is null");
             throw new IllegalArgumentException("QualityReport không được null.");
         }
-        System.out.printf(
-                "[QUALITY] Winner %s gửi báo cáo chất lượng cho phiên %s.%n",
-                report.getReporter().getUsername(), report.getAuctionId());
+        log.info("Quality report submitted: reportId={}, auctionId={}, reporterId={}, username={}",
+                report.getId(), report.getAuctionId(), report.getReporter().getId(),
+                report.getReporter().getUsername());
 
         // Thực hiện TODO: qualityReportDAO.save(report) — lưu report xuống DB
         qualityReportDAO.saveReport(report);
@@ -91,6 +96,8 @@ QualityReportService implements IQualityReportService {
     @Override
     public void approveReport(Admin admin, QualityReport report, Auction auction) {
         if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
+            log.warn("Approve quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
+                    report.getId(), report.getAuctionId(), report.getStatus());
             throw new IllegalStateException(
                     "Report không ở trạng thái PENDING: " + report.getStatus());
         }
@@ -127,7 +134,8 @@ QualityReportService implements IQualityReportService {
                 admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
         admin.addActionLog(log);
         SystemAdmin.getInstance().addActionLog(log);
-        System.out.println(log);
+        QualityReportService.log.info("Quality report approved: reportId={}, auctionId={}, adminId={}, sellerId={}, winnerId={}, refundAmount={}",
+                report.getId(), report.getAuctionId(), admin.getId(), seller.getId(), winner.getId(), finalPrice);
 
 //        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
 //        qualityReportDAO.updateReport(report);
@@ -146,6 +154,8 @@ QualityReportService implements IQualityReportService {
     @Override
     public void rejectReport(Admin admin, QualityReport report) {
         if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
+            log.warn("Reject quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
+                    report.getId(), report.getAuctionId(), report.getStatus());
             throw new IllegalStateException(
                     "Report không ở trạng thái PENDING: " + report.getStatus());
         }
@@ -156,7 +166,8 @@ QualityReportService implements IQualityReportService {
                 "[QUALITY] Admin %s từ chối report của %s | Phiên: %s",
                 admin.getUsername(), report.getReporter().getUsername(), report.getAuctionId());
         admin.addActionLog(log);
-        System.out.println(log);
+        QualityReportService.log.info("Quality report rejected: reportId={}, auctionId={}, adminId={}, reporterId={}",
+                report.getId(), report.getAuctionId(), admin.getId(), report.getReporter().getId());
 
 //        // Thực hiện TODO: qualityReportDAO.update(report)
 //        qualityReportDAO.updateReport(report);
