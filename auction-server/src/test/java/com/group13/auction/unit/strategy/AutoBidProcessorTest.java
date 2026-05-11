@@ -145,6 +145,10 @@ class AutoBidProcessorTest {
                 (ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry>)
                         mapField.get(registry);
         map.clear();
+        // Null-out autoBidDAO để tránh kết nối DB trong unit test
+        Field daoField = AutoBidRegistry.class.getDeclaredField("autoBidDAO");
+        daoField.setAccessible(true);
+        daoField.set(registry, null);
     }
 
     // =========================================================================
