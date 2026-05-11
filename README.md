@@ -1,5 +1,6 @@
-<div align="center">
 ![OmniBid Logo](OmniBid.png)
+
+<div align="center">
 
 # OmniBid - Hệ thống Đấu giá Trực tuyến
 
