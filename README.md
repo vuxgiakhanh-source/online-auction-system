@@ -217,7 +217,7 @@ style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 
 ### Sơ đồ thiết kế hướng đối tượng OOP
 
-```text
+```plaintext
 online-auction-system/
 ├── auction-common/          # Shared: DTO, Protocol (Packet, PacketType, PacketCodec)
 ├── auction-server/          # Server: Business logic, DAO, WebSocket server
