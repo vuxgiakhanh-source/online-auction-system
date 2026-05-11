@@ -1,5 +1,18 @@
 ![Logo](OmniBid.png)
-# 💸 OminiBid - Hệ thống đấu giá Online 💸
+
+<div align="center">
+
+# OminiBid - Hệ thống đấu giá Online 
+
+![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=white)
+![Maven](https://img.shields.io/badge/Apache_Maven-C71A36?logo=apachemaven&logoColor=white)
+![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)
+![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white)
+![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white)
+
+</div>
 
 ## 🧾 Mục lục
 
@@ -210,19 +223,17 @@ mvn javafx:run
 ## ⚙️ Công nghệ & Công cụ sử dụng
 ### Công nghệ theo lớp kiến trúc
 
-### Công nghệ theo lớp kiến trúc
-
-| Lớp kiến trúc      | Công nghệ & Huy hiệu | Vai trò |
-|--------------------|----------------------|--------|
-| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white) | Ngôn ngữ chủ đạo triển khai logic OOP. |
-| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white) | Quản lý dự án Multi-module và dependencies. |
-| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white) | Xây dựng giao diện Desktop theo mô hình MVC. |
-| **Networking**     | ![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white) | Truyền tải dữ liệu Real-time (Giá thầu/Thông báo). |
+| Lớp kiến trúc      | Công nghệ & Huy hiệu | Vai trò                                               |
+|--------------------|----------------------|-------------------------------------------------------|
+| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white) | Ngôn ngữ chủ đạo triển khai logic OOP.                |
+| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white) | Quản lý dự án Multi-module và dependencies.           |
+| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white) | Xây dựng giao diện Desktop theo mô hình MVC.          |
+| **Networking**     | ![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white) | Truyền tải dữ liệu Real-time (Giá thầu/Thông báo).    |
 | **Database**       | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white) | Lưu trữ bền vững dữ liệu phiên đấu giá và người dùng. |
-| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white) | Chuyển đổi đối tượng để truyền tin qua mạng. |
-| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white) | Tối ưu mã nguồn, giảm code thừa (Clean Code). |
-| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white) | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ. |
-| **Convention**     | ![Google](https://img.shields.io/badge/Google_Java_Style-4285F4?logo=google&logoColor=white) | Tuân thủ quy chuẩn viết code đồng nhất cho cả nhóm. |
+| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white) | Chuyển đổi đối tượng để truyền tin qua mạng.          |
+| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white) | Tối ưu mã nguồn, giảm code thừa (Clean Code).         |
+| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white) | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ.      |
+| **Convention**     | ![Google](https://img.shields.io/badge/Google_Java_Style-4285F4?logo=google&logoColor=white) | Tuân thủ quy chuẩn viết code đồng nhất cho cả dự án.  |
 
 ---
 
