@@ -1,0 +1,865 @@
+2026-05-10 09:37:38.011 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.025 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.027 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.033 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.033 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.339 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.339 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.365 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên f6071ec3-7b17-4d1d-9e8c-dae31aca06f8.
+2026-05-10 09:37:38.369 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 236639b6-80f9-4c2a-93f6-4582b2e78250.
+2026-05-10 09:37:38.372 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên a4e457dd-69ee-491d-944d-8d556dd3cdc8.
+2026-05-10 09:37:38.377 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 598aaccf-f668-416a-a405-51ee2fd05414.
+2026-05-10 09:37:38.410 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 0d41bd6c-7aab-45f3-b32f-35f6e7f56991 | Cọc khóa: 300000
+2026-05-10 09:37:38.421 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 388aa04c-c34b-40df-b31c-eb20e96a583f | Cọc khóa: 300000
+2026-05-10 09:37:38.425 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 684ba17c-7935-4aed-8dcf-aabffa213459 | Cọc khóa: 300000
+2026-05-10 09:37:38.429 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên b29240ac-3e74-4ee9-84a4-8d8bb19458f5 trước đó.
+2026-05-10 09:37:38.435 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3f049da7-4e4e-4b86-a693-61076cd10b0c | Cọc khóa: 300000
+2026-05-10 09:37:38.446 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ee1418eb-2b53-4bf6-8c0b-dd2e084c60b7 | Cọc khóa: 300000
+2026-05-10 09:37:38.466 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d8022eb2-d70b-48c5-90ff-8d81f42df382 | Cọc khóa: 300000
+2026-05-10 09:37:38.474 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 14816ad9-bdf3-4d31-9ba6-530299f3086f | Cọc khóa: 300000
+2026-05-10 09:37:38.482 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 09:37:38.493 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.504 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.507 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.510 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.512 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.516 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.661 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.664 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.667 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:37:38.669 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:37:38.672 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:37:38.674 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:37:38.676 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:37:38.679 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:37:38.681 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.467 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.480 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.481 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.484 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.485 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.731 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.731 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.763 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 37834317-6d77-4c5b-96c9-8fff011fe2d7.
+2026-05-10 09:46:12.763 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 7f623949-b3b2-4375-bb6e-d7666cf1e63c.
+2026-05-10 09:46:12.763 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên f5cc1e35-61df-4f55-971c-a84549615d52.
+2026-05-10 09:46:12.781 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên f881f8a1-4056-40b2-9da8-3ed7b791b3c0.
+2026-05-10 09:46:12.794 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên a30a4704-c625-47e2-b828-7ffa0191306c | Cọc khóa: 300000
+2026-05-10 09:46:12.794 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 26f921ad-26cd-4593-91c0-ec4146f2793b | Cọc khóa: 300000
+2026-05-10 09:46:12.810 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên f5d71c7c-24bf-45fe-a284-97f9c72d9d7a | Cọc khóa: 300000
+2026-05-10 09:46:12.810 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên fa2c2a20-24a7-4811-8838-85e20e60a34e trước đó.
+2026-05-10 09:46:12.810 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 21b6cd83-c49d-4cca-855b-a02f7c659237 | Cọc khóa: 300000
+2026-05-10 09:46:12.810 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên c014caac-d0f0-46d2-b0aa-c8df481eb563 | Cọc khóa: 300000
+2026-05-10 09:46:12.826 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 51b99da8-09b8-4d23-8e6e-c78cd5bb6767 | Cọc khóa: 300000
+2026-05-10 09:46:12.826 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 9226ccb8-16e5-4d22-83f8-1ae50cbb3716 | Cọc khóa: 300000
+2026-05-10 09:46:12.841 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 09:46:12.858 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.873 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.873 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.881 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.881 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.881 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.983 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.983 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:46:12.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:35.659 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.676 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.677 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.681 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.681 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.915 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.916 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:35.932 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 918871c4-ac2c-4fec-be22-9982db7a676a.
+2026-05-10 09:48:35.939 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên c1e13117-a9f9-48dd-b337-1c521676495d.
+2026-05-10 09:48:35.944 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 4d23f722-c31c-412f-b37e-a2d0a0224e73.
+2026-05-10 09:48:35.953 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 998e53be-be27-4029-9546-58f62d5b1cef.
+2026-05-10 09:48:35.975 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 9143911f-4c6d-473a-96a6-4daabb84e1bd | Cọc khóa: 300000
+2026-05-10 09:48:35.987 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 2d03b51a-29bf-4243-8a21-3604f161fbe6 | Cọc khóa: 300000
+2026-05-10 09:48:35.993 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên fa1e8530-fa5d-4c45-8065-833da0cc2470 | Cọc khóa: 300000
+2026-05-10 09:48:35.998 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên bf59cc1f-13f4-4eb6-b572-b55d488e9311 trước đó.
+2026-05-10 09:48:36.003 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 62cb69a6-ff68-4e18-8901-98e123a4ead4 | Cọc khóa: 300000
+2026-05-10 09:48:36.010 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 84655253-cfb7-4c50-8b84-1f4ab480cb42 | Cọc khóa: 300000
+2026-05-10 09:48:36.025 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên c406fb05-7c02-4613-8d06-dda19a6d115c | Cọc khóa: 300000
+2026-05-10 09:48:36.030 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 7edf1a1c-6829-4047-ad15-e40da93fa7c5 | Cọc khóa: 300000
+2026-05-10 09:48:36.036 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 09:48:36.055 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.066 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.069 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.071 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.076 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.210 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.213 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.215 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:48:36.219 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:36.221 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:36.223 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:36.226 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:36.228 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:48:36.230 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.094 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.095 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.098 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.099 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.341 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.341 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.361 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 3c16cbb1-76f1-49c0-b3e4-8d3e9c352f10.
+2026-05-10 09:50:10.365 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên eaf3150d-58a7-480a-8c85-de81f607019c.
+2026-05-10 09:50:10.367 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên aa6d3116-90d5-46d9-87dd-658e0ab41d7b.
+2026-05-10 09:50:10.372 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 2d317175-2356-4718-8b41-a3887298814b.
+2026-05-10 09:50:10.391 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 576882d3-7b98-4fd4-ac7f-0e19942d1108 | Cọc khóa: 300000
+2026-05-10 09:50:10.399 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 1165de2f-0b43-4860-af0c-1bf67e6df514 | Cọc khóa: 300000
+2026-05-10 09:50:10.401 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 77eb5f39-3984-4549-845d-c8f70ff8673e | Cọc khóa: 300000
+2026-05-10 09:50:10.403 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 7519604e-3a82-4be9-a295-3d3dbe4a45a3 trước đó.
+2026-05-10 09:50:10.406 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ef190a06-ce8b-40c6-be7b-41ae43aa2f9e | Cọc khóa: 300000
+2026-05-10 09:50:10.408 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 412bec24-1faf-4dd9-ba45-3dfe22137d6e | Cọc khóa: 300000
+2026-05-10 09:50:10.422 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 4991454f-f98c-493b-a4e5-3dc1a7b5202d | Cọc khóa: 300000
+2026-05-10 09:50:10.426 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 630a2ece-65eb-4622-83e1-7f0c6ca8efbc | Cọc khóa: 300000
+2026-05-10 09:50:10.433 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 09:50:10.445 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.467 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.475 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.480 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.489 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.493 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.624 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.627 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.629 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:50:10.631 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.633 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.636 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.638 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.639 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:50:10.641 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:48.856 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:48.872 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:48.873 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:48.876 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:48.876 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.103 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.104 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.126 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 575eeb76-6876-4b2a-a5bb-227dd9c72e4b.
+2026-05-10 09:52:49.131 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên acbe9f97-f305-4417-8d16-a4c0c7309962.
+2026-05-10 09:52:49.135 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 0d594797-4068-44f6-8571-e73b69552d55.
+2026-05-10 09:52:49.141 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 156911f3-78bc-409c-bb5d-fa2a796c51ff.
+2026-05-10 09:52:49.163 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên d040ccf0-ed15-4b7b-a9d0-52a7b3e3221a | Cọc khóa: 300000
+2026-05-10 09:52:49.172 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 73aaad2d-0f96-4a29-9650-25268159eb9a | Cọc khóa: 300000
+2026-05-10 09:52:49.175 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 8fd22545-b8aa-4333-80d7-39fc3963eec5 | Cọc khóa: 300000
+2026-05-10 09:52:49.178 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 60b0da96-4d0e-45ab-b413-c90e66fd1f4e trước đó.
+2026-05-10 09:52:49.181 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d4acbdd8-f777-445b-a717-3a802ca0a7b0 | Cọc khóa: 300000
+2026-05-10 09:52:49.185 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0839ea25-f54a-427a-b56b-323c0fe4e695 | Cọc khóa: 300000
+2026-05-10 09:52:49.198 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên eca530db-2755-4017-8581-dbfd774ba05a | Cọc khóa: 300000
+2026-05-10 09:52:49.203 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 8efe7a15-324a-48cd-ac5b-cdca2d4a4ba8 | Cọc khóa: 300000
+2026-05-10 09:52:49.210 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 09:52:49.221 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.231 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.234 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.237 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.241 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.245 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.345 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.348 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.352 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 09:52:49.356 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:49.359 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:49.361 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:49.364 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:49.366 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 09:52:49.368 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.050 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.063 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.064 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.068 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.069 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.243 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.244 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.266 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên d50db467-7ede-4ce4-b014-e06bddf0803b.
+2026-05-10 10:08:42.270 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 72f795eb-738d-43a6-947e-b821fd3109ec.
+2026-05-10 10:08:42.273 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên ddb17cdb-72c8-4f04-8790-d4e3556a2151.
+2026-05-10 10:08:42.280 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 92f6fa17-056b-4824-b6d8-3cd1587fa44c.
+2026-05-10 10:08:42.306 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên dd450c15-6164-4f15-9a3c-01fec8398ece | Cọc khóa: 300000
+2026-05-10 10:08:42.313 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 65a50690-a514-4ac3-99e6-de2a2d87926f | Cọc khóa: 300000
+2026-05-10 10:08:42.316 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3bbf55cc-1d30-47da-b831-5fba67a22fee | Cọc khóa: 300000
+2026-05-10 10:08:42.318 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 86f05a29-9580-4f04-806e-ed91c0420b8c trước đó.
+2026-05-10 10:08:42.322 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên b903ad52-8fea-4d8c-a89b-b58fe96c1134 | Cọc khóa: 300000
+2026-05-10 10:08:42.325 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d20c7c6e-d178-499c-b399-986f5434feff | Cọc khóa: 300000
+2026-05-10 10:08:42.337 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 53e5a46d-4622-4ea8-a0ba-b61a845c233a | Cọc khóa: 300000
+2026-05-10 10:08:42.340 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên cdd0f820-e08c-485c-9f93-4c4b1fb2f4d6 | Cọc khóa: 300000
+2026-05-10 10:08:42.344 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:08:42.354 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.366 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.368 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.370 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.373 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.375 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.465 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.468 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.471 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:08:42.474 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.477 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.480 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.483 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.485 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:08:42.487 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:45.624 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.642 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.643 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.647 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.648 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.872 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.873 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:45.897 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 553f5ae1-4533-4059-9c8d-d50f8d1bbcee.
+2026-05-10 10:23:45.902 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 66e1c07c-40a7-4bf6-8d5c-567c61b22974.
+2026-05-10 10:23:45.906 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 18ef221f-ba0d-4523-af53-2f293fd4f89b.
+2026-05-10 10:23:45.913 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên d032d0c3-7a98-44a0-9686-c69a1ec183ae.
+2026-05-10 10:23:45.932 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 658e3a85-4d48-4b17-9570-351c472d8c8b | Cọc khóa: 300000
+2026-05-10 10:23:45.941 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0ddde138-b04d-45fe-928a-ead48455a81b | Cọc khóa: 300000
+2026-05-10 10:23:45.945 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 9aa918d4-43ad-4375-8a45-29adad27c6b0 | Cọc khóa: 300000
+2026-05-10 10:23:45.948 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên fae621ea-db8c-4ec8-82c4-0fce48c5ddc7 trước đó.
+2026-05-10 10:23:45.953 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 29b87f1a-6328-41b8-86c8-477801067158 | Cọc khóa: 300000
+2026-05-10 10:23:45.959 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên b900a8d8-beb2-4657-ba92-deb24da237a2 | Cọc khóa: 300000
+2026-05-10 10:23:45.973 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên e69b81cc-d579-416d-884a-dac5ce8c764f | Cọc khóa: 300000
+2026-05-10 10:23:45.977 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0b66f6d0-2308-452f-9ff5-65947461c5c0 | Cọc khóa: 300000
+2026-05-10 10:23:45.988 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:23:46.014 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.030 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.036 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.042 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.046 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.050 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.166 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.169 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.171 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:46.175 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:46.178 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:46.181 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:46.183 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:46.185 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:23:46.187 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:11.648 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.669 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.670 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.674 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.675 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.900 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.900 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:11.924 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 5500f184-a5e4-4a8a-97aa-cd920d149341.
+2026-05-10 10:26:11.928 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên c9b17650-4d80-44eb-b387-2d8db7a44f82.
+2026-05-10 10:26:11.934 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên f622bac7-5919-4653-99fc-1a6236c9aeb9.
+2026-05-10 10:26:11.941 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên b2ab7de1-c4a0-4849-8d3c-73a7c18953f6.
+2026-05-10 10:26:11.964 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên e62750c3-eac0-4375-a32d-120e1571b94e | Cọc khóa: 300000
+2026-05-10 10:26:11.971 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 1169bc5b-559f-4f1e-9884-fd9195ecac78 | Cọc khóa: 300000
+2026-05-10 10:26:11.974 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 51341014-5638-4dbb-a484-9b5780d7b47f | Cọc khóa: 300000
+2026-05-10 10:26:11.976 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên d848f0a7-f84d-47f1-bb32-8c2c5fe8fba7 trước đó.
+2026-05-10 10:26:11.981 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d7d8b6da-cd3f-479f-8858-c0004f9135c4 | Cọc khóa: 300000
+2026-05-10 10:26:11.985 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5f898b04-1594-42dc-9820-d3c49b8309a8 | Cọc khóa: 300000
+2026-05-10 10:26:12.001 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 48300df0-ed4b-4b69-8ea9-85a706fe2838 | Cọc khóa: 300000
+2026-05-10 10:26:12.004 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0bcf7061-70b8-4743-8cf4-6ae50e73c54e | Cọc khóa: 300000
+2026-05-10 10:26:12.008 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:26:12.016 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.028 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.030 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.033 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.036 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.038 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.132 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.136 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.138 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:26:12.141 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:12.144 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:12.147 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:12.151 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:12.154 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:26:12.159 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.060 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.078 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.082 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.083 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.281 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.282 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.298 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 7393c28a-0d05-498a-8ebc-ad92e78cf06c.
+2026-05-10 10:39:37.302 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 820307d0-9ad2-47a6-9945-e11e9569c1a9.
+2026-05-10 10:39:37.305 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 4ad12cfe-1da0-482a-8902-4aa7536ccc17.
+2026-05-10 10:39:37.312 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên def8d9bb-10a8-4301-80af-a190a8fc9886.
+2026-05-10 10:39:37.334 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 8a303b12-fcd7-448d-8e4b-28e0a4a8a60f | Cọc khóa: 300000
+2026-05-10 10:39:37.340 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 43c74e65-761a-42b1-9cdf-2c2189da2a91 | Cọc khóa: 300000
+2026-05-10 10:39:37.343 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 6ac17c71-5931-41a3-b608-4cd25e908909 | Cọc khóa: 300000
+2026-05-10 10:39:37.345 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên a2cd74d6-232c-479f-b810-4b3fbb11f38e trước đó.
+2026-05-10 10:39:37.348 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên b7844500-779f-4c45-98c1-30775cf42ddb | Cọc khóa: 300000
+2026-05-10 10:39:37.351 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ba81f7f3-a768-4d2e-9d7d-fbd5ea294afe | Cọc khóa: 300000
+2026-05-10 10:39:37.364 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 53174392-3437-4169-9aa5-dc3aa11cee0c | Cọc khóa: 300000
+2026-05-10 10:39:37.367 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 7e40e299-148a-4c89-8015-9f15fab9897f | Cọc khóa: 300000
+2026-05-10 10:39:37.370 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:39:37.376 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.386 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.389 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.390 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.393 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.395 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.456 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.458 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.459 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:39:37.461 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.463 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.464 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.466 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.467 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:39:37.469 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:16.565 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.585 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.585 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.591 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.591 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.848 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.849 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.868 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 43202877-6b35-42c2-9825-1abd2f1ee161.
+2026-05-10 11:16:16.870 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên b709f642-2d19-4f56-8ff6-6dbb65952081.
+2026-05-10 11:16:16.872 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 9ecd6261-b7c4-4b97-96ec-61f2d4a0e20b.
+2026-05-10 11:16:16.876 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 53312603-0976-4f37-8c5e-911f94aa7d0c.
+2026-05-10 11:16:16.892 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên c8dc3280-20c4-4d28-b1df-084728a2113f | Cọc khóa: 300000
+2026-05-10 11:16:16.898 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5519a72b-bbeb-402e-a22c-eee965914b31 | Cọc khóa: 300000
+2026-05-10 11:16:16.901 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 78cffbba-374f-416c-b9d3-67d4d09d876a | Cọc khóa: 300000
+2026-05-10 11:16:16.902 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 3aeb15a8-9b76-4e0f-ac08-29ddc10b92d6 trước đó.
+2026-05-10 11:16:16.905 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên a3e3ad96-ac90-4785-bb8a-592a713ceeac | Cọc khóa: 300000
+2026-05-10 11:16:16.907 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0639a485-0a17-4f72-8a5b-25a594d0d7d3 | Cọc khóa: 300000
+2026-05-10 11:16:16.915 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên cf2e7df3-4db5-4e68-a720-9a272d5f15a6 | Cọc khóa: 300000
+2026-05-10 11:16:16.917 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 94cf0721-efb0-4383-8e4f-1517c30b38fd | Cọc khóa: 300000
+2026-05-10 11:16:16.919 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 11:16:16.925 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.934 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.936 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.938 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.940 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.941 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:16.999 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:17.001 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:17.003 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 11:16:17.005 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:17.006 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:17.007 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:17.009 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:17.009 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 11:16:17.011 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:55.789 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:55.806 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:55.807 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:55.811 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:55.812 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.058 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.060 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.086 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 1febab55-ab51-4f2c-9ca3-1832f2e84b63.
+2026-05-10 12:01:56.088 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 237428b5-b91f-4efc-8af8-ab3cbad69d09.
+2026-05-10 12:01:56.089 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 2a03e145-2e58-4720-9187-e6c063d4e311.
+2026-05-10 12:01:56.094 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 37306d96-32f9-4ea7-9054-28c2d56d7357.
+2026-05-10 12:01:56.110 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 78d5ffe6-3d7b-4c0f-99ab-71abebb5c96e | Cọc khóa: 300000
+2026-05-10 12:01:56.115 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5a5e90f2-6ea4-4f2e-9048-425ad6adfd58 | Cọc khóa: 300000
+2026-05-10 12:01:56.117 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 66eddba6-6a4d-4f22-8b1f-a44dd1a05013 | Cọc khóa: 300000
+2026-05-10 12:01:56.119 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 74941831-e792-4de7-9075-9a057d437a95 trước đó.
+2026-05-10 12:01:56.122 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3079bece-81eb-4b11-8f58-d2ef6f84ced5 | Cọc khóa: 300000
+2026-05-10 12:01:56.123 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0efb5d6d-e9b0-44ee-8872-44a5296b8449 | Cọc khóa: 300000
+2026-05-10 12:01:56.135 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3587c65b-355f-43d5-a799-43492ee1bbe3 | Cọc khóa: 300000
+2026-05-10 12:01:56.137 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 65d4c2f5-ceaa-45fa-9470-565de83af91c | Cọc khóa: 300000
+2026-05-10 12:01:56.140 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 12:01:56.148 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.160 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.162 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.167 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.171 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.174 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.233 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.234 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.235 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:01:56.237 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:56.238 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:56.238 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:56.239 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:56.240 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:01:56.241 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:32.847 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:32.860 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:32.861 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:32.863 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:32.863 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.055 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.056 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.077 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 7bc7a2b3-6200-47ec-8e95-72c533aa8cb6.
+2026-05-10 12:13:33.079 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên b949016c-5972-461e-8304-603302b25c51.
+2026-05-10 12:13:33.081 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên c1c4ddc1-eeba-4a16-8fa1-60e82edaba46.
+2026-05-10 12:13:33.089 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên f5d80d7d-e067-449e-80c6-8f38395f370b.
+2026-05-10 12:13:33.116 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 937e2cc7-0d52-4ca7-bddb-520ed856989a | Cọc khóa: 300000
+2026-05-10 12:13:33.124 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên f98c926f-fa1a-41f4-94e4-6ed0323a8a4a | Cọc khóa: 300000
+2026-05-10 12:13:33.126 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 77264b74-986c-470b-93a8-5fc24cf08c8d | Cọc khóa: 300000
+2026-05-10 12:13:33.128 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên eab32c67-fee9-40ee-89ad-87aaad30fee4 trước đó.
+2026-05-10 12:13:33.133 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 7c53b344-7b07-4031-bb90-5a1387e95926 | Cọc khóa: 300000
+2026-05-10 12:13:33.141 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 1ad07b5e-4d86-42ea-a809-2bba42bd4642 | Cọc khóa: 300000
+2026-05-10 12:13:33.155 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 403238dd-d31b-4148-bf3e-5bf640005526 | Cọc khóa: 300000
+2026-05-10 12:13:33.158 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d42d2095-12ba-4ebe-b86c-81f22e385511 | Cọc khóa: 300000
+2026-05-10 12:13:33.160 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 12:13:33.167 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.178 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.180 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.182 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.188 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.189 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.259 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.260 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.261 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 12:13:33.263 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:33.264 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:33.265 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:33.266 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:33.267 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 12:13:33.269 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:44.607 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.624 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.625 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.629 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.630 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.971 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.972 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:44.995 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 64f50bfc-0b7f-4fe8-b6fb-c4300fee1798.
+2026-05-10 14:18:44.997 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 8cda0cc7-5f40-4c1b-b1aa-007b39a4507e.
+2026-05-10 14:18:45.000 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 1fc527c3-009a-41d7-b6c1-3142818e2781.
+2026-05-10 14:18:45.007 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 08b4cbf1-aee2-4902-bfd9-9b3cd28337b2.
+2026-05-10 14:18:45.031 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên db6bb0bc-734d-4d63-8e99-ab391e83e2e9 | Cọc khóa: 300000
+2026-05-10 14:18:45.040 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 39f49155-7600-4a61-a908-0905a4da100f | Cọc khóa: 300000
+2026-05-10 14:18:45.046 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ec2817bc-c473-451b-93eb-abfb997df7c6 | Cọc khóa: 300000
+2026-05-10 14:18:45.048 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên dacd1cce-2357-49cb-98b6-79067c0239e8 trước đó.
+2026-05-10 14:18:45.053 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên c49557d6-015d-402d-964d-7307b6d6a5dc | Cọc khóa: 300000
+2026-05-10 14:18:45.060 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ac0b0699-9539-46d5-83cf-fb4f089699ec | Cọc khóa: 300000
+2026-05-10 14:18:45.076 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên bc3c88e5-c71a-4b68-9c82-4937c3f88983 | Cọc khóa: 300000
+2026-05-10 14:18:45.079 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 520f78df-a97d-4087-8fb9-5700479604c9 | Cọc khóa: 300000
+2026-05-10 14:18:45.081 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 14:18:45.088 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.099 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.102 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.105 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.108 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.111 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.187 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.192 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.195 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 14:18:45.199 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:45.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:45.205 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:45.209 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:45.211 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 14:18:45.215 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:05.061 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 15:03:05.165 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 15:03:05.174 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 15:03:05.183 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 15:03:05.199 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 15:03:05.206 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 15:03:05.212 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 15:03:05.216 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 15:03:05.221 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 15:03:05.230 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 15:03:05.237 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 15:03:05.240 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 15:03:05.244 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 15:03:05.281 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 15:03:05.299 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 15:03:05.315 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 15:03:05.352 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 15:03:05.362 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 15:03:06.586 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.589 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.589 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.591 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.592 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.839 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.839 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.851 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 73029ff9-a62e-455a-84ff-d21b52577a9a.
+2026-05-10 15:03:06.854 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên abae270c-4320-402c-befc-692b8e38c694.
+2026-05-10 15:03:06.858 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên d64df62f-7546-449c-951e-7ba4ba7c2a80.
+2026-05-10 15:03:06.863 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 24e04c59-c8d9-4e68-b468-22f4675fa7c1.
+2026-05-10 15:03:06.876 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 94c6361c-3cf5-43cb-ac94-66a02f11e960 | Cọc khóa: 300000
+2026-05-10 15:03:06.881 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3f02e6ab-0b30-4f38-98ab-ba292b98dcda | Cọc khóa: 300000
+2026-05-10 15:03:06.882 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên f15d43b5-6b66-4415-8c23-37b8a875f1bf | Cọc khóa: 300000
+2026-05-10 15:03:06.883 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên e87531b0-a46b-4089-8598-987a35a4c5e8 trước đó.
+2026-05-10 15:03:06.885 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên db8958aa-281d-47db-96d5-95d5053a14b7 | Cọc khóa: 300000
+2026-05-10 15:03:06.887 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên bb431cb8-ba00-4250-ba16-c2b99e0adc62 | Cọc khóa: 300000
+2026-05-10 15:03:06.896 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 6df55a15-09b3-417e-9dfb-e17b88ec07b1 | Cọc khóa: 300000
+2026-05-10 15:03:06.899 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên a102652a-9300-4046-8aae-f5c420655102 | Cọc khóa: 300000
+2026-05-10 15:03:06.901 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 15:03:06.907 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.917 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.918 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.919 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.921 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.923 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.978 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.981 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.983 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 15:03:06.985 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:06.987 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:06.988 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:06.989 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:06.991 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 15:03:06.993 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:21.840 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 17:10:21.946 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 17:10:21.946 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 17:10:21.961 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 17:10:21.977 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 17:10:21.977 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 17:10:21.977 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 17:10:21.999 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 17:10:21.999 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 17:10:22.009 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 17:10:22.024 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 17:10:22.024 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 17:10:22.024 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 17:10:22.057 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 17:10:22.088 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 17:10:22.099 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 17:10:22.118 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 17:10:22.134 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 17:10:22.861 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=dfa8ca0c-2949-43e1-b1b6-7d8c47d5c447
+2026-05-10 17:10:22.861 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=eb101183-7a82-4009-a526-57151b7a43ae reserve=1500000
+2026-05-10 17:10:23.040 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=ef30cb08-d19e-4996-80a9-29d226f296a5 reason=NO_WINNER
+2026-05-10 17:10:23.040 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=ef30cb08-d19e-4996-80a9-29d226f296a5
+2026-05-10 17:10:23.040 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=ef30cb08-d19e-4996-80a9-29d226f296a5 reason=NO_WINNER
+2026-05-10 17:10:23.040 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=ef30cb08-d19e-4996-80a9-29d226f296a5
+2026-05-10 17:10:23.059 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=9e27296f-68b1-423d-a1c7-d0099a4bde60 reason=NO_WINNER
+2026-05-10 17:10:23.059 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=9e27296f-68b1-423d-a1c7-d0099a4bde60 reason=NO_WINNER
+2026-05-10 17:10:23.080 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=3e709059-a462-4812-95f4-468c57008a27 reserve=2000000
+2026-05-10 17:10:23.080 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=3e709059-a462-4812-95f4-468c57008a27
+2026-05-10 17:10:23.080 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=3e709059-a462-4812-95f4-468c57008a27 reason=NO_WINNER
+2026-05-10 17:10:23.080 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=3e709059-a462-4812-95f4-468c57008a27
+2026-05-10 17:10:23.083 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=20621200-4b5f-41a0-b920-5ee60a4ed038 reserve=2000000
+2026-05-10 17:10:23.083 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=20621200-4b5f-41a0-b920-5ee60a4ed038
+2026-05-10 17:10:23.266 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=20621200-4b5f-41a0-b920-5ee60a4ed038 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.266 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=20621200-4b5f-41a0-b920-5ee60a4ed038 winner=bidder01 price=2500000
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=816677ed-17a3-4951-b38c-e4d68ab42496 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=816677ed-17a3-4951-b38c-e4d68ab42496 winner=bidder01 price=2500000
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=37cc7947-369c-48fb-b72f-85444299a1b9 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=37cc7947-369c-48fb-b72f-85444299a1b9 winner=bidder01 price=2500000
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=5a594975-abe1-4e44-804c-2cd4a5399926 reason=RESERVE_NOT_MET
+2026-05-10 17:10:23.278 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=5a594975-abe1-4e44-804c-2cd4a5399926 highestPrice=1200000 reserve=2000000
+2026-05-10 17:10:23.294 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=c687a5b8-0ce0-450f-85d7-1e7d9d1f060d winner=bidder01 deposit=300000
+2026-05-10 17:10:23.294 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=c687a5b8-0ce0-450f-85d7-1e7d9d1f060d winner=bidder01 price=2500000
+2026-05-10 17:10:23.300 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=92f1fead-d501-466d-ab8f-b6ec7ccdd232
+2026-05-10 17:10:23.373 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=783cd2e7-9b1a-4975-ac2b-9dfe4d3ba430
+2026-05-10 17:10:23.384 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=144ac306-a31f-41f5-b814-1ef008aa5593 reason=SELLER_REQUEST
+2026-05-10 17:10:23.384 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=d3789c1d-1f9b-4062-8d44-b91bb08d2410 reason=SELLER_REQUEST
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=3fe47697-a4e9-4a13-9382-a3d6b1f737be reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=3fe47697-a4e9-4a13-9382-a3d6b1f737be reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=3a112093-9bd6-427a-a45e-2604aa2f774d reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=3a112093-9bd6-427a-a45e-2604aa2f774d reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=f6dd7bd6-2bdd-4bdd-8456-5e7dcbf7018e reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=f6dd7bd6-2bdd-4bdd-8456-5e7dcbf7018e reason=FRAUDULENT_ITEM
+2026-05-10 17:10:23.389 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=6642ad31-2049-41b9-bd2e-bea1f8a779ce reason=SYSTEM_ERROR
+2026-05-10 17:10:23.406 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=4b9b8bfb-72c0-4ead-acca-32ac88d98f7f reason=NO_WINNER
+2026-05-10 17:10:23.406 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=1a703771-46eb-4545-8ecb-814057509f31 reason=NO_WINNER
+2026-05-10 17:10:23.406 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=99e5e539-00fa-4a56-8b3f-848b0efb7b78 reason=SELLER_REQUEST
+2026-05-10 17:10:23.406 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=eca949ee-2155-411c-a4e4-3ce149b475cc reason=SELLER_REQUEST
+2026-05-10 17:10:23.422 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=248090d9-3ba3-4a2c-8cad-6ab1d1d99a6c winner=bidder01 deposit=300000
+2026-05-10 17:10:23.422 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=248090d9-3ba3-4a2c-8cad-6ab1d1d99a6c winner=bidder01 price=2500000
+2026-05-10 17:10:23.436 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=67464450-6c55-4c89-a0e1-a7d36e685c60 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.436 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=67464450-6c55-4c89-a0e1-a7d36e685c60 winner=bidder01 price=2500000
+2026-05-10 17:10:23.452 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=1efbc963-8dc3-474e-9f31-88c428530863 reason=RESERVE_NOT_MET
+2026-05-10 17:10:23.452 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=1efbc963-8dc3-474e-9f31-88c428530863 highestPrice=1200000 reserve=2000000
+2026-05-10 17:10:23.452 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=5c76857c-c4c8-43b1-896f-96648427b985 reason=NO_WINNER
+2026-05-10 17:10:23.452 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=5c76857c-c4c8-43b1-896f-96648427b985
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=04d7ed58-a927-4111-aa9a-2f3c60e2ba45 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=04d7ed58-a927-4111-aa9a-2f3c60e2ba45 winner=bidder01 price=2500000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=68509f73-1959-4507-9c1e-5885a13054eb reason=RESERVE_NOT_MET
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=68509f73-1959-4507-9c1e-5885a13054eb highestPrice=1200000 reserve=2000000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=36d00f3c-5a4e-4a31-b5b0-8b4c386204d7 reason=NO_WINNER
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=36d00f3c-5a4e-4a31-b5b0-8b4c386204d7
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=02fd291a-7721-42e3-ae67-8c6c2a466f58 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=02fd291a-7721-42e3-ae67-8c6c2a466f58 winner=bidder01 price=2500000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=56a626a0-8ac7-4e0e-84f7-b658bc640333 winner=bidder01 deposit=300000
+2026-05-10 17:10:23.468 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=56a626a0-8ac7-4e0e-84f7-b658bc640333 winner=bidder01 price=2500000
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=fe1da151-b6ed-467c-84a7-fca8eed09708 reason=NO_WINNER
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=fe1da151-b6ed-467c-84a7-fca8eed09708
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=2f759ae5-b9e2-459e-8da9-ee5ce98dcfd3 reason=NO_WINNER
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=2f759ae5-b9e2-459e-8da9-ee5ce98dcfd3
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=acd7de07-52c1-42fc-914f-0744029ef7fd reason=NO_WINNER
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=acd7de07-52c1-42fc-914f-0744029ef7fd
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=9af579be-59a9-49f5-96de-b2f0e74d57d7
+2026-05-10 17:10:23.481 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=58204e14-44a9-473c-bd84-20d914282693
+2026-05-10 17:10:23.496 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=baa66544-1c4c-4195-a3e5-cbb9f6609e06
+2026-05-10 17:10:23.500 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=528c8ba5-71da-450e-9164-72038659975c reserve=1500000
+2026-05-10 17:10:23.512 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=bbecc4c7-0c04-469c-a968-8e7468e40314 reserve=2000000
+2026-05-10 17:10:23.528 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=cea1d78f-42c1-40bf-a7aa-013cb21eedba reserve=1500000
+2026-05-10 17:10:23.531 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=db867131-7ef5-4eab-bf1f-e19e6a3e43e2 reserve=1500000
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.080 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên b4d5c79a-203d-4b9e-8ab5-0afb7b18f1ff.
+2026-05-10 17:10:24.089 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên d0111309-7e90-42a9-ac31-9b99e61bc9cd.
+2026-05-10 17:10:24.089 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 1e5c2b22-8b4f-4afc-8baf-02527ff75ba5.
+2026-05-10 17:10:24.089 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 5ccddbf5-983e-4cf4-ba35-34ae5c8a6410.
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên e1ed8698-b739-4da5-8c51-ea8bdd20e8b0 | Cọc khóa: 300000
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên fefb9564-8940-445b-a8e5-864a385fb28b | Cọc khóa: 300000
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5a0abb48-58da-4599-a733-246c4568b25c | Cọc khóa: 300000
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên ba50627c-74d3-4833-bb15-292e740a7e6f trước đó.
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên b1ebd1da-af19-448d-b0ee-5be74cf0783d | Cọc khóa: 300000
+2026-05-10 17:10:24.105 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 6bd4a62f-c233-421c-acc7-b766a7b2c2d5 | Cọc khóa: 300000
+2026-05-10 17:10:24.121 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5168d8d5-1d30-4040-a9c3-37df7d2f8bc2 | Cọc khóa: 300000
+2026-05-10 17:10:24.121 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d76787bf-26a3-420c-90e1-f5e9cbdc3914 | Cọc khóa: 300000
+2026-05-10 17:10:24.121 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.137 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:10:24.201 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:06.840 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 17:51:06.934 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 17:51:06.939 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 17:51:06.939 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 17:51:06.954 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 17:51:06.966 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 17:51:06.966 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 17:51:06.981 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 17:51:06.981 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 17:51:06.997 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 17:51:06.997 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 17:51:06.997 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 17:51:06.997 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 17:51:07.039 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 17:51:07.044 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 17:51:07.044 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 17:51:07.075 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 17:51:07.082 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 17:51:07.799 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=7bf59b0f-942e-4bb7-836e-a1a51a5d212c
+2026-05-10 17:51:07.799 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=07f63929-1972-4f9b-b0dc-f0417095a147 reserve=1500000
+2026-05-10 17:51:07.988 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=dd257a43-421f-41f7-b7fb-2a636376af5f reason=NO_WINNER
+2026-05-10 17:51:07.988 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=dd257a43-421f-41f7-b7fb-2a636376af5f
+2026-05-10 17:51:07.988 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=a90a49a4-979d-4b2a-8151-dcf84f55889e reason=NO_WINNER
+2026-05-10 17:51:07.988 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=a90a49a4-979d-4b2a-8151-dcf84f55889e reason=NO_WINNER
+2026-05-10 17:51:08.014 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=422d22ce-6dc8-401f-9962-5516926b5ed3 reserve=2000000
+2026-05-10 17:51:08.014 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=422d22ce-6dc8-401f-9962-5516926b5ed3
+2026-05-10 17:51:08.014 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=422d22ce-6dc8-401f-9962-5516926b5ed3 reason=NO_WINNER
+2026-05-10 17:51:08.014 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=422d22ce-6dc8-401f-9962-5516926b5ed3
+2026-05-10 17:51:08.018 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=24f37cb6-c279-4c7f-8aaf-377fa71711db reserve=2000000
+2026-05-10 17:51:08.019 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=24f37cb6-c279-4c7f-8aaf-377fa71711db
+2026-05-10 17:51:08.287 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=24f37cb6-c279-4c7f-8aaf-377fa71711db winner=bidder01 deposit=300000
+2026-05-10 17:51:08.287 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=24f37cb6-c279-4c7f-8aaf-377fa71711db winner=bidder01 price=2500000
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=14047c21-04a3-4ac1-bc10-8d4286260117 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=14047c21-04a3-4ac1-bc10-8d4286260117 winner=bidder01 price=2500000
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=59994a2e-baf1-4b37-8f0b-5d52ca17f12f winner=bidder01 deposit=300000
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=59994a2e-baf1-4b37-8f0b-5d52ca17f12f winner=bidder01 price=2500000
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=d0fb144c-4e2f-424c-8c99-04101c460c9d reason=RESERVE_NOT_MET
+2026-05-10 17:51:08.303 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=d0fb144c-4e2f-424c-8c99-04101c460c9d highestPrice=1200000 reserve=2000000
+2026-05-10 17:51:08.318 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=492381e1-c75e-4d48-9440-63b17b7bc9f9 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.318 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=492381e1-c75e-4d48-9440-63b17b7bc9f9 winner=bidder01 price=2500000
+2026-05-10 17:51:08.318 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=b2970f63-8713-4a3f-8ff5-25eef1041b60
+2026-05-10 17:51:08.390 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=f8f69a8e-f1cf-4458-9650-3738629d1405
+2026-05-10 17:51:08.404 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=23db6cfb-9c7d-4f41-bd62-7778d4cee21e reason=SELLER_REQUEST
+2026-05-10 17:51:08.404 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c8a45516-0e97-49c2-8c9a-ca75703ae12d reason=SELLER_REQUEST
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=ffa1e156-1a1f-49e4-a34a-a8429da97433 reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=ffa1e156-1a1f-49e4-a34a-a8429da97433 reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=5e0ba573-d3bd-432d-8d82-e09b44e8329f reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=5e0ba573-d3bd-432d-8d82-e09b44e8329f reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=46d8bc3e-ac7e-4308-96e3-55f3133a0d15 reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=46d8bc3e-ac7e-4308-96e3-55f3133a0d15 reason=FRAUDULENT_ITEM
+2026-05-10 17:51:08.413 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=ef964395-faa4-414d-bcd6-4b4e96db7207 reason=SYSTEM_ERROR
+2026-05-10 17:51:08.429 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=4b025ba0-dd1a-4d14-97cc-ec7f38f67542 reason=NO_WINNER
+2026-05-10 17:51:08.437 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=8e464f3c-2436-411d-ae5a-ad2f9ae5f024 reason=NO_WINNER
+2026-05-10 17:51:08.437 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=2f3f28a6-4ceb-4f02-b17e-40ae07ce767e reason=SELLER_REQUEST
+2026-05-10 17:51:08.440 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=fd466648-96e2-4710-952a-ec6185116e22 reason=SELLER_REQUEST
+2026-05-10 17:51:08.445 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=8253184a-1fde-441b-970a-a69ed2ebf5a4 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.445 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=8253184a-1fde-441b-970a-a69ed2ebf5a4 winner=bidder01 price=2500000
+2026-05-10 17:51:08.468 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=5ee37cb9-58eb-4391-b718-447573f477e0 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.471 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=5ee37cb9-58eb-4391-b718-447573f477e0 winner=bidder01 price=2500000
+2026-05-10 17:51:08.478 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=20499c2e-765e-41ea-ba49-691d6e946c53 reason=RESERVE_NOT_MET
+2026-05-10 17:51:08.478 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=20499c2e-765e-41ea-ba49-691d6e946c53 highestPrice=1200000 reserve=2000000
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=f7345f24-fa87-4e88-bc07-ec25ac3dbd92 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=f7345f24-fa87-4e88-bc07-ec25ac3dbd92 winner=bidder01 price=2500000
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=ca31e55e-4854-4267-8279-0ddc0d57b9d6 reason=RESERVE_NOT_MET
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=ca31e55e-4854-4267-8279-0ddc0d57b9d6 highestPrice=1200000 reserve=2000000
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=76dac182-954b-4c66-9e15-0a6e04640876 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.495 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=76dac182-954b-4c66-9e15-0a6e04640876 winner=bidder01 price=2500000
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=cb21943a-d614-421c-9381-d405ccb8c728 winner=bidder01 deposit=300000
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=cb21943a-d614-421c-9381-d405ccb8c728 winner=bidder01 price=2500000
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=328ae8cc-f7e6-4b26-b847-fb0b79635b6d reason=NO_WINNER
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=328ae8cc-f7e6-4b26-b847-fb0b79635b6d
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=31def565-a1b9-4939-b33a-4c22fdafbe17 reason=NO_WINNER
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=31def565-a1b9-4939-b33a-4c22fdafbe17
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=351d7dd9-ebaa-4141-acf1-62192b1afe56 reason=NO_WINNER
+2026-05-10 17:51:08.508 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=351d7dd9-ebaa-4141-acf1-62192b1afe56
+2026-05-10 17:51:08.518 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=e9a0cecc-a1ec-4e4c-bc54-e8a91b0b88aa
+2026-05-10 17:51:08.523 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=01b6cb06-1f96-41f8-a2b6-61beeca37ae2
+2026-05-10 17:51:08.523 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=22fcc48f-2e5f-4e47-89bd-72e813401c70
+2026-05-10 17:51:08.540 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=d2b73cf3-eb05-4c81-9b44-0041ac466331 reserve=1500000
+2026-05-10 17:51:08.540 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=cb96f454-dd1b-472d-b78f-33547ae7ae49 reserve=2000000
+2026-05-10 17:51:08.557 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=37c1b0a5-f50f-44d9-9da2-063eff22ada7 reserve=1500000
+2026-05-10 17:51:08.557 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=bbb8a334-5601-4105-a41e-23d22ef6821a reserve=1500000
+2026-05-10 17:51:09.108 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.108 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.108 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên b3384a63-bc78-445b-b55c-746047a3f980.
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 2805fbc2-ea19-4fbc-80f6-b80da565da7c.
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên d70a7683-b3d6-4219-a005-eda3360a0b32.
+2026-05-10 17:51:09.110 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 66cfafd5-87d8-4a73-aa5f-1722e6f24ce0.
+2026-05-10 17:51:09.132 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 1b105ddc-f5b9-4305-b22f-581377877b26 | Cọc khóa: 300000
+2026-05-10 17:51:09.134 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên ff23a828-6c00-4e02-980b-a1a7527154f5 | Cọc khóa: 300000
+2026-05-10 17:51:09.134 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên d41bee4e-22fa-4e9f-b106-6725b7bdc549 | Cọc khóa: 300000
+2026-05-10 17:51:09.134 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên 31992af5-250c-4298-9895-586b6fbe5a6b trước đó.
+2026-05-10 17:51:09.141 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 6066c0e6-484e-4eb6-8d42-13220367e011 | Cọc khóa: 300000
+2026-05-10 17:51:09.142 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5776dade-c493-4830-b11e-a3e98bb87581 | Cọc khóa: 300000
+2026-05-10 17:51:09.142 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 34014e72-9636-4c27-9b29-fe04d8de5234 | Cọc khóa: 300000
+2026-05-10 17:51:09.142 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 5a05103c-458d-468a-8bba-18e5231bd5e6 | Cọc khóa: 300000
+2026-05-10 17:51:09.155 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 17:51:09.162 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.163 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.165 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.166 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.168 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.170 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:09.220 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:09.235 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 17:51:09.235 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:51.720 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 22:13:51.726 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 22:13:51.726 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 22:13:51.726 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 22:13:51.742 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 22:13:51.750 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 22:13:51.750 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 22:13:51.758 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 22:13:51.758 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 22:13:51.761 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 22:13:51.774 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 22:13:51.774 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 22:13:52.257 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=8d6e5433-5046-4314-a672-0c36e6e190b6
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=65373733-da4b-4dc3-81b0-deee59a4f026 reserve=1500000
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=9bf7ed2f-c8fb-494b-9f29-f57bc08463ce reason=NO_WINNER
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=9bf7ed2f-c8fb-494b-9f29-f57bc08463ce
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=f91dc4ba-f52c-45ab-a12f-541a23ebe90a reason=NO_WINNER
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=f91dc4ba-f52c-45ab-a12f-541a23ebe90a reason=NO_WINNER
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=6cd1650c-529b-4d45-8ddf-d276a25adc64 reserve=2000000
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=6cd1650c-529b-4d45-8ddf-d276a25adc64
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=6cd1650c-529b-4d45-8ddf-d276a25adc64 reason=NO_WINNER
+2026-05-10 22:13:52.266 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=6cd1650c-529b-4d45-8ddf-d276a25adc64
+2026-05-10 22:13:52.285 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=9b6d830b-3101-4451-928a-83d7a28527c0 reserve=2000000
+2026-05-10 22:13:52.285 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=9b6d830b-3101-4451-928a-83d7a28527c0
+2026-05-10 22:13:52.503 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=9b6d830b-3101-4451-928a-83d7a28527c0 winner=bidder01 deposit=300000
+2026-05-10 22:13:52.503 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=9b6d830b-3101-4451-928a-83d7a28527c0 winner=bidder01 price=2500000
+2026-05-10 22:13:52.503 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=b8cd7593-0c94-4d4d-8c3c-fb5fff23a29c winner=bidder01 deposit=300000
+2026-05-10 22:13:52.503 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=b8cd7593-0c94-4d4d-8c3c-fb5fff23a29c winner=bidder01 price=2500000
+2026-05-10 22:13:52.514 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=0bef4473-4ef9-40d0-9f8f-3b4fe5dc6037 winner=bidder01 deposit=300000
+2026-05-10 22:13:52.514 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=0bef4473-4ef9-40d0-9f8f-3b4fe5dc6037 winner=bidder01 price=2500000
+2026-05-10 22:13:52.514 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=e67b0af7-c636-4b2f-a41d-5072bf3945ad reason=RESERVE_NOT_MET
+2026-05-10 22:13:52.514 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=e67b0af7-c636-4b2f-a41d-5072bf3945ad highestPrice=1200000 reserve=2000000
+2026-05-10 22:13:52.522 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=1cbec3fd-fdda-405d-9f21-b39a8cc46f74 winner=bidder01 deposit=300000
+2026-05-10 22:13:52.522 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=1cbec3fd-fdda-405d-9f21-b39a8cc46f74 winner=bidder01 price=2500000
+2026-05-10 22:13:52.529 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=6be197d6-0b8a-434b-b538-c0576418d27f
+2026-05-10 22:13:52.543 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=ac8a30e9-c3c4-41c1-b14c-08fbbded73fe
+2026-05-10 22:13:52.549 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c57afb80-e5aa-4478-9095-dbab538d83ab reason=SELLER_REQUEST
+2026-05-10 22:13:52.550 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=168af99e-6600-4009-8e57-8e4ebbed4402 reason=SELLER_REQUEST
+2026-05-10 22:13:52.556 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=6f944894-fd77-41b2-86a1-38e1ada4604d reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.556 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=6f944894-fd77-41b2-86a1-38e1ada4604d reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.557 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=8dbaeec8-1773-406b-98a0-e654bfa8ce19 reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.557 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=8dbaeec8-1773-406b-98a0-e654bfa8ce19 reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.559 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=00aee2ab-0a5d-4a00-aa73-8f0c3f4254e8 reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.559 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=00aee2ab-0a5d-4a00-aa73-8f0c3f4254e8 reason=FRAUDULENT_ITEM
+2026-05-10 22:13:52.559 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=37030094-7831-45e0-96af-dfa3fafe019a reason=SYSTEM_ERROR
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=7404b3d0-1f5a-43ba-84e3-ccc943d88134 reason=NO_WINNER
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=3460aa0c-d95e-4009-b709-eb43b2ffbcc8 reason=NO_WINNER
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=b580e356-3d74-4e5e-b1fa-171d9134fd02 reason=SELLER_REQUEST
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=ba278c0f-1e38-4e18-aa8c-cc214a649526 reason=SELLER_REQUEST
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=bb087f10-3c53-447a-9ee0-970aad8d4e40 winner=bidder01 deposit=300000
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=bb087f10-3c53-447a-9ee0-970aad8d4e40 winner=bidder01 price=2500000
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=668c8149-1e1d-4326-9b1d-da17f991528a winner=bidder01 deposit=300000
+2026-05-10 22:13:52.566 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=668c8149-1e1d-4326-9b1d-da17f991528a winner=bidder01 price=2500000
+2026-05-10 22:13:52.585 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=a7cf1c54-60f4-40e5-8be3-b05e384cb877 reason=RESERVE_NOT_MET
+2026-05-10 22:13:52.585 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=a7cf1c54-60f4-40e5-8be3-b05e384cb877 highestPrice=1200000 reserve=2000000
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=f6b0cd58-54ee-4eac-84e7-2e8853722b2d winner=bidder01 deposit=300000
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=f6b0cd58-54ee-4eac-84e7-2e8853722b2d winner=bidder01 price=2500000
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=b2b5929e-5b5a-4f30-ba3a-14c4a9be7b82 reason=RESERVE_NOT_MET
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=b2b5929e-5b5a-4f30-ba3a-14c4a9be7b82 highestPrice=1200000 reserve=2000000
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=002dffb6-7dbd-475b-b474-4c6d23d785e9 winner=bidder01 deposit=300000
+2026-05-10 22:13:52.597 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=002dffb6-7dbd-475b-b474-4c6d23d785e9 winner=bidder01 price=2500000
+2026-05-10 22:13:52.613 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=cd5a9ca8-e9dc-4a94-bc38-46e87f079dde winner=bidder01 deposit=300000
+2026-05-10 22:13:52.613 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=cd5a9ca8-e9dc-4a94-bc38-46e87f079dde winner=bidder01 price=2500000
+2026-05-10 22:13:52.613 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=7873a2bc-e7b6-4fbf-b0aa-2ae3d14085f9 reason=NO_WINNER
+2026-05-10 22:13:52.613 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=7873a2bc-e7b6-4fbf-b0aa-2ae3d14085f9
+2026-05-10 22:13:52.613 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=0f354687-826f-46a5-8ad9-a92479b73f62 reason=NO_WINNER
+2026-05-10 22:13:52.625 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=0f354687-826f-46a5-8ad9-a92479b73f62
+2026-05-10 22:13:52.625 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=e3389241-9119-455b-8cbc-632473a27dc9 reason=NO_WINNER
+2026-05-10 22:13:52.625 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=e3389241-9119-455b-8cbc-632473a27dc9
+2026-05-10 22:13:52.629 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=6fcf8432-2bd4-4277-9920-6f1a0be1e983
+2026-05-10 22:13:52.629 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=75722940-f110-4e52-87da-629896ff86cf
+2026-05-10 22:13:52.629 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=72df5d63-d6d1-402c-a902-93e881ffe22d
+2026-05-10 22:13:52.645 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=8fd6ac65-b095-4374-b37f-bfe2198153e9 reserve=1500000
+2026-05-10 22:13:52.645 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=d17008e8-c1ca-4f62-95ac-5ff7e99a65fc reserve=2000000
+2026-05-10 22:13:52.645 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=aee4bc27-7d92-4677-9397-cd213e46931b reserve=1500000
+2026-05-10 22:13:52.658 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=104abcce-5f0e-4b42-bdcf-517ab4a9166b reserve=1500000
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 0ee8f84b-9f9f-4089-b2f4-8481681d7a24.
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 37281e50-a961-4ce3-ba75-767eef5683c7.
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên c5b731d2-5e1b-4263-83e1-6b43271c6fed.
+2026-05-10 22:13:53.276 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên c8faadc7-f26f-494c-a4a4-7e0b873b588a.
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên 9045ef8c-511a-4dfe-8286-34e46fbcec04 | Cọc khóa: 300000
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên c4d2691f-efdf-4ed9-b269-98bcaddb5260 | Cọc khóa: 300000
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 0d166e98-c82a-4be1-809a-8ffcd9a427de | Cọc khóa: 300000
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên edc3c79c-c4b1-4118-8ce3-5451a9fd9533 trước đó.
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên a38dd50f-960f-4216-b28a-2ecb3ac2ace9 | Cọc khóa: 300000
+2026-05-10 22:13:53.292 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 2b977b23-5424-450e-931f-b17cd411ec94 | Cọc khóa: 300000
+2026-05-10 22:13:53.308 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 617bb3ff-edea-4d8d-b98c-1e503963aa99 | Cọc khóa: 300000
+2026-05-10 22:13:53.308 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên f548305c-0975-46e6-831f-e2f06f78408c | Cọc khóa: 300000
+2026-05-10 22:13:53.308 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 22:13:53.308 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.320 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.320 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.323 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.325 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.325 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.359 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.359 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.359 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 22:13:53.359 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:53.371 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:53.373 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:53.382 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:53.386 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 22:13:53.389 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!

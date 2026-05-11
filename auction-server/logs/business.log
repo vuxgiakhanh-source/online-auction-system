@@ -1,0 +1,231 @@
+2026-05-10 10:16:37.701 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:37.784 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:37.796 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:37.814 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:37.823 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:37.833 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2500000 thành công!
+2026-05-10 10:16:59.760 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:16:59.797 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:16:59.849 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.598 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.677 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.689 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.704 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.714 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:00.722 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:21:12.174 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:22:45.026 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 2000000 thành công!
+2026-05-10 10:22:54.218 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 009bf5fc-a17e-490f-af3c-ce6f97ceb00c | Cọc khóa: 300000
+2026-05-10 10:22:54.287 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên fb4bb0b2-396a-4391-901c-e1abfbfbc0e5 | Cọc khóa: 300000
+2026-05-10 10:22:54.299 INFO  [main] c.group13.auction.service.BidService - freshBidr1 đã tham gia phiên edb26483-fcd4-4199-8e3b-158ab4646178 trước đó.
+2026-05-10 10:22:54.315 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 1872162f-2398-4f79-b40e-706c8c6bf087 | Cọc khóa: 300000
+2026-05-10 10:22:54.333 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 9eb1484d-90db-4e9e-bdaa-c13a75ecea8b | Cọc khóa: 300000
+2026-05-10 10:22:54.357 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 3d720b84-fddf-48ad-8d91-aef164742383 | Cọc khóa: 300000
+2026-05-10 10:22:54.361 INFO  [main] c.group13.auction.service.BidService - freshBidr1 tham gia phiên 82494f58-8ea5-4c0f-9604-236840484303 | Cọc khóa: 300000
+2026-05-10 10:23:05.902 INFO  [main] c.group13.auction.service.BidService - sellerUser1 tham gia phiên ed62c774-de09-4f3d-b1b6-8a943983f437 | Cọc khóa: 300000
+2026-05-10 10:23:14.228 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 01903ee7-846f-45b0-94e0-5c94d84d304d.
+2026-05-10 10:23:14.285 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên 7f383705-ebaf-4ee8-8b82-00f2da28d882.
+2026-05-10 10:23:14.297 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên bf97fe06-4ee5-45f0-86ef-67922704467e.
+2026-05-10 10:23:14.357 INFO  [main] c.group13.auction.service.BidService - bidderUser1 theo dõi phiên ba9febbf-13fc-4e13-9db8-59840e78e7fb.
+2026-05-10 10:23:22.030 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.038 INFO  [main] c.group13.auction.service.BidService - bidderFF1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.038 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1600000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.085 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.085 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.150 INFO  [main] c.group13.auction.service.BidService - bidderUser1 đặt giá 1200000 — chưa đạt reserve price (2000000).
+2026-05-10 10:23:22.150 INFO  [main] c.group13.auction.service.BidService - bidderEE1 đặt giá 1400000 — chưa đạt reserve price (2000000).
+2026-05-10 14:48:41.606 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 14:48:41.703 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 14:48:41.715 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 14:48:41.721 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 14:48:41.731 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBU6 reason=null
+2026-05-10 14:48:41.752 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 14:48:41.758 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 14:48:41.762 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 14:48:41.766 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 14:48:41.773 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 14:48:41.779 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 14:48:41.784 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 14:48:41.789 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 14:48:41.796 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 14:48:41.832 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 14:48:41.838 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 14:48:41.851 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 14:48:41.887 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 14:48:41.890 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 14:56:58.238 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBI4 reason=LOW_RATING
+2026-05-10 14:56:58.332 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBR3 reason=LOW_RATING
+2026-05-10 14:56:58.342 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBO0 reason=LOW_RATING
+2026-05-10 14:56:58.353 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBH3 reason=LOW_RATING
+2026-05-10 14:56:58.374 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBN9 reason=LOW_RATING
+2026-05-10 14:56:58.382 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBP1 reason=LOW_RATING
+2026-05-10 14:56:58.388 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBM8 reason=LOW_RATING
+2026-05-10 14:56:58.394 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBQ2 reason=SELLER_REFUND_DEFAULT
+2026-05-10 14:56:58.398 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=sellerBK6 reason=SELLER_REFUND_DEFAULT
+2026-05-10 14:56:58.405 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBT5 reason=LOW_RATING
+2026-05-10 14:56:58.410 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBL7 reason=LOW_RATING
+2026-05-10 14:56:58.415 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBJ5 reason=LOW_RATING
+2026-05-10 14:56:58.421 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staffAdmin target=bidderBS4 reason=LOW_RATING
+2026-05-10 14:56:58.454 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderXX4
+2026-05-10 14:56:58.463 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderYY5
+2026-05-10 14:56:58.478 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderWW3
+2026-05-10 14:56:58.510 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=bidderBG2
+2026-05-10 14:56:58.517 INFO  [main] c.g.auction.service.AccountService - sellerAA1 đã có role Seller.
+2026-05-10 17:11:18.901 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=920473f1-4fc5-493a-8345-8b8ea1aef1fc
+2026-05-10 17:11:19.035 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=a317d289-ce8d-4f86-9872-b318b42bbb1a reserve=1500000
+2026-05-10 17:11:19.119 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=051e4524-4818-4f72-bdf6-9d9d4adae3fb reason=NO_WINNER
+2026-05-10 17:11:19.119 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=051e4524-4818-4f72-bdf6-9d9d4adae3fb
+2026-05-10 17:11:19.119 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=051e4524-4818-4f72-bdf6-9d9d4adae3fb reason=NO_WINNER
+2026-05-10 17:11:19.119 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=051e4524-4818-4f72-bdf6-9d9d4adae3fb
+2026-05-10 17:11:19.135 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=0455f6d6-6d80-46d0-bbb7-68adf7141683 reason=NO_WINNER
+2026-05-10 17:11:19.135 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=0455f6d6-6d80-46d0-bbb7-68adf7141683 reason=NO_WINNER
+2026-05-10 17:11:19.157 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=0744b85b-f83a-461f-a59b-c51fcadb9015 reserve=2000000
+2026-05-10 17:11:19.159 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=0744b85b-f83a-461f-a59b-c51fcadb9015
+2026-05-10 17:11:19.159 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=0744b85b-f83a-461f-a59b-c51fcadb9015 reason=NO_WINNER
+2026-05-10 17:11:19.159 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=0744b85b-f83a-461f-a59b-c51fcadb9015
+2026-05-10 17:11:19.164 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=f3d98437-1d97-43e7-9e80-47816e686592 reserve=2000000
+2026-05-10 17:11:19.164 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=f3d98437-1d97-43e7-9e80-47816e686592
+2026-05-10 17:11:19.281 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=f3d98437-1d97-43e7-9e80-47816e686592 winner=bidder01 deposit=300000
+2026-05-10 17:11:19.281 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=f3d98437-1d97-43e7-9e80-47816e686592 winner=bidder01 price=2500000
+2026-05-10 17:11:19.296 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=e54f0df4-06c6-4f70-abe2-42e2a8ea071d winner=bidder01 deposit=300000
+2026-05-10 17:11:19.296 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=e54f0df4-06c6-4f70-abe2-42e2a8ea071d winner=bidder01 price=2500000
+2026-05-10 17:11:19.306 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=93d9ff93-272f-4c18-8860-016d64f0e9ee winner=bidder01 deposit=300000
+2026-05-10 17:11:19.306 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=93d9ff93-272f-4c18-8860-016d64f0e9ee winner=bidder01 price=2500000
+2026-05-10 17:11:19.306 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=6ccd2b67-3bb3-4f2e-b6df-fa75ab3e6a86 reason=RESERVE_NOT_MET
+2026-05-10 17:11:19.306 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=6ccd2b67-3bb3-4f2e-b6df-fa75ab3e6a86 highestPrice=1200000 reserve=2000000
+2026-05-10 17:11:19.315 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=470c1a26-20f3-4747-a238-d0bffda5f49e winner=bidder01 deposit=300000
+2026-05-10 17:11:19.315 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=470c1a26-20f3-4747-a238-d0bffda5f49e winner=bidder01 price=2500000
+2026-05-10 17:11:19.332 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=0542b360-9976-48f8-a253-a021f6618464
+2026-05-10 17:11:19.398 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=f2104db4-c20b-433b-ad79-7957f387d76e
+2026-05-10 17:11:19.417 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=5c3571f6-c4c9-46bc-8207-375663c78097 reason=SELLER_REQUEST
+2026-05-10 17:11:19.420 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=062dc4c8-0d6c-472e-8378-84fbf0f78aa3 reason=SELLER_REQUEST
+2026-05-10 17:11:19.433 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=95a431c4-928b-4f2c-924f-16e197d0eb97 reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.433 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=95a431c4-928b-4f2c-924f-16e197d0eb97 reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.439 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=69a3051f-948c-488c-8ccb-9274c7e20b28 reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.439 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=69a3051f-948c-488c-8ccb-9274c7e20b28 reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.443 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=b2168123-b470-47f4-9635-ed26b49c626a reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.443 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=b2168123-b470-47f4-9635-ed26b49c626a reason=FRAUDULENT_ITEM
+2026-05-10 17:11:19.448 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=9c864055-4090-4f43-8937-1bb3bd901caf reason=SYSTEM_ERROR
+2026-05-10 17:11:19.470 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=738c5e01-dba8-4ad2-b570-114dae3222ca reason=NO_WINNER
+2026-05-10 17:11:19.478 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c8719468-d2d9-4bb0-af91-fbed6a56969f reason=NO_WINNER
+2026-05-10 17:11:19.485 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=089124cd-4874-43e4-8516-fd3bdc108762 reason=SELLER_REQUEST
+2026-05-10 17:11:19.490 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=96030cf6-5663-48a0-927b-88c6a3f30f17 reason=SELLER_REQUEST
+2026-05-10 17:11:19.505 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=5e5971d5-8956-432c-95e2-30731412a4b3 winner=bidder01 deposit=300000
+2026-05-10 17:11:19.505 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=5e5971d5-8956-432c-95e2-30731412a4b3 winner=bidder01 price=2500000
+2026-05-10 17:11:19.517 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=0bc3ca69-fb00-472d-9f64-340c37f81a15 winner=bidder01 deposit=300000
+2026-05-10 17:11:19.517 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=0bc3ca69-fb00-472d-9f64-340c37f81a15 winner=bidder01 price=2500000
+2026-05-10 17:11:19.530 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=d429a555-e685-45b2-a1e3-54561ee34970 reason=RESERVE_NOT_MET
+2026-05-10 17:11:19.531 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=d429a555-e685-45b2-a1e3-54561ee34970 highestPrice=1200000 reserve=2000000
+2026-05-10 17:11:19.539 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=61c7aa8b-9008-44cb-9077-ded451540157 reason=NO_WINNER
+2026-05-10 17:11:19.539 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=61c7aa8b-9008-44cb-9077-ded451540157
+2026-05-10 17:11:19.547 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=724a01ac-ae08-4213-99d1-88b4ab10072c winner=bidder01 deposit=300000
+2026-05-10 17:11:19.547 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=724a01ac-ae08-4213-99d1-88b4ab10072c winner=bidder01 price=2500000
+2026-05-10 17:11:19.554 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=b6ff2fce-3bc9-4572-b706-e0a92e407aa6 reason=RESERVE_NOT_MET
+2026-05-10 17:11:19.554 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=b6ff2fce-3bc9-4572-b706-e0a92e407aa6 highestPrice=1200000 reserve=2000000
+2026-05-10 17:11:19.559 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=76d3a6e7-d13d-4d10-a4f4-9a930d67f6c0 reason=NO_WINNER
+2026-05-10 17:11:19.559 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=76d3a6e7-d13d-4d10-a4f4-9a930d67f6c0
+2026-05-10 17:11:19.569 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=b2c9e6d8-fa46-43cb-9e9a-35c8c1e32cf6 winner=bidder01 deposit=300000
+2026-05-10 17:11:19.570 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=b2c9e6d8-fa46-43cb-9e9a-35c8c1e32cf6 winner=bidder01 price=2500000
+2026-05-10 17:11:19.577 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=c062e818-fc4b-4f2a-9a74-85871898fc22 winner=bidder01 deposit=300000
+2026-05-10 17:11:19.577 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=c062e818-fc4b-4f2a-9a74-85871898fc22 winner=bidder01 price=2500000
+2026-05-10 17:11:19.582 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=26b624e8-061c-4ac0-b763-60fe64141da5 reason=NO_WINNER
+2026-05-10 17:11:19.582 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=26b624e8-061c-4ac0-b763-60fe64141da5
+2026-05-10 17:11:19.588 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=6e360ba9-217e-4b59-b7ae-4ecbadbed7ce reason=NO_WINNER
+2026-05-10 17:11:19.588 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=6e360ba9-217e-4b59-b7ae-4ecbadbed7ce
+2026-05-10 17:11:19.593 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=2f0d3ea7-bf75-494f-9761-8efd3584c9d0 reason=NO_WINNER
+2026-05-10 17:11:19.593 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=2f0d3ea7-bf75-494f-9761-8efd3584c9d0
+2026-05-10 17:11:19.607 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=888be394-a281-420b-b0c1-a4e8b0141a42
+2026-05-10 17:11:19.616 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=f866bc37-df00-4e3e-9308-f278d82ed422
+2026-05-10 17:11:19.625 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=516b7d62-4f10-406e-9e0c-c996b237b5c1
+2026-05-10 17:11:19.651 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=452024ba-deb5-46a7-a658-6d1a0763a052 reserve=1500000
+2026-05-10 17:11:19.656 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=a351247a-abd6-4fc0-b639-cf33cabb9bf6 reserve=2000000
+2026-05-10 17:11:19.666 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=a6f2f937-8914-4fab-a19f-a762c37d8319 reserve=1500000
+2026-05-10 17:11:19.680 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=595f22cc-d181-4167-bdd0-764861b7f852 reserve=1500000
+2026-05-10 17:48:05.640 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=cded0bab-2cb6-49de-9b1c-02a0a007600a reason=NO_WINNER
+2026-05-10 17:48:05.674 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=cded0bab-2cb6-49de-9b1c-02a0a007600a
+2026-05-10 17:48:31.435 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c986f4ae-fb18-4ed4-9183-fe1d86dd9ee1 reason=NO_WINNER
+2026-05-10 17:48:31.465 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=c986f4ae-fb18-4ed4-9183-fe1d86dd9ee1
+2026-05-10 17:50:55.150 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=c1647f51-6152-4e42-8c04-a1003c9b6f44
+2026-05-10 17:50:55.260 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=38a17ebb-ef24-416b-a07f-e9e616617cb8 reserve=1500000
+2026-05-10 17:50:55.346 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=3769253d-fc26-47fc-a05e-3a5049c41053 reason=NO_WINNER
+2026-05-10 17:50:55.346 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=3769253d-fc26-47fc-a05e-3a5049c41053
+2026-05-10 17:50:55.352 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=2bbebf5e-61b1-40cf-a037-b08c9668b3da reason=NO_WINNER
+2026-05-10 17:50:55.352 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=2bbebf5e-61b1-40cf-a037-b08c9668b3da reason=NO_WINNER
+2026-05-10 17:50:55.367 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=68911b20-73e6-44d8-86fd-b0fc837370e5 reserve=2000000
+2026-05-10 17:50:55.367 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=68911b20-73e6-44d8-86fd-b0fc837370e5
+2026-05-10 17:50:55.367 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=68911b20-73e6-44d8-86fd-b0fc837370e5 reason=NO_WINNER
+2026-05-10 17:50:55.367 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=68911b20-73e6-44d8-86fd-b0fc837370e5
+2026-05-10 17:50:55.374 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=6ed03a3a-69d0-402d-8a4b-9882420f246a reserve=2000000
+2026-05-10 17:50:55.374 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=6ed03a3a-69d0-402d-8a4b-9882420f246a
+2026-05-10 17:50:55.484 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=6ed03a3a-69d0-402d-8a4b-9882420f246a winner=bidder01 deposit=300000
+2026-05-10 17:50:55.484 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=6ed03a3a-69d0-402d-8a4b-9882420f246a winner=bidder01 price=2500000
+2026-05-10 17:50:55.502 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=9aaa8e14-13b2-4b65-a3ef-03b194e26bfb winner=bidder01 deposit=300000
+2026-05-10 17:50:55.502 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=9aaa8e14-13b2-4b65-a3ef-03b194e26bfb winner=bidder01 price=2500000
+2026-05-10 17:50:55.517 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=e7219621-fd5f-41cc-8fd2-ae960a7e1152 winner=bidder01 deposit=300000
+2026-05-10 17:50:55.517 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=e7219621-fd5f-41cc-8fd2-ae960a7e1152 winner=bidder01 price=2500000
+2026-05-10 17:50:55.518 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c0919946-17b9-49e6-8fbe-313ae30c60df reason=RESERVE_NOT_MET
+2026-05-10 17:50:55.518 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=c0919946-17b9-49e6-8fbe-313ae30c60df highestPrice=1200000 reserve=2000000
+2026-05-10 17:50:55.526 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=185ce95e-36c8-4090-b250-ba1f72c2a03e winner=bidder01 deposit=300000
+2026-05-10 17:50:55.526 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=185ce95e-36c8-4090-b250-ba1f72c2a03e winner=bidder01 price=2500000
+2026-05-10 17:50:55.532 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=35d9a2c1-4c9f-4d53-a260-452658d33fa8
+2026-05-10 17:50:55.593 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=6a2e8a83-1ad1-41af-b0e7-9801c3e9593e
+2026-05-10 17:50:55.617 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=8a55fbd7-9e6b-4376-b37e-63891f89ce4b reason=SELLER_REQUEST
+2026-05-10 17:50:55.626 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=3e9ef911-61a7-4638-95c9-769794e11ca0 reason=SELLER_REQUEST
+2026-05-10 17:50:55.641 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=ecffdbf3-ceaf-428d-ade4-31f4949f7ecd reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.641 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=ecffdbf3-ceaf-428d-ade4-31f4949f7ecd reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.647 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=e6eeb497-05f4-4329-bec8-422b6dde573b reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.647 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=e6eeb497-05f4-4329-bec8-422b6dde573b reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.653 INFO  [main] c.g.auction.service.AuctionService - STAFF CANCEL: staff=staff01 auctionId=ebc7f5ff-590b-430e-9d91-c75091e76c10 reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.653 INFO  [main] c.g.auction.service.AuctionService - AUDIT: staff=staff01 auctionId=ebc7f5ff-590b-430e-9d91-c75091e76c10 reason=FRAUDULENT_ITEM
+2026-05-10 17:50:55.659 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=9c56121c-39c1-4839-8250-afacb72f1ce0 reason=SYSTEM_ERROR
+2026-05-10 17:50:55.675 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=629acc91-a842-4d61-a3ec-79f5381284cb reason=NO_WINNER
+2026-05-10 17:50:55.681 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=52fd2725-4dc7-430c-8b67-64b818a46e85 reason=NO_WINNER
+2026-05-10 17:50:55.685 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=bc189360-33a7-4a90-a5fc-653c141eb849 reason=SELLER_REQUEST
+2026-05-10 17:50:55.688 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=febb4eef-e094-4bcd-9942-87b78ff70b69 reason=SELLER_REQUEST
+2026-05-10 17:50:55.697 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=479658e7-def1-4899-ac2b-cecbd0ecec70 winner=bidder01 deposit=300000
+2026-05-10 17:50:55.697 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=479658e7-def1-4899-ac2b-cecbd0ecec70 winner=bidder01 price=2500000
+2026-05-10 17:50:55.708 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=c017503c-3015-4174-9542-10354eb0ab37 winner=bidder01 deposit=300000
+2026-05-10 17:50:55.708 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=c017503c-3015-4174-9542-10354eb0ab37 winner=bidder01 price=2500000
+2026-05-10 17:50:55.719 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=33d2a2b7-8e7e-47b7-bcfc-06fe1c9c0f78 reason=RESERVE_NOT_MET
+2026-05-10 17:50:55.719 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=33d2a2b7-8e7e-47b7-bcfc-06fe1c9c0f78 highestPrice=1200000 reserve=2000000
+2026-05-10 17:50:55.730 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=37efca4c-a6bf-4543-8d8c-b339d607a13f winner=bidder01 deposit=300000
+2026-05-10 17:50:55.730 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=37efca4c-a6bf-4543-8d8c-b339d607a13f winner=bidder01 price=2500000
+2026-05-10 17:50:55.738 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=c31b3b80-c040-4a73-8ea0-5d80fcf769dd reason=RESERVE_NOT_MET
+2026-05-10 17:50:55.739 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - reserve chưa đạt: auctionId=c31b3b80-c040-4a73-8ea0-5d80fcf769dd highestPrice=1200000 reserve=2000000
+2026-05-10 17:50:55.745 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=e3e08756-1621-4451-bca4-a0148cd74341 winner=bidder01 deposit=300000
+2026-05-10 17:50:55.745 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=e3e08756-1621-4451-bca4-a0148cd74341 winner=bidder01 price=2500000
+2026-05-10 17:50:55.752 INFO  [main] c.g.auction.service.AuctionService - Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId=f814c7e1-285e-4564-8683-6b47731183fb winner=bidder01 deposit=300000
+2026-05-10 17:50:55.752 INFO  [main] c.g.auction.service.AuctionService - Winner: auctionId=f814c7e1-285e-4564-8683-6b47731183fb winner=bidder01 price=2500000
+2026-05-10 17:50:55.760 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=d138b533-93ae-4a1c-a324-a6bf3ffe4879 reason=NO_WINNER
+2026-05-10 17:50:55.760 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=d138b533-93ae-4a1c-a324-a6bf3ffe4879
+2026-05-10 17:50:55.765 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=bf503ff6-9adf-4250-b3de-d8099fda14d2 reason=NO_WINNER
+2026-05-10 17:50:55.765 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=bf503ff6-9adf-4250-b3de-d8099fda14d2
+2026-05-10 17:50:55.770 INFO  [main] c.g.auction.service.AuctionService - SYSTEM AUTO-CANCEL: auctionId=0303354a-729c-4f28-b988-cc482a70d95a reason=NO_WINNER
+2026-05-10 17:50:55.770 INFO  [main] c.g.auction.service.AuctionService - Phiên đóng - không có ai đặt giá: auctionId=0303354a-729c-4f28-b988-cc482a70d95a
+2026-05-10 17:50:55.778 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=03a3a8c9-64ac-4a38-bbaa-38992f850ee1
+2026-05-10 17:50:55.785 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=264d66e6-fb8b-48c1-a43d-16db2d82a12f
+2026-05-10 17:50:55.792 INFO  [main] c.g.auction.service.AuctionService - Phiên bắt đầu: auctionId=62d71345-2de9-4483-a4ea-9e235caa11dc
+2026-05-10 17:50:55.814 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=8faa2411-87b9-4a3b-a1f4-28d9e28a1829 reserve=1500000
+2026-05-10 17:50:55.819 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=36891358-c9e7-441f-ae0a-737ab6cb65e3 reserve=2000000
+2026-05-10 17:50:55.827 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=b2d13143-3f82-4d8c-bbdd-ce4c421d8be6 reserve=1500000
+2026-05-10 17:50:55.839 INFO  [main] c.g.auction.service.AuctionService - Tạo auction: auctionId=14aaf547-a85b-4ee1-a8f0-9b7b2f883b57 reserve=1500000
+2026-05-10 18:03:57.969 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=lifecycle05
+2026-05-10 18:03:58.095 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=lifecycle01 reason=LOW_RATING
+2026-05-10 18:03:58.120 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=lifecycle03 reason=SELLER_REFUND_DEFAULT
+2026-05-10 18:03:58.125 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=lifecycle02 reason=LOW_RATING
+2026-05-10 18:03:58.220 INFO  [main] c.g.auction.service.AccountService - Seller gửi yêu cầu hủy phiên: seller=seller10 auctionId=07f13db9-cc62-449b-89f2-dd6816f1ddd9 reason=Không bán nữa
+2026-05-10 18:03:58.433 INFO  [main] c.g.auction.service.AccountService - Tạo admin STAFF: username=newstaff01
+2026-05-10 18:03:58.445 INFO  [main] c.g.auction.service.AccountService - Tạo admin STAFF: username=newstaff03
+2026-05-10 18:03:58.461 INFO  [main] c.g.auction.service.AccountService - Tạo admin STAFF: username=newstaff02
+2026-05-10 18:03:58.473 INFO  [main] c.g.auction.service.AccountService - Tạo admin STAFF: username=newstaff04
+2026-05-10 18:03:58.536 INFO  [main] c.g.auction.service.AccountService - seller01 đã có role Seller.
+2026-05-10 18:03:58.542 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=user02
+2026-05-10 18:03:58.556 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=user01
+2026-05-10 18:03:58.573 INFO  [main] c.g.auction.service.AccountService - Auto-approve role Seller: user=user03
+2026-05-10 18:03:58.576 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim04 reason=LOW_RATING
+2026-05-10 18:03:58.576 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim05 reason=SELLER_REFUND_DEFAULT
+2026-05-10 18:03:58.585 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim08 reason=LOW_RATING
+2026-05-10 18:03:58.590 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim01 reason=LOW_RATING
+2026-05-10 18:03:58.596 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim02 reason=LOW_RATING
+2026-05-10 18:03:58.603 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim03 reason=LOW_RATING
+2026-05-10 18:03:58.613 INFO  [main] c.g.auction.service.AccountService - Ban user: admin=staff01 target=victim07 reason=LOW_RATING
