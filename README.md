@@ -1,41 +1,53 @@
-![Logo](OmniBid.png)
-
 <div align="center">
+![OmniBid Logo](OmniBid.png)
 
-# OminiBid - Hệ thống đấu giá Online 
+# OmniBid - Hệ thống Đấu giá Trực tuyến
 
-![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=white)
-![Maven](https://img.shields.io/badge/Apache_Maven-C71A36?logo=apachemaven&logoColor=white)
-![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white)
-![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)
-![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white)
-![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white)
+**Nền tảng đấu giá desktop thời gian thực, xây dựng bằng Java theo mô hình Client-Server.**  
+Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebSocket, và tự động hoá toàn bộ quy trình hậu mãi từ escrow đến hoàn tiền.
+
+---
+
+[![Java CI](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml/badge.svg)](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml)
+![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-3.8+-C71A36?logo=apachemaven&logoColor=white)
+![JavaFX](https://img.shields.io/badge/JavaFX-17-4A8CFF?logo=java&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-1.5.5-00BFFF)
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?logo=mysql&logoColor=white)
+![JUnit5](https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 </div>
+
+---
 
 ## 🧾 Mục lục
 
 * [Giới thiệu](#-giới-thiệu)
+* [Demo](#-demo)
 * [Đặc điểm kĩ thuật nổi bật](#-đặc-điểm-kĩ-thuật-nổi-bật)
 * [Chức năng hệ thống](#-chức-năng-hệ-thống)
     * [Chức năng cốt lõi](#chức-năng-cốt-lõi)
     * [Chức năng nâng cao](#chức-năng-nâng-cao)
 * [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
     * [Kiến trúc tổng quan](#kiến-trúc-tổng-quan)
-    * [Sơ đồ thiết kế hướng đối tượng OOP](#sơ-đồ-thiết-kế-hướng-đối-tượng-oop)
+    * [Cấu trúc project](#-cấu-trúc-project)
     * [Design Patterns áp dụng](#design-patterns-áp-dụng)
-* [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt-later)
-* [Cách sử dụng](#-cách-sử-dụng-later)
+* [Tech Stack](#-tech-stack)
+* [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt)
+  * [Yêu cầu](#yêu-cầu)
+  * [Các bước cài đặt](#các-bước-cài-đặt)
+  * [Troubleshooting](#troubleshooting)
+* [Testing](#-testing)
 * [Công nghệ & Công cụ sử dụng](#-công-nghệ--công-cụ-sử-dụng)
-* [Đội ngũ & Phân công nhiệm vụ (Project Roadmap)](#-đội-ngũ--phân-công-nhiệm-vụ-project-roadmap)
+* [Đội ngũ & Phân công nhiệm vụ (Team Section))](#-đội-ngũ--phân-công-nhiệm-vụ-team-section)
 * [Liên hệ](#-liên-hệ)
 * [License](#-license)
 
 ___
 
 ## 🚀 Giới thiệu
-**OmniBid** là một nền tảng đấu giá trực tuyến mạnh mẽ và hiện đại, được xây dựng để mang đến một môi trường giao dịch **minh bạch, công bằng và đầy kịch tính**.
+**OmniBid** là nền tảng đấu giá trực tuyến dạng desktop app, giải quyết các bài toán kỹ thuật cốt lõi của một hệ thống đấu giá thực tế.
 
 Hệ thống cho phép người bán (Seller) dễ dàng đăng tải các sản phẩm đa dạng, trong khi người mua (Bidder) có thể tham gia đấu thầu cạnh tranh gay gắt để sở hữu món đồ với mức giá phù hợp nhất thông qua cơ chế thị trường thực thụ.
 
@@ -47,23 +59,9 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 
 ---
 
-## ✨ Đặc điểm kĩ thuật nổi bật
-Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
-* __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với 
-__Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client 
-mà không cần tải lại trang.
-> Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast
-> tới các Bidders khác) (GIF)
+## 🎬 Demo
+> Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
-
-* __Concurrency Control__: Giải quyết triệt để các vấn đề Lost Update và Race Condition trong kịch bản nhiều người cùng đặt giá tại một mili giây.
-
-
-* __Cấu trúc hướng đối tượng (OOP)__: Áp dụng chặt chẽ 4 nguyên lý OOP __(Đóng gói, Kế thừa, Đa hình, Trừu tượng)__ cùng các mẫu thiết kế __Factory Method, Singleton, Strategy, Observer và State__ để quản lý logic nghiệp vụ phức tạp.
-
-
-* __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___. Tách biệt rõ ràng các tầng (Network, Handler, Service, Domain, DAO, Observer).
-> Add ảnh MVC Diagram
 ---
 
 ## 👷 Chức năng hệ thống
@@ -119,21 +117,6 @@ sequenceDiagram
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
 
-### Chức năng nâng cao
-* __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.
-> Add ảnh chụp giao diện người dùng thiết lập AutoBidding
-
-
-* __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
-
-
-* __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá chính xác.
-
-
-* __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
-
-
-* __Thanh toán Ký quỹ & Xử lý Khiếu nại__: Áp dụng cơ chế Escrow (giữ tiền qua SystemBank) để bảo vệ người mua. Sau khi nhận hàng, người mua có thể gửi **Báo cáo chất lượng (Quality Report)**. Admin duyệt báo cáo hợp lệ sẽ tiến hành hoàn tiền tự động cho người mua và trừ tiền người bán.
 ```mermaid
 sequenceDiagram
     autonumber
@@ -177,33 +160,70 @@ sequenceDiagram
     deactivate PS
 ```
 
-* __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
+### Chức năng nâng cao
+* __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.
+> Add ảnh chụp giao diện người dùng thiết lập AutoBidding
+
+
+* __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
+
+
+* __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá chính xác.
 > Ảnh chụp LineChart trong chương trình
+
+* __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
+
+
+* __Thanh toán Ký quỹ & Xử lý Khiếu nại__: Áp dụng cơ chế Escrow (giữ tiền qua SystemBank) để bảo vệ người mua. Sau khi nhận hàng, người mua có thể gửi **Báo cáo chất lượng (Quality Report)**. Admin duyệt báo cáo hợp lệ sẽ tiến hành hoàn tiền tự động cho người mua và trừ tiền người bán.
+
+
+* __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
+
+---
+
+## ✨ Đặc điểm kĩ thuật nổi bật
+Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
+* __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với 
+__Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client 
+mà không cần tải lại trang.
+> Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast
+> tới các Bidders khác) (GIF)
+
+
+* __Concurrency Control__: Giải quyết triệt để các vấn đề Lost Update và Race Condition trong kịch bản nhiều người cùng đặt giá tại một mili giây.
+
+
+* __Cấu trúc hướng đối tượng (OOP)__: Áp dụng chặt chẽ 4 nguyên lý OOP __(Đóng gói, Kế thừa, Đa hình, Trừu tượng)__ cùng các mẫu thiết kế __Factory Method, Singleton, Strategy, Observer và State__ để quản lý logic nghiệp vụ phức tạp.
+
+
+* __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___. Tách biệt rõ ràng các tầng (Network, Handler, Service, Domain, DAO, Observer).
+> Add ảnh MVC Diagram
+
 ---
 
 ## 🏗️ Kiến trúc hệ thống
 Hệ thống được thiết kế theo kiến trúc __Layered Architecture__ kết hợp __Event-Driven Architecture__ mạnh mẽ trên mô hình __Client-Server__
-### Kiến trúc tổng quan
+### 🏛️ Kiến trúc tổng quan
 ```mermaid
 graph TD
 
 %% Nodes
-Client["Client JavaFX + WebSocket"]
-Server["AuctionWebSocketServer"]
-Handlers["Packet Handlers"]
-Service["Service Layer"]
-Models["Domain Models + State/Strategy"]
-DAO["DAO Layer + MySQL"]
-Observer["Observer Pattern - Realtime Notification"]
+Client["🖥️ Client JavaFX + WebSocket"]
+Server["⚙️ AuctionWebSocketServer"]
+Handlers["📦 Packet Handlers\nAuthHandler · BidHandler · PaymentHandler..."]
+Service["🔧 Service Layer\nAuctionService · BidService · PaymentService..."]
+Models["🧩 Domain Models\nAuction · Item · User · BidTransaction"]
+DAO["🗄️ DAO Layer\nMySQL · JDBC"]
+Observer["📡 Observer Pattern\nRealtime Notification Engine"]
 
 %% Connections
-Client --- Server
-Server --> Handlers
-Handlers --> Service
-Service --> Models
-Service <--> DAO
-Service --> Observer
-Observer --> Client
+Client <-->|WebSocket| Server
+    Server --> Handlers
+    Handlers --> Service
+    Service --> Models
+    Service <--> DAO
+    Service --> Observer
+    Observer -->|Broadcast| Client
 
 %% Styling
 style Client fill:#242424,stroke:#666,stroke-width:1px,color:#fff
@@ -215,30 +235,40 @@ style DAO fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 ```
 
-### Sơ đồ thiết kế hướng đối tượng OOP
+### 📂 Cấu trúc project
 
-```plaintext
+Project được tổ chức theo kiến trúc **Multi-module Maven**:
+
+```text
 online-auction-system/
-├── auction-common/          # Shared: DTO, Protocol (Packet, PacketType, PacketCodec)
-├── auction-server/          # Server: Business logic, DAO, WebSocket server
-│   ├── model/
-│   │   ├── bank/            # SystemBank
-│   │   ├── entity/          # Entity (abstract base)
-│   │   ├── user/            # User → NormalUser, Admin, SystemAdmin + Factory
-│   │   ├── item/            # Item → Electronics, Art, Vehicle + Factory
-│   │   ├── auction/         # Auction + State pattern (Open/Running/Finished/Paid/Canceled), AuctionWinner, SecondChanceOffer
-│   │   └── bid/             # BidTransaction, FinancialTransaction, QualityReport
-│   ├── service/             # AccountService, AuctionService, BidService, PaymentService, RatingService...
-│   ├── dao/                 # AuctionDAO, UserDAO, ItemDAO, SecondChanceOfferDAO...
-│   ├── network/server/      # AuctionWebSocketServer, PacketRouter, Handlers (AuthHandler, BidHandler...)
-│   ├── observer/            # AuctionObserver, BidderObserver, SellerObserver...
-│   ├── strategy/            # BidStrategy, AutoBidStrategy, AuctionLockRegistry...
-│   └── manager/             # AuctionManager (Singleton)
-└── auction-client/          # Client: JavaFX UI, WebSocket client
-    └── network/client/      # AuctionWebSocketClient, ClientPacketDispatcher, Session...
+│
+├── auction-common/                  # Module dùng chung (Client & Server)
+│   └── src/main/java/
+│       ├── dto/                     # Data Transfer Objects (Auth, Bid, Auction, Payment...)
+│       └── protocol/                # Packet, PacketType, PacketCodec (Gson-based)
+│
+├── auction-server/                  # Module Server
+│   └── src/main/java/
+│       ├── model/
+│       │   ├── bank/                # SystemBank
+│       │   ├── entity/              # Entity (abstract base)
+│       │   ├── user/                # User → NormalUser, Admin, SystemAdmin + Factories
+│       │   ├── item/                # Item → Electronics, Art, Vehicle + Factories
+│       │   ├── auction/             # Auction + State pattern (5 states), AuctionWinner
+│       │   └── bid/                 # BidTransaction, FinancialTransaction, QualityReport
+│       ├── service/                 # AccountService, AuctionService, BidService, PaymentService...
+│       ├── dao/                     # AuctionDAO, UserDAO, ItemDAO, SecondChanceOfferDAO...
+│       ├── network/server/          # AuctionWebSocketServer, PacketRouter, Handlers
+│       ├── observer/                # AuctionObserver interface + 4 implementations
+│       ├── strategy/                # BidStrategy, AutoBidStrategy, AuctionLockRegistry
+│       └── manager/                 # AuctionManager (Singleton)
+│
+└── auction-client/                  # Module Client
+    └── src/main/java/
+        ├── network/client/          # AuctionWebSocketClient, ClientPacketDispatcher, Session
+        └── ui/                      # JavaFX Controllers & Views
 ```
-> Add ảnh Class Diagram  
-> Add ảnh DB Schema (Bảng User, ...)
+
 ### Design Patterns áp dụng:
 | Pattern            | Implementation                                                                              | Mục đích hệ thống |
 |--------------------|---------------------------------------------------------------------------------------------|----------------------------------|
@@ -248,30 +278,58 @@ online-auction-system/
 | **Factory Method** | `ItemFactory`, `UserFactory`                                                                | Chuẩn hóa việc tạo các loại Item (Electronics, Art, Vehicle...) và User. |
 | **Singleton**      | `AuctionManager`, `DatabaseConnection`                                                      | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |
 
-## 💡 Hướng dẫn cài đặt (Later)
+---
+
+
+
+## ⚙️ Tech Stack
+
+| Lớp               | Công nghệ         | Phiên bản   | Vai trò                                   |
+|-------------------|-------------------|-------------|-------------------------------------------|
+| **Language**      | Java              | 17 LTS      | Ngôn ngữ chính, áp dụng OOP & concurrency |
+| **Build**         | Apache Maven      | 3.8+        | Multi-module project management           |
+| **UI**            | JavaFX            | 17          | Desktop client, kiến trúc MVC             |
+| **Networking**    | Java-WebSocket    | 1.5.5       | Real-time bidding & notifications         |
+| **Database**      | MySQL             | 8.0+        | Persistent storage                        |
+| **Serialization** | Gson              | 2.10.1      | Object ↔ JSON qua network                 |
+| **Testing**       | JUnit 5 + Mockito | 5.10 / 5.2  | Unit tests & mock isolation               |
+| **Boilerplate**   | Lombok            | 1.18.38     | Giảm boilerplate code                     |
+| **CI**            | GitHub Actions    | —           | Auto build & test trên mỗi push           |
+| **Code Style**    | Google Java Style | —           | Quy chuẩn code thống nhất toàn dự án      |
+
+---
+
+## 💡 Hướng dẫn cài đặt
 
 ### Yêu cầu :
-* Java 17+
+| Công cụ      | Phiên bản                    | Kiểm tra          |
+|--------------|------------------------------|-------------------|
+| JDK          | 17 LTS (khuyên dùng Temurin) | `java -version`   |
+| Apache Maven | 3.8+                         | `mvn -version`    |
+| MySQL        | 8.0+                         | `mysql --version` |
 
-* Maven 3.8+
+⚠️ **Quan trọng:** MySQL phải đang chạy trước khi khởi động server.
 
-* MySQL 8.0+
+### Các bước cài đặt 
+#### 1. Clone repository
 
-### 1. Clone Repo
-```
+```bash
 git clone https://github.com/vuxgiakhanh-source/online-auction-system.git
 cd online-auction-system
 ```
 
-### 2. Tạo Database
-```
+#### 2. Tạo Database
+
+```bash
 mysql -u root -p < auction-server/src/main/resources/database/database.sql
 ```
 > Add ảnh chụp MySQL Workbench hoặc terminal sau khi import thành công.
 
-### 3. Cấu hình kết nối
-#### Chỉnh sửa file `auction-server/src/main/resources/data.properties:`
-```
+#### 3. Cấu hình kết nối
+
+Chỉnh sửa file `auction-server/src/main/resources/data.properties`:
+
+```properties
 db.host=localhost
 db.port=3306
 db.name=auction_db
@@ -280,60 +338,97 @@ db.password=your_password
 server.port=8887
 ```
 
-### 4. Build toàn bộ project
-```
+> 🔒 **Bảo mật:** Không commit file này kèm mật khẩu thật lên repository.
+
+#### 4. Build toàn bộ project
+
+```bash
+# Build và bỏ qua tests (nhanh hơn)
+mvn clean install -DskipTests
+
+# Build kèm chạy toàn bộ unit tests
 mvn clean install
 ```
-### 5. Khởi động Server
-```
+
+#### 5. Khởi động Server
+
+```bash
 cd auction-server
-mvn spring-boot:run
+mvn exec:java
 ```
 
-### 6. Khởi động Client
-```
+Chờ xuất hiện thông báo: `[Server] Started on port 8887`
+
+#### 6. Khởi động Client _(terminal mới)_
+
+```bash
 cd auction-client
 mvn javafx:run
 ```
----
 
-## 🔎 Cách sử dụng (Later)
-
----
-
-## ⚙️ Công nghệ & Công cụ sử dụng
-### Công nghệ theo lớp kiến trúc
-
-| Lớp kiến trúc      | Công nghệ                                                                                  | Vai trò                                               |
-|--------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white)             | Ngôn ngữ chủ đạo triển khai logic OOP.                |
-| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white)       | Quản lý dự án Multi-module và dependencies.           |
-| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white)            | Xây dựng giao diện Desktop theo mô hình MVC.          |
-| **Networking**     | ![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white) | Truyền tải dữ liệu Real-time (Giá thầu/Thông báo).    |
-| **Database**       | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)             | Lưu trữ bền vững dữ liệu phiên đấu giá và người dùng. |
-| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white)              | Chuyển đổi đối tượng để truyền tin qua mạng.          |
-| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white)          | Tối ưu mã nguồn, giảm code thừa (Clean Code).         |
-| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white)            | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ.      |
-| **Convention**     | ![Google](https://img.shields.io/badge/Google_Java_Style-4285F4?logo=google&logoColor=white) | Tuân thủ quy chuẩn viết code đồng nhất cho cả dự án.  |
+> **Lưu ý:** Client mặc định kết nối đến `localhost:8887`. Nếu server chạy trên máy khác, cập nhật host trong file cấu hình của `auction-client`.
 
 ---
 
-## 👥 Đội ngũ & Phân công nhiệm vụ (Project Roadmap)
-|                                                    Thành viên                                                    | Vai trò                                       | Nhiệm vụ chính                                                                                                          |               Tiến độ                | Trạng thái |
-|:----------------------------------------------------------------------------------------------------------------:|:----------------------------------------------|:------------------------------------------------------------------------------------------------------------------------|:------------------------------------:| :---: |
-|                  <img src="https://github.com/hchyy.png" width="50px;"/><br />**Hồ Huyền Chi**                   | **__Trưởng nhóm__ <br> OOP design**           | • Code logic đấu giá chính <br> • Hỗ trợ design giao diện <br> • Review và Refactor code <br> • Viết tài liệu hướng dẫn | ![50%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|      <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="50px;"/><br />**Vũ Gia Khánh**       | **__Thành viên__ <br> Concurrency / Testing** | • Cài đặt Network và Concurrency <br> • Phát triển chức năng nâng cao <br> • Viết test                                  | ![50%](https://geps.dev/progress/60) | 🏗️ *Processing* |
-|            <img src="https://github.com/thebrosaythree.png" width="50px;"/><br />**Bạch Quốc Thịnh**             | **__Thành viên__ <br> Backend**               | • Cài đặt DataBase và Backend <br> • Cài đặt Anti-Sniping                                                               | ![60%](https://geps.dev/progress/50) | 🏗️ *Processing* |
-|          <img src="https://github.com/identicons/bingbongg.png" width="50px;"/><br />**Trần Thảo Nhi**           | **__Thành viên__ <br> Frontend**              | • Đảm nhiệm toàn bộ Frontend và Client <br> • Viết tài liệu hướng dẫn                                                   | ![40%](https://geps.dev/progress/40) | 🏗️ *Processing* |
+### Troubleshooting
+
+| Lỗi                                 | Nguyên nhân           | Cách xử lý                                |
+|-------------------------------------|-----------------------|-------------------------------------------|
+| `Communications link failure`       | MySQL chưa chạy       | Khởi động MySQL service trước             |
+| `Address already in use: 8887`      | Port 8887 bị chiếm    | Đổi `server.port` trong `data.properties` |
+| `JavaFX runtime components missing` | Sai phiên bản Java    | Đảm bảo dùng JDK 17, không phải JRE       |
+| `BUILD FAILURE` khi `mvn install`   | Test fail do thiếu DB | Dùng `-DskipTests` hoặc setup DB trước    |
+
+---
+
+## 🧪 Testing
+
+Project có **39 unit test classes** và **hơn 1900 unit tests đã passed** bao phủ tất cả các tầng quan trọng của hệ thống. Tests không yêu cầu kết nối database — toàn bộ dependencies được mock bằng Mockito.
+
+```bash
+# Chạy toàn bộ tests
+mvn clean test
+
+# Chạy tests của riêng server module
+cd auction-server && mvn test
+```
+
+### Phân bổ test theo tầng
+
+| Tầng                       | Test Classes                                                                                                                                                   | Scenarios tiêu biểu                                 |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| **Domain / State Machine** | `AuctionTest` · `AuctionStateMachineTest` · `AuctionWinnerTest` · `SecondChanceOfferTest`                                                                      | State transitions, winner determination, edge cases |
+| **Concurrency**            | `AuctionLockRegistryTest`                                                                                                                                      | Per-auction locking, race condition prevention      |
+| **Strategy**               | `StandardBidStrategyTest` · `AutoBidStrategyTest` · `BidStrategyContractTest` · `AutoBidProcessorTest`                                                         | Bidding logic, contract testing trên interface      |
+| **Observer**               | `BidderObserverTest` · `SellerObserverTest` · `AdminObserverTest` · `AuctionObserverContractTest` · `AuctionEventTest`                                         | Notification propagation, contract tests            |
+| **Service**                | `BidServiceTest` · `PaymentServiceTest` · `AuctionServiceTest` · `AccountServiceTest` · `WalletServiceTest` · `RatingServiceTest` · `QualityReportServiceTest` | Business logic, payment flows                       |
+| **Factory**                | `UserFactoryTest` · `ItemFactoryTest` · `UserFactoryTest`                                                                                                      | Object creation, type correctness                   |
+| **Singleton**              | `AuctionManagerTest` · `SystemBankTest`                                                                                                                        | Single-instance guarantee                           |
+
+---
+
+## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section)
+
+|                                            Thành viên                                               | Vai trò                  | Nhiệm vụ chính                                                                          |               Tiến độ                |  Trạng thái     |
+|:---------------------------------------------------------------------------------------------------:|:-------------------------|:----------------------------------------------------------------------------------------|:------------------------------------:|:---------------:|
+|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | Trưởng nhóm · OOP Design | Core auction logic · Code review & refactor · Tài liệu · Unit tests · Integration tests | ![50%](https://geps.dev/progress/70) | 🏗️ In Progress |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | Concurrency · Testing    | Network & concurrency · Advanced features · Network tests · System tests                | ![60%](https://geps.dev/progress/60) | 🏗️ In Progress |
+|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | Backend · Database       | Database design · DAO layer · Anti-Sniping · Scheduler Building · Notification Layer    | ![50%](https://geps.dev/progress/60) | 🏗️ In Progress |
+|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | Frontend                 | Toàn bộ JavaFX UI · Client module · Tài liệu                                            | ![40%](https://geps.dev/progress/50) | 🏗️ In Progress |
 
 ---
 
 ## 📞 Liên hệ
-* [Hồ Huyền Chi : Core Logic (OOP)](https://www.facebook.com/hchy07/) - `chidinhhoi1709@gmail.com`
-* [Trần Thảo Nhi : Frontend](https://www.facebook.com/thao.nhi.377035) - `tthaonhi0127@gmail.com`
-* [Vũ Gia Khánh : Concurrency + Testing](https://www.facebook.com/khanh.vu.416010) - `vuxgiakhanh@gmail.com`
-* [Bạch Quốc Thịnh : Database + Backend](https://www.facebook.com/ven.is.me.3305) - `iamven56@gmail.com`
+
+| Thành viên      | Trách nhiệm           | GitHub                                                       | Email                    |
+|-----------------|-----------------------|--------------------------------------------------------------|--------------------------|
+| Hồ Huyền Chi    | Core Logic · OOP      | [@hchyy](https://github.com/hchyy)                           | chidinhhoi1709@gmail.com |
+| Vũ Gia Khánh    | Concurrency · Testing | [@vuxgiakhanh-source](https://github.com/vuxgiakhanh-source) | vuxgiakhanh@gmail.com    |
+| Bạch Quốc Thịnh | Database · Backend    | [@thebrosaythree](https://github.com/thebrosaythree)         | iamven56@gmail.com       |
+| Trần Thảo Nhi   | Frontend              | [@bingbongg](https://github.com/bingbongg)                   | tthaonhi0127@gmail.com   |
+
+---
 
 ## 📄 License
-__MIT © 2026 Group 13__
-![img.png](img.png)
+
+__MIT © 2026 Group 13 - OmniBid__
