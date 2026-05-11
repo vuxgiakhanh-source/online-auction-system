@@ -75,6 +75,46 @@ mà không cần tải lại trang.
 > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Bidder
+    participant S as AuctionWebSocketServer
+    participant L as AuctionLockRegistry
+    participant SVC as BidService
+    participant DB as Database
+    participant OB as Other Bidders
+
+    Note over B, OB: Quy trình đặt giá thầu Realtime (OmniBid)
+
+    B->>S: Gửi Packet [PlaceBid]
+    
+    rect rgb(40, 45, 50)
+        Note right of S: Concurrency Control
+        S->>L: Acquire Lock (per-auction)
+        L-->>S: Lock Acquired
+    end
+
+    S->>SVC: placeBid()
+    
+    activate SVC
+    SVC->>SVC: Validate Bid (amount, status, session...)
+    SVC->>SVC: Apply Strategy (Anti-Sniping + AutoBid)
+    
+    SVC->>DB: Update price & Save BidTransaction
+    DB-->>SVC: Success
+    
+    SVC-->>S: Return Success Result
+    deactivate SVC
+
+    par Broadcast Realtime
+        S->>OB: Notify via Observer Pattern (Price Update)
+        S->>B: Notify Bid Result (Success)
+    end
+
+    S->>L: Release Lock
+    Note over S, L: Mở khóa cho lượt bid tiếp theo
+```
 > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
@@ -94,7 +134,48 @@ mà không cần tải lại trang.
 
 
 * __Thanh toán Ký quỹ & Xử lý Khiếu nại__: Áp dụng cơ chế Escrow (giữ tiền qua SystemBank) để bảo vệ người mua. Sau khi nhận hàng, người mua có thể gửi **Báo cáo chất lượng (Quality Report)**. Admin duyệt báo cáo hợp lệ sẽ tiến hành hoàn tiền tự động cho người mua và trừ tiền người bán.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant W as Winner
+    participant S as AuctionWebSocketServer
+    participant PS as PaymentService
+    participant DB as Database
+    participant BNK as SystemBank
+    participant SEL as Seller
 
+    Note over W, SEL: Quy trình Thanh toán Ký quỹ (Escrow Payment)
+
+    S->>S: Auction Finished (Timer Trigger)
+    S->>PS: processAuctionCompletion()
+    
+    activate PS
+    PS->>DB: Lấy thông tin Winner & Final Price
+    
+    rect rgb(30, 40, 50)
+        Note right of PS: Giai đoạn Ký quỹ (Escrow)
+        PS->>BNK: Hold Escrow Amount (Tạm giữ tiền)
+        BNK-->>PS: Escrow Success
+    end
+    
+    PS->>DB: Create FinancialTransaction
+    PS-->>W: Notify "Vui lòng xác nhận thanh toán"
+    deactivate PS
+
+    W->>S: Gửi Packet [ConfirmPayment]
+    S->>PS: completePayment()
+
+    activate PS
+    PS->>BNK: Transfer to Seller (Sau khi trừ phí hệ thống)
+    BNK-->>PS: Transfer Success
+    PS->>DB: Update Auction Status = PAID
+    
+    par Thông báo kết quả
+        PS-->>W: Notify "Thanh toán thành công"
+        PS-->>SEL: Notify "Đã nhận tiền từ phiên đấu giá"
+    end
+    deactivate PS
+```
 
 * __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
 > Ảnh chụp LineChart trong chương trình
@@ -223,16 +304,16 @@ mvn javafx:run
 ## ⚙️ Công nghệ & Công cụ sử dụng
 ### Công nghệ theo lớp kiến trúc
 
-| Lớp kiến trúc      | Công nghệ & Huy hiệu | Vai trò                                               |
-|--------------------|----------------------|-------------------------------------------------------|
-| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white) | Ngôn ngữ chủ đạo triển khai logic OOP.                |
-| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white) | Quản lý dự án Multi-module và dependencies.           |
-| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white) | Xây dựng giao diện Desktop theo mô hình MVC.          |
+| Lớp kiến trúc      | Công nghệ                                                                                  | Vai trò                                               |
+|--------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white)             | Ngôn ngữ chủ đạo triển khai logic OOP.                |
+| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white)       | Quản lý dự án Multi-module và dependencies.           |
+| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white)            | Xây dựng giao diện Desktop theo mô hình MVC.          |
 | **Networking**     | ![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white) | Truyền tải dữ liệu Real-time (Giá thầu/Thông báo).    |
-| **Database**       | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white) | Lưu trữ bền vững dữ liệu phiên đấu giá và người dùng. |
-| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white) | Chuyển đổi đối tượng để truyền tin qua mạng.          |
-| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white) | Tối ưu mã nguồn, giảm code thừa (Clean Code).         |
-| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white) | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ.      |
+| **Database**       | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white)             | Lưu trữ bền vững dữ liệu phiên đấu giá và người dùng. |
+| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white)              | Chuyển đổi đối tượng để truyền tin qua mạng.          |
+| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white)          | Tối ưu mã nguồn, giảm code thừa (Clean Code).         |
+| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white)            | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ.      |
 | **Convention**     | ![Google](https://img.shields.io/badge/Google_Java_Style-4285F4?logo=google&logoColor=white) | Tuân thủ quy chuẩn viết code đồng nhất cho cả dự án.  |
 
 ---
