@@ -73,8 +73,7 @@ class BidStrategyContractTest {
     static Stream<BidStrategy> allImplementations() {
         return Stream.of(
                 new StandardBidStrategy(),
-                new AutoBidStrategy(10_000_000L),
-                new ReservePriceStrategy(5_000_000L)
+                new AutoBidStrategy(10_000_000L)
         );
     }
 
@@ -163,20 +162,6 @@ class BidStrategyContractTest {
             // Arrange — currentPrice = 500_000, increment = 50_000, maxBid = 1_000_000
             Auction auction = auctionWithPrice(500_000L);
             BidStrategy strategy = new AutoBidStrategy(1_000_000L);
-
-            // Act
-            boolean result = strategy.isValidBid(auction, 550_000L);
-
-            // Assert
-            assertTrue(result);
-        }
-
-        @Test
-        @DisplayName("ReservePriceStrategy: bid = currentPrice + increment → hợp lệ")
-        void reserve_minimumValidBid_returnsTrue() {
-            // Arrange — currentPrice = 500_000, increment = 50_000
-            Auction auction = auctionWithPrice(500_000L);
-            BidStrategy strategy = new ReservePriceStrategy(2_000_000L);
 
             // Act
             boolean result = strategy.isValidBid(auction, 550_000L);
@@ -336,20 +321,6 @@ class BidStrategyContractTest {
             // Assert
             assertFalse(result);
         }
-
-        @Test
-        @DisplayName("ReservePriceStrategy: bid = currentPrice + increment - 1 → không hợp lệ")
-        void reserve_oneBelowMinimum_returnsFalse() {
-            // Arrange — currentPrice = 2_000_000, increment = 200_000
-            Auction auction = auctionWithPrice(2_000_000L);
-            BidStrategy strategy = new ReservePriceStrategy(5_000_000L);
-
-            // Act
-            boolean result = strategy.isValidBid(auction, 2_199_999L);
-
-            // Assert
-            assertFalse(result);
-        }
     }
 
     // =========================================================================
@@ -493,18 +464,6 @@ class BidStrategyContractTest {
             assertDoesNotThrow(() -> strategy.describe());
         }
 
-        @Test
-        @DisplayName("ReservePriceStrategy dùng được qua BidStrategy reference")
-        void reserveUsableViaInterfaceReference() {
-            // Arrange
-            BidStrategy strategy = new ReservePriceStrategy(2_000_000L);
-            Auction auction = auctionWithPrice(500_000L);
-
-            // Act & Assert
-            assertDoesNotThrow(() -> strategy.isValidBid(auction, 550_000L));
-            assertDoesNotThrow(() -> strategy.describe());
-        }
-
         @ParameterizedTest(name = "{0}")
         @MethodSource("com.group13.auction.strategy.BidStrategyContractTest#allImplementations")
         @DisplayName("isValidBid() trả về boolean (không throw) với bid hợp lệ")
@@ -556,44 +515,6 @@ class BidStrategyContractTest {
         }
 
         @Test
-        @DisplayName("Standard và Reserve đồng thuận với nhau khi cùng điều kiện increment")
-        void standard_and_reserve_agreeOnMinimumBid() {
-            // Arrange — Standard và Reserve đều dùng cùng increment logic
-            // Sự khác biệt duy nhất là Reserve lưu reservePrice (không ảnh hưởng isValidBid)
-            Auction auction = auctionWithPrice(500_000L);
-            BidStrategy standard = new StandardBidStrategy();
-            BidStrategy reserve  = new ReservePriceStrategy(1_000_000L);
-            long bid = 550_000L; // = currentPrice + increment
-
-            // Act
-            boolean standardResult = standard.isValidBid(auction, bid);
-            boolean reserveResult  = reserve.isValidBid(auction, bid);
-
-            // Assert — cùng hành vi với bid hợp lệ
-            assertEquals(standardResult, reserveResult,
-                    "Standard và Reserve phải đồng thuận trên minimum valid bid");
-        }
-
-        @Test
-        @DisplayName("Standard và Reserve đồng thuận khi bid dưới minimum")
-        void standard_and_reserve_agreeOnBelowMinimumBid() {
-            // Arrange
-            Auction auction = auctionWithPrice(500_000L);
-            BidStrategy standard = new StandardBidStrategy();
-            BidStrategy reserve  = new ReservePriceStrategy(1_000_000L);
-            long bid = 549_999L; // dưới minimum
-
-            // Act
-            boolean standardResult = standard.isValidBid(auction, bid);
-            boolean reserveResult  = reserve.isValidBid(auction, bid);
-
-            // Assert — cùng từ chối
-            assertEquals(standardResult, reserveResult,
-                    "Standard và Reserve phải đồng thuận trên bid dưới minimum");
-            assertFalse(standardResult);
-        }
-
-        @Test
         @DisplayName("Auto với maxBid đủ cao đồng thuận với Standard trên bid hợp lệ")
         void auto_withHighMaxBid_agreesWithStandardOnValidBid() {
             // Arrange — maxBid cao hơn nhiều so với bid → không bị chặn bởi maxBid
@@ -621,8 +542,7 @@ class BidStrategyContractTest {
 
             List<BidStrategy> strategies = List.of(
                     new StandardBidStrategy(),
-                    new AutoBidStrategy(555_000L),   // maxBid < bid → từ chối
-                    new ReservePriceStrategy(2_000_000L)
+                    new AutoBidStrategy(555_000L)   // maxBid < bid → từ chối
             );
 
             // Act
@@ -633,7 +553,6 @@ class BidStrategyContractTest {
             // Assert — Standard và Reserve chấp nhận, Auto từ chối
             assertTrue(results[0],  "Standard phải chấp nhận bid 560_000");
             assertFalse(results[1], "Auto(maxBid=555_000) phải từ chối bid 560_000");
-            assertTrue(results[2],  "Reserve phải chấp nhận bid 560_000");
         }
     }
 
@@ -673,30 +592,6 @@ class BidStrategyContractTest {
         }
 
         @Test
-        @DisplayName("swap từ Standard sang Reserve — caller hoạt động bình thường với cả hai")
-        void swap_standardToReserve_callerWorksCorrectly() {
-            // Arrange — Standard và Reserve có cùng isValidBid logic
-            Auction auction  = auctionWithPrice(2_000_000L);
-            long validBid    = 2_200_000L; // = currentPrice + increment (200_000)
-            long invalidBid  = 2_100_000L; // < currentPrice + increment
-
-            BidStrategy standard = new StandardBidStrategy();
-            BidStrategy reserve  = new ReservePriceStrategy(8_000_000L);
-
-            // Act
-            boolean validWithStandard   = validateBid(standard, auction, validBid);
-            boolean validWithReserve    = validateBid(reserve, auction, validBid);
-            boolean invalidWithStandard = validateBid(standard, auction, invalidBid);
-            boolean invalidWithReserve  = validateBid(reserve, auction, invalidBid);
-
-            // Assert — hoán đổi nhưng hành vi giống hệt nhau
-            assertEquals(validWithStandard, validWithReserve,
-                    "Standard và Reserve phải đồng thuận với valid bid");
-            assertEquals(invalidWithStandard, invalidWithReserve,
-                    "Standard và Reserve phải đồng thuận với invalid bid");
-        }
-
-        @Test
         @DisplayName("strategy describe() vẫn gọi được sau khi swap reference")
         void swappedStrategy_describeStillCallable() {
             // Arrange
@@ -720,8 +615,7 @@ class BidStrategyContractTest {
 
             List<BidStrategy> strategies = List.of(
                     new StandardBidStrategy(),
-                    new AutoBidStrategy(1_000_000L),
-                    new ReservePriceStrategy(2_000_000L)
+                    new AutoBidStrategy(1_000_000L)
             );
 
             // Act & Assert — không có exception, tất cả trả về boolean
@@ -771,29 +665,6 @@ class BidStrategyContractTest {
         void auto_maxBidOne_createsSuccessfully() {
             // Act & Assert
             assertDoesNotThrow(() -> new AutoBidStrategy(1L));
-        }
-
-        @Test
-        @DisplayName("ReservePriceStrategy: reservePrice = 0 → ném IllegalArgumentException")
-        void reserve_reservePriceZero_throwsIllegalArgument() {
-            // Act & Assert
-            assertThrows(IllegalArgumentException.class,
-                    () -> new ReservePriceStrategy(0L));
-        }
-
-        @Test
-        @DisplayName("ReservePriceStrategy: reservePrice âm → ném IllegalArgumentException")
-        void reserve_negativeReservePrice_throwsIllegalArgument() {
-            // Act & Assert
-            assertThrows(IllegalArgumentException.class,
-                    () -> new ReservePriceStrategy(-500_000L));
-        }
-
-        @Test
-        @DisplayName("ReservePriceStrategy: reservePrice = 1 (minimum dương) → tạo thành công")
-        void reserve_reservePriceOne_createsSuccessfully() {
-            // Act & Assert
-            assertDoesNotThrow(() -> new ReservePriceStrategy(1L));
         }
 
         @Test
