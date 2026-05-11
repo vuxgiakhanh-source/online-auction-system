@@ -20,16 +20,13 @@
 ___
 
 ## 🚀 Giới thiệu
-**OmniBid** là một nền tảng đấu giá trực tuyến mạnh mẽ và hiện đại, 
-được xây dựng để cung cấp một môi trường giao dịch minh bạch, 
-công bằng và cập nhật theo thời gian thực. Hệ thống cho phép 
-người bán (Seller) đăng tải sản phẩm và người mua (Bidder) 
-tham gia đấu thầu cạnh tranh để xác định giá trị thực của tài 
-sản thông qua cơ chế thị trường.  
-Dự án tập trung giải quyết các bài toán phức tạp trong hệ thống 
-phân tán như xử lý tranh chấp dữ liệu khi đấu giá đồng thời, tối 
-ưu hóa trải nghiệm người dùng qua kết nối Socket và áp dụng các 
-mẫu thiết kế (Design Patterns) để đảm bảo khả năng mở rộng hệ thống.
+**OmniBid** là một nền tảng đấu giá trực tuyến mạnh mẽ và hiện đại, được xây dựng để mang đến một môi trường giao dịch **minh bạch, công bằng và đầy kịch tính**.
+
+Hệ thống cho phép người bán (Seller) dễ dàng đăng tải các sản phẩm đa dạng, trong khi người mua (Bidder) có thể tham gia đấu thầu cạnh tranh gay gắt để sở hữu món đồ với mức giá phù hợp nhất thông qua cơ chế thị trường thực thụ.
+
+Không dừng lại ở việc đơn thuần kết nối người mua và người bán, **OmniBid** tập trung giải quyết triệt để những bài toán khó của hệ thống phân tán: xử lý **đấu giá đồng thời** an toàn, ngăn chặn Race Condition, **cập nhật giá realtime** cho hàng trăm người dùng cùng lúc thông qua WebSocket, cùng với **quy trình hậu mãi** chuyên nghiệp (escrow payment, Quality Report, hoàn tiền tự động, Second Chance Offer…).
+
+Dự án được phát triển bằng Java theo mô hình Client-Server, áp dụng sâu các nguyên lý **OOP** cùng nhiều **Design Patterns** quan trọng (State, Observer, Strategy, Factory, Singleton). Nhờ đó, **OmniBid** không chỉ hoạt động mượt mà mà còn có kiến trúc sạch, dễ mở rộng và bảo trì.
 > Add ảnh demo mô phỏng ứng dụng hoạt động (ghép 2-3 màn hình (Login, 
 > Auction List, Bidding Detail) vào một khung ảnh)
 
@@ -44,67 +41,91 @@ mà không cần tải lại trang.
 > tới các Bidders khác) (GIF)
 
 
-* __Concurrency Control__: Giải quyết triệt để các vấn đề Lost Update 
-và Race Condition trong kịch bản nhiều người cùng đặt giá tại một 
-mili giây.
+* __Concurrency Control__: Giải quyết triệt để các vấn đề Lost Update và Race Condition trong kịch bản nhiều người cùng đặt giá tại một mili giây.
 
 
-* __Cấu trúc hướng đối tượng (OOP)__: Áp dụng chặt chẽ 4 nguyên lý OOP 
-__(Đóng gói, Kế thừa, Đa hình, Trừu tượng)__ cùng các mẫu thiết kế 
-__Factory Method, Singleton, Strategy, Observer và State__ để quản lý 
-logic nghiệp vụ phức tạp.
+* __Cấu trúc hướng đối tượng (OOP)__: Áp dụng chặt chẽ 4 nguyên lý OOP __(Đóng gói, Kế thừa, Đa hình, Trừu tượng)__ cùng các mẫu thiết kế __Factory Method, Singleton, Strategy, Observer và State__ để quản lý logic nghiệp vụ phức tạp.
 
 
-* __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) 
-và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___.
+* __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___. Tách biệt rõ ràng các tầng (Network, Handler, Service, Domain, DAO, Observer).
 > Add ảnh MVC Diagram
 ---
 
 ## 👷 Chức năng hệ thống
 ### Chức năng cốt lõi
-* __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối 
-tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính 
-bảo mật và đúng vai trò trong mọi tác vụ.
+* __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
 
 
-* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn 
-toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__). Hệ thống đảm bảo tính 
-chính xác tuyệt đối trong việc đóng/mở thầu.
+* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__). Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.
 > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
-* __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên 
-toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu 
-ngay cả khi đang offline / online.
+* __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
 
 
-* __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết 
-thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền__
-__(Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
+* __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
 
 ### Chức năng nâng cao
-* __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa
-và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần 
-trực tuyến liên tục.
+* __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.
 > Add ảnh chụp giao diện người dùng thiết lập AutoBidding
 
 
-* __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá
-phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
+* __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
 
 
-* __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu
-giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá
-chính xác.
+* __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá chính xác.
+
+
+* __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
+
+
+* __Thanh toán Ký quỹ & Xử lý Khiếu nại__: Áp dụng cơ chế Escrow (giữ tiền qua SystemBank) để bảo vệ người mua. Sau khi nhận hàng, người mua có thể gửi **Báo cáo chất lượng (Quality Report)**. Admin duyệt báo cáo hợp lệ sẽ tiến hành hoàn tiền tự động cho người mua và trừ tiền người bán.
+
+
+* __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
 > Ảnh chụp LineChart trong chương trình
 ---
 
 ## 🏗️ Kiến trúc hệ thống
+Hệ thống được thiết kế theo kiến trúc __Layered Architecture__ kết hợp __Event-Driven Architecture__ mạnh mẽ trên mô hình __Client-Server__
+```mermaid
+graph TD
+
+%% Nodes
+Client["Client JavaFX + WebSocket"]
+Server["AuctionWebSocketServer"]
+Handlers["Packet Handlers"]
+Service["Service Layer"]
+Models["Domain Models + State/Strategy"]
+DAO["DAO Layer + MySQL"]
+Observer["Observer Pattern - Realtime Notification"]
+
+%% Connections
+Client --- Server
+Server --> Handlers
+Handlers --> Service
+Service --> Models
+Service <--> DAO
+Service --> Observer
+Observer --> Client
+
+%% Styling
+style Client fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style Server fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style Handlers fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style Service fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style Models fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style DAO fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+```
+
+__Sơ đồ thiết kế hướng đối tượng OOP__
 
 ```text
 online-auction-system/
 ├── auction-common/      # Shared: DTO, Protocol (Packet, PacketType, PacketCodec)
 ├── auction-server/      # Server: Business logic, DAO, WebSocket server
-│   ├── model/
+│   ├── model/           
+        ├── bank/        # SystemBank
 │   │   ├── entity/      # Entity (abstract base)
 │   │   ├── user/        # User → NormalUser, Admin, SystemAdmin + Factory
 │   │   ├── item/        # Item → Electronics, Art, Vehicle + Factory
@@ -240,3 +261,4 @@ mvn javafx:run
 
 ## 📄 License
 __MIT © 2026 Group 13__
+![img.png](img.png)
