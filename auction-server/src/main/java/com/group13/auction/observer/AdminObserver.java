@@ -31,7 +31,7 @@ public class AdminObserver implements AuctionObserver {
                 && event.getEventType() != AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
             return;
         }
-        System.out.printf("[LOG - THÔNG BÁO tới Admin %s] Bid mới: %s đặt %.0f | Phiên: %s%s%n",
+        System.out.printf("[LOG - THÔNG BÁO tới Admin %s] Bid mới: %s đặt %d | Phiên: %s%s%n",
                 admin.getUsername(),
                 event.getBidder() != null ? event.getBidder().getUsername() : "?",
                 event.getBidAmount(),
@@ -61,7 +61,7 @@ public class AdminObserver implements AuctionObserver {
                 // TODO: notificationDao.save()
                 break;
             case RESERVE_NOT_MET_CLOSED:
-                System.out.printf("[LOG - THÔNG BÁO tới Admin %s] Phiên %s kết thúc với giá cao nhất %.0f nhưng CHƯA ĐẠT mức tối thiểu.%n",
+                System.out.printf("[LOG - THÔNG BÁO tới Admin %s] Phiên %s kết thúc với giá cao nhất %d nhưng CHƯA ĐẠT mức tối thiểu.%n",
                         admin.getUsername(),
                         event.getAuction().getId(),
                         event.getBidAmount());
