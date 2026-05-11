@@ -1,6 +1,8 @@
 package com.group13.auction.observer;
 
 import com.group13.auction.model.user.SystemAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Observer dành riêng cho SystemAdmin - nhận tất cả event toàn cục.
@@ -8,6 +10,8 @@ import com.group13.auction.model.user.SystemAdmin;
  * <p>SystemAdmin nhận global notify về mọi event trong hệ thống.
  */
 public class SystemAdminObserver implements AuctionObserver {
+
+    private static final Logger logger = LoggerFactory.getLogger(SystemAdminObserver.class);
 
     private final SystemAdmin systemAdmin;
 
@@ -123,6 +127,7 @@ public class SystemAdminObserver implements AuctionObserver {
 
     private void log(String message) {
         systemAdmin.addActionLog(message);
-        System.out.println(message);
+        logger.info("System admin observer notification: systemAdminId={}, username={}, message={}",
+                systemAdmin.getId(), systemAdmin.getUsername(), message);
     }
 }

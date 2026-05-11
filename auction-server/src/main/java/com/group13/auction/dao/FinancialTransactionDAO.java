@@ -1,5 +1,8 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.group13.auction.model.bid.FinancialTransaction;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,6 +10,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class FinancialTransactionDAO {
+    private static final Logger log = LoggerFactory.getLogger(FinancialTransactionDAO.class);
+
 
     public FinancialTransactionDAO() {}
 
@@ -29,7 +34,7 @@ public class FinancialTransactionDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu giao dịch tài chính: " + e.getMessage());
+            log.error("Lỗi lưu giao dịch tài chính", e);
             return false;
         }
     }
@@ -59,7 +64,7 @@ public class FinancialTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy tiền cọc đã lock: " + e.getMessage());
+            log.error("Lỗi lấy tiền cọc đã lock", e);
         }
         return 0L;
     }
