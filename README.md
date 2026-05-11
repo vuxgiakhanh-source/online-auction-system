@@ -9,6 +9,8 @@
     * [Chức năng cốt lõi](#chức-năng-cốt-lõi)
     * [Chức năng nâng cao](#chức-năng-nâng-cao)
 * [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
+    * [Kiến trúc tổng quan](#kiến-trúc-tổng-quan)
+    * [Sơ đồ thiết kế hướng đối tượng OOP](#sơ-đồ-thiết-kế-hướng-đối-tượng-oop)
     * [Design Patterns áp dụng](#design-patterns-áp-dụng)
 * [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt-later)
 * [Cách sử dụng](#-cách-sử-dụng-later)
@@ -60,7 +62,7 @@ mà không cần tải lại trang.
 > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
-
+> Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
 
@@ -87,6 +89,7 @@ mà không cần tải lại trang.
 
 ## 🏗️ Kiến trúc hệ thống
 Hệ thống được thiết kế theo kiến trúc __Layered Architecture__ kết hợp __Event-Driven Architecture__ mạnh mẽ trên mô hình __Client-Server__
+### Kiến trúc tổng quan
 ```mermaid
 graph TD
 
@@ -118,44 +121,38 @@ style DAO fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 ```
 
-__Sơ đồ thiết kế hướng đối tượng OOP__
+### Sơ đồ thiết kế hướng đối tượng OOP
 
 ```text
 online-auction-system/
-├── auction-common/      # Shared: DTO, Protocol (Packet, PacketType, PacketCodec)
-├── auction-server/      # Server: Business logic, DAO, WebSocket server
-│   ├── model/           
-        ├── bank/        # SystemBank
-│   │   ├── entity/      # Entity (abstract base)
-│   │   ├── user/        # User → NormalUser, Admin, SystemAdmin + Factory
-│   │   ├── item/        # Item → Electronics, Art, Vehicle + Factory
-│   │   ├── auction/     # Auction + State pattern (Open/Running/Finished/Paid/Canceled)
-│   │   └── bid/         # BidTransaction, FinancialTransaction
-│   ├── service/         # AccountService, AuctionService, BidService, PaymentService...
-│   ├── dao/             # AuctionDAO, UserDAO, ItemDAO, BidTransactionDAO...
-│   ├── network/server/  # AuctionWebSocketServer, PacketRouter, Handlers
-│   ├── observer/        # AuctionObserver, BidderObserver, SellerObserver...
-│   ├── strategy/        # AutoBidStrategy, BidStrategy, AuctionLockRegistry
-│   └── manager/         # AuctionManager (Singleton)
-└── auction-client/      # Client: JavaFX UI, WebSocket client
-└── network/client/      # AuctionWebSocketClient, ClientPacketDispatcher
+├── auction-common/          # Shared: DTO, Protocol (Packet, PacketType, PacketCodec)
+├── auction-server/          # Server: Business logic, DAO, WebSocket server
+│   ├── model/
+│   │   ├── bank/            # SystemBank
+│   │   ├── entity/          # Entity (abstract base)
+│   │   ├── user/            # User → NormalUser, Admin, SystemAdmin + Factory
+│   │   ├── item/            # Item → Electronics, Art, Vehicle + Factory
+│   │   ├── auction/         # Auction + State pattern (Open/Running/Finished/Paid/Canceled), AuctionWinner, SecondChanceOffer
+│   │   └── bid/             # BidTransaction, FinancialTransaction, QualityReport
+│   ├── service/             # AccountService, AuctionService, BidService, PaymentService, RatingService...
+│   ├── dao/                 # AuctionDAO, UserDAO, ItemDAO, SecondChanceOfferDAO...
+│   ├── network/server/      # AuctionWebSocketServer, PacketRouter, Handlers (AuthHandler, BidHandler...)
+│   ├── observer/            # AuctionObserver, BidderObserver, SellerObserver...
+│   ├── strategy/            # BidStrategy, AutoBidStrategy, AuctionLockRegistry...
+│   └── manager/             # AuctionManager (Singleton)
+└── auction-client/          # Client: JavaFX UI, WebSocket client
+    └── network/client/      # AuctionWebSocketClient, ClientPacketDispatcher, Session...
 ```
 > Add ảnh Class Diagram  
 > Add ảnh DB Schema (Bảng User, ...)
 ### Design Patterns áp dụng:
-* __Singleton__ - `AuctionManager`, `DatabaseConnection`
-
-* __Factory Method__ - `ItemFactory`, `UserFactory` (tạo 
-Electronics / Art / Vehicle, NormalUser / Admin)
-
-* __Observer__ - `AuctionObserver` → `BidderObserver`, 
-`SellerObserver`, `AdminObserver`, `StaffObserver`
-
-* __State__ - `AuctionState` → `OpenState`, `RunningState`, 
-`FinishedState`, `PaidState`, `CanceledState`
-
-* __Strategy__ - `BidStrategy` → `StandardBidStrategy`, 
-`AutoBidStrategy`
+| Pattern            | Implementation                                                                              | Mục đích hệ thống |
+|--------------------|---------------------------------------------------------------------------------------------|----------------------------------|
+| **State**          | `AuctionState` → `OpenState`, `RunningState`, `FinishedState`, `PaidState`, `CanceledState` | Quản lý logic chuyển đổi trạng thái phiên đấu giá (Mở → Chạy → Kết thúc) một cách tự động và rõ ràng. |
+| **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, `AdminObserver`, `StaffObserver`    | Đẩy thông báo thay đổi giá và trạng thái đến toàn bộ người tham gia ngay lập tức (Realtime). |
+| **Strategy**       | `BidStrategy`                                                                               | Linh hoạt giữa các chế độ đặt giá thủ công và Auto-Bidding. |
+| **Factory Method** | `ItemFactory`, `UserFactory`                                                                | Chuẩn hóa việc tạo các loại Item (Electronics, Art, Vehicle...) và User. |
+| **Singleton**      | `AuctionManager`, `DatabaseConnection`                                                      | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |
 
 ## 💡 Hướng dẫn cài đặt (Later)
 
@@ -207,39 +204,25 @@ mvn javafx:run
 ---
 
 ## 🔎 Cách sử dụng (Later)
-> Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 ---
 
 ## ⚙️ Công nghệ & Công cụ sử dụng
-* __Ngôn ngữ__: Java17
+### Công nghệ theo lớp kiến trúc
 
+### Công nghệ theo lớp kiến trúc
 
-* __Build tool__: Maven (multi-module)
-
-
-* __Giao diện__: JavaFX (MVC Pattern) + FXML
-
-
-* __Giao tiếp mạng__: WebSocket (`Java-WebSocket 1.5.5`)
-
-
-* __Serialization__ : Gson 2.10.1
-
-
-* __Database__: MySQL8
-
-
-* __BoilerPlate__: Lombok 1.18
-
-
-* __Unit Test__: JUnit 5.10
-
-
-* __Code convention__: Google Java Style Guide
-
-
-* __Kiểm thử__: (Later)
+| Lớp kiến trúc      | Công nghệ & Huy hiệu | Vai trò |
+|--------------------|----------------------|--------|
+| **Language**       | ![Java](https://img.shields.io/badge/Java-007396?logo=openjdk&logoColor=white) | Ngôn ngữ chủ đạo triển khai logic OOP. |
+| **Build Tool**     | ![Maven](https://img.shields.io/badge/Maven-C71A36?logo=apachemaven&logoColor=white) | Quản lý dự án Multi-module và dependencies. |
+| **Frontend**       | ![JavaFX](https://img.shields.io/badge/JavaFX-4A8CFF?logo=java&logoColor=white) | Xây dựng giao diện Desktop theo mô hình MVC. |
+| **Networking**     | ![WebSocket](https://img.shields.io/badge/WebSocket-00BFFF?logo=websocket&logoColor=white) | Truyền tải dữ liệu Real-time (Giá thầu/Thông báo). |
+| **Database**       | ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white) | Lưu trữ bền vững dữ liệu phiên đấu giá và người dùng. |
+| **Serialization**  | ![Gson](https://img.shields.io/badge/Gson-4285F4?logo=google&logoColor=white) | Chuyển đổi đối tượng để truyền tin qua mạng. |
+| **Boilerplate**    | ![Lombok](https://img.shields.io/badge/Lombok-9C27B0?logo=lombok&logoColor=white) | Tối ưu mã nguồn, giảm code thừa (Clean Code). |
+| **Testing**        | ![JUnit](https://img.shields.io/badge/JUnit-25A162?logo=junit5&logoColor=white) | Kiểm thử đơn vị (Unit Test) cho logic nghiệp vụ. |
+| **Convention**     | ![Google](https://img.shields.io/badge/Google_Java_Style-4285F4?logo=google&logoColor=white) | Tuân thủ quy chuẩn viết code đồng nhất cho cả nhóm. |
 
 ---
 
