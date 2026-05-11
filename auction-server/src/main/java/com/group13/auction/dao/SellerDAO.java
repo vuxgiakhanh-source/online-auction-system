@@ -1,10 +1,15 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SellerDAO {
+    private static final Logger log = LoggerFactory.getLogger(SellerDAO.class);
+
 
     public SellerDAO() {}
 
@@ -18,7 +23,7 @@ public class SellerDAO {
             pstmt.setString(1, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi yêu cầu role Seller: " + e.getMessage());
+            log.error("Lỗi yêu cầu role Seller", e);
             return false;
         }
     }
@@ -33,7 +38,7 @@ public class SellerDAO {
             pstmt.setString(1, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi duyệt role Seller: " + e.getMessage());
+            log.error("Lỗi duyệt role Seller", e);
             return false;
         }
     }

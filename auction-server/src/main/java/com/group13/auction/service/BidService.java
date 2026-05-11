@@ -69,7 +69,8 @@ public class BidService implements IBidService {
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
     if (user.hasJoined(auction.getId())) {
-      log.info("{} đã tham gia phiên {} trước đó.", user.getUsername(), auction.getId());
+      log.info("User already joined auction: userId={}, username={}, auctionId={}",
+              user.getId(), user.getUsername(), auction.getId());
       return;
     }
 
@@ -89,7 +90,8 @@ public class BidService implements IBidService {
     bidder.addToWatchList(auction.getId());
     auction.incrementViewerCount();
     auctionService.addObserver(auction.getId(), observer);
-    log.info("{} theo dõi phiên {}.", bidder.getUsername(), auction.getId());
+    log.info("User watching auction: userId={}, username={}, auctionId={}",
+            bidder.getId(), bidder.getUsername(), auction.getId());
 
     // Lưu trạng thái vào DB
     auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
@@ -102,20 +104,32 @@ public class BidService implements IBidService {
   @Override
   public void placeBid(NormalUser bidder, Auction auction,
                        long amount, BidStrategy strategy) {
+    log.debug("Placing bid: auctionId={}, bidderId={}, username={}, amount={}, strategy={}",
+            auction.getId(), bidder.getId(), bidder.getUsername(), amount,
+            strategy.getClass().getSimpleName());
     if (!ratingService.isEligible(bidder)) {
+      log.warn("Bid rejected because bidder is not eligible: auctionId={}, bidderId={}, username={}, amount={}, status={}",
+              auction.getId(), bidder.getId(), bidder.getUsername(), amount, bidder.getAccountStatus());
       throw recordAndThrow(bidder, auction, amount, buildIneligibleException(bidder));
     }
 
     if (!auction.isAcceptingBids()) {
+      log.warn("Bid rejected because auction is not accepting bids: auctionId={}, bidderId={}, amount={}, status={}",
+              auction.getId(), bidder.getId(), amount, auction.getStatus());
       throw new AuctionClosedException(auction.getStatus());
     }
 
     if (!bidder.hasJoined(auction.getId())) {
+      log.warn("Bid rejected because bidder has not joined auction: auctionId={}, bidderId={}, amount={}",
+              auction.getId(), bidder.getId(), amount);
       throw recordAndThrow(bidder, auction, amount,
               new AuctionBusinessException(AuctionBusinessException.Reason.NOT_JOINED_AUCTION));
     }
 
     if (!strategy.isValidBid(auction, amount)) {
+      log.warn("Bid rejected by strategy validation: auctionId={}, bidderId={}, amount={}, currentPrice={}, strategy={}",
+              auction.getId(), bidder.getId(), amount, auction.getCurrentPrice(),
+              strategy.getClass().getSimpleName());
       throw recordAndThrow(bidder, auction, amount,
               new InvalidBidException(
                       String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
@@ -132,14 +146,15 @@ public class BidService implements IBidService {
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
-      log.info("{} đặt giá {} — chưa đạt reserve price ({}).",
-              bidder.getUsername(), amount, auction.getReservePrice());
+      log.info("Bid accepted but reserve not met: auctionId={}, bidderId={}, username={}, amount={}, reservePrice={}",
+              auction.getId(), bidder.getId(), bidder.getUsername(), amount, auction.getReservePrice());
     } else {
       BidTransaction tx = recordTransaction(bidder, auction, amount, BidResult.ACCEPTED);
       auction.addBidTransactionId(tx.getId());
       auctionService.notify(auction,
               AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
-      log.info("{} đặt giá {} thành công!", bidder.getUsername(), amount);
+      log.info("Bid placed: auctionId={}, bidderId={}, username={}, amount={}, currentPrice={}",
+              auction.getId(), bidder.getId(), bidder.getUsername(), amount, auction.getCurrentPrice());
     }
 
     // Anti-sniping: nếu có bid hợp lệ trong N giây cuối thì gia hạn phiên thêm M giây
@@ -150,6 +165,8 @@ public class BidService implements IBidService {
       if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
         auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
         auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+        log.info("Auction extended by anti-sniping: auctionId={}, bidderId={}, amount={}, oldEndTime={}, newEndTime={}",
+                auction.getId(), bidder.getId(), amount, currentEnd, auction.getEndTime());
         auctionService.notify(
                 auction,
                 AuctionEvent.AuctionEventType.AUCTION_EXTENDED,
@@ -171,11 +188,15 @@ public class BidService implements IBidService {
    */
   private void joinAsNormalUser(NormalUser bidder, Auction auction, AuctionObserver observer) {
     if (!ratingService.isEligible(bidder)) {
+      log.warn("Join rejected because bidder is not eligible: auctionId={}, bidderId={}, username={}, status={}",
+              auction.getId(), bidder.getId(), bidder.getUsername(), bidder.getAccountStatus());
       throw buildIneligibleException(bidder);
     }
 
     if (bidder.hasRole(User.UserRole.SELLER)
             && bidder.getAllAuctionIds().contains(auction.getId())) {
+      log.warn("Join rejected because seller cannot bid own auction: auctionId={}, bidderId={}, username={}",
+              auction.getId(), bidder.getId(), bidder.getUsername());
       throw new AuctionBusinessException(
               AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
     }
@@ -184,8 +205,8 @@ public class BidService implements IBidService {
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
 
     registerJoin(bidder, auction, observer);
-    log.info("{} tham gia phiên {} | Cọc khóa: {}",
-            bidder.getUsername(), auction.getId(), depositAmount);
+    log.info("Bidder joined auction: auctionId={}, bidderId={}, username={}, lockedDeposit={}",
+            auction.getId(), bidder.getId(), bidder.getUsername(), depositAmount);
   }
 
   /**
@@ -193,7 +214,8 @@ public class BidService implements IBidService {
    */
   private void joinAsAdmin(User admin, Auction auction, AuctionObserver observer) {
     registerJoin(admin, auction, observer);
-    log.info("Admin {} join phiên {} (không cọc).", admin.getUsername(), auction.getId());
+    log.info("Admin joined auction without deposit: auctionId={}, adminId={}, username={}",
+            auction.getId(), admin.getId(), admin.getUsername());
   }
 
   /**
@@ -209,11 +231,15 @@ public class BidService implements IBidService {
     // TODO: [DB] auctionDAO.updateViewerCount / userDAO.saveUserAuctionActivity
     auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
     userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+    log.debug("Join registered: auctionId={}, userId={}, viewerCount={}",
+            auction.getId(), user.getId(), auction.getViewerCount());
   }
 
   private RuntimeException recordAndThrow(NormalUser bidder, Auction auction,
                               long amount, RuntimeException ex) {
     recordTransaction(bidder, auction, amount, BidResult.REJECTED);
+    log.warn("Rejected bid recorded: auctionId={}, bidderId={}, amount={}, reason={}",
+            auction.getId(), bidder.getId(), amount, ex.getMessage());
     return ex;
   }
 
@@ -224,6 +250,8 @@ public class BidService implements IBidService {
 
     // Thực hiện TODO: bidTransactionDAO.save(tx)
     bidTransactionDAO.saveTransaction(tx);
+    log.debug("Bid transaction recorded: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
+            tx.getId(), auction.getId(), bidder.getId(), amount, result);
 
     return tx;
   }
