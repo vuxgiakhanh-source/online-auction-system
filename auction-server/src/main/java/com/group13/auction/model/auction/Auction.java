@@ -1,9 +1,13 @@
 package com.group13.auction.model.auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +16,8 @@ import java.util.List;
 
 /** Phiên đấu giá - chỉ lưu data và trạng thái. */
 public class Auction extends Entity {
+
+  private static final Logger log = LoggerFactory.getLogger(Auction.class);
 
   public enum AuctionStatus {
     OPEN,
@@ -317,14 +323,13 @@ public class Auction extends Entity {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN PHIÊN ĐẤU GIÁ");
-    System.out.printf("ID      : %s%n", getId());
-    System.out.printf("Item    : %s%n", item.getName());
-    System.out.printf("Giá     : %d%n", currentPrice);
-    System.out.printf("Status  : %s%n", getStatus());
-    System.out.printf(
-            "Leader  : %s%n", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
-    System.out.printf("Viewers : %d%n", viewerCount);
-    System.out.println("==========================================");
+    log.info("THÔNG TIN PHIÊN ĐẤU GIÁ");
+    log.info("ID      : {}", getId());
+    log.info("Item    : {}", item.getName());
+    log.info("Giá     : {}", currentPrice);
+    log.info("Status  : {}", getStatus());
+    log.info("Leader  : {}", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
+    log.info("Viewers : {}", viewerCount);
+    log.info("==========================================");
   }
 }

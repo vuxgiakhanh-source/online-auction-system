@@ -1,5 +1,8 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.group13.auction.model.bid.QualityReport;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,6 +10,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class QualityReportDAO {
+    private static final Logger log = LoggerFactory.getLogger(QualityReportDAO.class);
+
 
     public QualityReportDAO() {}
 
@@ -28,7 +33,7 @@ public class QualityReportDAO {
             return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu báo cáo chất lượng: " + e.getMessage());
+            log.error("Lỗi lưu báo cáo chất lượng", e);
             return false;
         }
     }
@@ -59,7 +64,7 @@ public class QualityReportDAO {
 //            return pstmt.executeUpdate() > 0;
 //
 //        } catch (SQLException e) {
-//            System.err.println("Lỗi cập nhật báo cáo chất lượng: " + e.getMessage());
+//            log.error("Lỗi cập nhật báo cáo chất lượng", e);
 //            return false;
 //        }
 //    }

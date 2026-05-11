@@ -1,4 +1,6 @@
 package com.group13.auction.model.auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.user.NormalUser;
@@ -6,6 +8,8 @@ import java.time.LocalDateTime;
 
 /** Ghi nhận người chiến thắng và trạng thái thanh toán — chỉ lưu data. */
 public class AuctionWinner extends Entity {
+
+  private static final Logger log = LoggerFactory.getLogger(AuctionWinner.class);
 
   public enum PaymentStatus {
     PENDING,
@@ -227,14 +231,14 @@ public class AuctionWinner extends Entity {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN WINNER CỦA PHIÊN");
-    System.out.printf("Winner : %s%n", winner.getUsername());
-    System.out.printf("Auction ID : %s%n", auctionId);
-    System.out.printf("Giá cuối : %d%n", finalPrice);
-    System.out.printf("Đã cọc : %d%n", depositPaid);
-    System.out.printf("Còn lại : %d%n", getRemainingAmount());
-    System.out.printf("Hạn TT : %s%n", getPaymentDeadline());
-    System.out.printf("TT Status : %s%n", paymentStatus);
-    System.out.println("======================================");
+    log.info("THÔNG TIN WINNER CỦA PHIÊN");
+    log.info("Winner : {}", winner.getUsername());
+    log.info("Auction ID : {}", auctionId);
+    log.info("Giá cuối : {}", finalPrice);
+    log.info("Đã cọc : {}", depositPaid);
+    log.info("Còn lại : {}", getRemainingAmount());
+    log.info("Hạn TT : {}", getPaymentDeadline());
+    log.info("TT Status : {}", paymentStatus);
+    log.info("======================================");
   }
 }

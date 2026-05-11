@@ -1,4 +1,6 @@
 package com.group13.auction.model.user;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,6 +24,8 @@ import java.util.List;
  * Khi admin joinAuction sẽ nhận thêm notify theo phiên như người bình thường.
  */
 public class Admin extends User {
+
+  private static final Logger log = LoggerFactory.getLogger(Admin.class);
 
   public static final String LEVEL_MASTER = "MASTER";
   public static final String LEVEL_STAFF = "STAFF";
@@ -92,9 +96,9 @@ public class Admin extends User {
   }
 
   private Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-               String username, String hashedPassword, String email,
-               AccountStatus accountStatus, double rating,
-               String adminLevel, LocalDateTime suspendedAt) {
+                String username, String hashedPassword, String email,
+                AccountStatus accountStatus, double rating,
+                String adminLevel, LocalDateTime suspendedAt) {
     super(id, createdAt, updatedAt, username, hashedPassword, email,
             UserRole.ADMIN, accountStatus, rating, suspendedAt);
     this.adminLevel = adminLevel;
@@ -149,13 +153,13 @@ public class Admin extends User {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN ADMIN");
-    System.out.printf("Username : %s%n", getUsername());
-    System.out.printf("Email : %s%n", getEmail());
-    System.out.printf("Admin level : %s%n", adminLevel);
-    System.out.printf("Rating : %.1f (cố định)%n", getRating());
-    System.out.printf("Status : %s%n", getAccountStatus());
-    System.out.printf("Hành động : %d lần%n", actionLog.size());
-    System.out.println("=============================================");
+    log.info("THÔNG TIN ADMIN");
+    log.info("Username : {}", getUsername());
+    log.info("Email : {}", getEmail());
+    log.info("Admin level : {}", adminLevel);
+    log.info("Rating : {} (cố định)", getRating());
+    log.info("Status : {}", getAccountStatus());
+    log.info("Hành động : {} lần", actionLog.size());
+    log.info("=============================================");
   }
 }

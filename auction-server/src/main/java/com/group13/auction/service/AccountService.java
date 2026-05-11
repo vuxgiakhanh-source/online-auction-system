@@ -81,6 +81,9 @@ public class AccountService implements IAccountService {
    */
   @Override
   public void banUser(Admin admin, User target, Admin.BanReason reason) {
+    if (reason == null) {
+      throw new IllegalArgumentException("Lí do ban không được null");
+    }
     target.setAccountStatus(AccountStatus.BANNED);
     String log = String.format(
             "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);

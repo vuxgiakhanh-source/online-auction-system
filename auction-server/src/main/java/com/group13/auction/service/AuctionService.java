@@ -142,6 +142,9 @@ public class AuctionService implements IAuctionService {
    */
   @Override
   public void closeAuction(Auction auction) {
+    if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+      throw new IllegalStateException("Phiên đang không ở trạng thái RUNNING - không thể đóng.");
+    }
     if (auction.getCurrentLeader() == null) {
       // TH1.1: không có ai đặt giá -> SYSTEM auto-cancel
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0L);

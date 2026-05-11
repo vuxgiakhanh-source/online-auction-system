@@ -1,4 +1,6 @@
 package com.group13.auction.model.user;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.item.Item;
@@ -24,11 +26,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class NormalUser extends User {
 
+    private static final Logger log = LoggerFactory.getLogger(NormalUser.class);
+
     // Bidder state (FIX: Dùng AtomicLong để thread-safe)
     private final AtomicLong balance;
     /** Số tiền bị khóa làm cọc cho các phiên đang tham gia. */
     private final AtomicLong lockedDeposit;
-    
+
     // FIX: Dùng Concurrent Collections để tránh ConcurrentModificationException
     private List<BidTransaction> bidHistory;
 
@@ -333,17 +337,17 @@ public class NormalUser extends User {
 
     @Override
     public void printInfo() {
-        System.out.println("THÔNG TIN NORMAL USER");
-        System.out.printf("Username  : %s%n", getUsername());
-        System.out.printf("Email     : %s%n", getEmail());
-        System.out.printf("Roles     : %s%n", getRoles());
-        System.out.printf("Balance   : %d%n", balance.get());
-        System.out.printf("Locked    : %d%n", lockedDeposit.get());
-        System.out.printf("Available : %d%n", getAvailableBalance());
-        System.out.printf("Rating    : %.1f%n", getRating());
-        System.out.printf("Status    : %s%n", getAccountStatus());
-        System.out.printf("Penalized : %s%n", hasEverBeenPenalized);
-        System.out.printf("Restored  : %s%n", hasEverBeenRestored);
-        System.out.println("======================================");
+        log.info("THÔNG TIN NORMAL USER");
+        log.info("Username  : {}", getUsername());
+        log.info("Email     : {}", getEmail());
+        log.info("Roles     : {}", getRoles());
+        log.info("Balance   : {}", balance.get());
+        log.info("Locked    : {}", lockedDeposit.get());
+        log.info("Available : {}", getAvailableBalance());
+        log.info("Rating    : {}", getRating());
+        log.info("Status    : {}", getAccountStatus());
+        log.info("Penalized : {}", hasEverBeenPenalized);
+        log.info("Restored  : {}", hasEverBeenRestored);
+        log.info("======================================");
     }
 }

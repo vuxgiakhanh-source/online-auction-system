@@ -1,51 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Default to ./logs (project root when running locally) -->
-    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
 
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Online Auction System — logback.xml
+         Pattern: timestamp | thread | level | logger | [requestId] | message
+         ════════════════════════════════════════════════════════════════════ -->
+
+    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+    <property name="MAX_HISTORY" value="14"/>
+    <property name="MAX_FILE_SIZE" value="50MB"/>
+    <property name="TOTAL_SIZE_CAP" value="500MB"/>
+
+    <!-- ── CONSOLE ─────────────────────────────────────────────────────────── -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{30} [%X{requestId:-–}] %X{auctionId:+[a=%X{auctionId}] }%X{username:+[u=%X{username}] }— %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- ── ROLLING FILE: business (service, handler, strategy, observer) ──── -->
     <appender name="BUSINESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/business.log</file>
         <append>true</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/archive/business.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>14</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/archive/business.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} [req=%X{requestId:-–}] [auction=%X{auctionId:-–}] [user=%X{username:-–}] — %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- ── ROLLING FILE: DAO ────────────────────────────────────────────────── -->
     <appender name="DAO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/dao.log</file>
         <append>true</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/archive/dao.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>14</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/archive/dao.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} — %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Business logs -->
+    <!-- ── ROLLING FILE: error ──────────────────────────────────────────────── -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/archive/error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} [req=%X{requestId:-–}] [auction=%X{auctionId:-–}] [user=%X{username:-–}] — %msg%n%exception{full}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ── LOGGER CONFIGURATION ─────────────────────────────────────────────── -->
+
+    <!-- Business: service, strategy, handler, observer -->
     <logger name="com.group13.auction.service" level="INFO" additivity="false">
         <appender-ref ref="BUSINESS_FILE"/>
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    <logger name="com.group13.auction.strategy" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    <logger name="com.group13.auction.network" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    <logger name="com.group13.auction.observer" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    <logger name="com.group13.auction.manager" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    <logger name="com.group13.auction.model" level="INFO" additivity="false">
+        <appender-ref ref="BUSINESS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
     </logger>
 
-    <!-- DAO logs -->
+    <!-- DAO: DEBUG để xem query detail khi cần debug -->
     <logger name="com.group13.auction.dao" level="DEBUG" additivity="false">
         <appender-ref ref="DAO_FILE"/>
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
     </logger>
 
+    <!-- Root: catch-all cho các thư viện bên ngoài -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
     </root>
+
 </configuration>

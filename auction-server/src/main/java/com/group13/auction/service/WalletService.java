@@ -1,4 +1,6 @@
 package com.group13.auction.service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.FinancialTransactionDAO;
@@ -27,6 +29,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Đã thực hiện TODO: inject FinancialTransactionDAO và UserDAO để persist.
  */
 public class WalletService implements IWalletService {
+
+    private static final Logger log = LoggerFactory.getLogger(WalletService.class);
 
     private final SystemBank systemBank;
     /** Lưu lịch sử giao dịch tài chính (FIX: Dùng CopyOnWriteArrayList cho thread-safety). */
@@ -70,9 +74,7 @@ public class WalletService implements IWalletService {
         // FIX: Bọc synchronized để đảm bảo atomic "read-modify-write" cho DB và RAM
         synchronized (user) {
             user.setBalance(user.getBalance() + amount);
-            System.out.printf(
-                    "[ACCOUNT] %s nạp %d | Số dư mới: %d%n",
-                    user.getUsername(), amount, user.getBalance());
+            log.info("[ACCOUNT] {} nạp {} | Số dư mới: {}", user.getUsername(), amount, user.getBalance());
 
             // Gọi DAO để cộng tiền dưới DB
             userDAO.addBalance(user.getId(), amount);
@@ -109,9 +111,7 @@ public class WalletService implements IWalletService {
             }
 
             user.setBalance(user.getBalance() - amount);
-            System.out.printf(
-                    "[ACCOUNT] %s rút %d | Số dư mới: %d%n",
-                    user.getUsername(), amount, user.getBalance());
+            log.info("[ACCOUNT] {} rút {} | Số dư mới: {}", user.getUsername(), amount, user.getBalance());
 
             // Đã thực hiện TODO: persist số dư mới xuống DB
             userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
@@ -191,7 +191,7 @@ public class WalletService implements IWalletService {
                     TransactionType.DEPOSIT_FORFEIT, auctionId);
             transactionLog.add(tx);
             tx.printInfo();
-            System.out.printf("[WALLET] Tịch thu cọc %d của %s — chuyển vào SystemBank.%n",
+            log.info("[WALLET] Tịch thu cọc {} của {} — chuyển vào SystemBank.",
                     depositAmount, winner.getUsername());
 
             // Đã thực hiện TODO: financialTransactionDao.save(tx)
@@ -254,9 +254,7 @@ public class WalletService implements IWalletService {
                         winner.getId(), "SYSTEM_BANK", finalPrice,
                         TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
-                System.out.printf(
-                        "[WALLET] Winner %s chuyển %d vào SystemBank (FUNDS_HELD).%n",
-                        winner.getUsername(), finalPrice);
+                log.info("[WALLET] Winner {} chuyển {} vào SystemBank (FUNDS_HELD).", winner.getUsername(), finalPrice);
 
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
@@ -269,10 +267,10 @@ public class WalletService implements IWalletService {
                 try {
                     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
                 } catch (Exception syncEx) {
-                    System.err.printf("[WALLET] ROLLBACK DB thất bại phiên %s | Lỗi: %s%n",
+                    log.error("[WALLET] ROLLBACK DB thất bại phiên {} | Lỗi: {}",
                             auctionId, syncEx.getMessage());
                 }
-                System.err.printf("[WALLET] ROLLBACK phiên %s | Lỗi: %s%n", auctionId, e.getMessage());
+                log.error("[WALLET] ROLLBACK phiên {} | Lỗi: {}", auctionId, e.getMessage());
                 throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
                         "Giao dịch thất bại, đã rollback: " + e.getMessage());
             }

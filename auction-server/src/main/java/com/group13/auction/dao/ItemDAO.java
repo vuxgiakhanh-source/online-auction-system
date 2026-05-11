@@ -1,4 +1,6 @@
 package com.group13.auction.dao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.item.Art;
 import com.group13.auction.model.item.Electronics;
@@ -16,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemDAO {
+
+    private static final Logger log = LoggerFactory.getLogger(ItemDAO.class);
 
     public ItemDAO() {}
 
@@ -49,7 +53,7 @@ public class ItemDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi thêm sản phẩm: " + e.getMessage());
+            log.error("Lỗi thêm sản phẩm: ", e);
             return false;
         }
     }
@@ -84,7 +88,7 @@ public class ItemDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi tìm Item theo ID: " + e.getMessage());
+            log.error("Lỗi tìm Item theo ID: ", e);
         }
         return null;
     }
@@ -113,7 +117,7 @@ public class ItemDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy danh sách item của seller: " + e.getMessage());
+            log.error("Lỗi lấy danh sách item của seller: ", e);
         }
         return items;
     }
@@ -171,7 +175,7 @@ public class ItemDAO {
                         seller, manufacturer, year, mileage);
             }
             default:
-                System.err.println("Loại item không được hỗ trợ: " + categoryType);
+                log.error("Loại item không được hỗ trợ:  {}", categoryType);
                 return null;
         }
     }
@@ -190,7 +194,7 @@ public class ItemDAO {
             pstmt.setString(1, itemId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi xóa item (rollback orphan): " + e.getMessage());
+            log.error("Lỗi xóa item (rollback orphan): ", e);
             return false;
         }
     }

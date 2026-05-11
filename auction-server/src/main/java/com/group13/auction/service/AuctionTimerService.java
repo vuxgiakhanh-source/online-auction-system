@@ -11,48 +11,31 @@ import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
 
 /**
- * Scheduler tự động quản lý vòng đời phiên đấu giá theo thời gian thực.
+ * Scheduler tự động quản lý vòng đời phiên đấu giá.
  *
- * <h3>Nhiệm vụ:</h3>
+ * <h3>Cải tiến v2:</h3>
  * <ul>
- *   <li>Quét các phiên OPEN có {@code startTime <= now()} → gọi
- *       {@link AuctionService#startAuction(Auction)} → broadcast {@code AUCTION_STARTED_UPDATE}</li>
- *   <li>Quét các phiên RUNNING có {@code endTime <= now()} → gọi
- *       {@link AuctionService#closeAuction(Auction)} → broadcast {@code AUCTION_ENDED_UPDATE}
- *       hoặc {@code AUCTION_CANCELED_UPDATE} tùy kết quả</li>
+ *   <li>Logging chuẩn SLF4J (xóa java.util.logging.Logger).</li>
+ *   <li>Dùng {@link AuctionLockRegistry#tryLock} với timeout thay vì lock vô hạn.</li>
+ *   <li>Double-check anti-sniping sau khi lấy lock.</li>
+ *   <li>Resource cleanup (AutoBidRegistry, LockRegistry) khi phiên kết thúc.</li>
  * </ul>
- *
- * <h3>Thiết kế & Concurrency (Đã nâng cấp):</h3>
- * <ul>
- *   <li>Singleton eager init — thread-safe từ đầu.</li>
- *   <li>1 daemon thread, chu kỳ quét 1 giây (Precision: 1s) để đảm bảo độ chính xác.</li>
- *   <li><b>Per-auction Locking:</b> Sử dụng ReentrantLock để bọc chuỗi validate -> close
- *       nhằm ngăn chặn xung đột với Anti-sniping (gia hạn giờ ở giây cuối).</li>
- *   <li><b>Resource Cleanup:</b> Tự động giải phóng LockRegistry và AutoBidRegistry khi phiên kết thúc.</li>
- *   <li>Bắt exception per-auction: 1 phiên lỗi không dừng scheduler.</li>
- * </ul>
- *
- * <h3>Cách dùng trong server bootstrap:</h3>
- * <pre>{@code
- *   AuctionTimerService.getInstance().start(auctionService, sessionManager);
- *   // Khi shutdown:
- *   AuctionTimerService.getInstance().stop();
- * }</pre>
  */
 public class AuctionTimerService {
 
-    private static final Logger log = Logger.getLogger(AuctionTimerService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AuctionTimerService.class);
     private static final int SCAN_INTERVAL_SECONDS = 1;
+    private static final long CLOSE_LOCK_TIMEOUT_SECONDS = 5L;
 
     private static final AuctionTimerService INSTANCE = new AuctionTimerService();
 
@@ -71,24 +54,19 @@ public class AuctionTimerService {
     }
 
     /**
-     * Khởi động scheduler. Gọi một lần duy nhất khi server start.
-     *
-     * @param auctionService service xử lý nghiệp vụ phiên
-     * @param paymentService service hoàn cọc khi phiên bị hủy
-     * @param sessionManager để broadcast kết quả tới client
+     * Khởi động scheduler. Gọi một lần khi server start.
      */
     public synchronized void start(AuctionService auctionService,
                                    IPaymentService paymentService,
                                    SessionManager sessionManager) {
         if (running) {
-            log.warning("[TIMER] AuctionTimerService đã chạy, bỏ qua lệnh start.");
+            log.warn("AuctionTimerService đã chạy, bỏ qua lệnh start.");
             return;
         }
         this.auctionService = auctionService;
         this.paymentService = paymentService;
         this.sessionManager = sessionManager;
 
-        // daemon=true: tự tắt khi JVM shutdown, không block server stop
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "auction-timer");
             t.setDaemon(true);
@@ -103,105 +81,85 @@ public class AuctionTimerService {
         );
 
         running = true;
-        log.info("[TIMER] AuctionTimerService khởi động — quét mỗi " + SCAN_INTERVAL_SECONDS + "s.");
+        log.info("AuctionTimerService khởi động — quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
     }
 
-    /**
-     * Dừng scheduler khi server shutdown.
-     */
     public synchronized void stop() {
         if (!running || scheduler == null) return;
         scheduler.shutdownNow();
         running = false;
-        log.info("[TIMER] AuctionTimerService đã dừng.");
+        log.info("AuctionTimerService đã dừng.");
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
 
-    /**
-     * Một chu kỳ quét: xử lý OPEN→RUNNING rồi RUNNING→FINISHED/CANCELED.
-     * Bắt exception per-auction để 1 phiên lỗi không dừng scheduler.
-     */
     private void scanAndProcess() {
         try {
             LocalDateTime now = LocalDateTime.now();
             startPendingAuctions(now);
             closeExpiredAuctions(now);
         } catch (Exception e) {
-            log.severe("[TIMER] Lỗi không mong muốn trong scan: " + e.getMessage());
+            log.error("Lỗi không mong muốn trong scan:", e);
         }
     }
 
-    /**
-     * Tìm tất cả phiên OPEN có startTime <= now → chuyển sang RUNNING
-     * và broadcast {@code AUCTION_STARTED_UPDATE} tới tất cả watcher.
-     */
     private void startPendingAuctions(LocalDateTime now) {
         List<Auction> openAuctions = AuctionManager.getInstance()
                 .getAuctionsByStatus(Auction.AuctionStatus.OPEN);
 
         for (Auction auction : openAuctions) {
-            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) {
+            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) continue;
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("startPendingAuctions: lock timeout auctionId={}", auction.getId());
                 continue;
             }
-
-            ReentrantLock lock = lockRegistry.getLock(auction.getId());
-            lock.lock();
             try {
-                // Double-check trạng thái sau khi lấy lock
                 if (auction.getStatus() != Auction.AuctionStatus.OPEN) continue;
 
                 auctionService.startAuction(auction);
-
                 broadcastUpdate(auction, PacketType.AUCTION_STARTED_UPDATE);
-                log.info("[TIMER] Phiên bắt đầu: " + auction.getId());
+                log.info("Auction started: auctionId={}", auction.getId());
             } catch (Exception e) {
-                log.warning("[TIMER] Không thể start phiên " + auction.getId()
-                        + ": " + e.getMessage());
+                log.warn("Không thể start phiên: auctionId={} reason={}", auction.getId(), e.getMessage());
             } finally {
-                lock.unlock();
+                lockRegistry.unlock(auction.getId());
             }
         }
     }
 
-    /**
-     * Tìm tất cả phiên RUNNING có endTime <= now → đóng phiên
-     * bọc trong per-auction lock để tránh xung đột với anti-sniping.
-     */
     private void closeExpiredAuctions(LocalDateTime now) {
         List<Auction> runningAuctions = AuctionManager.getInstance()
                 .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
 
         for (Auction auction : runningAuctions) {
-            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) {
+            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) continue;
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("closeExpiredAuctions: lock timeout auctionId={}", auction.getId());
                 continue;
             }
 
-            ReentrantLock lock = lockRegistry.getLock(auction.getId());
             boolean releaseLock = false;
-            lock.lock();
             try {
-                // CRITICAL DOUBLE-CHECK: Phiên có thể đã được gia hạn bởi BidService (Anti-sniping)
-                // trong khi luồng timer đang đợi lấy lock.
+                // CRITICAL DOUBLE-CHECK: anti-sniping có thể đã gia hạn trong khi chờ lock
                 if (auction.getStatus() != Auction.AuctionStatus.RUNNING) continue;
                 if (auction.getEndTime().isAfter(now)) {
-                    log.info("[TIMER] Phiên " + auction.getId() + " vừa được gia hạn, bỏ qua kết thúc.");
+                    log.info("Auction vừa được gia hạn, bỏ qua kết thúc: auctionId={}", auction.getId());
                     continue;
                 }
 
-                // Lưu trạng thái TRƯỚC khi đóng để phân nhánh broadcast chính xác
                 NormalUser leaderBeforeClose = auction.getCurrentLeader();
                 boolean reserveMetBeforeClose = auction.isReserveMet();
 
                 auctionService.closeAuction(auction);
 
-                // Phân nhánh packetType dựa trên trạng thái trước khi closeAuction() thay đổi
                 PacketType packetType;
                 if (auction.getStatus() == Auction.AuctionStatus.FINISHED) {
-                    // Có winner và đã đạt reserve
                     packetType = PacketType.AUCTION_ENDED_UPDATE;
                 } else {
-                    // CANCELED — phân biệt nguyên nhân
                     if (leaderBeforeClose == null) {
                         packetType = PacketType.AUCTION_NO_WINNER_UPDATE;
                     } else if (!reserveMetBeforeClose) {
@@ -210,29 +168,22 @@ public class AuctionTimerService {
                         packetType = PacketType.AUCTION_CANCELED_UPDATE;
                     }
 
-                    // Hoàn cọc cho tất cả bidder đã tham gia
                     try {
                         paymentService.refundDeposits(auction);
                     } catch (Exception refundEx) {
-                        log.severe("[TIMER] Lỗi hoàn cọc phiên " + auction.getId()
-                                + ": " + refundEx.getMessage());
+                        log.error("Lỗi hoàn cọc: auctionId={}", auction.getId(), refundEx);
                     }
                 }
 
                 broadcastUpdate(auction, packetType);
-
-                // --- RESOURCE CLEANUP ---
                 autoBidRegistry.clearAuction(auction.getId());
                 releaseLock = true;
 
-                log.info("[TIMER] Phiên đóng: " + auction.getId() + " | Status: " + auction.getStatus());
+                log.info("Auction closed: auctionId={} status={}", auction.getId(), auction.getStatus());
             } catch (Exception e) {
-                log.warning("[TIMER] Không thể close phiên " + auction.getId()
-                        + ": " + e.getMessage());
+                log.error("Không thể close phiên: auctionId={}", auction.getId(), e);
             } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
+                lockRegistry.unlock(auction.getId());
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
                 }

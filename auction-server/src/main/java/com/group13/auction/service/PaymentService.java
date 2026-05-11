@@ -1,4 +1,6 @@
 package com.group13.auction.service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionWinnerDAO;
@@ -26,6 +28,8 @@ import java.util.List;
  * Đã thực hiện TODO: inject các DAO cần thiết.
  */
 public class PaymentService implements IPaymentService {
+
+  private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
   private final IAuctionService auctionService;
   private final IRatingService ratingService;
@@ -85,9 +89,7 @@ public class PaymentService implements IPaymentService {
     auctionService.notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
             winner, auctionWinner.getFinalPrice());
 
-    System.out.printf(
-            "[PAYMENT] Winner %s đã thanh toán %d — tiền giữ tại SystemBank (FUNDS_HELD).%n",
-            winner.getUsername(), auctionWinner.getFinalPrice());
+    log.info("[PAYMENT] Winner {} đã thanh toán {} — tiền giữ tại SystemBank (FUNDS_HELD).", winner.getUsername(), auctionWinner.getFinalPrice());
 
     // Thực hiện TODO: Cập nhật trạng thái thanh toán xuống DB
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
@@ -109,9 +111,7 @@ public class PaymentService implements IPaymentService {
     }
 
     auctionWinner.confirmReceipt();
-    System.out.printf(
-            "[PAYMENT] Winner %s xác nhận nhận hàng — 3 ngày report bắt đầu đếm.%n",
-            auctionWinner.getWinner().getUsername());
+    log.info("[PAYMENT] Winner {} xác nhận nhận hàng — 3 ngày report bắt đầu đếm.", auctionWinner.getWinner().getUsername());
 
     // TODO: [DB] auctionWinnerDAO.updateReportDeadline(auctionWinner.getId(), reportDeadline)
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(),
@@ -144,9 +144,7 @@ public class PaymentService implements IPaymentService {
 
     auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
 
-    System.out.printf(
-            "[PAYMENT] Giải ngân %d cho Seller %s từ SystemBank.%n",
-            payout, seller.getUsername());
+    log.info("[PAYMENT] Giải ngân {} cho Seller {} từ SystemBank.", payout, seller.getUsername());
 
     // TODO: [DB] auctionWinnerDAO.updatePaymentStatus(...)
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(),
@@ -170,9 +168,7 @@ public class PaymentService implements IPaymentService {
     // TODO: [DB] userDAO.updateBalances(winner.getId(), ...)
     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
-    System.out.printf(
-            "[PAYMENT] SystemBank hoàn %d cho Winner %s (report thành công).%n",
-            auctionWinner.getFinalPrice(), winner.getUsername());
+    log.info("[PAYMENT] SystemBank hoàn {} cho Winner {} (report thành công).", auctionWinner.getFinalPrice(), winner.getUsername());
   }
 
   /** Chú ý: method ni được gọi ở Scheduler check isExpired */
@@ -198,7 +194,7 @@ public class PaymentService implements IPaymentService {
     auctionWinner.setPaymentStatus(AuctionWinner.PaymentStatus.EXPIRED);
     offerSecondChance(auction);
 
-    System.out.printf("[PAYMENT] Winner %s không thanh toán | Cọc tịch thu | Rating phạt.%n",
+    log.info("[PAYMENT] Winner {} không thanh toán | Cọc tịch thu | Rating phạt.",
             winner.getUsername());
 
     // Thực hiện TODO: Cập nhật DB
@@ -211,7 +207,7 @@ public class PaymentService implements IPaymentService {
             ? auction.getWinner().getWinner().getId()
             : null;
 
-    System.out.printf("[PAYMENT] Hoàn cọc cho tất cả bidder phiên %s (trừ winner %s).%n",
+    log.info("[PAYMENT] Hoàn cọc cho tất cả bidder phiên {} (trừ winner {}).",
             auction.getId(), winnerId != null ? winnerId : "N/A");
 
 
@@ -232,7 +228,7 @@ public class PaymentService implements IPaymentService {
     }
     if (offer.isExpired()) {
       offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
-      System.out.printf("[PAYMENT] Second Chance Offer hết hạn — phiên %s bị hủy.%n", auction.getId());
+      log.info("[PAYMENT] Second Chance Offer hết hạn — phiên {} bị hủy.", auction.getId());
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
       // Cập nhật trạng thái hết hạn
@@ -258,7 +254,7 @@ public class PaymentService implements IPaymentService {
 
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
 
-    System.out.printf("[PAYMENT] Runner-up %s chấp nhận Second Chance Offer | Giá: %d%n",
+    log.info("[PAYMENT] Runner-up {} chấp nhận Second Chance Offer | Giá: {}",
             runnerUp.getUsername(), offer.getOfferPrice());
 
     // Thực hiện TODO: Cập nhật DB
@@ -273,7 +269,7 @@ public class PaymentService implements IPaymentService {
     offer.setStatus(SecondChanceOffer.OfferStatus.DECLINED);
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
-    System.out.printf("[PAYMENT] Runner-up %s từ chối Second Chance Offer — phiên %s bị hủy.%n",
+    log.info("[PAYMENT] Runner-up {} từ chối Second Chance Offer — phiên {} bị hủy.",
             offer.getRunnerUp().getUsername(), auction.getId());
 
     // TODO: notificationDao.save() - báo cho seller
@@ -285,7 +281,7 @@ public class PaymentService implements IPaymentService {
     String winnerId = auction.getWinner() != null
             ? auction.getWinner().getWinner().getId() : null;
 
-    System.out.printf("[PAYMENT] Tìm runner-up cho phiên %s để tạo SecondChanceOffer...%n", auction.getId());
+    log.info("[PAYMENT] Tìm runner-up cho phiên {} để tạo SecondChanceOffer...", auction.getId());
 
     // Thực hiện TODO: Query DAO lấy Bid cao nhất (trừ winner)
     BidTransaction runnerUpBid = bidTransactionDAO.findHighestValidBidExcept(auction.getId(), winnerId);
@@ -298,7 +294,7 @@ public class PaymentService implements IPaymentService {
         createSecondChanceOffer(runnerUp, auction, runnerUpBid.getAmount(), depositPaid);
       }
     } else {
-      System.out.println("[PAYMENT] Không tìm thấy runner-up hợp lệ. Hủy phiên.");
+      log.info("[PAYMENT] Không tìm thấy runner-up hợp lệ. Hủy phiên.");
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
     }
 
@@ -309,7 +305,7 @@ public class PaymentService implements IPaymentService {
   public SecondChanceOffer createSecondChanceOffer(NormalUser runnerUp,
                                                    Auction auction, long offerPrice, long depositPaid) {
     if (offerPrice < auction.getReservePrice()) {
-      System.out.printf("[PAYMENT] Runner-up bid %d chưa đạt reserve. Hủy phiên.%n", offerPrice);
+      log.info("[PAYMENT] Runner-up bid {} chưa đạt reserve. Hủy phiên.", offerPrice);
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
       return null;
     }
@@ -321,7 +317,7 @@ public class PaymentService implements IPaymentService {
             runnerUp, offerPrice,
             String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
 
-    System.out.printf("[PAYMENT] Second Chance Offer tạo cho %s | Giá: %d | Hạn: %s%n",
+    log.info("[PAYMENT] Second Chance Offer tạo cho {} | Giá: {} | Hạn: {}",
             runnerUp.getUsername(), offerPrice, offer.getDeadline());
 
     // Thực hiện TODO: Lưu DB
