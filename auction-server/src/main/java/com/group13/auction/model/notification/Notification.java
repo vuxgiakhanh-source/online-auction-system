@@ -1,10 +1,14 @@
 package com.group13.auction.model.notification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.entity.Entity;
 import java.time.LocalDateTime;
 
 
 public class Notification extends Entity {
+
+    private static final Logger log = LoggerFactory.getLogger(Notification.class);
 
     private final String userId;
     private final String auctionId;
@@ -45,7 +49,7 @@ public class Notification extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.printf("[NOTIFICATION] %s | Read: %s | %s%n",
+        log.info("[NOTIFICATION] {} | Read: {} | {}",
                 userId, isRead, message);
     }
 

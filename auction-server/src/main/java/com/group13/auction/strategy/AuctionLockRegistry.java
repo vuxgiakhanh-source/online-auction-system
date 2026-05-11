@@ -1,6 +1,10 @@
 package com.group13.auction.strategy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -12,36 +16,27 @@ import java.util.concurrent.locks.ReentrantLock;
  * <ul>
  *   <li>Thread A đọc {@code currentPrice = 1_000_000}</li>
  *   <li>Thread B đọc {@code currentPrice = 1_000_000} (cùng lúc)</li>
- *   <li>Cả hai đặt bid 1_200_000 → cả hai đều pass validate, nhưng chỉ một bid
- *       được ghi cuối cùng → lost update / hai người cùng nghĩ mình đang dẫn đầu.</li>
+ *   <li>Cả hai đặt bid → cả hai pass validate → lost update</li>
  * </ul>
  *
- * <h3>Thiết kế:</h3>
- * <ul>
- *   <li>Key = auctionId → 1 ReentrantLock duy nhất per phiên.</li>
- *   <li>{@link ConcurrentHashMap#computeIfAbsent} đảm bảo atomic "create if absent"
- *       → không bao giờ tạo 2 lock cho cùng 1 auction.</li>
- *   <li>Singleton eager init → thread-safe từ đầu.</li>
- *   <li>{@link #release(String)} dọn dẹp sau khi phiên kết thúc để tránh memory leak.</li>
- * </ul>
+ * <h3>Cải tiến v2 — lock với timeout:</h3>
+ * <p>Thay vì {@code lock()} block vô thời hạn, dùng {@link #tryLock(String, long, TimeUnit)}
+ * để tránh deadlock hoặc client bị treo quá lâu.
  *
- * <h3>Cách dùng (trong BidHandler / AutoBidProcessor):</h3>
+ * <h3>Cách dùng (BidHandler):</h3>
  * <pre>{@code
- *   ReentrantLock lock = AuctionLockRegistry.getInstance().getLock(auctionId);
- *   lock.lock();
+ *   boolean locked = lockRegistry.tryLock(auctionId, 3, TimeUnit.SECONDS);
+ *   if (!locked) { // trả lỗi timeout cho client }
  *   try {
- *       // validate + update auction state an toàn
  *       bidService.placeBid(...);
  *   } finally {
- *       lock.unlock();
+ *       lockRegistry.unlock(auctionId);
  *   }
  * }</pre>
- *
- * <p><b>Không dùng {@code synchronized(auction)}</b> vì object lock không đủ
- * visibility: các thread khác có thể lấy reference auction khác nhau từ cache
- * hoặc DAO, dẫn đến lock trên object khác nhau mà không biết.
  */
 public final class AuctionLockRegistry {
+
+    private static final Logger log = LoggerFactory.getLogger(AuctionLockRegistry.class);
 
     private static final AuctionLockRegistry INSTANCE = new AuctionLockRegistry();
 
@@ -57,30 +52,55 @@ public final class AuctionLockRegistry {
     /**
      * Lấy lock của một phiên, tạo mới nếu chưa có.
      * Thread-safe nhờ {@link ConcurrentHashMap#computeIfAbsent}.
-     *
-     * @param auctionId ID phiên đấu giá
-     * @return ReentrantLock gắn với phiên đó (non-fair, dùng fair = true nếu
-     *         muốn ưu tiên thread đợi lâu hơn nhưng throughput thấp hơn)
      */
     public ReentrantLock getLock(String auctionId) {
-        return locks.computeIfAbsent(auctionId, id -> new ReentrantLock());
+        return locks.computeIfAbsent(auctionId, id -> new ReentrantLock(true)); // fair=true
     }
 
     /**
-     * Xóa lock khi phiên đấu giá đã kết thúc.
-     * Gọi từ {@link com.group13.auction.service.AuctionService#closeAuction()} để tránh memory leak.
+     * Acquire lock với timeout. Trả về true nếu lấy được trong thời gian cho phép.
      *
-     * <p><b>An toàn để gọi ngay sau khi phiên kết thúc:</b>
-     * Tại thời điểm closeAuction, lock đã được unlock (chạy trong finally),
-     * nên không còn thread nào đang giữ lock.
-     *
-     * @param auctionId ID phiên đã kết thúc
+     * @param auctionId ID phiên
+     * @param timeout   thời gian chờ tối đa
+     * @param unit      đơn vị thời gian
+     * @return true nếu lấy được lock, false nếu timeout
+     */
+    public boolean tryLock(String auctionId, long timeout, TimeUnit unit) {
+        ReentrantLock lock = getLock(auctionId);
+        try {
+            boolean acquired = lock.tryLock(timeout, unit);
+            if (!acquired) {
+                log.warn("tryLock TIMEOUT: auctionId={} timeout={}{}",
+                        auctionId, timeout, unit.name().toLowerCase());
+            }
+            return acquired;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("tryLock INTERRUPTED: auctionId={}", auctionId);
+            return false;
+        }
+    }
+
+    /**
+     * Unlock an toàn. Chỉ unlock nếu thread hiện tại đang giữ lock.
+     */
+    public void unlock(String auctionId) {
+        ReentrantLock lock = locks.get(auctionId);
+        if (lock != null && lock.isHeldByCurrentThread()) {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Xóa lock khi phiên đấu giá đã kết thúc (tránh memory leak).
+     * Gọi từ AuctionTimerService sau khi closeAuction.
      */
     public void release(String auctionId) {
         locks.remove(auctionId);
+        log.debug("Lock released: auctionId={}", auctionId);
     }
 
-    /** Chỉ dùng cho testing — kiểm tra số lock đang tồn tại. */
+    /** Chỉ dùng cho testing. */
     public int size() {
         return locks.size();
     }
