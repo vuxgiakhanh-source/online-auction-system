@@ -1,5 +1,7 @@
 package com.group13.auction.strategy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AutoBidRegistry {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoBidRegistry.class);
+
     private static final AutoBidRegistry INSTANCE = new AutoBidRegistry();
 
     /**
@@ -58,7 +62,7 @@ public class AutoBidRegistry {
         String key = buildKey(userId, auctionId);
         AutoBidEntry entry = new AutoBidEntry(userId, auctionId, maxBid, LocalDateTime.now());
         registry.put(key, entry);
-        System.out.printf("[AUTO-BID REGISTRY] Đăng ký: userId=%s, auction=%s, maxBid=%d%n",
+        log.info("Auto-bid entry registered: userId={}, auctionId={}, maxBid={}",
                 userId, auctionId, maxBid);
     }
 
@@ -73,8 +77,7 @@ public class AutoBidRegistry {
         String key = buildKey(userId, auctionId);
         boolean removed = registry.remove(key) != null;
         if (removed) {
-            System.out.printf("[AUTO-BID REGISTRY] Hủy: userId=%s, auction=%s%n",
-                    userId, auctionId);
+            log.info("Auto-bid entry canceled: userId={}, auctionId={}", userId, auctionId);
         }
         return removed;
     }
@@ -90,8 +93,7 @@ public class AutoBidRegistry {
         registry.entrySet().removeIf(e -> e.getValue().getAuctionId().equals(auctionId));
         int removed = before - registry.size();
         if (removed > 0) {
-            System.out.printf("[AUTO-BID REGISTRY] Xóa %d entry của phiên %s%n",
-                    removed, auctionId);
+            log.info("Auto-bid entries cleared for auction: auctionId={}, removed={}", auctionId, removed);
         }
     }
 

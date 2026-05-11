@@ -1,5 +1,8 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.dao.UserDAO;
 import java.sql.Connection;
@@ -10,6 +13,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class SecondChanceOfferDAO {
+    private static final Logger log = LoggerFactory.getLogger(SecondChanceOfferDAO.class);
+
 
     public SecondChanceOfferDAO() {}
 
@@ -33,7 +38,7 @@ public class SecondChanceOfferDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu Second Chance Offer: " + e.getMessage());
+            log.error("Lỗi lưu Second Chance Offer", e);
             return false;
         }
     }
@@ -52,7 +57,7 @@ public class SecondChanceOfferDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi cập nhật trạng thái Second Chance Offer: " + e.getMessage());
+            log.error("Lỗi cập nhật trạng thái Second Chance Offer", e);
             return false;
         }
     }
@@ -101,7 +106,7 @@ public class SecondChanceOfferDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi tìm Second Chance Offer PENDING: " + e.getMessage());
+            log.error("Lỗi tìm Second Chance Offer PENDING", e);
         }
         return null;
     }

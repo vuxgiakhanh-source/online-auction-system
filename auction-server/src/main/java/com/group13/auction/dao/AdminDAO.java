@@ -1,11 +1,16 @@
 package com.group13.auction.dao;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
 
 public class AdminDAO {
+    private static final Logger log = LoggerFactory.getLogger(AdminDAO.class);
+
 
     public AdminDAO() {
     }
@@ -28,7 +33,7 @@ public class AdminDAO {
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("Lỗi tạo Admin: " + e.getMessage());
+            log.error("Lỗi tạo Admin", e);
             return false;
         }
     }

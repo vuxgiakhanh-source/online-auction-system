@@ -10,6 +10,8 @@ import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Đã thực hiện TODO: inject FinancialTransactionDAO và UserDAO để persist.
  */
 public class WalletService implements IWalletService {
+
+    private static final Logger log = LoggerFactory.getLogger(WalletService.class);
 
     private final SystemBank systemBank;
     /** Lưu lịch sử giao dịch tài chính (FIX: Dùng CopyOnWriteArrayList cho thread-safety). */
@@ -61,18 +65,20 @@ public class WalletService implements IWalletService {
     @Override
     public void deposit(NormalUser user, long amount) {
         if (!ratingService.isEligible(user)) {
+            log.warn("Deposit rejected because user is not eligible: userId={}, username={}, amount={}, status={}, rating={}",
+                    user.getId(), user.getUsername(), amount, user.getAccountStatus(), user.getRating());
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
         if (amount <= 0) {
+            log.warn("Deposit rejected because amount is invalid: userId={}, amount={}", user.getId(), amount);
             throw new IllegalArgumentException("Số tiền nạp phải lớn hơn 0.");
         }
 
         // FIX: Bọc synchronized để đảm bảo atomic "read-modify-write" cho DB và RAM
         synchronized (user) {
             user.setBalance(user.getBalance() + amount);
-            System.out.printf(
-                    "[ACCOUNT] %s nạp %d | Số dư mới: %d%n",
-                    user.getUsername(), amount, user.getBalance());
+            log.info("Deposit completed: userId={}, username={}, amount={}, newBalance={}",
+                    user.getId(), user.getUsername(), amount, user.getBalance());
 
             // Gọi DAO để cộng tiền dưới DB
             userDAO.addBalance(user.getId(), amount);
@@ -94,14 +100,19 @@ public class WalletService implements IWalletService {
     @Override
     public void withdraw(NormalUser user, long amount) {
         if (!ratingService.isEligible(user)) {
+            log.warn("Withdraw rejected because user is not eligible: userId={}, username={}, amount={}, status={}, rating={}",
+                    user.getId(), user.getUsername(), amount, user.getAccountStatus(), user.getRating());
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
         if (amount <= 0) {
+            log.warn("Withdraw rejected because amount is invalid: userId={}, amount={}", user.getId(), amount);
             throw new IllegalArgumentException("Số tiền rút phải lớn hơn 0.");
         }
 
         synchronized (user) {
             if (user.getAvailableBalance() < amount) {
+                log.warn("Withdraw rejected because available balance is insufficient: userId={}, amount={}, availableBalance={}",
+                        user.getId(), amount, user.getAvailableBalance());
                 throw new IllegalArgumentException(
                         String.format(
                                 "Số dư khả dụng không đủ. Khả dụng: %d, Yêu cầu: %d",
@@ -109,9 +120,8 @@ public class WalletService implements IWalletService {
             }
 
             user.setBalance(user.getBalance() - amount);
-            System.out.printf(
-                    "[ACCOUNT] %s rút %d | Số dư mới: %d%n",
-                    user.getUsername(), amount, user.getBalance());
+            log.info("Withdraw completed: userId={}, username={}, amount={}, newBalance={}",
+                    user.getId(), user.getUsername(), amount, user.getBalance());
 
             // Đã thực hiện TODO: persist số dư mới xuống DB
             userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
@@ -130,6 +140,8 @@ public class WalletService implements IWalletService {
     public void lockDeposit(NormalUser bidder, long depositAmount, String auctionId) {
         synchronized (bidder) {
             if (bidder.getAvailableBalance() < depositAmount) {
+                log.warn("Lock deposit rejected because available balance is insufficient: auctionId={}, bidderId={}, amount={}, availableBalance={}",
+                        auctionId, bidder.getId(), depositAmount, bidder.getAvailableBalance());
                 throw new AuctionBusinessException(AuctionBusinessException.Reason.INSUFFICIENT_DEPOSIT);
             }
 
@@ -144,7 +156,8 @@ public class WalletService implements IWalletService {
                     bidder.getId(), "SYSTEM_LOCKED", depositAmount,
                     TransactionType.DEPOSIT_LOCK, auctionId);
             transactionLog.add(tx);
-            tx.printInfo();
+            log.info("Deposit locked: txId={}, auctionId={}, bidderId={}, amount={}",
+                    tx.getId(), auctionId, bidder.getId(), depositAmount);
 
             // Đã thực hiện TODO: Lưu lịch sử xuống DB
             financialTransactionDAO.saveTransaction(tx);
@@ -165,7 +178,8 @@ public class WalletService implements IWalletService {
                     "SYSTEM_LOCKED", bidder.getId(), depositAmount,
                     TransactionType.DEPOSIT_UNLOCK, auctionId);
             transactionLog.add(tx);
-            tx.printInfo();
+            log.info("Deposit unlocked: txId={}, auctionId={}, bidderId={}, amount={}",
+                    tx.getId(), auctionId, bidder.getId(), depositAmount);
             // Đã thực hiện TODO: financialTransactionDao.save(tx)
             financialTransactionDAO.saveTransaction(tx);
         }
@@ -190,9 +204,8 @@ public class WalletService implements IWalletService {
                     winner.getId(), "SYSTEM_BANK", depositAmount,
                     TransactionType.DEPOSIT_FORFEIT, auctionId);
             transactionLog.add(tx);
-            tx.printInfo();
-            System.out.printf("[WALLET] Tịch thu cọc %d của %s — chuyển vào SystemBank.%n",
-                    depositAmount, winner.getUsername());
+            log.warn("Deposit forfeited: txId={}, auctionId={}, winnerId={}, username={}, amount={}",
+                    tx.getId(), auctionId, winner.getId(), winner.getUsername(), depositAmount);
 
             // Đã thực hiện TODO: financialTransactionDao.save(tx)
             financialTransactionDAO.saveTransaction(tx);
@@ -223,6 +236,8 @@ public class WalletService implements IWalletService {
             long remaining = finalPrice - depositPaid;
 
             if (winner.getAvailableBalance() < remaining) {
+                log.warn("Payment to bank rejected because winner balance is insufficient: auctionId={}, winnerId={}, finalPrice={}, depositPaid={}, remaining={}, availableBalance={}",
+                        auctionId, winner.getId(), finalPrice, depositPaid, remaining, winner.getAvailableBalance());
                 throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
                         String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
             }
@@ -254,13 +269,13 @@ public class WalletService implements IWalletService {
                         winner.getId(), "SYSTEM_BANK", finalPrice,
                         TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
-                System.out.printf(
-                        "[WALLET] Winner %s chuyển %d vào SystemBank (FUNDS_HELD).%n",
-                        winner.getUsername(), finalPrice);
+                log.info("Winner payment moved to SystemBank: auctionId={}, winnerId={}, username={}, finalPrice={}, depositPaid={}, remaining={}",
+                        auctionId, winner.getId(), winner.getUsername(), finalPrice, depositPaid, remaining);
 
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
-                    tx.printInfo();
+                    log.debug("Financial transaction persisted from payment batch: txId={}, auctionId={}, type={}, amount={}",
+                            tx.getId(), auctionId, tx.getType(), tx.getAmount());
                     financialTransactionDAO.saveTransaction(tx);
                 }
 
@@ -269,10 +284,11 @@ public class WalletService implements IWalletService {
                 try {
                     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
                 } catch (Exception syncEx) {
-                    System.err.printf("[WALLET] ROLLBACK DB thất bại phiên %s | Lỗi: %s%n",
-                            auctionId, syncEx.getMessage());
+                    log.error("Payment rollback DB sync failed: auctionId={}, winnerId={}",
+                            auctionId, winner.getId(), syncEx);
                 }
-                System.err.printf("[WALLET] ROLLBACK phiên %s | Lỗi: %s%n", auctionId, e.getMessage());
+                log.error("Payment to bank failed and balances were rolled back: auctionId={}, winnerId={}",
+                        auctionId, winner.getId(), e);
                 throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
                         "Giao dịch thất bại, đã rollback: " + e.getMessage());
             }

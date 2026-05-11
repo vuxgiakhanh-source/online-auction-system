@@ -12,9 +12,10 @@ import com.group13.auction.model.item.ItemFactory;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.logging.Logger;
 
 /**
  * WebSocket Server chính của hệ thống đấu giá.
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
  */
 public class AuctionWebSocketServer extends WebSocketServer {
 
-    private static final Logger log = Logger.getLogger(AuctionWebSocketServer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AuctionWebSocketServer.class);
 
     private final SessionManager sessionManager;
     private final PacketRouter router;
@@ -58,7 +59,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
         router.register(new UserAdminHandler(accountService, ratingService,
                 qualityReportService, sessionManager));
 
-        log.info("[SERVER] AuctionWebSocketServer khởi tạo trên port " + port);
+        log.info("AuctionWebSocketServer initialized: port={}", port);
     }
 
     // ── WebSocketServer lifecycle callbacks ───────────────────────────────────
@@ -66,8 +67,8 @@ public class AuctionWebSocketServer extends WebSocketServer {
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         sessionManager.register(conn);
-        log.info("[SERVER] New connection: " + conn.getRemoteSocketAddress()
-                + " | Total: " + sessionManager.getConnectedCount());
+        log.info("WebSocket connection opened: remoteAddress={}, connectedCount={}",
+                conn.getRemoteSocketAddress(), sessionManager.getConnectedCount());
     }
 
     @Override
@@ -75,19 +76,20 @@ public class AuctionWebSocketServer extends WebSocketServer {
         ClientSession session = sessionManager.getByConnection(conn);
         String username = session != null ? session.getUsername() : "unknown";
         sessionManager.unregister(conn);
-        log.info("[SERVER] Closed: " + username
-                + " | code=" + code + " | reason=" + reason
-                + " | Total: " + sessionManager.getConnectedCount());
+        log.info("WebSocket connection closed: username={}, code={}, reason={}, remote={}, connectedCount={}",
+                username, code, reason, remote, sessionManager.getConnectedCount());
     }
 
     @Override
     public void onMessage(WebSocket conn, String message) {
         ClientSession session = sessionManager.getByConnection(conn);
         if (session == null) {
-            log.warning("[SERVER] onMessage: không tìm thấy session cho connection "
-                    + conn.getRemoteSocketAddress());
+            log.warn("WebSocket message ignored because session was not found: remoteAddress={}",
+                    conn.getRemoteSocketAddress());
             return;
         }
+        log.debug("WebSocket message received: username={}, bytes={}",
+                session.getUsername(), message != null ? message.length() : 0);
         router.route(session, message);
     }
 
@@ -96,16 +98,16 @@ public class AuctionWebSocketServer extends WebSocketServer {
         if (conn != null) {
             ClientSession session = sessionManager.getByConnection(conn);
             String username = session != null ? session.getUsername() : "unknown";
-            log.severe("[SERVER] onError: " + username + " | " + ex.getMessage());
+            log.error("WebSocket connection error: username={}", username, ex);
         } else {
-            log.severe("[SERVER] Server-level error: " + ex.getMessage());
+            log.error("WebSocket server-level error", ex);
         }
     }
 
     @Override
     public void onStart() {
-        log.info("[SERVER] ✅ AuctionWebSocketServer started on port "
-                + getPort() + " | " + java.time.LocalDateTime.now());
+        log.info("AuctionWebSocketServer started: port={}, startedAt={}",
+                getPort(), java.time.LocalDateTime.now());
         setConnectionLostTimeout(60);
     }
 
@@ -114,7 +116,8 @@ public class AuctionWebSocketServer extends WebSocketServer {
         dto.setMessage(message);
         dto.setSeverity(severity);
         sessionManager.broadcastAll(Packet.of(PacketType.SYSTEM_ANNOUNCEMENT, dto));
-        log.info("[SERVER] System announcement sent: " + message);
+        log.info("System announcement sent: severity={}, messageLength={}",
+                severity, message != null ? message.length() : 0);
     }
 
     public void broadcastShutdownWarning(String reason, int shutdownInSeconds) {
@@ -122,7 +125,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
         dto.setReason(reason);
         dto.setShutdownInSeconds(shutdownInSeconds);
         sessionManager.broadcastAll(Packet.of(PacketType.SERVER_SHUTDOWN_NOTIFY, dto));
-        log.info("[SERVER] Shutdown warning sent: " + reason + " in " + shutdownInSeconds + "s");
+        log.info("Shutdown warning sent: reason={}, shutdownInSeconds={}", reason, shutdownInSeconds);
     }
 
     public PacketRouter getRouter() { return router; }

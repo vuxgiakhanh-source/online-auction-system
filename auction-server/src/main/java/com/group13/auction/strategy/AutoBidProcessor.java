@@ -11,6 +11,8 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.BidService;
 import com.group13.auction.manager.AuctionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ import java.util.List;
  */
 public class AutoBidProcessor {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoBidProcessor.class);
+
     private final BidService      bidService;
     private final SessionManager  sessionManager;
     private final AutoBidRegistry registry = AutoBidRegistry.getInstance();
@@ -79,6 +83,8 @@ public class AutoBidProcessor {
      */
     public void process(Auction auction, String triggeredByUserId) {
         String auctionId = auction.getId();
+        log.debug("Processing auto-bid chain: auctionId={}, triggeredByUserId={}",
+                auctionId, triggeredByUserId);
 
         // Lấy snapshot để tránh ConcurrentModification khi iterate
         Collection<AutoBidRegistry.AutoBidEntry> allEntries = registry.getEntriesForAuction(auctionId);
@@ -113,6 +119,8 @@ public class AutoBidProcessor {
 
             if (candidates.isEmpty()) {
                 // Không ai còn có thể counter → chuỗi kết thúc
+                log.debug("Auto-bid chain stopped because there are no candidates: auctionId={}, iteration={}",
+                        auctionId, iteration);
                 break;
             }
 
@@ -132,6 +140,8 @@ public class AutoBidProcessor {
 
             if (autoBidder == null) {
                 // User không tìm thấy (đã bị xóa?) → xóa entry khỏi registry
+                log.warn("Auto-bid entry removed because user was not found: auctionId={}, userId={}",
+                        auctionId, winner.getUserId());
                 registry.cancel(winner.getUserId(), auctionId);
                 continue;
             }
@@ -155,15 +165,13 @@ public class AutoBidProcessor {
                 sessionManager.broadcastToAuction(auctionId,
                         Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
-                System.out.printf(
-                        "[AUTO-BID PROCESSOR] %s tự counter-bid %d (phiên %s, vòng %d)%n",
-                        autoBidder.getUsername(), nextBid, auctionId, iteration);
+                log.info("Auto-bid counter placed: auctionId={}, bidderId={}, username={}, amount={}, iteration={}",
+                        auctionId, autoBidder.getId(), autoBidder.getUsername(), nextBid, iteration);
 
             } catch (Exception e) {
                 // Bid thất bại (phiên đóng, maxBid cạn, ...) → xóa entry
-                System.out.printf(
-                        "[AUTO-BID PROCESSOR] %s counter-bid thất bại: %s → xóa entry.%n",
-                        winner.getUserId(), e.getMessage());
+                log.warn("Auto-bid counter failed and entry will be removed: auctionId={}, userId={}, amount={}",
+                        auctionId, winner.getUserId(), nextBid, e);
                 registry.cancel(winner.getUserId(), auctionId);
             }
 
@@ -225,9 +233,8 @@ public class AutoBidProcessor {
 
                 registry.cancel(entry.getUserId(), auctionId);
 
-                System.out.printf(
-                        "[AUTO-BID PROCESSOR] %s đã cạn maxBid (%d) → xóa auto-bid entry.%n",
-                        entry.getUserId(), entry.getMaxBid());
+                log.info("Auto-bid exhausted and entry removed: auctionId={}, userId={}, maxBid={}, currentPrice={}",
+                        auctionId, entry.getUserId(), entry.getMaxBid(), auction.getCurrentPrice());
             }
         }
     }
@@ -252,6 +259,8 @@ public class AutoBidProcessor {
         if (fromDb != null) {
             // Thêm vào memory cache để lần sau không phải query DB nữa
             AuctionManager.getInstance().addToUserList(fromDb);
+            log.debug("Auto-bid user loaded from database: userId={}, username={}",
+                    fromDb.getId(), fromDb.getUsername());
         }
         return fromDb;
     }

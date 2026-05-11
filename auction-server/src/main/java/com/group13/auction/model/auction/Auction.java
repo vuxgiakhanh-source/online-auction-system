@@ -4,6 +4,8 @@ import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +14,8 @@ import java.util.List;
 
 /** Phiên đấu giá - chỉ lưu data và trạng thái. */
 public class Auction extends Entity {
+
+  private static final Logger log = LoggerFactory.getLogger(Auction.class);
 
   public enum AuctionStatus {
     OPEN,

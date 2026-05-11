@@ -18,7 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Scheduler tự động quản lý vòng đời phiên đấu giá theo thời gian thực.
@@ -51,7 +52,7 @@ import java.util.logging.Logger;
  */
 public class AuctionTimerService {
 
-    private static final Logger log = Logger.getLogger(AuctionTimerService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AuctionTimerService.class);
     private static final int SCAN_INTERVAL_SECONDS = 1;
 
     private static final AuctionTimerService INSTANCE = new AuctionTimerService();
@@ -81,7 +82,7 @@ public class AuctionTimerService {
                                    IPaymentService paymentService,
                                    SessionManager sessionManager) {
         if (running) {
-            log.warning("[TIMER] AuctionTimerService đã chạy, bỏ qua lệnh start.");
+            log.warn("AuctionTimerService already running, start ignored");
             return;
         }
         this.auctionService = auctionService;
@@ -103,7 +104,7 @@ public class AuctionTimerService {
         );
 
         running = true;
-        log.info("[TIMER] AuctionTimerService khởi động — quét mỗi " + SCAN_INTERVAL_SECONDS + "s.");
+        log.info("AuctionTimerService started: scanIntervalSeconds={}", SCAN_INTERVAL_SECONDS);
     }
 
     /**
@@ -113,7 +114,7 @@ public class AuctionTimerService {
         if (!running || scheduler == null) return;
         scheduler.shutdownNow();
         running = false;
-        log.info("[TIMER] AuctionTimerService đã dừng.");
+        log.info("AuctionTimerService stopped");
     }
 
     // ── Private ───────────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ public class AuctionTimerService {
             startPendingAuctions(now);
             closeExpiredAuctions(now);
         } catch (Exception e) {
-            log.severe("[TIMER] Lỗi không mong muốn trong scan: " + e.getMessage());
+            log.error("Unexpected error while scanning auctions", e);
         }
     }
 
@@ -154,10 +155,9 @@ public class AuctionTimerService {
                 auctionService.startAuction(auction);
 
                 broadcastUpdate(auction, PacketType.AUCTION_STARTED_UPDATE);
-                log.info("[TIMER] Phiên bắt đầu: " + auction.getId());
+                log.info("Timer started auction: auctionId={}", auction.getId());
             } catch (Exception e) {
-                log.warning("[TIMER] Không thể start phiên " + auction.getId()
-                        + ": " + e.getMessage());
+                log.warn("Timer could not start auction: auctionId={}", auction.getId(), e);
             } finally {
                 lock.unlock();
             }
@@ -185,7 +185,8 @@ public class AuctionTimerService {
                 // trong khi luồng timer đang đợi lấy lock.
                 if (auction.getStatus() != Auction.AuctionStatus.RUNNING) continue;
                 if (auction.getEndTime().isAfter(now)) {
-                    log.info("[TIMER] Phiên " + auction.getId() + " vừa được gia hạn, bỏ qua kết thúc.");
+                    log.info("Timer skipped auction close because auction was extended: auctionId={}, endTime={}",
+                            auction.getId(), auction.getEndTime());
                     continue;
                 }
 
@@ -214,8 +215,7 @@ public class AuctionTimerService {
                     try {
                         paymentService.refundDeposits(auction);
                     } catch (Exception refundEx) {
-                        log.severe("[TIMER] Lỗi hoàn cọc phiên " + auction.getId()
-                                + ": " + refundEx.getMessage());
+                        log.error("Timer failed to refund deposits: auctionId={}", auction.getId(), refundEx);
                     }
                 }
 
@@ -225,10 +225,9 @@ public class AuctionTimerService {
                 autoBidRegistry.clearAuction(auction.getId());
                 releaseLock = true;
 
-                log.info("[TIMER] Phiên đóng: " + auction.getId() + " | Status: " + auction.getStatus());
+                log.info("Timer closed auction: auctionId={}, status={}", auction.getId(), auction.getStatus());
             } catch (Exception e) {
-                log.warning("[TIMER] Không thể close phiên " + auction.getId()
-                        + ": " + e.getMessage());
+                log.warn("Timer could not close auction: auctionId={}", auction.getId(), e);
             } finally {
                 if (lock.isHeldByCurrentThread()) {
                     lock.unlock();
