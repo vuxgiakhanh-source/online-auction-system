@@ -1,4 +1,6 @@
 package com.group13.auction.observer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.user.Admin;
 
@@ -17,6 +19,8 @@ import com.group13.auction.model.user.Admin;
  * Dữ liệu log luôn có thể truy xuất sau này từ actionLog.
  */
 public class StaffObserver implements AuctionObserver {
+
+    private static final Logger log = LoggerFactory.getLogger(StaffObserver.class);
 
     private final Admin staff;
 
@@ -56,7 +60,7 @@ public class StaffObserver implements AuctionObserver {
 
             case RESERVE_NOT_MET_CLOSED:
                 log = String.format(
-                        "[THÔNG BÁO tới STAFF - %s] Phiên %s kết thúc — giá cao nhất %.0f"
+                        "[THÔNG BÁO tới STAFF - %s] Phiên %s kết thúc — giá cao nhất %d"
                                 + " chưa đạt reserve — auto-cancel.",
                         staff.getUsername(), event.getAuction().getId(), event.getBidAmount());
                 break;
@@ -87,12 +91,14 @@ public class StaffObserver implements AuctionObserver {
             default:
                 break;
         }
-        log(log);
+        if (log != null) {
+            log(log);
+        }
     }
     // Private helper
 
     private void log(String message) {
         staff.addActionLog(message);
-        System.out.println(message);
+        log.info("{}", message);
     }
 }

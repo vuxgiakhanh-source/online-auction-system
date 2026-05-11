@@ -1,4 +1,6 @@
 package com.group13.auction.network.server.session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
  */
 public class SessionManager {
 
+    private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
+
     private static final SessionManager INSTANCE = new SessionManager();
 
     /** WebSocket connection → ClientSession */
@@ -48,7 +52,7 @@ public class SessionManager {
     public ClientSession register(WebSocket connection) {
         ClientSession session = new ClientSession(connection);
         byConnection.put(connection, session);
-        System.out.println("[SESSION] New connection: " + connection.getRemoteSocketAddress());
+        log.info("{}", "[SESSION] New connection: " + connection.getRemoteSocketAddress());
         return session;
     }
 
@@ -61,7 +65,7 @@ public class SessionManager {
         ClientSession session = byConnection.remove(connection);
         if (session != null && session.getUserId() != null) {
             byUserId.remove(session.getUserId());
-            System.out.println("[SESSION] Disconnected: " + session.getUsername());
+            log.info("{}", "[SESSION] Disconnected: " + session.getUsername());
         }
     }
 
@@ -82,12 +86,12 @@ public class SessionManager {
         if (oldSession != null && oldSession != session) {
             oldSession.close(1000, "Logged in from another location");
             byConnection.remove(oldSession.getConnection());
-            System.out.println("[SESSION] Replaced old session for userId=" + userId);
+            log.info("{}", "[SESSION] Replaced old session for userId=" + userId);
         }
 
         session.authenticate(userId, username, role);
         byUserId.put(userId, session);
-        System.out.println("[SESSION] Authenticated: " + username + " (" + role + ")");
+        log.info("{}", "[SESSION] Authenticated: " + username + " (" + role + ")");
     }
 
     /**

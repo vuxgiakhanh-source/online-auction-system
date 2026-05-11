@@ -1,6 +1,8 @@
 package com.group13.auction.strategy;
 
 import com.group13.auction.model.auction.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Kiểu đặt giá thông thường.
@@ -12,6 +14,8 @@ import com.group13.auction.model.auction.Auction;
  */
 public class StandardBidStrategy implements BidStrategy {
 
+  private static final Logger log = LoggerFactory.getLogger(StandardBidStrategy.class);
+
   /**
    * Khởi tạo StandardBidStrategy.
    * minIncrement được tính động tại thời điểm validate bid.
@@ -21,7 +25,15 @@ public class StandardBidStrategy implements BidStrategy {
   @Override
   public boolean isValidBid(Auction auction, long amount) {
     long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
-    return amount >= auction.getCurrentPrice() + increment;
+    boolean valid = amount >= auction.getCurrentPrice() + increment;
+    if (!valid) {
+      log.warn("Standard bid rejected: auctionId={}, amount={}, currentPrice={}, minIncrement={}",
+              auction.getId(), amount, auction.getCurrentPrice(), increment);
+    } else {
+      log.debug("Standard bid accepted by strategy: auctionId={}, amount={}, currentPrice={}, minIncrement={}",
+              auction.getId(), amount, auction.getCurrentPrice(), increment);
+    }
+    return valid;
   }
 
   @Override

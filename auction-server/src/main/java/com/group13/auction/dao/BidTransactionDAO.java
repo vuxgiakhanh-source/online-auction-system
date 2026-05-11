@@ -3,6 +3,8 @@ package com.group13.auction.dao;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.auction.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BidTransactionDAO {
+    private static final Logger log = LoggerFactory.getLogger(BidTransactionDAO.class);
+
     private final UserDAO userDAO = new UserDAO();
     public BidTransactionDAO() {}
 
@@ -30,10 +34,17 @@ public class BidTransactionDAO {
             pstmt.setLong(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());
 
-            return pstmt.executeUpdate() > 0;
+            boolean saved = pstmt.executeUpdate() > 0;
+            log.debug("Bid transaction saved: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
+                    tx.getId(), tx.getAuctionId(), tx.getBidder().getId(), tx.getAmount(), tx.getResult());
+            return saved;
 
         } catch (SQLException e) {
-            System.err.println("Lỗi lưu lịch sử Bid: " + e.getMessage());
+            log.error("Failed to save bid transaction: txId={}, auctionId={}, bidderId={}",
+                    tx != null ? tx.getId() : null,
+                    tx != null ? tx.getAuctionId() : null,
+                    tx != null && tx.getBidder() != null ? tx.getBidder().getId() : null,
+                    e);
             return false;
         }
     }
@@ -51,7 +62,7 @@ public class BidTransactionDAO {
 
             pstmt.setString(1, auctionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                UserDAO userDAO = new UserDAO(); // Dùng UserDAO để lấy thông tin chi tiết của User
+                UserDAO userDAO = new UserDAO();
 
                 while (rs.next()) {
                     String bidderId = rs.getString("bidder_id");
@@ -62,13 +73,70 @@ public class BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi lấy danh sách bidder: " + e.getMessage());
+            log.error("Failed to find bidders by auction: auctionId={}", auctionId, e);
         }
+        log.debug("Bidders loaded by auction: auctionId={}, count={}", auctionId, bidders.size());
         return bidders;
     }
 
     /**
-     * 3. Tìm lượt đặt giá HỢP LỆ cao nhất, ngoại trừ người thắng cuộc (winner).
+     * 3. Lấy toàn bộ lịch sử đặt giá HỢP LỆ theo auctionId, sắp xếp theo thời gian tăng dần.
+     * Dùng cho GET_BID_HISTORY (vẽ line chart).
+     *
+     * FIX BUG #1: Thêm WHERE result != 'REJECTED' để không đưa bid bị từ chối lên chart.
+     * Bid REJECTED là bid không hợp lệ (giá thấp hơn giá hiện tại, phiên đã đóng...)
+     * — hiển thị chúng sẽ làm đường giá bị tụt xuống một cách sai.
+     */
+    public List<BidTransaction> findByAuctionId(String auctionId) {
+        List<BidTransaction> result = new ArrayList<>();
+
+        // FIX BUG #1: Thêm "AND result != 'REJECTED'" — chỉ lấy bid hợp lệ để vẽ chart
+        String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
+                "FROM bid_transactions " +
+                "WHERE auction_id = ? AND result != 'REJECTED' " +
+                "ORDER BY bid_time ASC";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String id             = rs.getString("id");
+                    String fetchedAuction = rs.getString("auction_id");
+                    String bidderId       = rs.getString("bidder_id");
+                    long   amount         = rs.getLong("bid_amount");
+                    String resultStr      = rs.getString("result");
+
+                    java.sql.Timestamp ts = rs.getTimestamp("bid_time");
+                    java.time.LocalDateTime bidTime = (ts != null)
+                            ? ts.toLocalDateTime()
+                            : java.time.LocalDateTime.now();
+
+                    NormalUser bidder = userDAO.findNormalUserById(bidderId);
+
+                    BidTransaction tx = BidTransaction.reconstitute(
+                            id,
+                            bidTime,
+                            bidTime,
+                            bidder,
+                            fetchedAuction,
+                            amount,
+                            bidTime,
+                            BidTransaction.BidResult.valueOf(resultStr)
+                    );
+                    result.add(tx);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Failed to find bid history by auction: auctionId={}", auctionId, e);
+        }
+        log.debug("Bid history loaded: auctionId={}, count={}", auctionId, result.size());
+        return result;
+    }
+
+    /**
+     * 4. Tìm lượt đặt giá HỢP LỆ cao nhất, ngoại trừ người thắng cuộc (winner).
      * Dùng để tìm Runner-up (người về nhì) cho Second Chance Offer.
      */
     public BidTransaction findHighestValidBidExcept(String auctionId, String excludedBidderId) {
@@ -78,36 +146,29 @@ public class BidTransactionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auctionId);
-            // Xử lý trường hợp không có winner (truyền chuỗi rỗng để SQL vẫn chạy đúng)
             pstmt.setString(2, excludedBidderId != null ? excludedBidderId : "");
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // 1. Rút trích dữ liệu thô từ Database
                     String id = rs.getString("id");
                     String fetchedAuctionId = rs.getString("auction_id");
                     String bidderId = rs.getString("bidder_id");
                     long amount = rs.getLong("bid_amount");
                     String resultStr = rs.getString("result");
 
-                    // Lấy thời gian (nếu DB lưu là TIMESTAMP)
                     java.sql.Timestamp bidTimeTs = rs.getTimestamp("bid_time");
                     java.time.LocalDateTime bidTime = (bidTimeTs != null) ?
                             bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
-                    // 2. Lấy đối tượng NormalUser từ Database
                     UserDAO userDAO = new UserDAO();
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
 
-                    // KHÔNG CẦN gọi AuctionDAO nữa để tránh rườm rà
-
-                    // 3. Gọi hàm HỒI SINH (reconstitute)
                     return BidTransaction.reconstitute(
                             id,
                             bidTime,
                             bidTime,
                             bidder,
-                            null,  // <-- TRUYỀN NULL VÀO ĐÂY LÀ XONG!
+                            null,
                             amount,
                             bidTime,
                             BidTransaction.BidResult.valueOf(resultStr)
@@ -115,9 +176,10 @@ public class BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi tìm Runner-up: " + e.getMessage());
+            log.error("Failed to find highest valid bid except bidder: auctionId={}, excludedBidderId={}",
+                    auctionId, excludedBidderId, e);
         }
+        log.debug("No runner-up bid found: auctionId={}, excludedBidderId={}", auctionId, excludedBidderId);
         return null;
     }
-
 }

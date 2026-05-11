@@ -1,0 +1,174 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"54e02acf-fc9e-48cc-a336-38882789db3c\" name=\"Changes\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n<<<<<<< HEAD\r\n      <change beforePath=\"$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java\" afterDir=\"false\" />\r\n=======\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java\" afterDir=\"false\" />\r\n>>>>>>> c31a800 (test: add Account/Payment tests and update fixture)\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"EmbeddingIndexingInfo\">\r\n    <option name=\"cachedIndexableFilesCount\" value=\"163\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Class\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"McpProjectServerCommands\">\r\n    <commands />\r\n    <urls />\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 5\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3Bf1olCAfW6Jtpf69fu91Kj7oE4\" />\r\n  <component name=\"ProjectLevelVcsManager\">\r\n    <ConfirmationsSetting value=\"1\" id=\"Add\" />\r\n  </component>\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"Application.TestLauncher.executor\": \"Run\",\r\n    \"JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates.executor\": \"Run\",\r\n    \"JUnit.AccountServiceTest.executor\": \"Run\",\r\n    \"JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$JoinAuctionNormalUser.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$JoinAuctionSellerBidOwnItem.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidAntiSniping.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidClosedAuction.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidHappyPath.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidIneligibleUser.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidInvalidAmount.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidNotJoined.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidNotJoined.placeBid_bidderNotJoined_doesNotChangeAuctionState.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidNotJoined.placeBid_bidderNotJoined_savesRejectedTransaction.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidNotJoined.placeBid_bidderNotJoined_throwsAuctionBusinessException.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_closedAuction_doesNotCallStrategy.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidReserveNotMet.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidSequential.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidStrategyOrchestration.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_callsStrategyWithCorrectArgs.executor\": \"Run\",\r\n    \"JUnit.BidServiceTest$WatchAuction.executor\": \"Run\",\r\n    \"JUnit.PaymentServiceTest.executor\": \"Run\",\r\n    \"JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored.executor\": \"Run\",\r\n    \"JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored.executor\": \"Run\",\r\n    \"JUnit.RatingServiceTest.executor\": \"Run\",\r\n    \"JUnit.WalletServiceTest.executor\": \"Run\",\r\n    \"ModuleVcsDetector.initialDetectionPerformed\": \"true\",\r\n    \"RunOnceActivity.MCP Project settings loaded\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252\": \"true\",\r\n    \"RunOnceActivity.git.unshallow\": \"true\",\r\n    \"RunOnceActivity.typescript.service.memoryLimit.init\": \"true\",\r\n    \"codeWithMe.voiceChat.enabledByDefault\": \"false\",\r\n    \"com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1\": \"true\",\r\n    \"git-widget-placeholder\": \"OOP-logic-testig\",\r\n    \"junie.onboarding.icon.badge.shown\": \"true\",\r\n    \"kotlin-language-version-configured\": \"true\",\r\n    \"last_opened_file_path\": \"C:/Users/HP/Desktop/java/online-auction-system\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"project.structure.last.edited\": \"Project\",\r\n    \"project.structure.proportion\": \"0.15\",\r\n    \"project.structure.side.proportion\": \"0.2\",\r\n    \"settings.editor.selected.configurable\": \"ml.llm.AcpAgentsConfigurable\",\r\n    \"to.speed.mode.migration.done\": \"true\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  },\r\n  \"keyToStringList\": {\r\n    \"DatabaseDriversLRU\": [\r\n      \"mysql\"\r\n    ]\r\n  }\r\n}]]></component>\r\n  <component name=\"RunManager\" selected=\"JUnit.AccountServiceTest\">\r\n    <configuration default=\"true\" type=\"PythonConfigurationType\" factoryName=\"Python\">\r\n      <option name=\"ENV_FILES\" value=\"\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <module name=\"\" />\r\n      <option name=\"RUN_TOOL\" value=\"\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration default=\"true\" type=\"Tox\" factoryName=\"Tox\">\r\n      <option name=\"ENV_FILES\" value=\"\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"RUN_TOOL\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"TestLauncher\" type=\"Application\" factoryName=\"Application\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.group13.auction.TestLauncher\" />\r\n      <module name=\"auction-server\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.group13.auction.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"AccountServiceTest$BanUser.nullReason_exceptionPropagates\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"auction-server\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.group13.auction.service.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.group13.auction.service.AccountServiceTest\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.group13.auction.service.AccountServiceTest$BanUser\" />\r\n      <option name=\"METHOD_NAME\" value=\"nullReason_exceptionPropagates\" />\r\n      <option name=\"TEST_OBJECT\" value=\"method\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"AccountServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"auction-server\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.group13.auction.service.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.group13.auction.service\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.group13.auction.service.AccountServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"PaymentServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"auction-server\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.group13.auction.service.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.group13.auction.service\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.group13.auction.service.PaymentServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration name=\"RatingServiceTest\" type=\"JUnit\" factoryName=\"JUnit\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"auction-server\" />\r\n      <extension name=\"coverage\">\r\n        <pattern>\r\n          <option name=\"PATTERN\" value=\"com.group13.auction.service.*\" />\r\n          <option name=\"ENABLED\" value=\"true\" />\r\n        </pattern>\r\n      </extension>\r\n      <option name=\"PACKAGE_NAME\" value=\"com.group13.auction.service\" />\r\n      <option name=\"MAIN_CLASS_NAME\" value=\"com.group13.auction.service.RatingServiceTest\" />\r\n      <option name=\"TEST_OBJECT\" value=\"class\" />\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration default=\"true\" type=\"JetRunConfigurationType\">\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n      </method>\r\n    </configuration>\r\n    <configuration default=\"true\" type=\"KotlinStandaloneScriptRunConfigurationType\">\r\n      <option name=\"filePath\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"JUnit.AccountServiceTest\" />\r\n        <item itemvalue=\"JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates\" />\r\n        <item itemvalue=\"JUnit.PaymentServiceTest\" />\r\n        <item itemvalue=\"Application.TestLauncher\" />\r\n        <item itemvalue=\"JUnit.RatingServiceTest\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"54e02acf-fc9e-48cc-a336-38882789db3c\" name=\"Changes\" comment=\"\" />\r\n      <created>1774865487288</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1774865487288</updated>\r\n      <workItem from=\"1774865488615\" duration=\"1012000\" />\r\n      <workItem from=\"1774879562391\" duration=\"76000\" />\r\n      <workItem from=\"1778388971207\" duration=\"3813000\" />\r\n      <workItem from=\"1778393672489\" duration=\"433000\" />\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"sửa lại để tránh tạo 2 instance cùng lúc khi multi-thread\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1775401089871</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1775401089871</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"synchronized\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1775401668182</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1775401668182</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"synchronized\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1775401764067</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1775401764067</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"4\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"sửa lại để tránh tạo 2 instance cùng lúc khi multi-thread\" />\r\n    <MESSAGE value=\"synchronized\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"synchronized\" />\r\n  </component>\r\n  <component name=\"XDebuggerManager\">\r\n    <breakpoint-manager>\r\n      <breakpoints>\r\n        <line-breakpoint enabled=\"true\" type=\"java-method\">\r\n          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestLauncher.java</url>\r\n          <line>31</line>\r\n          <properties class=\"com.group13.auction.TestLauncher\" method=\"main\">\r\n            <option name=\"EMULATED\" value=\"true\" />\r\n            <option name=\"WATCH_EXIT\" value=\"false\" />\r\n          </properties>\r\n          <option name=\"timeStamp\" value=\"1\" />\r\n        </line-breakpoint>\r\n      </breakpoints>\r\n    </breakpoint-manager>\r\n  </component>\r\n  <component name=\"XSLT-Support.FileAssociations.UIState\">\r\n    <expand />\r\n    <select />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 774f4eb2d9a93f055fd718dfe8b3c452ddae5b88)
++++ b/.idea/workspace.xml	(date 1778420267075)
+@@ -6,22 +6,6 @@
+   <component name="ChangeListManager">
+     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-<<<<<<< HEAD
+-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/SecondChanceOfferDAO.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" afterDir="false" />
+-=======
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/TestFixture.java" afterDir="false" />
+->>>>>>> c31a800 (test: add Account/Payment tests and update fixture)
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -29,7 +13,7 @@
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+   <component name="EmbeddingIndexingInfo">
+-    <option name="cachedIndexableFilesCount" value="163" />
++    <option name="cachedIndexableFilesCount" value="169" />
+   </component>
+   <component name="FileTemplateManagerImpl">
+     <option name="RECENT_TEMPLATES">
+@@ -59,8 +43,6 @@
+   <component name="PropertiesComponent"><![CDATA[{
+   "keyToString": {
+     "Application.TestLauncher.executor": "Run",
+-    "JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates.executor": "Run",
+-    "JUnit.AccountServiceTest.executor": "Run",
+     "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
+     "JUnit.BidServiceTest$JoinAuctionNormalUser.executor": "Run",
+     "JUnit.BidServiceTest$JoinAuctionSellerBidOwnItem.executor": "Run",
+@@ -80,7 +62,6 @@
+     "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.executor": "Run",
+     "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_callsStrategyWithCorrectArgs.executor": "Run",
+     "JUnit.BidServiceTest$WatchAuction.executor": "Run",
+-    "JUnit.PaymentServiceTest.executor": "Run",
+     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored.executor": "Run",
+     "JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored.executor": "Run",
+     "JUnit.RatingServiceTest.executor": "Run",
+@@ -96,14 +77,14 @@
+     "git-widget-placeholder": "OOP-logic-testig",
+     "junie.onboarding.icon.badge.shown": "true",
+     "kotlin-language-version-configured": "true",
+-    "last_opened_file_path": "C:/Users/HP/Desktop/java/online-auction-system",
++    "last_opened_file_path": "D:/online-auction-system",
+     "node.js.detected.package.eslint": "true",
+     "node.js.detected.package.tslint": "true",
+     "node.js.selected.package.eslint": "(autodetect)",
+     "node.js.selected.package.tslint": "(autodetect)",
+     "nodejs_package_manager_path": "npm",
+     "project.structure.last.edited": "Project",
+-    "project.structure.proportion": "0.15",
++    "project.structure.proportion": "0.0",
+     "project.structure.side.proportion": "0.2",
+     "settings.editor.selected.configurable": "ml.llm.AcpAgentsConfigurable",
+     "to.speed.mode.migration.done": "true",
+@@ -115,7 +96,7 @@
+     ]
+   }
+ }]]></component>
+-  <component name="RunManager" selected="JUnit.AccountServiceTest">
++  <component name="RunManager" selected="Application.TestLauncher">
+     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+       <option name="ENV_FILES" value="" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+@@ -164,7 +145,7 @@
+         <option name="Make" enabled="true" />
+       </method>
+     </configuration>
+-    <configuration name="AccountServiceTest$BanUser.nullReason_exceptionPropagates" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
++    <configuration name="RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+       <module name="auction-server" />
+       <extension name="coverage">
+         <pattern>
+@@ -172,15 +153,15 @@
+           <option name="ENABLED" value="true" />
+         </pattern>
+       </extension>
+-      <option name="PACKAGE_NAME" value="com.group13.auction.service.AccountServiceTest" />
+-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest$BanUser" />
+-      <option name="METHOD_NAME" value="nullReason_exceptionPropagates" />
++      <option name="PACKAGE_NAME" value="com.group13.auction.service.RatingServiceTest" />
++      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.RatingServiceTest$CheckAndRestoreSuspended" />
++      <option name="METHOD_NAME" value="suspendedExactly3Months_notRestored" />
+       <option name="TEST_OBJECT" value="method" />
+       <method v="2">
+         <option name="Make" enabled="true" />
+       </method>
+     </configuration>
+-    <configuration name="AccountServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
++    <configuration name="RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+       <module name="auction-server" />
+       <extension name="coverage">
+         <pattern>
+@@ -188,14 +169,15 @@
+           <option name="ENABLED" value="true" />
+         </pattern>
+       </extension>
+-      <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.AccountServiceTest" />
+-      <option name="TEST_OBJECT" value="class" />
++      <option name="PACKAGE_NAME" value="com.group13.auction.service.RatingServiceTest" />
++      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.RatingServiceTest$CheckAndRestoreSuspended" />
++      <option name="METHOD_NAME" value="suspendedLessThan3Months_notRestored" />
++      <option name="TEST_OBJECT" value="method" />
+       <method v="2">
+         <option name="Make" enabled="true" />
+       </method>
+     </configuration>
+-    <configuration name="PaymentServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
++    <configuration name="RatingServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+       <module name="auction-server" />
+       <extension name="coverage">
+         <pattern>
+@@ -204,13 +186,13 @@
+         </pattern>
+       </extension>
+       <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.PaymentServiceTest" />
++      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.RatingServiceTest" />
+       <option name="TEST_OBJECT" value="class" />
+       <method v="2">
+         <option name="Make" enabled="true" />
+       </method>
+     </configuration>
+-    <configuration name="RatingServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
++    <configuration name="WalletServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+       <module name="auction-server" />
+       <extension name="coverage">
+         <pattern>
+@@ -219,7 +201,7 @@
+         </pattern>
+       </extension>
+       <option name="PACKAGE_NAME" value="com.group13.auction.service" />
+-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.RatingServiceTest" />
++      <option name="MAIN_CLASS_NAME" value="com.group13.auction.service.WalletServiceTest" />
+       <option name="TEST_OBJECT" value="class" />
+       <method v="2">
+         <option name="Make" enabled="true" />
+@@ -236,11 +218,11 @@
+     </configuration>
+     <recent_temporary>
+       <list>
+-        <item itemvalue="JUnit.AccountServiceTest" />
+-        <item itemvalue="JUnit.AccountServiceTest$BanUser.nullReason_exceptionPropagates" />
+-        <item itemvalue="JUnit.PaymentServiceTest" />
+         <item itemvalue="Application.TestLauncher" />
+         <item itemvalue="JUnit.RatingServiceTest" />
++        <item itemvalue="JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedExactly3Months_notRestored" />
++        <item itemvalue="JUnit.RatingServiceTest$CheckAndRestoreSuspended.suspendedLessThan3Months_notRestored" />
++        <item itemvalue="JUnit.WalletServiceTest" />
+       </list>
+     </recent_temporary>
+   </component>

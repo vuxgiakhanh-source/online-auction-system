@@ -1,5 +1,9 @@
 package com.group13.auction.strategy;
 
+import com.group13.auction.dao.AutoBidDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,38 +11,29 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Singleton registry lưu trữ toàn bộ auto-bid đang hoạt động trong hệ thống.
+ * Singleton registry lưu toàn bộ auto-bid đang hoạt động.
  *
- * <h3>Tại sao cần class này?</h3>
- * <p>Khi user B đã đăng ký auto-bid với maxBid=5.000.000, rồi user A bid thủ công
- * 3.000.000 vượt B — hệ thống cần biết B có auto-bid không để tự động counter.
- * AutoBidRegistry là nơi duy nhất lưu thông tin đó.
- *
- * <h3>Key design decisions:</h3>
+ * <h3>Cải tiến v2:</h3>
  * <ul>
- *   <li>Key = "{userId}:{auctionId}" — mỗi user chỉ có DUY NHẤT 1 auto-bid/phiên</li>
- *   <li>ConcurrentHashMap → thread-safe không cần synchronized block ngoài</li>
- *   <li>Singleton eager init → an toàn với multi-thread từ đầu</li>
- *   <li>AutoBidEntry là immutable → đọc song song không cần lock</li>
+ *   <li>Persist AutoBid xuống DB qua {@link AutoBidDAO} — không mất khi restart.</li>
+ *   <li>Logging chuẩn SLF4J.</li>
+ *   <li>AutoBidEntry vẫn immutable — thread-safe khi đọc song song.</li>
  * </ul>
- *
- * <h3>Vòng đời của một AutoBidEntry:</h3>
- * <pre>
- *   REGISTER → (bị vượt) → HỆ THỐNG TỰ COUNTER-BID → (vẫn còn slot → tiếp tục)
- *           → (maxBid cạn hoặc người dùng CANCEL) → bị xóa khỏi registry
- * </pre>
  */
 public class AutoBidRegistry {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoBidRegistry.class);
+
     private static final AutoBidRegistry INSTANCE = new AutoBidRegistry();
 
-    /**
-     * Map lưu toàn bộ auto-bid đang hoạt động.
-     * Key = "{userId}:{auctionId}"
-     */
+    /** Map lưu toàn bộ auto-bid. Key = "{userId}:{auctionId}" */
     private final ConcurrentHashMap<String, AutoBidEntry> registry = new ConcurrentHashMap<>();
 
-    private AutoBidRegistry() {}
+    /* package-private for test injection */ AutoBidDAO autoBidDAO;
+
+    private AutoBidRegistry() {
+        this.autoBidDAO = new AutoBidDAO();
+    }
 
     public static AutoBidRegistry getInstance() {
         return INSTANCE;
@@ -47,88 +42,72 @@ public class AutoBidRegistry {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     /**
-     * Đăng ký hoặc cập nhật auto-bid cho một user trong một phiên.
-     * Nếu đã có entry cũ cho cùng userId+auctionId → ghi đè (update maxBid).
-     *
-     * @param userId    ID người dùng
-     * @param auctionId ID phiên đấu giá
-     * @param maxBid    giá tối đa người dùng sẵn sàng trả
+     * Đăng ký hoặc cập nhật auto-bid.
+     * Persist xuống DB để không mất khi server restart.
      */
     public void register(String userId, String auctionId, long maxBid) {
         String key = buildKey(userId, auctionId);
-        AutoBidEntry entry = new AutoBidEntry(userId, auctionId, maxBid, LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        // Giữ nguyên registeredAt nếu đã có entry (chỉ update maxBid)
+        AutoBidEntry existing = registry.get(key);
+        LocalDateTime registeredAt = (existing != null) ? existing.getRegisteredAt() : now;
+
+        AutoBidEntry entry = new AutoBidEntry(userId, auctionId, maxBid, registeredAt);
         registry.put(key, entry);
-        System.out.printf("[AUTO-BID REGISTRY] Đăng ký: userId=%s, auction=%s, maxBid=%d%n",
-                userId, auctionId, maxBid);
+
+        // Persist xuống DB (graceful: nếu DB chưa sẵn sàng — test env — bỏ qua)
+        if (autoBidDAO != null) {
+            try { autoBidDAO.upsert(userId, auctionId, maxBid, registeredAt); }
+            catch (Exception e) { log.warn("auto-bid DB upsert failed (non-critical): {}", e.getMessage()); }
+        }
+
+        log.info("auto-bid registered: userId={} auctionId={} maxBid={}", userId, auctionId, maxBid);
     }
 
     /**
-     * Hủy auto-bid của một user trong một phiên.
-     *
-     * @param userId    ID người dùng
-     * @param auctionId ID phiên
-     * @return true nếu có entry và đã xóa, false nếu không có gì để xóa
+     * Hủy auto-bid.
+     * @return true nếu có entry và đã xóa
      */
     public boolean cancel(String userId, String auctionId) {
         String key = buildKey(userId, auctionId);
         boolean removed = registry.remove(key) != null;
         if (removed) {
-            System.out.printf("[AUTO-BID REGISTRY] Hủy: userId=%s, auction=%s%n",
-                    userId, auctionId);
+            if (autoBidDAO != null) {
+                try { autoBidDAO.delete(userId, auctionId); }
+                catch (Exception e) { log.warn("auto-bid DB delete failed: {}", e.getMessage()); }
+            }
+            log.info("auto-bid cancelled: userId={} auctionId={}", userId, auctionId);
         }
         return removed;
     }
 
     /**
      * Xóa toàn bộ auto-bid của một phiên khi phiên kết thúc.
-     * Gọi từ AuctionService.closeAuction() để dọn dẹp bộ nhớ.
-     *
-     * @param auctionId ID phiên đã kết thúc
      */
     public void clearAuction(String auctionId) {
         int before = registry.size();
         registry.entrySet().removeIf(e -> e.getValue().getAuctionId().equals(auctionId));
         int removed = before - registry.size();
         if (removed > 0) {
-            System.out.printf("[AUTO-BID REGISTRY] Xóa %d entry của phiên %s%n",
-                    removed, auctionId);
+            if (autoBidDAO != null) {
+                try { autoBidDAO.deleteByAuction(auctionId); }
+                catch (Exception e) { log.warn("auto-bid DB deleteByAuction failed: {}", e.getMessage()); }
+            }
+            log.info("auto-bid cleared: auctionId={} count={}", auctionId, removed);
         }
     }
 
-    /**
-     * Lấy auto-bid entry của một user trong một phiên.
-     *
-     * @param userId    ID người dùng
-     * @param auctionId ID phiên
-     * @return AutoBidEntry nếu đang hoạt động, null nếu không có
-     */
     public AutoBidEntry get(String userId, String auctionId) {
         return registry.get(buildKey(userId, auctionId));
     }
 
-    /**
-     * Kiểm tra user có đang có auto-bid trong phiên không.
-     *
-     * @param userId    ID người dùng
-     * @param auctionId ID phiên
-     * @return true nếu đang có auto-bid hoạt động
-     */
     public boolean hasActiveBid(String userId, String auctionId) {
         return registry.containsKey(buildKey(userId, auctionId));
     }
 
     /**
-     * Lấy tất cả auto-bid entry đang hoạt động trong một phiên.
-     *
-     * <p><b>Dùng để:</b> Khi user A vừa bid thủ công, server iterate danh sách này
-     * để tìm những bidder khác có auto-bid và kích hoạt counter-bid của họ.
-     *
-     * <p><b>Thread-safety:</b> Trả về snapshot (ArrayList mới) thay vì live view
-     * → tránh ConcurrentModificationException khi iterate đồng thời có thread
-     * khác gọi register/cancel.
-     *
-     * @param auctionId ID phiên
-     * @return list snapshot các AutoBidEntry đang hoạt động
+     * Trả về snapshot tất cả auto-bid của một phiên.
+     * Thread-safe: ArrayList mới, không live view.
      */
     public Collection<AutoBidEntry> getEntriesForAuction(String auctionId) {
         List<AutoBidEntry> result = new ArrayList<>();
@@ -140,6 +119,24 @@ public class AutoBidRegistry {
         return result;
     }
 
+    /**
+     * Load lại auto-bid từ DB khi server restart.
+     * Gọi từ server bootstrap sau khi loadDataFromDatabase().
+     */
+    public void loadFromDatabase() {
+        List<AutoBidDAO.AutoBidRow> rows = autoBidDAO.findAll();
+        int count = 0;
+        for (AutoBidDAO.AutoBidRow row : rows) {
+            String key = buildKey(row.userId, row.auctionId);
+            AutoBidEntry entry = new AutoBidEntry(row.userId, row.auctionId, row.maxBid, row.registeredAt);
+            registry.putIfAbsent(key, entry);
+            count++;
+        }
+        if (count > 0) {
+            log.info("auto-bid registry loaded from DB: count={}", count);
+        }
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private static String buildKey(String userId, String auctionId) {
@@ -149,10 +146,7 @@ public class AutoBidRegistry {
     // ── Inner class: AutoBidEntry ─────────────────────────────────────────────
 
     /**
-     * Dữ liệu của một auto-bid đang hoạt động.
-     *
-     * <p><b>Immutable</b> để thread-safe khi đọc từ nhiều thread đồng thời.
-     * Khi cần update maxBid → tạo entry mới và put vào registry (replace-and-forget).
+     * Immutable auto-bid entry. Thread-safe khi đọc song song.
      */
     public static final class AutoBidEntry {
         private final String userId;
@@ -174,17 +168,8 @@ public class AutoBidRegistry {
         public LocalDateTime getRegisteredAt() { return registeredAt; }
 
         /**
-         * Tính giá bid kế tiếp để vượt mức giá hiện tại của phiên.
-         *
-         * <p>Logic:
-         * <pre>
-         *   increment = BidIncrementCalculator.calculate(currentPrice)
-         *   nextBid   = currentPrice + increment
-         *   nếu nextBid > maxBid → trả về -1 (đã cạn, không bid nữa)
-         * </pre>
-         *
-         * @param currentPrice giá hiện tại của phiên
-         * @return giá cần đặt để vượt, hoặc -1 nếu maxBid không đủ
+         * Tính giá bid kế tiếp.
+         * @return giá bid tiếp theo, hoặc -1 nếu maxBid không đủ
          */
         public long calculateNextBid(long currentPrice) {
             long increment = BidIncrementCalculator.calculate(currentPrice);
@@ -199,4 +184,3 @@ public class AutoBidRegistry {
         }
     }
 }
-

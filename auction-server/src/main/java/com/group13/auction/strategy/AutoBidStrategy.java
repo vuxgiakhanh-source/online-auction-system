@@ -1,6 +1,8 @@
 package com.group13.auction.strategy;
 
 import com.group13.auction.model.auction.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Kiểu đặt giá tự động - thông minh hơn Standard.
@@ -18,6 +20,8 @@ import com.group13.auction.model.auction.Auction;
  */
 public class AutoBidStrategy implements BidStrategy {
 
+  private static final Logger log = LoggerFactory.getLogger(AutoBidStrategy.class);
+
   private final long maxBid;
 
   /**
@@ -28,6 +32,7 @@ public class AutoBidStrategy implements BidStrategy {
    */
   public AutoBidStrategy(long maxBid) {
     if (maxBid <= 0) {
+      log.warn("AutoBidStrategy rejected invalid maxBid={}", maxBid);
       throw new IllegalArgumentException("maxBid phải lớn hơn 0.");
     }
     this.maxBid = maxBid;
@@ -36,7 +41,15 @@ public class AutoBidStrategy implements BidStrategy {
   @Override
   public boolean isValidBid(Auction auction, long amount) {
     long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
-    return amount <= maxBid && amount >= auction.getCurrentPrice() + increment;
+    boolean valid = amount <= maxBid && amount >= auction.getCurrentPrice() + increment;
+    if (!valid) {
+      log.warn("Auto bid rejected: auctionId={}, amount={}, maxBid={}, currentPrice={}, minIncrement={}",
+              auction.getId(), amount, maxBid, auction.getCurrentPrice(), increment);
+    } else {
+      log.debug("Auto bid accepted by strategy: auctionId={}, amount={}, maxBid={}, currentPrice={}, minIncrement={}",
+              auction.getId(), amount, maxBid, auction.getCurrentPrice(), increment);
+    }
+    return valid;
   }
 
   /**
@@ -52,8 +65,12 @@ public class AutoBidStrategy implements BidStrategy {
     long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     long next = auction.getCurrentPrice() + increment;
     if (next > maxBid) {
+      log.debug("Auto bid cannot continue because next bid exceeds maxBid: auctionId={}, nextBid={}, maxBid={}",
+              auction.getId(), next, maxBid);
       return -1; // vượt quá maxBid - không tự bid nữa
     }
+    log.debug("Calculated next auto bid: auctionId={}, currentPrice={}, minIncrement={}, nextBid={}, maxBid={}",
+            auction.getId(), auction.getCurrentPrice(), increment, next, maxBid);
     return next;
   }
 
