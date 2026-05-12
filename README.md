@@ -480,10 +480,10 @@ cd auction-server && mvn test
 ### 📅 Tổng quan Timeline
 
 ```
-Tuần 1       Tuần 2–3          Tuần 4–5            Tuần 6          Tuần 7           Tuần 8
+Tuần 1         Tuần 2–3          Tuần 4–5              Tuần 6         Tuần 7           Tuần 8
 [Phase 1] ──▶ [Phase 2] ──────▶ [Phase 3] ─────────▶ [Phase 4] ──▶ [Phase 5] ─────▶ [Phase 6]
-Foundation    Core Logic        Advanced Features    Testing        Integration     Polish & Deploy
-24/3–30/3     31/3–13/4         14/4–27/4            28/4–11/5      12/5–18/5       19/5–25/5
+Foundation    Core Logic        Advanced Features      Testing       Integration     Polish & Deploy
+24/3–30/3     31/3–13/4         14/4–27/4              28/4–11/5     12/5–18/5       19/5–25/5
 ```
  
 ⭐ [Chi tiết phase 1](./CONTRIBUTORS.md#-phase-1--project-foundation--architecture-design)  
