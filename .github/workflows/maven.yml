@@ -130,6 +130,9 @@ jobs:
 
       - name: Copy docker-compose.yml lên VPS
         run: |
+          ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "mkdir -p ~/auction-system"
           scp -i ~/.ssh/deploy_key \
             docker-compose.yml \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/auction-system/docker-compose.yml"
@@ -137,6 +140,7 @@ jobs:
       - name: Deploy trên VPS
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}"
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s << REMOTE
             set -euo pipefail
@@ -147,16 +151,16 @@ jobs:
               docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
             # Ghi file .env với secrets (không lưu trong image)
-            cat > .env << ENVEOF
-          DB_ROOT_PASSWORD=${{ secrets.DEPLOY_DB_ROOT_PASSWORD }}
-          DB_USERNAME=${{ secrets.DEPLOY_DB_USERNAME }}
-          DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }}
-          ENVEOF
+            # Dùng printf thay vì heredoc để tránh khoảng trắng YAML / delimiter lồng nhau làm hỏng .env
+            printf '%s\n' \
+              "DB_ROOT_PASSWORD=${{ secrets.DEPLOY_DB_ROOT_PASSWORD }}" \
+              "DB_USERNAME=${{ secrets.DEPLOY_DB_USERNAME }}" \
+              "DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }}" \
+              > .env
 
-            # Pull image mới và restart container
-            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}"
-            docker pull "\$IMAGE"
-            AUCTION_SERVER_IMAGE="\$IMAGE" docker compose up -d --no-build
+            # Pull image mới và restart container (chuỗi image đã được runner chèn vào script)
+            docker pull "$IMAGE"
+            AUCTION_SERVER_IMAGE="$IMAGE" docker compose up -d --no-build
             docker compose ps
 
             # Dọn image cũ không còn dùng
