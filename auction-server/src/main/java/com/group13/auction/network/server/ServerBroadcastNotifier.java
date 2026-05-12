@@ -13,6 +13,8 @@ import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.model.auction.Auction;
 
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Cầu nối giữa Observer pattern phía server và WebSocket broadcast.
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
  */
 public class ServerBroadcastNotifier {
 
+    private static final Logger log = LoggerFactory.getLogger(ServerBroadcastNotifier.class);
     private static final ServerBroadcastNotifier INSTANCE = new ServerBroadcastNotifier();
 
     private final SessionManager sessionManager = SessionManager.getInstance();
@@ -48,6 +51,8 @@ public class ServerBroadcastNotifier {
      */
     public void notifyBidUpdate(Auction auction, long bidAmount,
                                 String bidderUsername, boolean isAutoBid) {
+        log.info("Broadcast BID_UPDATE: auctionId={}, bidder={}, amount={}, autoBid={}",
+                auction.getId(), bidderUsername, bidAmount, isAutoBid);
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount);
         PacketType type = auction.isReserveMet()
                 ? PacketType.BID_UPDATE
@@ -110,6 +115,7 @@ public class ServerBroadcastNotifier {
 
     /** Broadcast AUCTION_ENDED_UPDATE khi phiên kết thúc có winner. */
     public void notifyAuctionEnded(Auction auction) {
+        log.info("Broadcast AUCTION_ENDED_UPDATE: auctionId={}", auction.getId());
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
         sessionManager.broadcastToAuction(auction.getId(),
                 Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
@@ -145,6 +151,8 @@ public class ServerBroadcastNotifier {
      */
     public void notifyAuctionExtended(Auction auction,
                                       LocalDateTime newEndTime, int extendedBySeconds) {
+        log.info("Broadcast AUCTION_EXTENDED: auctionId={}, newEndTime={}, extendedBy={}s",
+                auction.getId(), newEndTime, extendedBySeconds);
         AuctionDTOs.AuctionExtendedDTO dto = new AuctionDTOs.AuctionExtendedDTO();
         dto.setAuctionId(auction.getId());
         dto.setNewEndTime(newEndTime);

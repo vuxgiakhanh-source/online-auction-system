@@ -7,12 +7,16 @@ import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.iservice.IUserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Xử lý xác thực người dùng (authentication).
  * Trách nhiệm duy nhất: verify danh tính người dùng từ DB.
  */
 public class UserService implements IUserService {
+
+  private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
   private final UserDAO userDAO;
 
@@ -37,24 +41,29 @@ public class UserService implements IUserService {
 
     // 2. Nếu không tìm thấy trong DB -> Ném exception
     if (user == null) {
+      log.warn("Login failed: user not found, username={}", username);
       // Lưu ý: Bạn cần thêm USER_NOT_FOUND vào enum Reason trong class AuthenticationException nhé
       throw new AuthenticationException(Reason.USER_NOT_FOUND);
     }
 
     // 3. Kiểm tra trạng thái tài khoản
     if (user.getAccountStatus() == AccountStatus.BANNED) {
+      log.warn("Login failed: account banned, username={}", username);
       throw new AuthenticationException(Reason.ACCOUNT_BANNED);
     }
     if (user.getAccountStatus() == AccountStatus.SUSPENDED) {
+      log.warn("Login failed: account suspended, username={}", username);
       throw new AuthenticationException(Reason.ACCOUNT_SUSPENDED);
     }
 
     // 4. Kiểm tra mật khẩu
     if (!user.getHashedPassword().equals(User.hashPassword(inputPassword))) {
+      log.warn("Login failed: wrong password, username={}", username);
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
     // 5. Đăng nhập thành công
+    log.info("Login success: username={}", username);
     return user;
   }
 }

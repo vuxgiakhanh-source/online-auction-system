@@ -2,6 +2,8 @@ package com.group13.auction.service;
 
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Item.ItemCategory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,6 +14,8 @@ import java.util.stream.Collectors;
  * loại sản phẩm.
  */
 public class AuctionSortService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuctionSortService.class);
 
     /**
      * Sort auction theo giá hiện tại (cao → thấp).
@@ -57,6 +61,7 @@ public class AuctionSortService {
      * @return danh sách đã lọc
      */
     public List<Auction> filterByCategory(List<Auction> auctions, ItemCategory category) {
+        log.debug("filterByCategory: category={}, total={}", category, auctions.size());
         return auctions.stream()
                 .filter(a -> a.getItem().getCategory() == category)
                 .collect(Collectors.toList());

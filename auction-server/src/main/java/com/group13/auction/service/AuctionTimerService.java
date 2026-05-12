@@ -190,6 +190,8 @@ public class AuctionTimerService {
             } finally {
                 MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
+                // Luôn release khỏi registry khi phiên đã được xử lý (kể cả lỗi)
+                // để tránh memory leak với phiên không thể close
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
                 }
