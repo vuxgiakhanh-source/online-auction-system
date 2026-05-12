@@ -1,9 +1,11 @@
 package com.group13.auction.core.state;
 
-/** Trạng thái kết nối mạng đang hiển thị trên UI. */
+/**
+ * Trạng thái kết nối giữa JavaFX client và auction server.
+ */
 public enum ConnectionState {
+    DISCONNECTED,
     CONNECTING,
     CONNECTED,
-    DISCONNECTED,
     FAILED
 }

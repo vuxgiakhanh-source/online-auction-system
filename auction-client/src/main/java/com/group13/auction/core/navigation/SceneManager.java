@@ -1,55 +1,79 @@
 package com.group13.auction.core.navigation;
 
-import java.io.IOException;
-import java.net.URL;
-
 import com.group13.auction.config.ResourcePath;
 import com.group13.auction.util.ResourceUtil;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
- * Quản lý việc load FXML và chuyển Scene cho ứng dụng JavaFX.
+ * Quản lý việc load FXML và chuyển scene cho ứng dụng JavaFX.
  */
 public final class SceneManager {
 
     private final Stage primaryStage;
 
     /**
-     * Khởi tạo SceneManager với dữ liệu cần thiết cho module client.
+     * Khởi tạo scene manager với stage chính của ứng dụng.
+     *
+     * @param primaryStage stage chính
      */
     public SceneManager(Stage primaryStage) {
-        this.primaryStage = primaryStage;
+        this.primaryStage = Objects.requireNonNull(primaryStage, "primaryStage must not be null");
     }
 
     /**
-     * Thực thi thao tác load của thành phần client.
+     * Chuyển đến màn hình tương ứng với route.
+     *
+     * @param route route cần mở
      */
-    public Parent load(String fxmlPath) {
-        try {
-            URL resource = ResourceUtil.requireResource(fxmlPath);
-            FXMLLoader loader = new FXMLLoader(resource);
-            return loader.load();
-        } catch (IOException exception) {
-            throw new IllegalStateException("Không thể load FXML: " + fxmlPath, exception);
-        }
+    public void switchTo(Route route) {
+        Objects.requireNonNull(route, "route must not be null");
+        switchTo(route.getFxmlPath());
     }
 
     /**
-     * Thực thi thao tác switchTo của thành phần client.
+     * Chuyển đến màn hình có đường dẫn FXML tương ứng.
+     *
+     * @param fxmlPath đường dẫn tuyệt đối trong resources
      */
     public void switchTo(String fxmlPath) {
-        Parent root = load(fxmlPath);
+        Parent root = loadView(fxmlPath);
         Scene scene = primaryStage.getScene();
+
         if (scene == null) {
             scene = new Scene(root);
-            scene.getStylesheets()
-                    .add(ResourceUtil.requireResource(ResourcePath.APP_CSS).toExternalForm());
+            addStylesheet(scene, ResourcePath.APP_CSS);
             primaryStage.setScene(scene);
         } else {
             scene.setRoot(root);
+            addStylesheet(scene, ResourcePath.APP_CSS);
+        }
+    }
+
+    private Parent loadView(String fxmlPath) {
+        URL resource = ResourceUtil.requireResource(fxmlPath);
+        FXMLLoader loader = new FXMLLoader(resource);
+
+        try {
+            return loader.load();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Không thể load màn hình từ FXML: " + fxmlPath, exception);
+        }
+    }
+
+    private void addStylesheet(Scene scene, String stylesheetPath) {
+        if (!ResourceUtil.exists(stylesheetPath)) {
+            return;
+        }
+
+        String stylesheet = ResourceUtil.toExternalForm(stylesheetPath);
+        if (!scene.getStylesheets().contains(stylesheet)) {
+            scene.getStylesheets().add(stylesheet);
         }
     }
 }
