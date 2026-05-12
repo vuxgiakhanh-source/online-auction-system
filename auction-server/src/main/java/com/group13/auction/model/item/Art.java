@@ -2,9 +2,13 @@ package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tác phẩm nghệ thuật. */
 public class Art extends Item {
+
+  private static final Logger log = LoggerFactory.getLogger(Art.class);
 
   private final String artist;
   private final int yearCreated;
@@ -52,12 +56,12 @@ public class Art extends Item {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN SẢN PHẨM - ART");
-    System.out.printf("Tên : %s%n", getName());
-    System.out.printf("Nghệ sĩ : %s%n", artist);
-    System.out.printf("Năm sáng tác : %d%n", yearCreated);
-    System.out.printf("Chất liệu : %s%n", medium);
-    System.out.printf("Giá khởi điểm: %d%n", getStartingPrice());
-    System.out.println("======================================");
+    log.info("THÔNG TIN SẢN PHẨM - ART");
+    log.info("Tên          : {}", getName());
+    log.info("Nghệ sĩ      : {}", artist);
+    log.info("Năm sáng tác : {}", yearCreated);
+    log.info("Chất liệu    : {}", medium);
+    log.info("Giá khởi điểm: {}", getStartingPrice());
+    log.info("======================================");
   }
 }

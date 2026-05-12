@@ -70,7 +70,7 @@ public class RatingService implements IRatingService {
   @Override
   public void rewardBidder(NormalUser bidder) {
     bidder.adjustRating(REWARD_BIDDER_PAYMENT);
-    log.info("[RATING] {} +{} → {}", bidder.getUsername(), REWARD_BIDDER_PAYMENT, bidder.getRating());
+    log.info("Rating reward bidder: username={}, delta=+{}, newRating={}", bidder.getUsername(), REWARD_BIDDER_PAYMENT, bidder.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(bidder.getId(), bidder.getRating());
@@ -80,7 +80,7 @@ public class RatingService implements IRatingService {
   @Override
   public void rewardSeller(User seller) {
     seller.adjustRating(REWARD_SELLER_SALE);
-    log.info("[RATING] {} +{} → {}", seller.getUsername(), REWARD_SELLER_SALE, seller.getRating());
+    log.info("Rating reward seller: username={}, delta=+{}, newRating={}", seller.getUsername(), REWARD_SELLER_SALE, seller.getRating());
 
     // Thực hiện TODO: Cập nhật rating xuống DB
     userDAO.updateRating(seller.getId(), seller.getRating());
@@ -93,7 +93,7 @@ public class RatingService implements IRatingService {
   public void penalizeLatePayment(NormalUser bidder) {
     bidder.adjustRating(-PENALTY_LATE_PAYMENT);
     bidder.markPenalized();
-    log.info("[RATING] {} -{} → {} (vi phạm thanh toán)", bidder.getUsername(), PENALTY_LATE_PAYMENT, bidder.getRating());
+    log.info("Rating penalty late-payment: username={}, delta=-{}, newRating={}", bidder.getUsername(), PENALTY_LATE_PAYMENT, bidder.getRating());
 
     autoSuspendIfNeeded(bidder);
 
@@ -113,7 +113,7 @@ public class RatingService implements IRatingService {
       isPenalized = true;
     }
 
-    log.info("[RATING] {} -{} → {} (vi phạm chất lượng)", seller.getUsername(), PENALTY_SELLER_QUALITY, seller.getRating());
+    log.info("Rating penalty seller-quality: username={}, delta=-{}, newRating={}", seller.getUsername(), PENALTY_SELLER_QUALITY, seller.getRating());
 
     autoSuspendIfNeeded(seller);
 
@@ -157,7 +157,7 @@ public class RatingService implements IRatingService {
 
     // Guard: chỉ restore 1 lần duy nhất
     if (normalUser.isHasEverBeenRestored()) {
-      log.info("[RATING] {} đã từng được auto-restore — không restore thêm.", user.getUsername());
+      log.info("Rating restore skipped - already restored once: username={}", user.getUsername());
       return;
     }
 
@@ -171,9 +171,9 @@ public class RatingService implements IRatingService {
 
     if (user.getRating() > AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.ACTIVE);
-      log.info("[RATING] {} được khôi phục sau {} tháng | Rating: {} → ACTIVE", user.getUsername(), SUSPEND_RESTORE_MONTHS, user.getRating());
+      log.info("Rating auto-restored to ACTIVE: username={}, afterMonths={}, newRating={}", user.getUsername(), SUSPEND_RESTORE_MONTHS, user.getRating());
     } else {
-      log.info("[RATING] {}: cộng {} nhưng rating {} vẫn <= {} — giữ SUSPENDED", user.getUsername(), RESTORE_DELTA, user.getRating(), AUTO_SUSPEND_THRESHOLD);
+      log.info("Rating restored but still suspended: username={}, delta=+{}, newRating={}, threshold={}", user.getUsername(), RESTORE_DELTA, user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
 
     // Đánh dấu đã restore 1 lần
@@ -193,7 +193,7 @@ public class RatingService implements IRatingService {
     if (user.getAccountStatus() == AccountStatus.ACTIVE
             && user.getRating() <= AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.SUSPENDED);
-      log.info("[RATING] {} bị SUSPEND — rating {} <= {}", user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
+      log.info("Account auto-suspended: username={}, rating={}, threshold={}", user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }
     // TODO: notificationDao.save() - báo cho user
   }

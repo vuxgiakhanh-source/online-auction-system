@@ -4,9 +4,13 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Ghi lại một lần đặt giá — chỉ lưu data. */
 public class BidTransaction extends Entity {
+
+  private static final Logger log = LoggerFactory.getLogger(BidTransaction.class);
 
   public enum BidResult {
     ACCEPTED,
@@ -89,11 +93,11 @@ public class BidTransaction extends Entity {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN GIAO DỊCH");
-    System.out.printf("Bidder : %s%n", bidder.getUsername());
-    System.out.printf("Số tiền : %d%n", amount);
-    System.out.printf("Kết quả : %s%n", result);
-    System.out.printf("Thời gian: %s%n", timestamp);
-    System.out.println("======================================");
+    log.info("THÔNG TIN GIAO DỊCH");
+    log.info("Bidder   : {}", bidder.getUsername());
+    log.info("Số tiền  : {}", amount);
+    log.info("Kết quả  : {}", result);
+    log.info("Thời gian: {}", timestamp);
+    log.info("======================================");
   }
 }

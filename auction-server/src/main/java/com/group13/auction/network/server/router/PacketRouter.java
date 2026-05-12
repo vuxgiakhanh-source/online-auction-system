@@ -9,6 +9,7 @@ import com.group13.auction.network.server.handler.PacketHandler;
 import com.group13.auction.network.server.session.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,17 @@ public class PacketRouter {
         // Tìm handler
         for (PacketHandler handler : handlers) {
             if (handler.supports(type)) {
+                MDC.put("requestId", requestId != null ? requestId : "-");
+                MDC.put("username", session.getUsername() != null ? session.getUsername() : "anonymous");
+                // Trích auctionId từ payload nếu có (BID, PAYMENT, AUCTION packets)
+                try {
+                    if (payload != null && payload.isJsonObject()) {
+                        com.google.gson.JsonObject p = payload.getAsJsonObject();
+                        String auctionId = p.has("auctionId") && !p.get("auctionId").isJsonNull()
+                                ? p.get("auctionId").getAsString() : null;
+                        if (auctionId != null) MDC.put("auctionId", auctionId);
+                    }
+                } catch (Exception ignored) { /* payload không phải object — không cần auctionId */ }
                 try {
                     handler.handle(session, type, payload, requestId);
                 } catch (Exception e) {
@@ -78,6 +90,10 @@ public class PacketRouter {
                     session.send(Packet.of(PacketType.SYSTEM_ERROR,
                             ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
                                     "Lỗi hệ thống khi xử lý " + type, requestId)));
+                } finally {
+                    MDC.remove("requestId");
+                    MDC.remove("username");
+                    MDC.remove("auctionId");
                 }
                 return;
             }

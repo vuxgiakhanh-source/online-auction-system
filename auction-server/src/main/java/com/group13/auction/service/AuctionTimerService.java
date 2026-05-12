@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.MDC;
 
 /**
  * Scheduler tự động quản lý vòng đời phiên đấu giá.
@@ -118,12 +119,14 @@ public class AuctionTimerService {
             try {
                 if (auction.getStatus() != Auction.AuctionStatus.OPEN) continue;
 
+                MDC.put("auctionId", auction.getId());
                 auctionService.startAuction(auction);
                 broadcastUpdate(auction, PacketType.AUCTION_STARTED_UPDATE);
                 log.info("Auction started: auctionId={}", auction.getId());
             } catch (Exception e) {
                 log.warn("Không thể start phiên: auctionId={} reason={}", auction.getId(), e.getMessage());
             } finally {
+                MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
             }
         }
@@ -150,6 +153,8 @@ public class AuctionTimerService {
                     log.info("Auction vừa được gia hạn, bỏ qua kết thúc: auctionId={}", auction.getId());
                     continue;
                 }
+
+                MDC.put("auctionId", auction.getId());
 
                 NormalUser leaderBeforeClose = auction.getCurrentLeader();
                 boolean reserveMetBeforeClose = auction.isReserveMet();
@@ -183,6 +188,7 @@ public class AuctionTimerService {
             } catch (Exception e) {
                 log.error("Không thể close phiên: auctionId={}", auction.getId(), e);
             } finally {
+                MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
