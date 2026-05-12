@@ -1,63 +1,94 @@
 package com.group13.auction.core.context;
 
+import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.SessionManager;
-import com.group13.auction.service.auction.AuctionQueryService;
-import com.group13.auction.service.auction.BidHistoryService;
-import com.group13.auction.service.auction.BidService;
-import com.group13.auction.service.auth.AuthService;
-import com.group13.auction.service.network.NetworkGateway;
-import com.group13.auction.service.seller.SellerAuctionService;
-import com.group13.auction.service.wallet.WalletService;
+import com.group13.auction.core.state.ConnectionState;
+import com.group13.auction.core.state.ScreenStateStore;
+import java.util.Objects;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 
-/** Container thủ công đơn giản cho các service dùng chung trong client. */
+/**
+ * Application context dùng chung trong client.
+ *
+ * <p>Lớp này giữ các singleton nhẹ ở phía client như navigator, session và screen state. Không đặt
+ * nghiệp vụ đấu giá ở đây.
+ */
 public final class AppContext {
 
     private static final AppContext INSTANCE = new AppContext();
 
-    private final NetworkGateway networkGateway = NetworkGateway.getInstance();
-    private final SessionManager sessionManager = SessionManager.getInstance();
-    private final AuthService authService = new AuthService(networkGateway, sessionManager);
-    private final AuctionQueryService auctionQueryService = new AuctionQueryService(networkGateway);
-    private final BidService bidService = new BidService(networkGateway);
-    private final BidHistoryService bidHistoryService = new BidHistoryService(networkGateway);
-    private final SellerAuctionService sellerAuctionService = new SellerAuctionService(networkGateway);
-    private final WalletService walletService = new WalletService(networkGateway);
+    private final SessionManager sessionManager = new SessionManager();
+    private final ScreenStateStore screenStateStore = new ScreenStateStore();
+    private final ObjectProperty<ConnectionState> connectionState =
+            new SimpleObjectProperty<>(ConnectionState.DISCONNECTED);
+
+    private Navigator navigator;
 
     private AppContext() {}
 
+    /**
+     * Lấy context dùng chung của client.
+     *
+     * @return singleton application context
+     */
     public static AppContext getInstance() {
         return INSTANCE;
     }
 
-    public NetworkGateway getNetworkGateway() {
-        return networkGateway;
+    /**
+     * Gắn navigator sau khi JavaFX stage đã được khởi tạo.
+     *
+     * @param navigator navigator chính của ứng dụng
+     */
+    public void setNavigator(Navigator navigator) {
+        this.navigator = Objects.requireNonNull(navigator, "navigator must not be null");
     }
 
+    /**
+     * Lấy navigator hiện tại.
+     *
+     * @return navigator chính
+     */
+    public Navigator getNavigator() {
+        if (navigator == null) {
+            throw new IllegalStateException("Navigator chưa được khởi tạo.");
+        }
+        return navigator;
+    }
+
+    /**
+     * Lấy session manager của client.
+     *
+     * @return session manager
+     */
     public SessionManager getSessionManager() {
         return sessionManager;
     }
 
-    public AuthService getAuthService() {
-        return authService;
+    /**
+     * Lấy kho state tạm thời giữa các màn hình.
+     *
+     * @return screen state store
+     */
+    public ScreenStateStore getScreenStateStore() {
+        return screenStateStore;
     }
 
-    public AuctionQueryService getAuctionQueryService() {
-        return auctionQueryService;
+    /**
+     * Property trạng thái kết nối để UI có thể bind hoặc lắng nghe thay đổi.
+     *
+     * @return connection state property
+     */
+    public ObjectProperty<ConnectionState> connectionStateProperty() {
+        return connectionState;
     }
 
-    public BidService getBidService() {
-        return bidService;
+    public ConnectionState getConnectionState() {
+        return connectionState.get();
     }
 
-    public BidHistoryService getBidHistoryService() {
-        return bidHistoryService;
-    }
-
-    public SellerAuctionService getSellerAuctionService() {
-        return sellerAuctionService;
-    }
-
-    public WalletService getWalletService() {
-        return walletService;
+    public void setConnectionState(ConnectionState state) {
+        connectionState.set(Objects.requireNonNull(state, "state must not be null"));
     }
 }

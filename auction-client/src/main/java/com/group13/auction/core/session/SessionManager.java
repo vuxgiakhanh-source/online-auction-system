@@ -1,91 +1,83 @@
 package com.group13.auction.core.session;
 
-import com.group13.auction.common.dto.auth.LoginResponseDTO;
-import com.group13.auction.common.dto.user.UserDTO;
-import com.group13.auction.network.client.AuctionWebSocketClient;
-import java.util.List;
 import java.util.Optional;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
-/** Quản lý phiên đăng nhập hiện tại ở phía client. */
+/**
+ * Quản lý trạng thái đăng nhập của JavaFX client.
+ *
+ * <p>Lớp này chỉ lưu session trong memory khi app đang chạy, không lưu token xuống file.
+ */
 public final class SessionManager {
 
-    private static final SessionManager INSTANCE = new SessionManager();
+    private final BooleanProperty loggedIn = new SimpleBooleanProperty(false);
 
     private UserSession currentSession;
 
-    private SessionManager() {}
-
     /**
-     * Thực thi thao tác getInstance của thành phần client.
+     * Lưu session mới sau khi đăng nhập hoặc đăng ký thành công.
+     *
+     * @param session session hiện tại
      */
-    public static SessionManager getInstance() {
-        return INSTANCE;
+    public void startSession(UserSession session) {
+        if (session == null) {
+            throw new IllegalArgumentException("session must not be null");
+        }
+
+        currentSession = session;
+        loggedIn.set(true);
+    }
+
+    /** Xóa session hiện tại khi logout hoặc mất xác thực. */
+    public void clearSession() {
+        currentSession = null;
+        loggedIn.set(false);
     }
 
     /**
-     * Trả về giá trị currentSession dùng cho tầng giao diện hoặc service.
+     * Kiểm tra client đã đăng nhập chưa.
      *
-     * @return giá trị currentSession
+     * @return true nếu có session
+     */
+    public boolean isLoggedIn() {
+        return loggedIn.get();
+    }
+
+    /**
+     * Property trạng thái đăng nhập để UI có thể bind nếu cần.
+     *
+     * @return logged in property
+     */
+    public BooleanProperty loggedInProperty() {
+        return loggedIn;
+    }
+
+    /**
+     * Lấy session hiện tại dưới dạng optional.
+     *
+     * @return optional session
      */
     public Optional<UserSession> getCurrentSession() {
         return Optional.ofNullable(currentSession);
     }
 
     /**
-     * Kiểm tra trạng thái loggedIn hiện tại.
+     * Lấy session hiện tại, ném lỗi nếu chưa đăng nhập.
      *
-     * @return {@code true} nếu điều kiện đúng, ngược lại {@code false}
+     * @return session hiện tại
      */
-    public boolean isLoggedIn() {
-        return currentSession != null;
+    public UserSession requireSession() {
+        return getCurrentSession()
+                .orElseThrow(() -> new IllegalStateException("Người dùng chưa đăng nhập."));
     }
 
     /**
-     * Khởi tạo stage chính của ứng dụng JavaFX.
+     * Lấy token hiện tại, dùng khi tạo request tới server.
      *
-     * @param primaryStage stage chính được JavaFX cung cấp
+     * @return session token
      */
-    public void start(LoginResponseDTO response) {
-        if (response == null || response.getUser() == null) {
-            return;
-        }
-        currentSession = new UserSession(response.getToken(), response.getUser());
-        try {
-            AuctionWebSocketClient.getInstance()
-                    .setAuthState(
-                            response.getToken(), response.getUser().getId(), response.getUser().getUsername());
-        } catch (IllegalStateException ignored) {
-            // Network chưa khởi tạo thì UI vẫn dùng session nội bộ.
-        }
-    }
-
-    /** Tạo session demo để em test UI khi server chưa chạy. */
-    /**
-     * Thực thi thao tác startDemo của thành phần client.
-     */
-    public void startDemo(String username) {
-        UserDTO user = new UserDTO();
-        user.setId("U-DEMO-01");
-        user.setUsername(username == null || username.isBlank() ? "beo.demo" : username);
-        user.setEmail("demo@omnibid.local");
-        user.setRoles(List.of("BIDDER", "SELLER"));
-        user.setAccountStatus("ACTIVE");
-        user.setRating(4.9);
-        user.setBalance(8_500_000);
-        user.setLockedDeposit(650_000);
-        user.setAvailableBalance(7_850_000);
-        currentSession = new UserSession("demo-token", user);
-    }
-
-    /**
-     * Thực thi thao tác clear của thành phần client.
-     */
-    public void clear() {
-        currentSession = null;
-        try {
-            AuctionWebSocketClient.getInstance().clearAuthState();
-        } catch (IllegalStateException ignored) {
-            // Không có connection để clear.
-        }
+    public String requireToken() {
+        return requireSession().getToken();
     }
 }

@@ -1,72 +1,146 @@
 package com.group13.auction.core.session;
 
+import com.group13.auction.common.dto.auth.LoginResponseDTO;
 import com.group13.auction.common.dto.user.UserDTO;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/** Thông tin người dùng đang đăng nhập trong ứng dụng client. */
+/**
+ * Session hiện tại của người dùng đã đăng nhập ở phía client.
+ *
+ * <p>Session chỉ lưu dữ liệu cần thiết cho UI và request tiếp theo. Không lưu mật khẩu.
+ */
 public final class UserSession {
 
     private final String token;
-    private final UserDTO user;
+    private final String userId;
+    private final String username;
+    private final String email;
+    private final List<String> roles;
+    private final String accountStatus;
 
-    /**
-     * Khởi tạo UserSession với dữ liệu cần thiết cho module client.
-     */
-    public UserSession(String token, UserDTO user) {
-        this.token = Objects.requireNonNullElse(token, "demo-token");
-        this.user = Objects.requireNonNull(user);
+    private UserSession(
+            String token,
+            String userId,
+            String username,
+            String email,
+            List<String> roles,
+            String accountStatus) {
+        this.token = token;
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.roles = List.copyOf(roles == null ? Collections.emptyList() : roles);
+        this.accountStatus = accountStatus;
     }
 
     /**
-     * Trả về giá trị token dùng cho tầng giao diện hoặc service.
+     * Tạo session từ response đăng nhập/đăng ký server trả về.
      *
-     * @return giá trị token
+     * @param response response chứa token và user DTO
+     * @return session phía client
      */
+    public static UserSession from(LoginResponseDTO response) {
+        Objects.requireNonNull(response, "response must not be null");
+        return from(response.getToken(), response.getUser());
+    }
+
+    /**
+     * Tạo session từ token và {@link UserDTO}.
+     *
+     * @param token session token
+     * @param user thông tin người dùng từ common DTO
+     * @return session phía client
+     */
+    public static UserSession from(String token, UserDTO user) {
+        Objects.requireNonNull(user, "user must not be null");
+
+        return new UserSession(
+                requireText(token, "token"),
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRoles(),
+                user.getAccountStatus());
+    }
+
+    /**
+     * Tạo session thủ công, hữu ích cho test hoặc mock UI tạm thời.
+     *
+     * @param token session token
+     * @param userId id người dùng
+     * @param username tên đăng nhập
+     * @param email email người dùng
+     * @param roles danh sách role
+     * @param accountStatus trạng thái tài khoản
+     * @return session phía client
+     */
+    public static UserSession of(
+            String token,
+            String userId,
+            String username,
+            String email,
+            List<String> roles,
+            String accountStatus) {
+        return new UserSession(
+                requireText(token, "token"), userId, username, email, roles, accountStatus);
+    }
+
     public String getToken() {
         return token;
     }
 
-    /**
-     * Trả về giá trị user dùng cho tầng giao diện hoặc service.
-     *
-     * @return giá trị user
-     */
-    public UserDTO getUser() {
-        return user;
-    }
-
-    /**
-     * Trả về giá trị userId dùng cho tầng giao diện hoặc service.
-     *
-     * @return giá trị userId
-     */
     public String getUserId() {
-        return user.getId();
+        return userId;
     }
 
-    /**
-     * Trả về giá trị username dùng cho tầng giao diện hoặc service.
-     *
-     * @return giá trị username
-     */
     public String getUsername() {
-        return user.getUsername();
+        return username;
     }
 
-    /**
-     * Trả về giá trị roles dùng cho tầng giao diện hoặc service.
-     *
-     * @return giá trị roles
-     */
+    public String getEmail() {
+        return email;
+    }
+
     public List<String> getRoles() {
-        return user.getRoles();
+        return roles;
+    }
+
+    public String getAccountStatus() {
+        return accountStatus;
     }
 
     /**
-     * Thực thi thao tác hasRole của thành phần client.
+     * Kiểm tra user hiện tại có role nhất định hay không.
+     *
+     * @param role role cần kiểm tra, ví dụ {@code BIDDER}, {@code SELLER}, {@code ADMIN}
+     * @return true nếu session có role này
      */
     public boolean hasRole(String role) {
-        return user.getRoles() != null && user.getRoles().contains(role);
+        if (role == null || role.isBlank()) {
+            return false;
+        }
+
+        return roles.stream().anyMatch(currentRole -> currentRole.equalsIgnoreCase(role));
+    }
+
+    public boolean isAdmin() {
+        return hasRole("ADMIN");
+    }
+
+    public boolean isSeller() {
+        return hasRole("SELLER") || hasRole("BIDDER_SELLER");
+    }
+
+    public boolean isBidder() {
+        return hasRole("BIDDER") || hasRole("BIDDER_SELLER");
+    }
+
+    private static String requireText(String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " must not be blank");
+        }
+        return value;
     }
 }
