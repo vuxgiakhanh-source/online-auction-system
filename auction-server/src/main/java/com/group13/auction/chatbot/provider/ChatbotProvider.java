@@ -284,12 +284,17 @@ public class ChatbotProvider {
             List<FAQ> faqs  = new ArrayList<>();
 
             for (JsonElement element : faqArray) {
-                FAQ faq = gson.fromJson(element, FAQ.class);
-                if (isValidFaq(faq)) {
-                    faqs.add(faq);
-                } else {
+                FAQ raw = gson.fromJson(element, FAQ.class);
+                if (!isValidFaq(raw)) {
                     log.warn("[ChatbotProvider] Bỏ qua FAQ không hợp lệ: {}", element);
+                    continue;
                 }
+                // Gson gán List mutable — bọc lại qua constructor FAQ để keywords bất biến (an toàn luồng).
+                List<String> safeKeywords = raw.getKeywords() == null || raw.getKeywords().isEmpty()
+                        ? List.of()
+                        : List.copyOf(raw.getKeywords());
+                faqs.add(new FAQ(raw.getId(), raw.getCategory(), safeKeywords,
+                        raw.getQuestion(), raw.getAnswer()));
             }
 
             return faqs;

@@ -5,7 +5,7 @@ import com.group13.auction.dao.ItemDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -16,6 +16,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Cơ sở cho integration test có DB (Testcontainers).
+ *
+ * <p><b>Lưu ý:</b> {@link com.group13.auction.service.AuctionService} (và một số luồng khác) gọi
+ * {@link com.group13.auction.model.user.SystemAdmin#getInstance()} khi khởi tạo hoặc khi xử lý.
+ * Mọi test tạo {@code new AuctionService(...)} phải gọi {@code com.group13.auction.unit.TestFixture.bootstrapSystemAdmin()}
+ * trước khi construct, và {@code TestFixture.resetSystemAdmin()} trong tear-down để cô lập.
+ */
 public abstract class IntegrationTestBase {
 
     private final List<String> trackedUserIds         = new ArrayList<>();
@@ -27,7 +35,7 @@ public abstract class IntegrationTestBase {
     private final List<String> trackedSecondChanceIds = new ArrayList<>();
     private final List<String> trackedQualityIds      = new ArrayList<>();
 
-    protected static void configureTestcontainer(MySQLContainer<?> mysql) throws Exception {
+    protected static void configureTestcontainer(MySQLContainer mysql) throws Exception {
         Field instanceField = DatabaseConnection.class.getDeclaredField("instance");
         instanceField.setAccessible(true);
         instanceField.set(null, null);

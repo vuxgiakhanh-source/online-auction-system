@@ -27,7 +27,7 @@
         <junit.version>5.10.0</junit.version>
         <lombok.version>1.18.30</lombok.version>
         <assertj.version>3.25.3</assertj.version>
-        <testcontainers.version>1.19.0</testcontainers.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
         <logback.version>1.4.11</logback.version>
         <mockito.version>5.5.0</mockito.version>
         <junit-platform.version>1.10.0</junit-platform.version>
@@ -86,21 +86,21 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- Testcontainers: MySQL container driver -->
+            <!-- Testcontainers 2.x: module JDBC MySQL (artifact đổi tên từ mysql) -->
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>mysql</artifactId>
+                <artifactId>testcontainers-mysql</artifactId>
                 <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>
 
             <!--
-                Testcontainers JUnit 5 extension: cung cấp @Testcontainers + @Container.
-                Phải khai báo riêng vì KHÔNG được kéo theo tự động bởi testcontainers:mysql.
+                Testcontainers JUnit 5 extension: @Testcontainers + @Container.
+                Không kéo theo tự động bởi testcontainers-mysql.
             -->
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>junit-jupiter</artifactId>
+                <artifactId>testcontainers-junit-jupiter</artifactId>
                 <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>

@@ -44,21 +44,17 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Testcontainers: MySQL container -->
+        <!-- Testcontainers 2.x: MySQL (org.testcontainers.mysql.MySQLContainer) -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>mysql</artifactId>
+            <artifactId>testcontainers-mysql</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!--
-            Testcontainers JUnit 5 extension — cung cấp @Testcontainers và @Container.
-            Artifact này KHÔNG được kéo tự động bởi testcontainers:mysql nên phải
-            khai báo tường minh, nếu không @Testcontainers sẽ không hoạt động.
-        -->
+        <!-- JUnit 5 extension — không kéo theo bởi testcontainers-mysql -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -97,18 +93,14 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
             <!--
-                maven-surefire-plugin: chạy unit tests (*Test.java) trong phase "test".
-                Exclude:
-                  - **/*IT.java           : integration tests dùng Testcontainers (cần Docker)
-                  - **/*IntegrationTest.java : các file integration test đặt tên theo convention cũ
-                                              (PersistenceLayerIntegrationTest, ConcurrencyBiddingIntegrationTest,
-                                               RealtimeNotificationIntegrationTest) — cũng cần Docker
-                                              hoặc dùng Mockito @ExtendWith và có state phức tạp.
-                Lệnh unit test: mvn test
+                maven-surefire-plugin: phase "test" — không Docker.
+                Exclude: **/*IT.java, **/*IntegrationTest.java (Failsafe).
+                Gồm: com.group13.auction.unit.**, concurrency.** (*Test), load.** chỉ tên *Test (vd. Chatbot*Test).
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -123,19 +115,20 @@
                     <argLine>
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
+                        -Dfile.encoding=UTF-8
+                        -Dstdout.encoding=UTF-8
+                        -Dstderr.encoding=UTF-8
                     </argLine>
+                    <systemPropertyVariables>
+                        <TESTCONTAINERS_RYUK_DISABLED>false</TESTCONTAINERS_RYUK_DISABLED>
+                        <file.encoding>UTF-8</file.encoding>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
             <!--
-                maven-failsafe-plugin: chạy integration tests trong phase "integration-test" / "verify".
-                Include:
-                  - **/*IT.java           : convention chuẩn (BidServiceIntegrationIT, DepositRefundIT, ...)
-                  - **/*IntegrationTest.java : convention cũ (PersistenceLayerIntegrationTest,
-                                               ConcurrencyBiddingIntegrationTest, RealtimeNotificationIntegrationTest)
-                Lệnh: mvn verify
-                       hoặc: mvn failsafe:integration-test failsafe:verify
-                Yêu cầu: Docker daemon phải đang chạy (Testcontainers kéo mysql:8.0).
+                maven-failsafe-plugin: verify — *IT.java + *IntegrationTest.java (Docker khi cần).
+                Ví dụ: integration.**, load.*IT (vd. load.BidServiceLoadIT).
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -150,7 +143,12 @@
                     <argLine>
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
+                        -Dfile.encoding=UTF-8
                     </argLine>
+                    <systemPropertyVariables>
+                        <TESTCONTAINERS_RYUK_DISABLED>false</TESTCONTAINERS_RYUK_DISABLED>
+                        <file.encoding>UTF-8</file.encoding>
+                    </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>

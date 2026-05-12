@@ -1,4 +1,4 @@
-package com.group13.auction.integration.service.bid;
+package com.group13.auction.concurrency;
 
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.BidTransactionDAO;
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * ============================================================================
- * INTEGRATION TEST: Concurrency Bidding & Auto-Bid
+ * UNIT (mocked) — Concurrency Bidding & Auto-Bid
  * ============================================================================
  *
  * Kỹ thuật tích hợp áp dụng:
@@ -70,11 +70,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *   Group E – Edge cases & Guard conditions
  * ============================================================================
  */
-@DisplayName("Integration: Concurrency Bidding & Auto-Bid")
+@DisplayName("Unit (mocked): Concurrency Bidding & Auto-Bid")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ConcurrencyBiddingIntegrationTest {
+class BidConcurrencyTest {
 
-    private static final Logger log = LoggerFactory.getLogger(ConcurrencyBiddingIntegrationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(BidConcurrencyTest.class);
 
     // ── Thresholds & constants ────────────────────────────────────────────────
     private static final long  STARTING_PRICE   = 500_000L;   // 500k VNĐ (tier LOW → increment 50k)

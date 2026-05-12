@@ -1,6 +1,7 @@
 package com.group13.auction.integration.service.bid;
 import com.group13.auction.integration.base.RequiresDocker;
 import com.group13.auction.integration.base.IntegrationTestBase;
+import com.group13.auction.unit.TestFixture;
 
 import com.group13.auction.dao.*;
 import com.group13.auction.exception.AuctionBusinessException;
@@ -18,7 +19,7 @@ import com.group13.auction.strategy.StandardBidStrategy;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -54,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BidServiceIntegrationIT extends IntegrationTestBase {
 
     @Container
-    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+    static final MySQLContainer mysql = new MySQLContainer("mysql:8.0")
             .withDatabaseName("omnibid_test")
             .withUsername("test_user")
             .withPassword("test_pass")
@@ -77,7 +78,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         userDAO                 = new UserDAO();
         itemDAO                 = new ItemDAO();
         auctionDAO              = new AuctionDAO();
@@ -85,6 +86,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
         financialTransactionDAO = new FinancialTransactionDAO();
 
         ratingService  = new RatingService(userDAO);
+        TestFixture.bootstrapSystemAdmin();
         walletService  = new WalletService(financialTransactionDAO, userDAO, ratingService);
         auctionService = new AuctionService(ratingService, auctionDAO);
         bidService     = new BidService(auctionService, ratingService, walletService,
@@ -95,6 +97,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
     @AfterEach
     void tearDown() throws Exception {
         cleanupDB();
+        TestFixture.resetSystemAdmin();
     }
 
     // =========================================================================

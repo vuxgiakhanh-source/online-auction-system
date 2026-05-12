@@ -9,7 +9,7 @@ import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.user.NormalUser;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AuctionWinnerDAOIT extends IntegrationTestBase {
 
     @Container
-    static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
+    static final MySQLContainer mysql = new MySQLContainer("mysql:8.0")
             .withDatabaseName("omnibid_test")
             .withUsername("test_user")
             .withPassword("test_pass")
