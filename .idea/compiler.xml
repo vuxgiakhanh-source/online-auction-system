@@ -12,7 +12,9 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="network-layer" target="17" />
+      <module name="auction-client" target="17" />
+      <module name="auction-common" target="17" />
+      <module name="auction-server" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

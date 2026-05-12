@@ -1,0 +1,8 @@
+package com.group13.auction.service.iservice;
+
+import java.util.concurrent.TimeUnit;
+
+public interface IScheduler {
+    void scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
+    void shutdownNow();
+}

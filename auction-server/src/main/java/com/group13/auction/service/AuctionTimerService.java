@@ -13,24 +13,16 @@ import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import com.group13.auction.service.iservice.IScheduler;
+import com.group13.auction.service.scheduler.TaskScheduler;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.MDC;
 
 /**
  * Scheduler tự động quản lý vòng đời phiên đấu giá.
- *
- * <h3>Cải tiến v2:</h3>
- * <ul>
- *   <li>Logging chuẩn SLF4J (xóa java.util.logging.Logger).</li>
- *   <li>Dùng {@link AuctionLockRegistry#tryLock} với timeout thay vì lock vô hạn.</li>
- *   <li>Double-check anti-sniping sau khi lấy lock.</li>
- *   <li>Resource cleanup (AutoBidRegistry, LockRegistry) khi phiên kết thúc.</li>
- * </ul>
  */
 public class AuctionTimerService {
 
@@ -40,7 +32,7 @@ public class AuctionTimerService {
 
     private static final AuctionTimerService INSTANCE = new AuctionTimerService();
 
-    private ScheduledExecutorService scheduler;
+    private IScheduler scheduler;
     private AuctionService auctionService;
     private IPaymentService paymentService;
     private SessionManager sessionManager;
@@ -68,11 +60,7 @@ public class AuctionTimerService {
         this.paymentService = paymentService;
         this.sessionManager = sessionManager;
 
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "auction-timer");
-            t.setDaemon(true);
-            return t;
-        });
+        this.scheduler = new TaskScheduler(1, "auction-timer");
 
         scheduler.scheduleAtFixedRate(
                 this::scanAndProcess,
@@ -82,17 +70,17 @@ public class AuctionTimerService {
         );
 
         running = true;
-        log.info("AuctionTimerService khởi động — quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
+        log.info("AuctionTimerService khởi động - quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
     }
 
     public synchronized void stop() {
-        if (!running || scheduler == null) return;
+        if (!running || scheduler == null) {
+            return;
+        }
         scheduler.shutdownNow();
         running = false;
         log.info("AuctionTimerService đã dừng.");
     }
-
-    // ── Private ───────────────────────────────────────────────────────────────
 
     private void scanAndProcess() {
         try {
@@ -109,15 +97,20 @@ public class AuctionTimerService {
                 .getAuctionsByStatus(Auction.AuctionStatus.OPEN);
 
         for (Auction auction : openAuctions) {
-            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) continue;
+            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) {
+                continue;
+            }
 
             boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
                 log.warn("startPendingAuctions: lock timeout auctionId={}", auction.getId());
                 continue;
             }
+
             try {
-                if (auction.getStatus() != Auction.AuctionStatus.OPEN) continue;
+                if (auction.getStatus() != Auction.AuctionStatus.OPEN) {
+                    continue;
+                }
 
                 MDC.put("auctionId", auction.getId());
                 auctionService.startAuction(auction);
@@ -137,7 +130,9 @@ public class AuctionTimerService {
                 .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
 
         for (Auction auction : runningAuctions) {
-            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) continue;
+            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) {
+                continue;
+            }
 
             boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
@@ -147,8 +142,10 @@ public class AuctionTimerService {
 
             boolean releaseLock = false;
             try {
-                // CRITICAL DOUBLE-CHECK: anti-sniping có thể đã gia hạn trong khi chờ lock
-                if (auction.getStatus() != Auction.AuctionStatus.RUNNING) continue;
+                // Anti-sniping có thể đã gia hạn trong khi chờ lock.
+                if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+                    continue;
+                }
                 if (auction.getEndTime().isAfter(now)) {
                     log.info("Auction vừa được gia hạn, bỏ qua kết thúc: auctionId={}", auction.getId());
                     continue;
@@ -190,8 +187,6 @@ public class AuctionTimerService {
             } finally {
                 MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
-                // Luôn release khỏi registry khi phiên đã được xử lý (kể cả lỗi)
-                // để tránh memory leak với phiên không thể close
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
                 }
