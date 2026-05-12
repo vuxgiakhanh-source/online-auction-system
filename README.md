@@ -69,11 +69,17 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ---
 
 ## 👷 Chức năng hệ thống
+
+### Use Case tổng quát
+![UseCase Diagram](./UsecaseDiagram.png)
+
 ### Chức năng cốt lõi
 * __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
 
 
-* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__). Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.
+* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__). Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.  
+> Tham khảo Auction Life Sequence Diagram [tại đây](./AuctionLifecycleSequenceDiagram.md)  
+
 > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
@@ -194,9 +200,7 @@ sequenceDiagram
 
 ## ✨ Đặc điểm kĩ thuật nổi bật
 Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
-* __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với 
-__Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client 
-mà không cần tải lại trang.
+* __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với __Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client mà không cần tải lại trang.
 > Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast
 > tới các Bidders khác) (GIF)
 
@@ -327,6 +331,8 @@ online-auction-system/
         ├── network/client/          # AuctionWebSocketClient, ClientPacketDispatcher, Session
         └── ui/                      # JavaFX Controllers & Views
 ```
+
+> Tham khảo Class Diagram [tại đây](./ClassDiagram.md)
 
 ### Design Patterns áp dụng:
 | Pattern            | Implementation                                                                              | Mục đích hệ thống |
