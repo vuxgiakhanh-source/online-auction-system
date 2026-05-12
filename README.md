@@ -32,6 +32,7 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
     * [Chức năng nâng cao](#chức-năng-nâng-cao)
 * [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
     * [Kiến trúc tổng quan](#kiến-trúc-tổng-quan)
+    * [Kiến trúc chatbot](#-kiến-trúc-chatbot)
     * [Cấu trúc project](#-cấu-trúc-project)
     * [Design Patterns áp dụng](#design-patterns-áp-dụng)
 * [Tech Stack](#-tech-stack)
