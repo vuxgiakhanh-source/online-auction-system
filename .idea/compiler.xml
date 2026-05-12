@@ -6,6 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="auction-client" />
+        <module name="auction-common" />
         <module name="auction-server" />
       </profile>
     </annotationProcessing>
@@ -15,9 +17,9 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="auction-client" options="-parameters" />
-      <module name="auction-common" options="-parameters" />
-      <module name="auction-server" options="-parameters" />
+      <module name="auction-client" options="" />
+      <module name="auction-common" options="" />
+      <module name="auction-server" options="" />
     </option>
   </component>
 </project>
