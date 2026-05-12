@@ -31,7 +31,6 @@
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
-            <!-- Dùng version từ parent BOM (1.5.5) để nhất quán toàn project -->
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -45,9 +44,21 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Testcontainers: MySQL container -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            Testcontainers JUnit 5 extension — cung cấp @Testcontainers và @Container.
+            Artifact này KHÔNG được kéo tự động bởi testcontainers:mysql nên phải
+            khai báo tường minh, nếu không @Testcontainers sẽ không hoạt động.
+        -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -87,6 +98,58 @@
                     <source>17</source>
                     <target>17</target>
                 </configuration>
+            </plugin>
+
+            <!--
+                maven-surefire-plugin: chạy unit tests (*Test.java) trong phase "test".
+                Exclude:
+                  - **/*IT.java           : integration tests dùng Testcontainers (cần Docker)
+                  - **/*IntegrationTest.java : các file integration test đặt tên theo convention cũ
+                                              (PersistenceLayerIntegrationTest, ConcurrencyBiddingIntegrationTest,
+                                               RealtimeNotificationIntegrationTest) — cũng cần Docker
+                                              hoặc dùng Mockito @ExtendWith và có state phức tạp.
+                Lệnh unit test: mvn test
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*IntegrationTest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!--
+                maven-failsafe-plugin: chạy integration tests trong phase "integration-test" / "verify".
+                Include:
+                  - **/*IT.java           : convention chuẩn (BidServiceIntegrationIT, DepositRefundIT, ...)
+                  - **/*IntegrationTest.java : convention cũ (PersistenceLayerIntegrationTest,
+                                               ConcurrencyBiddingIntegrationTest, RealtimeNotificationIntegrationTest)
+                Lệnh: mvn verify
+                       hoặc: mvn failsafe:integration-test failsafe:verify
+                Yêu cầu: Docker daemon phải đang chạy (Testcontainers kéo mysql:8.0).
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                        <include>**/*IntegrationTest.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Fat JAR — Dockerfile COPY auction-server/target/auction-server-*.jar app.jar -->

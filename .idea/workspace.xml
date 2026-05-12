@@ -4,14 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="199" />
+    <option name="cachedIndexableFilesCount" value="248" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -23,6 +30,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
@@ -39,53 +50,65 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.ServerMain.executor": "Run",
-    "Application.TestLauncher.executor": "Run",
-    "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
-    "JUnit.AccountServiceTest.executor": "Run",
-    "JUnit.AdminObserverTest.executor": "Run",
-    "JUnit.AuctionObserverContractTest.executor": "Run",
-    "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
-    "JUnit.AutoBidStrategyTest.executor": "Run",
-    "JUnit.BidServiceTest$PlaceBidHappyPath.executor": "Run",
-    "JUnit.BidStrategyContractTest.executor": "Run",
-    "JUnit.PaymentServiceTest.executor": "Run",
-    "JUnit.RatingServiceTest.executor": "Run",
-    "JUnit.StandardBidStrategyTest.executor": "Run",
-    "JUnit.SystemAdminObserverTest.executor": "Run",
-    "Maven.online-auction-system [clean].executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "OOP-logic-testig",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ServerMain.executor&quot;: &quot;Run&quot;,
+    &quot;Application.TestLauncher.executor&quot;: &quot;Run&quot;,
+    &quot;Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
+    &quot;Application.com.group13.auction.unit.TestLauncher.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.Dockerfile.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AccountServiceTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AdminObserverTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AuctionObserverContractTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AuctionWinnerDAOIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.AutoBidStrategyTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BidServiceIntegrationIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BidServiceTest$PlaceBidHappyPath.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.BidStrategyContractTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.ConcurrencyBiddingIntegrationTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.DepositRefundIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.FinancialAuditIntegrationIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.PaymentServiceTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.PaymentStateTransitionIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.RatingServiceTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.StandardBidStrategyTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.SystemAdminObserverTest.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.UserRegistrationIntegrationIT.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.WalletPaymentIT.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.online-auction-system [clean].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;OOP-logic-testig&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
-  <component name="RunManager" selected="Application.ServerMain">
-    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
+}</component>
+  <component name="RunManager" selected="Application.com.group13.auction.integration.base.IntegrationTestLauncher">
+    <configuration name="IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.IntegrationTestLauncher" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -93,19 +116,12 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.TestLauncher" />
-      <module name="auction-server" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="com.group13.auction.unit.TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
+    <configuration name="com.group13.auction.integration.base.IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.base.IntegrationTestLauncher" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.base.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -113,43 +129,57 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AutoBidStrategyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.strategy.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.strategy" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.strategy.AutoBidStrategyTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BidStrategyContractTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.strategy.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.strategy" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.strategy.BidStrategyContractTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.BidServiceIntegrationIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
+    </configuration>
+    <configuration name="Dockerfile" type="docker-deploy" factoryName="dockerfile" temporary="true" server-name="Docker">
+      <deployment type="dockerfile">
+        <settings>
+          <option name="sourceFilePath" value="Dockerfile" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
+      <deployment type="dockerfile">
+        <settings />
+      </deployment>
+      <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ServerMain" />
-        <item itemvalue="Application.com.group13.auction.unit.TestLauncher" />
-        <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.BidStrategyContractTest" />
-        <item itemvalue="JUnit.AutoBidStrategyTest" />
+        <item itemvalue="Application.com.group13.auction.integration.base.IntegrationTestLauncher" />
+        <item itemvalue="Docker.Dockerfile" />
+        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
+        <item itemvalue="Application.IntegrationTestLauncher" />
+        <item itemvalue="JUnit.BidServiceIntegrationIT" />
       </list>
     </recent_temporary>
   </component>
@@ -168,6 +198,13 @@
       <option name="presentableId" value="Default" />
       <updated>1774865487288</updated>
       <workItem from="1778548394280" duration="12663000" />
+      <workItem from="1778562699280" duration="3969000" />
+      <workItem from="1778567820675" duration="3273000" />
+      <workItem from="1778572388012" duration="275000" />
+      <workItem from="1778572761637" duration="173000" />
+      <workItem from="1778572986537" duration="3905000" />
+      <workItem from="1778577604924" duration="1381000" />
+      <workItem from="1778579203240" duration="689000" />
     </task>
     <servers />
   </component>
@@ -184,6 +221,11 @@
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
           <line>19</line>
           <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/base/IntegrationTestLauncher.java</url>
+          <line>28</line>
+          <option name="timeStamp" value="9" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
