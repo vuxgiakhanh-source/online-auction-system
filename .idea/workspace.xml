@@ -5,10 +5,24 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources/8b6e7012-e4f3-4cfb-b191-7dedb62ddae5.corrupted.20260512-062822.reason.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/fix_bom.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/fix_scheduler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/replace.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/iservice/INotifier.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/iservice/IScheduler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/notification/CompositeNotifier.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/notification/ConsoleNotifier.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/scheduler/TaskScheduler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/8b6e7012-e4f3-4cfb-b191-7dedb62ddae5.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/8b6e7012-e4f3-4cfb-b191-7dedb62ddae5.corrupted.20260512-062822.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/BidderObserver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/SellerObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/SellerObserver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionTimerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/logback.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/logback.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/notification/RealtimeNotificationIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/notification/RealtimeNotificationIntegrationTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/docker-java.properties" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/docker-java.properties" afterDir="false" />
     </list>
@@ -102,6 +116,7 @@
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "ml.llm.AcpAgentsConfigurable",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   },
