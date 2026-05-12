@@ -42,7 +42,9 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
   * [Troubleshooting](#troubleshooting)
 * [Testing](#-testing)
 * [Công nghệ & Công cụ sử dụng](#-công-nghệ--công-cụ-sử-dụng)
-* [Đội ngũ & Phân công nhiệm vụ (Team Section))](#-đội-ngũ--phân-công-nhiệm-vụ-team-section)
+* [Đội ngũ & Phân công nhiệm vụ (Team Section & Project Roadmap))](#-đội-ngũ--phân-công-nhiệm-vụ-team-section--project-roadmap)
+  * [Đội ngũ](#-đội-ngũ)
+  * [Tổng quan Timeline](#-tổng-quan-timeline)
 * [Liên hệ](#-liên-hệ)
 * [License](#-license)
 
@@ -440,7 +442,7 @@ mvn javafx:run
 
 ## 🧪 Testing
 
-Project có **39 unit test classes** và **hơn 1900 unit tests đã passed** bao phủ tất cả các tầng quan trọng của hệ thống. Tests không yêu cầu kết nối database — toàn bộ dependencies được mock bằng Mockito.
+Project có **40 unit test classes** và **hơn 2000 unit tests đã passed** bao phủ tất cả các tầng quan trọng của hệ thống. Tests không yêu cầu kết nối database — toàn bộ dependencies được mock bằng Mockito.
 
 ```bash
 # Chạy toàn bộ tests
@@ -452,20 +454,21 @@ cd auction-server && mvn test
 
 ### Phân bổ test theo tầng
 
-| Tầng                       | Test Classes                                                                                                                                                   | Scenarios tiêu biểu                                 |
-|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| **Domain / State Machine** | `AuctionTest` · `AuctionStateMachineTest` · `AuctionWinnerTest` · `SecondChanceOfferTest`                                                                      | State transitions, winner determination, edge cases |
-| **Concurrency**            | `AuctionLockRegistryTest`                                                                                                                                      | Per-auction locking, race condition prevention      |
-| **Strategy**               | `StandardBidStrategyTest` · `AutoBidStrategyTest` · `BidStrategyContractTest` · `AutoBidProcessorTest`                                                         | Bidding logic, contract testing trên interface      |
-| **Observer**               | `BidderObserverTest` · `SellerObserverTest` · `AdminObserverTest` · `AuctionObserverContractTest` · `AuctionEventTest`                                         | Notification propagation, contract tests            |
-| **Service**                | `BidServiceTest` · `PaymentServiceTest` · `AuctionServiceTest` · `AccountServiceTest` · `WalletServiceTest` · `RatingServiceTest` · `QualityReportServiceTest` | Business logic, payment flows                       |
-| **Factory**                | `UserFactoryTest` · `ItemFactoryTest` · `UserFactoryTest`                                                                                                      | Object creation, type correctness                   |
-| **Singleton**              | `AuctionManagerTest` · `SystemBankTest`                                                                                                                        | Single-instance guarantee                           |
+| Tầng                       | Test Classes                                                                                                                                                                                | Scenarios tiêu biểu                                 |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| **Domain / State Machine** | `AuctionTest`, `AuctionStateMachineTest`, `AuctionWinnerTest`, `SecondChanceOfferTest`                                                                                                      | State transitions, winner determination, edge cases |
+| **Concurrency**            | `AuctionLockRegistryTest`, `ChatbotProviderTest`                                                                                                                                            | Per-auction locking, race condition prevention      |
+| **Strategy**               | `StandardBidStrategyTest`, `AutoBidStrategyTest`, `BidStrategyContractTest`, `AutoBidProcessorTest`                                                                                         | Bidding logic, contract testing trên interface      |
+| **Observer**               | `BidderObserverTest`, `SellerObserverTest`, `AdminObserverTest`, `AuctionObserverContractTest`, `AuctionEventTest`                                                                          | Notification propagation, contract tests            |
+| **Service**                | `BidServiceTest`, `PaymentServiceTest`, `AuctionServiceTest`, `AccountServiceTest`, `WalletServiceTest`, `RatingServiceTest`, `QualityReportServiceTest`, `ChatbotProviderTest`             | Business logic, payment flows                       |
+| **Factory**                | `UserFactoryTest`, `ItemFactoryTest`, `UserFactoryTest`                                                                                                                                     | Object creation, type correctness                   |
+| **Singleton**              | `AuctionManagerTest`, `SystemBankTest`, `ChatbotProviderTest`                                                                                                                               | Single-instance guarantee                           |
 
 ---
 
-## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section)
+## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section & Project Roadmap)
 
+### 🧠 Đội ngũ
 |                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |               Tiến độ                |  Trạng thái     |
 |:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:------------------------------------:|:---------------:|
 |             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![50%](https://geps.dev/progress/70) | 🏗️ In Progress |
@@ -473,16 +476,33 @@ cd auction-server && mvn test
 |       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![50%](https://geps.dev/progress/60) | 🏗️ In Progress |
 |     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![40%](https://geps.dev/progress/50) | 🏗️ In Progress |
 
+
+### 📅 Tổng quan Timeline
+
+```
+Tuần 1       Tuần 2–3          Tuần 4–5            Tuần 6          Tuần 7           Tuần 8
+[Phase 1] ──▶ [Phase 2] ──────▶ [Phase 3] ─────────▶ [Phase 4] ──▶ [Phase 5] ─────▶ [Phase 6]
+Foundation    Core Logic        Advanced Features    Testing        Integration     Polish & Deploy
+24/3–30/3     31/3–13/4         14/4–27/4            28/4–11/5      12/5–18/5       19/5–25/5
+```
+ 
+⭐ [Chi tiết phase 1](./CONTRIBUTORS.md#-phase-1--project-foundation--architecture-design)  
+⭐ [Chi tết phase 2](./CONTRIBUTORS.md#-phase-2--core-domain--data-layer-implementation)  
+⭐ [Chi tiết phase 3](./CONTRIBUTORS.md#-phase-3--advanced-features--business-logic-completion)  
+⭐ [Chi tiết phase 4](./CONTRIBUTORS.md#-phase-4--testing--quality-assurance)  
+⭐ [Chi tiết phase 5](./CONTRIBUTORS.md#-phase-5--integration-cicd--containerization)  
+⭐ [Chi tiết phase 6](./CONTRIBUTORS.md#-phase-6--documentation-polish--demo-preparation)
+
 ---
 
 ## 📞 Liên hệ
 
-| Thành viên      | Trách nhiệm           | GitHub                                                       | Email                    |
-|-----------------|-----------------------|--------------------------------------------------------------|--------------------------|
-| Hồ Huyền Chi    | Core Logic · OOP      | [@hchyy](https://github.com/hchyy)                           | chidinhhoi1709@gmail.com |
-| Vũ Gia Khánh    | Concurrency · Testing | [@vuxgiakhanh-source](https://github.com/vuxgiakhanh-source) | vuxgiakhanh@gmail.com    |
-| Bạch Quốc Thịnh | Database · Backend    | [@thebrosaythree](https://github.com/thebrosaythree)         | iamven56@gmail.com       |
-| Trần Thảo Nhi   | Frontend              | [@bingbongg](https://github.com/bingbongg)                   | tthaonhi0127@gmail.com   |
+| Thành viên      | Trách nhiệm           | GitHub                                                          | Email                    |
+|-----------------|-----------------------|-----------------------------------------------------------------|--------------------------|
+| Hồ Huyền Chi    | Core Logic · OOP      | [@hchyy](https://github.com/hchyy)                              | chidinhhoi1709@gmail.com |
+| Vũ Gia Khánh    | Concurrency · Testing | [@vuxgiakhanh-source](https://github.com/vuxgiakhanh-source)    | vuxgiakhanh@gmail.com    |
+| Bạch Quốc Thịnh | Database · Backend    | [@thebrosaythree](https://github.com/thebrosaythree)            | iamven56@gmail.com       |
+| Trần Thảo Nhi   | Frontend              | [@bingbongg](https://github.com/bingbongg)                      | tthaonhi0127@gmail.com   |
 
 ---
 
