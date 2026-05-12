@@ -3,7 +3,7 @@ package com.group13.auction.core.navigation;
 import com.group13.auction.config.ViewPath;
 
 /**
- * Điều hướng giữa các màn hình JavaFX.
+ * Điều hướng giữa các màn hình JavaF cấp scene.
  */
 public final class Navigator {
 
