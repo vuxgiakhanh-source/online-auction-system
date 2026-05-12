@@ -696,5 +696,40 @@ public enum PacketType {
      * Client nên hiển thị cảnh báo và lưu trạng thái.
      * Payload: {@code SystemShutdownDTO} (reason + shutdownInSeconds).
      */
-    SERVER_SHUTDOWN_NOTIFY
+    SERVER_SHUTDOWN_NOTIFY,
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CHATBOT — Hỗ trợ khách hàng tự động (Rule-based FAQ)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Client gửi câu hỏi tới chatbot, kèm id câu hỏi hoặc từ khóa tìm kiếm.
+     * Payload: {@code ChatbotRequestDTO} (query + optional category).
+     */
+    CHATBOT_ASK,
+
+    /**
+     * Server trả về câu trả lời tìm được từ FAQ.
+     * Payload: {@code ChatbotResponse} (faqId + question + answer + category).
+     */
+    CHATBOT_ANSWER,
+
+    /**
+     * Server trả về khi không tìm thấy câu trả lời phù hợp.
+     * Payload: {@code ChatbotResponse} (message gợi ý liên hệ admin).
+     */
+    CHATBOT_NOT_FOUND,
+
+    /**
+     * Client yêu cầu lấy toàn bộ danh sách câu hỏi FAQ theo category.
+     * Payload: {@code String category} (GENERAL | BIDDING | PAYMENT | RATING | SELLER).
+     *          Nếu null → trả về tất cả category.
+     */
+    CHATBOT_GET_FAQ_LIST,
+
+    /**
+     * Server trả về danh sách FAQ (dùng để hiển thị menu câu hỏi gợi ý).
+     * Payload: {@code ChatbotFaqListResponse} (List&lt;FAQ&gt; theo category).
+     */
+    CHATBOT_FAQ_LIST_SUCCESS
 }
