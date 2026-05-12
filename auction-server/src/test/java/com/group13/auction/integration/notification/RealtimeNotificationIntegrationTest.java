@@ -370,10 +370,10 @@ class RealtimeNotificationIntegrationTest {
                     auction, bidder, amount);
 
             assertAll(
-                () -> assertThat(event.getEventType()).isEqualTo(AuctionEventType.BID_PLACED),
-                () -> assertThat(event.getAuction().getId()).isEqualTo(auction.getId()),
-                () -> assertThat(event.getBidder()).isEqualTo(bidder),
-                () -> assertThat(event.getBidAmount()).isEqualTo(amount)
+                    () -> assertThat(event.getEventType()).isEqualTo(AuctionEventType.BID_PLACED),
+                    () -> assertThat(event.getAuction().getId()).isEqualTo(auction.getId()),
+                    () -> assertThat(event.getBidder()).isEqualTo(bidder),
+                    () -> assertThat(event.getBidAmount()).isEqualTo(amount)
             );
         }
     }
@@ -422,18 +422,39 @@ class RealtimeNotificationIntegrationTest {
             auctionService.addObserver(auction.getId(), spy);
 
             assertThatCode(() ->
-                auctionService.notify(auction, AuctionEventType.AUCTION_EXTENDED,
-                        bidder, 0L, null))
-                .doesNotThrowAnyException();
+                    auctionService.notify(auction, AuctionEventType.AUCTION_EXTENDED,
+                            bidder, 0L, null))
+                    .doesNotThrowAnyException();
         }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    /**
+     * Reset trạng thái nội tại của AuctionManager singleton sau mỗi test.
+     *
+     * <p><b>KHÔNG</b> set instance = null vì AuctionService.notify() gọi
+     * {@code AuctionManager.getInstance()} trực tiếp mà không kiểm tra null —
+     * nếu null thì NPE sẽ lan sang toàn bộ test chạy sau trong cùng JVM.
+     *
+     * <p>Thay vào đó: clear 4 collection nội bộ (allAuctions, allUsers,
+     * globalObservers, staffObservers) để đạt test isolation mà không phá singleton.
+     */
+    @SuppressWarnings("unchecked")
     private void resetAuctionManagerSingleton() throws Exception {
         Class<?> cls = Class.forName("com.group13.auction.manager.AuctionManager");
-        Field f = cls.getDeclaredField("instance");
-        f.setAccessible(true);
-        f.set(null, null);
+        Object manager = cls.getDeclaredMethod("getInstance").invoke(null);
+
+        for (String fieldName : new String[]{"allAuctions", "allUsers",
+                "globalObservers", "staffObservers"}) {
+            Field f = cls.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            Object col = f.get(manager);
+            if (col instanceof java.util.Map) {
+                ((java.util.Map<?,?>) col).clear();
+            } else if (col instanceof java.util.List) {
+                ((java.util.List<?>) col).clear();
+            }
+        }
     }
 }
