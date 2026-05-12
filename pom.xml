@@ -28,6 +28,7 @@
         <assertj.version>3.25.3</assertj.version>
         <testcontainers.version>1.19.0</testcontainers.version>
         <logback.version>1.4.11</logback.version>
+        <slf4j.version>2.0.9</slf4j.version>
     </properties>
 
     <dependencyManagement>
