@@ -52,7 +52,7 @@ public class SessionManager {
     public ClientSession register(WebSocket connection) {
         ClientSession session = new ClientSession(connection);
         byConnection.put(connection, session);
-        log.info("{}", "[SESSION] New connection: " + connection.getRemoteSocketAddress());
+        log.info("New connection: remoteAddress={}, totalConnected={}", connection.getRemoteSocketAddress(), byConnection.size());
         return session;
     }
 
@@ -65,7 +65,7 @@ public class SessionManager {
         ClientSession session = byConnection.remove(connection);
         if (session != null && session.getUserId() != null) {
             byUserId.remove(session.getUserId());
-            log.info("{}", "[SESSION] Disconnected: " + session.getUsername());
+            log.info("Session disconnected: userId={}, username={}", session.getUserId(), session.getUsername());
         }
     }
 
@@ -86,12 +86,12 @@ public class SessionManager {
         if (oldSession != null && oldSession != session) {
             oldSession.close(1000, "Logged in from another location");
             byConnection.remove(oldSession.getConnection());
-            log.info("{}", "[SESSION] Replaced old session for userId=" + userId);
+            log.info("Replaced stale session: userId={}, username={}", userId, username);
         }
 
         session.authenticate(userId, username, role);
         byUserId.put(userId, session);
-        log.info("{}", "[SESSION] Authenticated: " + username + " (" + role + ")");
+        log.info("Session authenticated: userId={}, username={}, role={}", userId, username, role);
     }
 
     /**

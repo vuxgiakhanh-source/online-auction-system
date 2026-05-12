@@ -74,7 +74,7 @@ public class WalletService implements IWalletService {
         // FIX: Bọc synchronized để đảm bảo atomic "read-modify-write" cho DB và RAM
         synchronized (user) {
             user.setBalance(user.getBalance() + amount);
-            log.info("[ACCOUNT] {} nạp {} | Số dư mới: {}", user.getUsername(), amount, user.getBalance());
+            log.info("Deposit success: username={}, amount={}, newBalance={}", user.getUsername(), amount, user.getBalance());
 
             // Gọi DAO để cộng tiền dưới DB
             userDAO.addBalance(user.getId(), amount);
@@ -111,7 +111,7 @@ public class WalletService implements IWalletService {
             }
 
             user.setBalance(user.getBalance() - amount);
-            log.info("[ACCOUNT] {} rút {} | Số dư mới: {}", user.getUsername(), amount, user.getBalance());
+            log.info("Withdraw success: username={}, amount={}, newBalance={}", user.getUsername(), amount, user.getBalance());
 
             // Đã thực hiện TODO: persist số dư mới xuống DB
             userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
@@ -191,8 +191,7 @@ public class WalletService implements IWalletService {
                     TransactionType.DEPOSIT_FORFEIT, auctionId);
             transactionLog.add(tx);
             tx.printInfo();
-            log.info("[WALLET] Tịch thu cọc {} của {} — chuyển vào SystemBank.",
-                    depositAmount, winner.getUsername());
+            log.info("Deposit forfeited: username={}, depositAmount={}, auctionId={}", winner.getUsername(), depositAmount, auctionId);
 
             // Đã thực hiện TODO: financialTransactionDao.save(tx)
             financialTransactionDAO.saveTransaction(tx);
@@ -245,7 +244,7 @@ public class WalletService implements IWalletService {
                         "SYSTEM_LOCKED", winner.getId(), depositPaid,
                         TransactionType.DEPOSIT_UNLOCK, auctionId));
 
-                // TODO: [DB] userDAO.updateBalances(winner)
+                // Persist số dư sau khi trừ remaining và giải phóng cọc
                 userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
                 // Bank giữ toàn bộ finalPrice
@@ -254,7 +253,7 @@ public class WalletService implements IWalletService {
                         winner.getId(), "SYSTEM_BANK", finalPrice,
                         TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
-                log.info("[WALLET] Winner {} chuyển {} vào SystemBank (FUNDS_HELD).", winner.getUsername(), finalPrice);
+                log.info("Payment to bank success: username={}, finalPrice={}, auctionId={}", winner.getUsername(), finalPrice, auctionId);
 
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
@@ -267,10 +266,9 @@ public class WalletService implements IWalletService {
                 try {
                     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
                 } catch (Exception syncEx) {
-                    log.error("[WALLET] ROLLBACK DB thất bại phiên {} | Lỗi: {}",
-                            auctionId, syncEx.getMessage());
+                    log.error("Rollback DB sync failed: auctionId={}, error={}", auctionId, syncEx.getMessage());
                 }
-                log.error("[WALLET] ROLLBACK phiên {} | Lỗi: {}", auctionId, e.getMessage());
+                log.error("Payment rolled back: auctionId={}, error={}", auctionId, e.getMessage());
                 throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
                         "Giao dịch thất bại, đã rollback: " + e.getMessage());
             }

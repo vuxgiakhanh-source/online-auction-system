@@ -31,9 +31,13 @@ public class AdminDAO {
             pstmt.setString(4, email);
             pstmt.setString(5, level);
 
-            return pstmt.executeUpdate() > 0;
+            boolean result = pstmt.executeUpdate() > 0;
+            if (result) {
+                log.debug("Admin created: adminId={}, username={}, level={}", adminId, username, level);
+            }
+            return result;
         } catch (SQLException e) {
-            log.error("Lỗi tạo Admin", e);
+            log.error("Failed to create admin: adminId={}, username={}", adminId, username, e);
             return false;
         }
     }

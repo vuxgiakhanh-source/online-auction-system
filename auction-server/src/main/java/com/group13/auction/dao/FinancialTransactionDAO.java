@@ -32,9 +32,15 @@ public class FinancialTransactionDAO {
             pstmt.setString(5, tx.getType().name());
             pstmt.setString(6, tx.getAuctionId());
 
-            return pstmt.executeUpdate() > 0;
+            boolean result = pstmt.executeUpdate() > 0;
+            if (result) {
+                log.debug("Financial transaction saved: txId={}, type={}, amount={}, auctionId={}, from={}, to={}",
+                        tx.getId(), tx.getType(), tx.getAmount(), tx.getAuctionId(), tx.getFromUserId(), tx.getToUserId());
+            }
+            return result;
         } catch (SQLException e) {
-            log.error("Lỗi lưu giao dịch tài chính", e);
+            log.error("Failed to save financial transaction: txId={}, type={}, auctionId={}",
+                    tx.getId(), tx.getType(), tx.getAuctionId(), e);
             return false;
         }
     }
@@ -60,11 +66,13 @@ public class FinancialTransactionDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getLong("total");
+                    long total = rs.getLong("total");
+                    log.debug("Locked deposit found: userId={}, auctionId={}, total={}", userId, auctionId, total);
+                    return total;
                 }
             }
         } catch (SQLException e) {
-            log.error("Lỗi lấy tiền cọc đã lock", e);
+            log.error("Failed to find locked deposit: userId={}, auctionId={}", userId, auctionId, e);
         }
         return 0L;
     }
