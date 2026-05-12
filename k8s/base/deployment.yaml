@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auction-server
+  labels:
+    app: auction-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auction-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Tạo thêm 1 pod mới trước khi xóa pod cũ
+      maxUnavailable: 0    # Không bao giờ có downtime
+  template:
+    metadata:
+      labels:
+        app: auction-server
+    spec:
+      terminationGracePeriodSeconds: 30
+
+      # Chỉ schedule pod trên node có label workload=app
+      # (optional — xóa nếu cluster chỉ có 1 node)
+      # nodeSelector:
+      #   workload: app
+
+      containers:
+        - name: auction-server
+          image: ghcr.io/GITHUB_ORG/auction-server:latest  # bị override bởi overlay
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: websocket
+              containerPort: 8081
+
+          envFrom:
+            - configMapRef:
+                name: auction-config        # biến môi trường không nhạy cảm
+            - secretRef:
+                name: auction-secrets       # DB password, keys...
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+
+          # Resource limits (bị override theo env)
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # Mount log volume
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+
+      volumes:
+        - name: logs
+          emptyDir: {}
