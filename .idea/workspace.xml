@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AuctionLifecycleSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/AuctionLifecycleSequenceDiagram.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UseCaseDiagram.md" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,6 +178,13 @@
       </deployment>
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Application.TestLauncher" />
+      <item itemvalue="Application.com.group13.auction.integration.base.IntegrationTestLauncher" />
+      <item itemvalue="Docker.Dockerfile" />
+      <item itemvalue="JUnit.ChatbotProviderTest" />
+      <item itemvalue="JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.TestLauncher" />

@@ -77,53 +77,35 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 * __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
 
 
-* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__). Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.  
-> Tham khảo Auction Life Sequence Diagram [tại đây](./AuctionLifecycleSequenceDiagram.md)  
+* __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__) nhờ __Scheduler__. Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.  
+  > Tham khảo __Auction Life Sequence Diagram__ [tại đây](./AuctionLifecycleSequenceDiagram.md)  
 
-> Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
+  > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant B as Bidder
-    participant S as AuctionWebSocketServer
-    participant L as AuctionLockRegistry
-    participant SVC as BidService
-    participant DB as Database
-    participant OB as Other Bidders
+    participant Client as "WebSocket Client"
+    participant SessionManager
+    participant AuctionEvent as "AuctionEvent"
+    participant Observers as "5 Observer types<br/>(BidderObserver, SellerObserver, ...)"
+    participant ServerBroadcastNotifier
+    participant WebSocket
 
-    Note over B, OB: Quy trình đặt giá thầu Realtime (OmniBid)
+    Client->>SessionManager: subscribe(auctionId)
+    SessionManager-->>Client: Session registered
 
-    B->>S: Gửi Packet [PlaceBid]
+    AuctionEvent->>Observers: notify(eventType: BID_PLACED / AUCTION_ENDED / ...)
     
-    rect rgb(40, 45, 50)
-        Note right of S: Concurrency Control
-        S->>L: Acquire Lock (per-auction)
-        L-->>S: Lock Acquired
+    loop For each matching observer
+        Observers->>ServerBroadcastNotifier: broadcast(event)
+        ServerBroadcastNotifier->>WebSocket: push to specific sessions (per auction/user)
     end
 
-    S->>SVC: placeBid()
-    
-    activate SVC
-    SVC->>SVC: Validate Bid (amount, status, session...)
-    SVC->>SVC: Apply Strategy (Anti-Sniping + AutoBid)
-    
-    SVC->>DB: Update price & Save BidTransaction
-    DB-->>SVC: Success
-    
-    SVC-->>S: Return Success Result
-    deactivate SVC
-
-    par Broadcast Realtime
-        S->>OB: Notify via Observer Pattern (Price Update)
-        S->>B: Notify Bid Result (Success)
-    end
-
-    S->>L: Release Lock
-    Note over S, L: Mở khóa cho lượt bid tiếp theo
+    WebSocket-->>Client: realtime update (JSON payload)
+    Note right of ServerBroadcastNotifier: Filter theo auctionId + user roles
 ```
-> Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
+  > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
 
@@ -169,23 +151,26 @@ sequenceDiagram
     end
     deactivate PS
 ```
+  > Tham khảo toàn bộ về khâu __Payment and Deposit Escrow__ [tại đây](./PaymentAndDepositEscrowSequenceDiagram.md)
 
 ### Chức năng nâng cao
 * __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.
-> Add ảnh chụp giao diện người dùng thiết lập AutoBidding
+  > Tham khảo __Auto-Bid Engine Sequence Diagram__ [tại đây](./AutoBidSequenceDiagram.md)
+
+  > Add ảnh chụp giao diện người dùng thiết lập AutoBidding
 
 
 * __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
 
 
 * __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá chính xác.
-> Ảnh chụp LineChart trong chương trình
+  > Ảnh chụp LineChart trong chương trình
 
-* __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
+* __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động (nhờ __Scheduler__) gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
 
 
 * __Thanh toán Ký quỹ & Xử lý Khiếu nại__: Áp dụng cơ chế Escrow (giữ tiền qua SystemBank) để bảo vệ người mua. Sau khi nhận hàng, người mua có thể gửi **Báo cáo chất lượng (Quality Report)**. Admin duyệt báo cáo hợp lệ sẽ tiến hành hoàn tiền tự động cho người mua và trừ tiền người bán.
-
+  > Tham khảo __Quality Report Arbitration Sequence Diagram__ [tại đây](./QualityReportArbitrationSequenceDiagram.md)
 
 * __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
 
@@ -201,8 +186,7 @@ sequenceDiagram
 ## ✨ Đặc điểm kĩ thuật nổi bật
 Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
 * __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với __Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client mà không cần tải lại trang.
-> Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast
-> tới các Bidders khác) (GIF)
+  > Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast tới các Bidders khác) (GIF)
 
 
 * __Concurrency Control__: Giải quyết triệt để các vấn đề Lost Update và Race Condition trong kịch bản nhiều người cùng đặt giá tại một mili giây.
@@ -212,7 +196,7 @@ Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
 
 
 * __Kiến trúc MVC Phân tầng:__ Tách biệt hoàn toàn giao diện (Client side) và logic xử lý dữ liệu (Server side) qua ___mô hình Client-Server___. Tách biệt rõ ràng các tầng (Network, Handler, Service, Domain, DAO, Observer).
-> Add ảnh MVC Diagram
+  > Add ảnh MVC Diagram
 
 ---
 
@@ -332,7 +316,7 @@ online-auction-system/
         └── ui/                      # JavaFX Controllers & Views
 ```
 
-> Tham khảo Class Diagram [tại đây](./ClassDiagram.md)
+  > Tham khảo Class Diagram [tại đây](./ClassDiagram.md)
 
 ### Design Patterns áp dụng:
 | Pattern            | Implementation                                                                              | Mục đích hệ thống |
@@ -448,7 +432,19 @@ mvn javafx:run
 
 ## 🧪 Testing
 
-Project có **40 unit test classes** và **hơn 2000 unit tests đã passed** bao phủ tất cả các tầng quan trọng của hệ thống. Tests không yêu cầu kết nối database — toàn bộ dependencies được mock bằng Mockito.
+Project áp dụng __testing pyramid__ mạnh mẽ và có tổ chức rõ ràng với __6 nhóm test chính__.
+
+__Thống kê số files và test methods tính đến ngày `13-5-2026`__
+
+| Loại Test              | Files          | Test Methods             | Công cụ / Đặc điểm                              |
+|------------------------|----------------|--------------------------|-------------------------------------------------|
+| **Unit Tests**         | 38             | 1,670                    | JUnit 5 + Mockito, kiểm tra từng class độc lập  |
+| **Integration Tests**  | 11             | 163                      | Docker + MySQL thật, @RequiresDocker            |
+| **Concurrency Tests**  | 1              | 23                       | Multi-thread race condition, ExecutorService    |
+| **Security Tests**     | 1              | 4                        | WebSocket auth bypass, unauthorized bid         |
+| **Load Tests**         | 2              | 3                        | Throughput benchmark, BidService + Chatbot      |
+| **WebSocket Tests**    | 3              | 39                       | End-to-end packet routing & broadcast           |
+| **TỔNG CỘNG**          | **56 files**   | **1,902 test methods**   |                                                 |
 
 ```bash
 # Chạy toàn bộ tests
@@ -475,12 +471,12 @@ cd auction-server && mvn test
 ## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section & Project Roadmap)
 
 ### 🧠 Đội ngũ
-|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |               Tiến độ                |  Trạng thái     |
-|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:------------------------------------:|:---------------:|
-|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![50%](https://geps.dev/progress/70) | 🏗️ In Progress |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![60%](https://geps.dev/progress/60) | 🏗️ In Progress |
-|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![50%](https://geps.dev/progress/60) | 🏗️ In Progress |
-|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![40%](https://geps.dev/progress/50) | 🏗️ In Progress |
+|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |               Tiến độ                |    Trạng thái     |
+|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:------------------------------------:|:-----------------:|
+|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![50%](https://geps.dev/progress/80) | 🏗️ In Progress   |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![60%](https://geps.dev/progress/80) |  🏗️ In Progress  |
+|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![50%](https://geps.dev/progress/80) |  🏗️ In Progress  |
+|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![40%](https://geps.dev/progress/60) |  🏗️ In Progress  |
 
 
 ### 📅 Tổng quan Timeline
