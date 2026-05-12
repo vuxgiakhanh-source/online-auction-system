@@ -8,7 +8,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 
 /**
- * Entry point of the JavaFX client application.
+ * Entry point của ứng dụng JavaFX client.
  */
 public final class App extends Application {
 
@@ -23,15 +23,16 @@ public final class App extends Application {
         primaryStage.setWidth(UiConstants.DEFAULT_WIDTH);
         primaryStage.setHeight(UiConstants.DEFAULT_HEIGHT);
 
+        AppContext.getInstance().getNetworkGateway().ensureInitialized();
         navigator.goTo(ViewPath.LANDING_VIEW);
         primaryStage.show();
     }
 
-    /**
-     * Launches the JavaFX application.
-     *
-     * @param args command line arguments
-     */
+    @Override
+    public void stop() {
+        AppContext.getInstance().getNetworkGateway().shutdown();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
