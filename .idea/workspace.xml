@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/notification/RealtimeNotificationIntegrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/notification/RealtimeNotificationIntegrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/docker-java.properties" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/docker-java.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,7 +18,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="248" />
+    <option name="cachedIndexableFilesCount" value="256" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -58,6 +63,7 @@
     "Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor": "Run",
     "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
     "Docker.Dockerfile.executor": "Run",
+    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
     "JUnit.AccountServiceTest.executor": "Run",
     "JUnit.AdminObserverTest.executor": "Run",
     "JUnit.AuctionObserverContractTest.executor": "Run",
@@ -75,6 +81,7 @@
     "JUnit.PaymentServiceTest.executor": "Run",
     "JUnit.PaymentStateTransitionIT.executor": "Run",
     "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest$SandwichIntegration.executor": "Run",
     "JUnit.StandardBidStrategyTest.executor": "Run",
     "JUnit.SystemAdminObserverTest.executor": "Run",
     "JUnit.UserRegistrationIntegrationIT.executor": "Run",
@@ -104,20 +111,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Application.TestLauncher">
-    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="Application.com.group13.auction.integration.base.IntegrationTestLauncher">
     <configuration name="com.group13.auction.integration.base.IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.base.IntegrationTestLauncher" />
       <module name="auction-server" />
@@ -131,32 +125,31 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.chatbot.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest$SearchByQueryTest" />
-      <option name="METHOD_NAME" value="randomQuery_returnsNotFound" />
-      <option name="TEST_OBJECT" value="method" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
+      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="ChatbotProviderTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.chatbot.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.service.bid.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.chatbot" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.bid" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.bid.BidServiceIntegrationIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -170,19 +163,31 @@
       </deployment>
       <method v="2" />
     </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml" />
+      <method v="2" />
+    </configuration>
     <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
       <deployment type="dockerfile">
         <settings />
       </deployment>
       <method v="2" />
     </configuration>
+    <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="docker-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.ChatbotProviderTest" />
-        <item itemvalue="JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound" />
         <item itemvalue="Application.com.group13.auction.integration.base.IntegrationTestLauncher" />
+        <item itemvalue="Docker.docker-compose.yml: Compose Deployment" />
         <item itemvalue="Docker.Dockerfile" />
+        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
+        <item itemvalue="JUnit.BidServiceIntegrationIT" />
       </list>
     </recent_temporary>
   </component>
@@ -208,6 +213,9 @@
       <workItem from="1778572986537" duration="3905000" />
       <workItem from="1778577604924" duration="1381000" />
       <workItem from="1778579203240" duration="689000" />
+      <workItem from="1778589156605" duration="2445000" />
+      <workItem from="1778593867386" duration="289000" />
+      <workItem from="1778594531842" duration="336000" />
     </task>
     <servers />
   </component>
@@ -224,6 +232,11 @@
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/base/IntegrationTestLauncher.java</url>
           <line>28</line>
           <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
+          <line>53</line>
+          <option name="timeStamp" value="11" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
