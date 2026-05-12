@@ -14,7 +14,8 @@
     <!-- ── CONSOLE ─────────────────────────────────────────────────────────── -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{30} [%X{requestId:-–}] %X{auctionId:+[a=%X{auctionId}] }%X{username:+[u=%X{username}] }— %msg%n</pattern>
+            <charset>UTF-8</charset>
+            <pattern>%-5level [%thread] %logger{30} [%X{requestId:-–}] %X{auctionId:+[a=%X{auctionId}] }%X{username:+[u=%X{username}] }— %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -29,6 +30,7 @@
             <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
+            <charset>UTF-8</charset>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} [req=%X{requestId:-–}] [auction=%X{auctionId:-–}] [user=%X{username:-–}] — %msg%n</pattern>
         </encoder>
     </appender>
@@ -44,6 +46,7 @@
             <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
+            <charset>UTF-8</charset>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} — %msg%n</pattern>
         </encoder>
     </appender>
@@ -62,6 +65,7 @@
             <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
+            <charset>UTF-8</charset>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} [req=%X{requestId:-–}] [auction=%X{auctionId:-–}] [user=%X{username:-–}] — %msg%n%exception{full}</pattern>
         </encoder>
     </appender>
