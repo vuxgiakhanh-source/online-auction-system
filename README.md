@@ -180,6 +180,13 @@ sequenceDiagram
 
 * __Hệ thống Đánh giá Người dùng (Rating Service)__: Tự động theo dõi và cập nhật điểm đánh giá của người dùng dựa trên lịch sử giao dịch. Người dùng vi phạm nhiều lần (không giao hàng, khiếu nại không hợp lý...) sẽ bị tạm ngưng hoặc khóa tài khoản theo quy định.
 
+
+* __Hỗ trợ khách hàng thông minh (Smart Chatbot)__: Tích hợp trợ lý ảo ngay trên giao diện JavaFX, hỗ trợ giải đáp thắc mắc về quy trình đấu giá, chính sách thanh toán và tìm kiếm phiên đấu giá nhanh thông qua từ khóa.
+
+  * __Tra cứu FAQ__: Trả về câu trả lời tức thì cho các câu hỏi thường gặp.
+
+  * __Tìm kiếm thông minh__: Sử dụng thuật toán tính điểm liên quan (Relevance Scoring) để gợi ý thông tin chính xác nhất.
+
 ---
 
 ## ✨ Đặc điểm kĩ thuật nổi bật
@@ -236,6 +243,53 @@ style DAO fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
 ```
 
+### 🤖 Kiến trúc chatbot
+
+Chatbot được xây dựng theo mô hình hướng sự kiện (Event-Driven), tách biệt hoàn toàn giữa tầng điều phối (Handler) và tầng cung cấp dữ liệu (Provider).
+* __PacketRouter__: Giải mã và điều phối các gói tin CHATBOT_ASK hoặc CHATBOT_GET_FAQ_LIST.
+* __ChatbotProvider__ (Singleton): Đảm bảo hiệu năng bằng cách nạp dữ liệu từ faq_data.json một lần duy nhất vào bộ nhớ và hỗ trợ truy vấn $O(1)$ qua HashMap.
+
+```mermaid
+graph TD
+    %% Định nghĩa Style
+    classDef client fill:#424242,stroke:#333,stroke-width:2px,color:#fff;
+    classDef router fill:#0d47a1,stroke:#333,stroke-width:1px,color:#fff;
+    classDef handler fill:#004d40,stroke:#333,stroke-width:1px,color:#fff;
+    classDef provider fill:#4527a0,stroke:#333,stroke-width:1px,color:#fff;
+    classDef data fill:#3e2723,stroke:#333,stroke-width:1px,color:#fff;
+
+    %% Các thành phần
+    Client["🖥️ Client (WebSocket)<br/>Gửi JSON packet & requestId"]:::client
+    
+    Router["⚙️ PacketRouter<br/>Decode JSON ➔ peekType() ➔ Dispatch"]:::router
+    
+    MainHandler["📦 ChatbotHandler<br/>Supports: CHATBOT_ASK, GET_FAQ_LIST<br/>(Parse ➔ Dispatch ➔ Serialize)"]:::handler
+
+    AskSub["🔍 handleChatbotAsk()<br/>faqId → getAnswerByQuestionId()<br/>query → searchByQuery()"]:::handler
+    
+    ListSub["📋 handleGetFaqList()<br/>getFaqsByCategory()<br/>buildFaqSummaryArray()"]:::handler
+
+    Provider["🧠 ChatbotProvider (Singleton)<br/>HashMap O(1) | Relevance Scoring<br/>Immutable FAQ Data"]:::provider
+
+    JsonDB["📄 faq_data.json (classpath)<br/>10 FAQ · 5 Category · Keywords"]:::data
+
+    %% Luồng dữ liệu
+    Client -- "CHATBOT_ASK / GET_FAQ_LIST" --> Router
+    Router --> MainHandler
+    
+    MainHandler -- "faqId / query?" --> AskSub
+    MainHandler -- "category?" --> ListSub
+    
+    AskSub --> Provider
+    ListSub --> Provider
+    
+    Provider -.->|Load once| JsonDB
+    
+    %% Phản hồi
+    Provider -- "Data" --> MainHandler
+    MainHandler -- "CHATBOT_ANSWER / FAQ_LIST_SUCCESS" --> Client
+```
+
 ### 📂 Cấu trúc project
 
 Project được tổ chức theo kiến trúc **Multi-module Maven**:
@@ -252,6 +306,7 @@ online-auction-system/
 │   └── src/main/java/
 │       ├── model/
 │       │   ├── bank/                # SystemBank
+│       │   ├── chatbot/             # ChatbotHandler, ChatbotResponse, FAQ,...
 │       │   ├── entity/              # Entity (abstract base)
 │       │   ├── user/                # User → NormalUser, Admin, SystemAdmin + Factories
 │       │   ├── item/                # Item → Electronics, Art, Vehicle + Factories
@@ -277,7 +332,7 @@ online-auction-system/
 | **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, `AdminObserver`, `StaffObserver`    | Đẩy thông báo thay đổi giá và trạng thái đến toàn bộ người tham gia ngay lập tức (Realtime). |
 | **Strategy**       | `BidStrategy`                                                                               | Linh hoạt giữa các chế độ đặt giá thủ công và Auto-Bidding. |
 | **Factory Method** | `ItemFactory`, `UserFactory`                                                                | Chuẩn hóa việc tạo các loại Item (Electronics, Art, Vehicle...) và User. |
-| **Singleton**      | `AuctionManager`, `DatabaseConnection`                                                      | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |
+| **Singleton**      | `AuctionManager`, `DatabaseConnection`, `ChatbotProvider`                                    | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |
 
 ---
 
