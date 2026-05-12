@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "version": "1.0.0-test",
+    "lastUpdated": "2025-01-01",
+    "description": "Dữ liệu FAQ kiểm thử — dùng riêng cho unit test, KHÔNG phải production data"
+  },
+  "faqs": [
+    {
+      "id": "FAQ_001",
+      "category": "GENERAL",
+      "keywords": ["omnibid", "hệ thống", "giới thiệu", "là gì", "sàn đấu giá"],
+      "question": "OmniBid là gì và hệ thống hoạt động như thế nào?",
+      "answer": "OmniBid là sàn đấu giá trực tuyến kết nối Người mua (Bidder) và Người bán (Seller). Quy trình hoạt động gồm 3 bước: \n(1) Seller đăng tài sản cần bán kèm giá khởi điểm; \n(2) Bidder đặt giá vượt mức tối thiểu trong thời gian đấu giá mở; \n(3) Sau khi phiên kết thúc, người trả giá cao nhất thắng và có 24 giờ để hoàn tất thanh toán. Hệ thống hỗ trợ đấu giá tự động (Auto-Bid) và theo dõi điểm uy tín cho tất cả người dùng."
+    },
+    {
+      "id": "FAQ_002",
+      "category": "BIDDING",
+      "keywords": ["giá thầu", "tối thiểu", "bước giá", "minimum bid", "đặt giá"],
+      "question": "Quy định về mức giá thầu tối thiểu là gì?",
+      "answer": "Mỗi lượt đặt giá phải cao hơn mức giá hiện tại ít nhất một bước giá (bid increment). Bước giá tối thiểu được hệ thống tính tự động theo giá trị tài sản: \nDưới 1 triệu đồng = 10.000đ/bước; \nTừ 1–10 triệu = 50.000đ/bước; \nTừ 10–100 triệu = 500.000đ/bước; \nTrên 100 triệu = 1.000.000đ/bước. \nMọi lượt đấu thầu thấp hơn mức này sẽ bị hệ thống từ chối tự động."
+    },
+    {
+      "id": "FAQ_003",
+      "category": "BIDDING",
+      "keywords": ["auto bid", "tự động", "đấu giá tự động", "autobid", "giá trần"],
+      "question": "Tính năng Auto-Bid (Đấu giá tự động) hoạt động ra sao?",
+      "answer": "Auto-Bid giúp bạn đặt giá tự động mà không cần theo dõi liên tục. Bạn đặt một mức Giá trần (Maximum Price) — hệ thống sẽ tự động đặt giá thay bạn với bước giá tối thiểu khi có người khác vượt qua bạn, cho đến khi đạt giá trần (max bid). Lưu ý quan trọng: giá trần được mã hóa và không hiển thị với người dùng khác. Nếu hai Bidder có cùng giá trần, người đặt Auto-Bid trước sẽ được ưu tiên thắng."
+    },
+    {
+      "id": "FAQ_004",
+      "category": "PAYMENT",
+      "keywords": ["thanh toán", "24 giờ", "payment", "nộp tiền", "sau khi thắng"],
+      "question": "Sau khi thắng đấu giá, tôi phải thanh toán trong bao lâu?",
+      "answer": "Người thắng đấu giá có đúng 24 giờ kể từ thời điểm phiên đấu giá kết thúc để hoàn tất thanh toán qua hệ thống ví nội bộ OmniBid. Quy trình: \n(1) Nạp số dư vào Ví OmniBid trước khi tham gia; \n(2) Khi thắng, số tiền được giữ (freeze) từ ví; \n(3) Xác nhận thanh toán trong 24h để giải phóng tiền cho Seller. \nNếu quá 24h không thanh toán, giao dịch tự động hủy và điểm uy tín của bạn sẽ bị trừ."
+    },
+    {
+      "id": "FAQ_005",
+      "category": "PAYMENT",
+      "keywords": ["không trả tiền", "hủy thanh toán", "second chance", "cơ hội thứ hai"],
+      "question": "Điều gì xảy ra nếu người thắng không thanh toán trong 24 giờ?",
+      "answer": "Nếu người thắng không thanh toán đúng hạn, hệ thống sẽ xử lý theo thứ tự: \n(1) Giao dịch bị hủy tự động, điểm uy tín của Bidder bị trừ 0.5 điểm; \n(2) Hệ thống gửi 'Cơ hội thứ hai' (Second Chance Offer) đến người đặt giá cao thứ nhì; \n(3) Nếu người thứ hai cũng từ chối, Seller có quyền đăng lại phiên đấu giá. \nBidder vi phạm nhiều lần có thể bị đình chỉ tài khoản (SUSPENDED) hoặc cấm vĩnh viễn (BANNED)."
+    },
+    {
+      "id": "FAQ_006",
+      "category": "RATING",
+      "keywords": ["điểm uy tín", "rating", "trừ điểm", "bị trừ", "reputation"],
+      "question": "Điểm uy tín bị trừ trong những trường hợp nào?",
+      "answer": "Điểm uy tín (thang 0–5, mặc định 3.0) bị trừ trong các trường hợp sau: \n(1) Thắng đấu giá nhưng không thanh toán trong 24h: -0.5 điểm; \n(2) Bị Seller/Bidder đánh giá thấp sau giao dịch: tùy điểm đánh giá; \n(3) Bị phát hiện gian lận (shill bidding, thông đồng giá): -1.0 điểm và bị Admin xem xét. \nKhi điểm ≤ 1.5, tài khoản tự động bị SUSPENDED trong 3 tháng. \nĐiểm dưới 1.0 hoặc vi phạm nghiêm trọng sẽ bị BAN vĩnh viễn."
+    },
+    {
+      "id": "FAQ_007",
+      "category": "RATING",
+      "keywords": ["tăng điểm", "cải thiện uy tín", "restore", "khôi phục điểm"],
+      "question": "Làm thế nào để tăng điểm uy tín và khôi phục tài khoản bị đình chỉ?",
+      "answer": "Điểm uy tín tăng khi: \n(1) Hoàn tất thanh toán đúng hạn; \n(2) Được Seller/Bidder đánh giá tốt (4–5 sao) sau giao dịch; \n(3) Tham gia và hoàn thành nhiều phiên đấu giá thành công. Với tài khoản SUSPENDED: sau 3 tháng hệ thống tự động khôi phục về trạng thái ACTIVE và cộng +0.5 điểm bonus. \nTrong thời gian bị SUSPENDED, bạn không thể đặt giá hoặc đăng phiên đấu giá mới."
+    },
+    {
+      "id": "FAQ_008",
+      "category": "SELLER",
+      "keywords": ["đăng ký seller", "bán hàng", "seller role", "đăng tài sản"],
+      "question": "Làm thế nào để trở thành Seller và đăng tài sản lên đấu giá?",
+      "answer": "Để trở thành Seller, bạn cần: \n(1) Có tài khoản OmniBid đã xác minh với điểm uy tín ≥ 2.0; \n(2) Gửi yêu cầu nâng cấp vai trò Seller — hệ thống tự động xét duyệt; \n(3) Sau khi được duyệt, vào mục 'Tạo phiên đấu giá' và điền thông tin: tên tài sản, mô tả, danh mục (Điện tử / Nghệ thuật / Phương tiện), giá khởi điểm, thời gian kết thúc. \nLưu ý: Seller cũng bị đánh giá điểm uy tín bởi Bidder sau mỗi giao dịch."
+    },
+    {
+      "id": "FAQ_009",
+      "category": "BIDDING",
+      "keywords": ["rút giá", "hủy bid", "cancel bid", "rút lại"],
+      "question": "Tôi có thể rút lại lượt đặt giá của mình không?",
+      "answer": "Theo quy định của OmniBid, lượt đặt giá sau khi được xác nhận là KHÔNG THỂ rút lại hoặc chỉnh sửa. Đây là nguyên tắc công bằng của đấu giá trực tuyến để bảo vệ các bên tham gia. Do đó, hãy cân nhắc kỹ trước khi xác nhận mỗi lượt đặt giá. Nếu bạn thắng phiên đấu giá nhưng không thanh toán, điểm uy tín của bạn sẽ bị ảnh hưởng theo chính sách vi phạm thanh toán."
+    },
+    {
+      "id": "FAQ_010",
+      "category": "PAYMENT",
+      "keywords": ["ví", "nạp tiền", "wallet", "số dư", "rút tiền"],
+      "question": "Hệ thống Ví OmniBid hoạt động như thế nào?",
+      "answer": "Ví OmniBid là ví nội bộ dùng để thanh toán trong phiên đấu giá. Quy trình: \n(1) Nạp tiền vào ví trước khi tham gia đấu giá (mô phỏng qua giao diện hệ thống); \n(2) Khi thắng, xác nhận thanh toán trong 24h để chuyển tiền cho Seller; \n(3) Seller có thể rút số dư về sau khi giao dịch hoàn tất. \nLưu ý: Ví OmniBid là ví mô phỏng phục vụ mục đích dự án, không kết nối ngân hàng thực tế."
+    }
+  ]
+}

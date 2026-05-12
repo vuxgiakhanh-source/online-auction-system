@@ -5,12 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/8b6e7012-e4f3-4cfb-b191-7dedb62ddae5.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/PacketType.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/PacketType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +28,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="OOP-logic-testig" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -50,65 +55,67 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ServerMain.executor&quot;: &quot;Run&quot;,
-    &quot;Application.TestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.com.group13.auction.unit.TestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Docker.Dockerfile.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AccountServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AdminObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionObserverContractTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionWinnerDAOIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AutoBidStrategyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceTest$PlaceBidHappyPath.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidStrategyContractTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ConcurrencyBiddingIntegrationTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DepositRefundIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.FinancialAuditIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentStateTransitionIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RatingServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.StandardBidStrategyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SystemAdminObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserRegistrationIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.WalletPaymentIT.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.online-auction-system [clean].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;OOP-logic-testig&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.IntegrationTestLauncher.executor": "Run",
+    "Application.ServerMain.executor": "Run",
+    "Application.TestLauncher.executor": "Run",
+    "Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor": "Run",
+    "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
+    "Docker.Dockerfile.executor": "Run",
+    "JUnit.AccountServiceTest.executor": "Run",
+    "JUnit.AdminObserverTest.executor": "Run",
+    "JUnit.AuctionObserverContractTest.executor": "Run",
+    "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
+    "JUnit.AuctionWinnerDAOIT.executor": "Run",
+    "JUnit.AutoBidStrategyTest.executor": "Run",
+    "JUnit.BidServiceIntegrationIT.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidHappyPath.executor": "Run",
+    "JUnit.BidStrategyContractTest.executor": "Run",
+    "JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor": "Run",
+    "JUnit.ChatbotProviderTest.executor": "Run",
+    "JUnit.ConcurrencyBiddingIntegrationTest.executor": "Run",
+    "JUnit.DepositRefundIT.executor": "Run",
+    "JUnit.FinancialAuditIntegrationIT.executor": "Run",
+    "JUnit.PaymentServiceTest.executor": "Run",
+    "JUnit.PaymentStateTransitionIT.executor": "Run",
+    "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.StandardBidStrategyTest.executor": "Run",
+    "JUnit.SystemAdminObserverTest.executor": "Run",
+    "JUnit.UserRegistrationIntegrationIT.executor": "Run",
+    "JUnit.WalletPaymentIT.executor": "Run",
+    "Maven.online-auction-system [clean].executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "chatbot-service",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
-  <component name="RunManager" selected="Application.com.group13.auction.integration.base.IntegrationTestLauncher">
-    <configuration name="IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.IntegrationTestLauncher" />
+}]]></component>
+  <component name="RunManager" selected="Application.TestLauncher">
+    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -129,31 +136,32 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.chatbot.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest$SearchByQueryTest" />
+      <option name="METHOD_NAME" value="randomQuery_returnsNotFound" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BidServiceIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="ChatbotProviderTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.chatbot.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.BidServiceIntegrationIT" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.chatbot" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -175,11 +183,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.ChatbotProviderTest" />
+        <item itemvalue="JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound" />
         <item itemvalue="Application.com.group13.auction.integration.base.IntegrationTestLauncher" />
         <item itemvalue="Docker.Dockerfile" />
-        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
-        <item itemvalue="Application.IntegrationTestLauncher" />
-        <item itemvalue="JUnit.BidServiceIntegrationIT" />
       </list>
     </recent_temporary>
   </component>
@@ -217,11 +225,6 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
-          <line>19</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/base/IntegrationTestLauncher.java</url>
           <line>28</line>
