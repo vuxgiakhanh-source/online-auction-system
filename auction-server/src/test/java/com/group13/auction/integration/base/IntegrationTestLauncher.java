@@ -15,20 +15,22 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 /**
  * Launcher chạy toàn bộ Integration Tests.
  *
- * Cấu trúc package:
- *   integration.base/           — IntegrationTestBase, Launcher, RequiresDocker
- *   integration.dao/            — DAOIntegrationIT, AuctionWinnerDAOIT
- *   integration.service.bid/    — BidServiceIntegrationIT, ConcurrencyBiddingIntegrationTest
- *   integration.service.payment/— PaymentStateTransitionIT, WalletPaymentIT,
- *                                  DepositRefundIT, PaymentExpireAndSecondChanceIT
- *   integration.service.rating/ — RatingServiceIntegrationIT
- *   integration.service.report/ — QualityReportIntegrationIT
- *   integration.notification/   — RealtimeNotificationIntegrationTest
- *   integration.user/           — UserRegistrationIntegrationIT
+ * Cấu trúc test (cùng cấp dưới {@code com.group13.auction}):
+ *   unit/           — *Test.java (Surefire, {@link com.group13.auction.unit.TestLauncher})
+ *   integration/    — *IT.java, *IntegrationTest.java (Failsafe + Docker)
+ *   concurrency/  — BidConcurrencyTest (mock, Surefire)
+ *   load/           — BidServiceLoadIT (Docker), …
+ *   websocket/      — BidWebSocketIntegrationIT (Docker), …
+ *
+ * Package concret:
+ *   integration.base/ — IntegrationTestBase, Launcher, RequiresDocker
+ *   integration.dao/, service.*, user/, notification/
+ *   websocket/        — *IT WebSocket × DB (Testcontainers)
  */
 public final class IntegrationTestLauncher {
 
     private static final String ROOT = "com.group13.auction.integration";
+    private static final String WEBSOCKET_IT = "com.group13.auction.websocket";
 
     private IntegrationTestLauncher() {}
 
@@ -39,7 +41,10 @@ public final class IntegrationTestLauncher {
         System.out.println("╚══════════════════════════════════════════════════════════╝\n");
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectPackage(ROOT))
+                .selectors(
+                        selectPackage(ROOT),
+                        selectPackage(WEBSOCKET_IT),
+                        selectPackage("com.group13.auction.load"))
                 .filters(includeClassNamePatterns(".*IT", ".*IntegrationTest"))
                 .build();
 

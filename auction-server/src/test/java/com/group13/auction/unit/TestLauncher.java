@@ -13,14 +13,19 @@ import static org.junit.platform.engine.discovery.ClassNameFilter.includeClassNa
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 /**
- * Launcher chạy toàn bộ unit test logic nghiệp vụ OOP.
+ * Launcher chạy unit test + concurrency (cùng cấp {@code unit/}, không Docker).
  *
- * <p>Module này chỉ phụ thuộc các class OOP trong auction-server.
+ * <p>Gồm {@code com.group13.auction.unit}, {@code com.group13.auction.websocket} (unit),
+ * {@code com.group13.auction.security}, và {@code com.group13.auction.concurrency}.
+ * Test tải nhẹ trong {@code com.group13.auction.load} có tên *Test (vd. Chatbot…) cũng chạy ở đây.
  */
 public final class TestLauncher {
 
-    /** Package gốc chứa toàn bộ test logic nghiệp vụ. */
-    private static final String TEST_PACKAGE = "com.group13.auction.unit";
+    private static final String UNIT = "com.group13.auction.unit";
+    private static final String WEBSOCKET_UNIT = "com.group13.auction.websocket";
+    private static final String SECURITY = "com.group13.auction.security";
+    private static final String CONCURRENCY = "com.group13.auction.concurrency";
+    private static final String LOAD = "com.group13.auction.load";
 
     private TestLauncher() {}
 
@@ -35,7 +40,12 @@ public final class TestLauncher {
 
         LauncherDiscoveryRequest request =
                 LauncherDiscoveryRequestBuilder.request()
-                        .selectors(selectPackage(TEST_PACKAGE))
+                        .selectors(
+                                selectPackage(UNIT),
+                                selectPackage(WEBSOCKET_UNIT),
+                                selectPackage(SECURITY),
+                                selectPackage(CONCURRENCY),
+                                selectPackage(LOAD))
                         .filters(includeClassNamePatterns(".*Test"))
                         .build();
 
