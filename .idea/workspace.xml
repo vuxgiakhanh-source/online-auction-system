@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/BidConcurrencyTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/payment/SecondChanceOfferConcurrencyTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +15,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="296" />
+    <option name="cachedIndexableFilesCount" value="297" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -68,6 +69,7 @@
     "JUnit.AuctionSystemLoadIT.executor": "Run",
     "JUnit.AuctionTimerServiceConcurrencyTest.executor": "Run",
     "JUnit.AuctionWinnerDAOIT (1).executor": "Run",
+    "JUnit.AuctionWinnerDAOIT$UpdatePaymentStatusTests.executor": "Run",
     "JUnit.AuctionWinnerDAOIT.executor": "Run",
     "JUnit.AutoBidChainConcurrencyTest.executor": "Run",
     "JUnit.AutoBidStrategyTest.executor": "Run",
@@ -75,6 +77,9 @@
     "JUnit.BidDaoConsistencyTest.executor": "Run",
     "JUnit.BidEdgeCasesTest.executor": "Run",
     "JUnit.BidRaceConditionTest.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.joinAuction_happyPath_depositLockedAndDbConsistent.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$PlaceBidTests.executor": "Run",
     "JUnit.BidServiceIntegrationIT.executor": "Run",
     "JUnit.BidServiceTest$PlaceBidHappyPath.executor": "Run",
     "JUnit.BidStrategyContractTest.executor": "Run",
@@ -82,22 +87,29 @@
     "JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor": "Run",
     "JUnit.ChatbotProviderTest.executor": "Run",
     "JUnit.ConcurrencyBiddingIntegrationTest.executor": "Run",
+    "JUnit.DAOIntegrationIT$AuctionDAOIntegrationTests.executor": "Run",
+    "JUnit.DAOIntegrationIT$TransactionIntegrityTests.unlockDeposit_atomic_restoresBalanceCorrectly.executor": "Run",
     "JUnit.DAOIntegrationIT.executor": "Run",
     "JUnit.DepositRefundIT.executor": "Run",
+    "JUnit.DepositRefundIT.threeBidders_allReceiveFullDepositRefund_afterCancel.executor": "Run",
+    "JUnit.DepositRefundIT.winner_doesNotReceiveRefund_onlyLosersRefunded.executor": "Run",
     "JUnit.FinancialAuditIntegrationIT.executor": "Run",
     "JUnit.JoinAuctionConcurrencyTest.executor": "Run",
     "JUnit.ObserverConcurrencyTest.executor": "Run",
     "JUnit.PacketRouterDispatchTest.executor": "Run",
     "JUnit.PacketRouterLoadTest.executor": "Run",
+    "JUnit.PaymentExpireAndSecondChanceIT.executor": "Run",
     "JUnit.PaymentServiceConcurrencyTest.executor": "Run",
     "JUnit.PaymentServiceLoadIT.executor": "Run",
     "JUnit.PaymentServiceTest.executor": "Run",
     "JUnit.PaymentStateTransitionIT.executor": "Run",
     "JUnit.QualityReportIntegrationIT.executor": "Run",
     "JUnit.RatingConcurrencyTest.executor": "Run",
+    "JUnit.RatingServiceIntegrationIT.executor": "Run",
     "JUnit.RatingServiceTest.executor": "Run",
     "JUnit.RealtimeNotificationIntegrationTest$SandwichIntegration.executor": "Run",
     "JUnit.RealtimeNotificationIntegrationTest$TopDownEventDispatch.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest.executor": "Run",
     "JUnit.SessionManagerBroadcastTest$BroadcastToAuction.differentAuctions_onlyMatchingWatcherReceives.executor": "Run",
     "JUnit.SessionManagerLoadTest.executor": "Run",
     "JUnit.StandardBidStrategyTest.executor": "Run",
@@ -107,6 +119,7 @@
     "JUnit.UserRegistrationIntegrationIT.executor": "Run",
     "JUnit.WalletConcurrencyTest.executor": "Run",
     "JUnit.WalletPaymentIT.executor": "Run",
+    "JUnit.WalletServiceTest.executor": "Run",
     "Maven.online-auction-system [clean].executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -117,6 +130,7 @@
     "git-widget-placeholder": "OOP-logic-testig",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/online-auction-system",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
@@ -132,77 +146,75 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="JUnit.PaymentServiceConcurrencyTest">
-    <configuration name="BidEdgeCasesTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Application.IntegrationTestLauncher">
+    <configuration name="IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.base.IntegrationTestLauncher" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.bid.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.base.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.bid" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.bid.BidEdgeCasesTest" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="DAOIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.DAOIntegrationIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BidRaceConditionTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="PaymentStateTransitionIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.bid.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.service.payment.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.bid" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.bid.BidRaceConditionTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.payment" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.payment.PaymentStateTransitionIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="JoinAuctionConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="RatingServiceIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.join.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.service.rating.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.join" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.join.JoinAuctionConcurrencyTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.rating" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.rating.RatingServiceIntegrationIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="ObserverConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="WalletPaymentIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.observer.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.service.payment.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.observer" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.observer.ObserverConcurrencyTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="PaymentServiceConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.payment.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.payment" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.payment.PaymentServiceConcurrencyTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.payment" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.payment.WalletPaymentIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -221,19 +233,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="JUnit.BidEdgeCasesTest" />
-      <item itemvalue="JUnit.BidRaceConditionTest" />
-      <item itemvalue="JUnit.JoinAuctionConcurrencyTest" />
-      <item itemvalue="JUnit.ObserverConcurrencyTest" />
-      <item itemvalue="JUnit.PaymentServiceConcurrencyTest" />
+      <item itemvalue="Application.IntegrationTestLauncher" />
+      <item itemvalue="JUnit.DAOIntegrationIT" />
+      <item itemvalue="JUnit.PaymentStateTransitionIT" />
+      <item itemvalue="JUnit.RatingServiceIntegrationIT" />
+      <item itemvalue="JUnit.WalletPaymentIT" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.PaymentServiceConcurrencyTest" />
-        <item itemvalue="JUnit.ObserverConcurrencyTest" />
-        <item itemvalue="JUnit.JoinAuctionConcurrencyTest" />
-        <item itemvalue="JUnit.BidRaceConditionTest" />
-        <item itemvalue="JUnit.BidEdgeCasesTest" />
+        <item itemvalue="Application.IntegrationTestLauncher" />
+        <item itemvalue="JUnit.DAOIntegrationIT" />
+        <item itemvalue="JUnit.RatingServiceIntegrationIT" />
+        <item itemvalue="JUnit.WalletPaymentIT" />
+        <item itemvalue="JUnit.PaymentStateTransitionIT" />
       </list>
     </recent_temporary>
   </component>
@@ -263,6 +275,9 @@
       <workItem from="1778593867386" duration="289000" />
       <workItem from="1778594531842" duration="3169000" />
       <workItem from="1778598162091" duration="7291000" />
+      <workItem from="1778661220092" duration="396000" />
+      <workItem from="1778666989410" duration="2303000" />
+      <workItem from="1778673314187" duration="25757000" />
     </task>
     <servers />
   </component>
@@ -282,11 +297,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
-          <line>58</line>
-          <option name="timeStamp" value="16" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
           <line>111</line>
           <option name="timeStamp" value="17" />
         </line-breakpoint>
@@ -295,14 +305,10 @@
           <line>34</line>
           <option name="timeStamp" value="20" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-method">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/base/IntegrationTestLauncher.java</url>
-          <line>36</line>
-          <properties class="com.group13.auction.integration.base.IntegrationTestLauncher" method="main">
-            <option name="EMULATED" value="true" />
-            <option name="WATCH_EXIT" value="false" />
-          </properties>
-          <option name="timeStamp" value="12" />
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="24" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -22,7 +22,6 @@ import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.lang.reflect.Field;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -57,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   - Không dùng dữ liệu shared giữa các test → mỗi test độc lập hoàn toàn
  *
  * Các class được tích hợp:
- *   - {@link DatabaseConnection} (Singleton — sẽ được reset bằng reflection)
+ *   - {@link DatabaseConnection} (Singleton — reconfigured via HikariCP pool)
  *   - {@link UserDAO}
  *   - {@link ItemDAO}
  *   - {@link AuctionDAO}
@@ -104,16 +103,9 @@ class DAOIntegrationIT {
 
     @BeforeAll
     static void configureDataSource() throws Exception {
-        /*
-         * Bottom-up bước đầu tiên: đảm bảo DatabaseConnection (tầng thấp nhất)
-         * kết nối được tới Testcontainer thay vì production MySQL.
-         * Dùng reflection để inject JDBC URL vào Singleton sau khi container started.
-         */
-        resetDatabaseConnectionSingleton(
-                mysql.getJdbcUrl(),
-                mysql.getUsername(),
-                mysql.getPassword()
-        );
+        // Reconfigure HikariCP pool to point to the Testcontainer instance.
+        DatabaseConnection.getInstance()
+                .reconfigure(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
     }
 
     @BeforeEach
@@ -207,8 +199,8 @@ class DAOIntegrationIT {
         @DisplayName("Schema được khởi tạo đúng — bảng users tồn tại")
         void schema_requiredTablesExist() throws Exception {
             String[] requiredTables = {
-                "users", "items", "auctions", "bid_transactions",
-                "financial_transactions", "user_auction_activity"
+                    "users", "items", "auctions", "bid_transactions",
+                    "financial_transactions", "user_auction_activity"
             };
 
             try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
@@ -216,8 +208,8 @@ class DAOIntegrationIT {
                 for (String table : requiredTables) {
                     try (ResultSet rs = meta.getTables(null, null, table, new String[]{"TABLE"})) {
                         assertThat(rs.next())
-                            .as("Bảng '%s' phải tồn tại trong schema", table)
-                            .isTrue();
+                                .as("Bảng '%s' phải tồn tại trong schema", table)
+                                .isTrue();
                     }
                 }
             }
@@ -343,18 +335,32 @@ class DAOIntegrationIT {
         @Order(8)
         @DisplayName("saveUserAuctionActivity() lưu JOINED, findJoinedAuctionIdsByUserId() trả về đúng")
         void saveAndFindUserAuctionActivity_roundTrip() {
-            String userId    = userDAO.registerUser(
+            // Tạo seller + seller record + item + auction thật vì user_auction_activity có FK → auctions(id)
+            String userId = userDAO.registerUser(
                     "bidder_grace", hashPassword("pass1234"), "grace@omnibid.vn");
             createdUserIds.add(userId);
-            String auctionId = UUID.randomUUID().toString();
-            // Không tạo auction thật để đơn giản hoá — user_auction_activity không FK auction
-            // (tuỳ schema; nếu có FK thì tạo auction trước)
 
-            boolean saved = userDAO.saveUserAuctionActivity(userId, auctionId, "JOINED");
+            String sellerId = userDAO.registerUser(
+                    "seller_grace_aux", hashPassword("pass1234"), "grace_seller@omnibid.vn");
+            createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
+
+            String itemId = UUID.randomUUID().toString();
+            itemDAO.addItem(itemId, sellerId, "Grace Test Item", "desc", 1_000_000L, "ELECTRONICS");
+            createdItemIds.add(itemId);
+
+            Item item = itemDAO.findItemById(itemId);
+            Auction auction = Auction.create(item,
+                    LocalDateTime.now().plusMinutes(1),
+                    LocalDateTime.now().plusHours(1), 1_500_000L);
+            auctionDAO.createAuction(auction);
+            createdAuctionIds.add(auction.getId());
+
+            boolean saved = userDAO.saveUserAuctionActivity(userId, auction.getId(), "JOINED");
 
             assertThat(saved).isTrue();
             Set<String> joinedIds = userDAO.findJoinedAuctionIdsByUserId(userId);
-            assertThat(joinedIds).contains(auctionId);
+            assertThat(joinedIds).contains(auction.getId());
         }
 
         @ParameterizedTest
@@ -386,15 +392,33 @@ class DAOIntegrationIT {
     @DisplayName("Tầng 2B — FinancialTransactionDAO (không phụ thuộc DAO khác)")
     class FinancialTransactionDAOTests {
 
+        /** Helper tạo seller + item + auction thật để dùng làm auctionId hợp lệ */
+        private String createRealAuction(String sellerUsername) {
+            String sellerId = userDAO.registerUser(
+                    sellerUsername, hashPassword("pass"), sellerUsername + "@test.vn");
+            createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
+            String itemId = UUID.randomUUID().toString();
+            itemDAO.addItem(itemId, sellerId, "FinTx Item " + sellerUsername, "desc", 1_000_000L, "ELECTRONICS");
+            createdItemIds.add(itemId);
+            Item item = itemDAO.findItemById(itemId);
+            Auction auction = Auction.create(item,
+                    LocalDateTime.now().plusMinutes(1),
+                    LocalDateTime.now().plusHours(1), 1_500_000L);
+            auctionDAO.createAuction(auction);
+            createdAuctionIds.add(auction.getId());
+            return auction.getId();
+        }
+
         @Test
         @Order(1)
         @DisplayName("saveTransaction(DEPOSIT_LOCK) lưu thành công và truy vấn được")
         void saveTransaction_depositLock_persistsCorrectly() {
-            // Cần user để FK sender_id hợp lệ
+            // Cần user để FK sender_id hợp lệ, auction thật để FK auction_id hợp lệ
             String userId    = userDAO.registerUser(
                     "wallet_user1", hashPassword("pass"), "wallet1@test.vn");
             createdUserIds.add(userId);
-            String auctionId = UUID.randomUUID().toString();
+            String auctionId = createRealAuction("wallet_seller1");
 
             FinancialTransaction tx = FinancialTransaction.create(
                     userId, "SYSTEM_LOCKED", 500_000L,
@@ -413,7 +437,7 @@ class DAOIntegrationIT {
             String userId    = userDAO.registerUser(
                     "wallet_user2", hashPassword("pass"), "wallet2@test.vn");
             createdUserIds.add(userId);
-            String auctionId = UUID.randomUUID().toString();
+            String auctionId = createRealAuction("wallet_seller2");
 
             // Lưu 2 DEPOSIT_LOCK cho cùng 1 (userId, auctionId)
             FinancialTransaction tx1 = FinancialTransaction.create(
@@ -448,14 +472,14 @@ class DAOIntegrationIT {
             String userId = userDAO.registerUser(
                     "wallet_user3", hashPassword("pass"), "wallet3@test.vn");
             createdUserIds.add(userId);
-            String auctionId = UUID.randomUUID().toString();
+            String auctionId = createRealAuction("wallet_seller3");
 
             TransactionType[] types = {
-                TransactionType.DEPOSIT_LOCK,
-                TransactionType.DEPOSIT_UNLOCK,
-                TransactionType.DEPOSIT_FORFEIT,
-                TransactionType.PAYMENT_FROM_WINNER,
-                TransactionType.PAYOUT_TO_SELLER
+                    TransactionType.DEPOSIT_LOCK,
+                    TransactionType.DEPOSIT_UNLOCK,
+                    TransactionType.DEPOSIT_FORFEIT,
+                    TransactionType.PAYMENT_FROM_WINNER,
+                    TransactionType.PAYOUT_TO_SELLER
             };
 
             for (TransactionType type : types) {
@@ -886,15 +910,15 @@ class DAOIntegrationIT {
             long lockedInDB = financialTransactionDAO.findLockedDepositAmount(userId, auctionId);
 
             assertAll("Atomicity — balance, locked, finTx phải nhất quán",
-                () -> assertThat(user.getBalance())
-                        .as("Balance phải giảm đúng depositAmount")
-                        .isEqualTo(10_000_000L - depositAmount),
-                () -> assertThat(user.getLockedDeposit())
-                        .as("lockedDeposit phải tăng đúng depositAmount")
-                        .isEqualTo(depositAmount),
-                () -> assertThat(lockedInDB)
-                        .as("FinancialTransaction ghi nhận đúng số tiền cọc")
-                        .isEqualTo(depositAmount)
+                    () -> assertThat(user.getBalance())
+                            .as("Balance phải giảm đúng depositAmount")
+                            .isEqualTo(10_000_000L - depositAmount),
+                    () -> assertThat(user.getLockedDeposit())
+                            .as("lockedDeposit phải tăng đúng depositAmount")
+                            .isEqualTo(depositAmount),
+                    () -> assertThat(lockedInDB)
+                            .as("FinancialTransaction ghi nhận đúng số tiền cọc")
+                            .isEqualTo(depositAmount)
             );
         }
 
@@ -918,8 +942,8 @@ class DAOIntegrationIT {
 
             // Thực thi atomic block nhưng cố tình fail ở bước lưu FinancialTransaction
             assertThatThrownBy(() ->
-                executeAtomicDepositLock_withFailure(userId, auctionId, 3_000_000L))
-                .isInstanceOf(SQLException.class);
+                    executeAtomicDepositLock_withFailure(userId, auctionId, 3_000_000L))
+                    .isInstanceOf(SQLException.class);
 
             // Verify: balance phải giữ nguyên sau rollback
             NormalUser userAfter = userDAO.findNormalUserById(userId);
@@ -1010,12 +1034,12 @@ class DAOIntegrationIT {
             // Verify: balance về lại như ban đầu, lockedDeposit = 0
             NormalUser user = userDAO.findNormalUserById(userId);
             assertAll("unlockDeposit — phải hoàn về trạng thái ban đầu",
-                () -> assertThat(user.getBalance())
-                        .as("Balance phải trở về 10_000_000 sau khi hoàn cọc")
-                        .isEqualTo(10_000_000L),
-                () -> assertThat(user.getLockedDeposit())
-                        .as("lockedDeposit phải = 0 sau khi hoàn toàn bộ")
-                        .isZero()
+                    () -> assertThat(user.getBalance())
+                            .as("Balance phải trở về 10_000_000 sau khi hoàn cọc")
+                            .isEqualTo(10_000_000L),
+                    () -> assertThat(user.getLockedDeposit())
+                            .as("lockedDeposit phải = 0 sau khi hoàn toàn bộ")
+                            .isZero()
             );
         }
 
@@ -1036,9 +1060,9 @@ class DAOIntegrationIT {
             String auctionId = UUID.randomUUID().toString();
 
             assertThatThrownBy(() ->
-                executeAtomicDepositLock(userId, auctionId, 8_000_000L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Số dư khả dụng không đủ");
+                    executeAtomicDepositLock(userId, auctionId, 8_000_000L))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Số dư khả dụng không đủ");
 
             // Verify: balance không thay đổi
             NormalUser user = userDAO.findNormalUserById(userId);
@@ -1079,12 +1103,12 @@ class DAOIntegrationIT {
             long expectedBalance = 30_000_000L - finalPrice;
 
             assertAll("Payment flow end-to-end",
-                () -> assertThat(winner.getBalance())
-                        .as("Balance winner sau thanh toán = 30tr - finalPrice")
-                        .isEqualTo(expectedBalance),
-                () -> assertThat(winner.getLockedDeposit())
-                        .as("lockedDeposit phải = 0 sau khi thanh toán xong")
-                        .isZero()
+                    () -> assertThat(winner.getBalance())
+                            .as("Balance winner sau thanh toán = 30tr - finalPrice")
+                            .isEqualTo(expectedBalance),
+                    () -> assertThat(winner.getLockedDeposit())
+                            .as("lockedDeposit phải = 0 sau khi thanh toán xong")
+                            .isZero()
             );
         }
     }
@@ -1109,6 +1133,8 @@ class DAOIntegrationIT {
                     "crossdao_bidder", hashPassword("pass"), "crossbidder@omnibid.vn");
             createdUserIds.addAll(List.of(sellerId, bidderId));
             userDAO.addBalance(bidderId, 20_000_000L);
+
+            ensureSellerRecord(sellerId);
 
             String itemId = UUID.randomUUID().toString();
             itemDAO.addItem(itemId, sellerId, "Cross DAO Test Item", "d",
@@ -1155,26 +1181,26 @@ class DAOIntegrationIT {
                     bidderId, auction.getId());
 
             assertAll("Cross-DAO consistency",
-                () -> assertThat(auctionFromDB.getStatus())
-                        .as("Auction phải ở RUNNING")
-                        .isEqualTo(Auction.AuctionStatus.RUNNING),
-                () -> assertThat(auctionFromDB.getCurrentPrice())
-                        .as("currentPrice phải = bidAmount")
-                        .isEqualTo(bidAmount),
-                () -> assertThat(auctionFromDB.getCurrentLeader().getId())
-                        .as("currentLeader phải là bidderId")
-                        .isEqualTo(bidderId),
-                () -> assertThat(bidderFromDB.getLockedDeposit())
-                        .as("lockedDeposit của bidder phải = deposit")
-                        .isEqualTo(deposit),
-                () -> assertThat(bidHistory).hasSize(1)
-                        .as("BidTransaction phải được ghi 1 lần"),
-                () -> assertThat(depositInDB)
-                        .as("FinancialTransaction DEPOSIT_LOCK phải ghi đúng số tiền")
-                        .isEqualTo(deposit),
-                () -> assertThat(bidderFromDB.getJoinedAuctionIds())
-                        .as("User phải được đánh dấu đã JOINED auction")
-                        .contains(auction.getId())
+                    () -> assertThat(auctionFromDB.getStatus())
+                            .as("Auction phải ở RUNNING")
+                            .isEqualTo(Auction.AuctionStatus.RUNNING),
+                    () -> assertThat(auctionFromDB.getCurrentPrice())
+                            .as("currentPrice phải = bidAmount")
+                            .isEqualTo(bidAmount),
+                    () -> assertThat(auctionFromDB.getCurrentLeader().getId())
+                            .as("currentLeader phải là bidderId")
+                            .isEqualTo(bidderId),
+                    () -> assertThat(bidderFromDB.getLockedDeposit())
+                            .as("lockedDeposit của bidder phải = deposit")
+                            .isEqualTo(deposit),
+                    () -> assertThat(bidHistory).hasSize(1)
+                            .as("BidTransaction phải được ghi 1 lần"),
+                    () -> assertThat(depositInDB)
+                            .as("FinancialTransaction DEPOSIT_LOCK phải ghi đúng số tiền")
+                            .isEqualTo(deposit),
+                    () -> assertThat(bidderFromDB.getJoinedAuctionIds())
+                            .as("User phải được đánh dấu đã JOINED auction")
+                            .contains(auction.getId())
             );
         }
 
@@ -1185,6 +1211,7 @@ class DAOIntegrationIT {
             String sellerId = userDAO.registerUser(
                     "crossdao_seller2", hashPassword("pass"), "crossseller2@omnibid.vn");
             createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
 
             String itemId = UUID.randomUUID().toString();
             itemDAO.addItem(itemId, sellerId, "No winner item", "d", 1_000_000L, "ART");
@@ -1240,13 +1267,13 @@ class DAOIntegrationIT {
      * @return ID của FinancialTransaction đã lưu
      */
     private String executeAtomicDepositLock(String userId, String auctionId,
-                                             long depositAmount) throws Exception {
+                                            long depositAmount) throws Exception {
         NormalUser user = userDAO.findNormalUserById(userId);
         long available = user.getBalance() - user.getLockedDeposit();
         if (available < depositAmount) {
             throw new IllegalStateException(
                     "Số dư khả dụng không đủ. Khả dụng: " + available
-                    + ", Yêu cầu: " + depositAmount);
+                            + ", Yêu cầu: " + depositAmount);
         }
 
         FinancialTransaction tx = FinancialTransaction.create(
@@ -1270,8 +1297,8 @@ class DAOIntegrationIT {
                 // Bước 2: lưu FinancialTransaction
                 try (PreparedStatement ps = conn.prepareStatement(
                         "INSERT INTO financial_transactions " +
-                        "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)")) {
+                                "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
+                                "VALUES (?, ?, ?, ?, ?, ?)")) {
                     ps.setString(1, tx.getId());
                     ps.setString(2, tx.getFromUserId());
                     ps.setString(3, tx.getToUserId());
@@ -1295,7 +1322,7 @@ class DAOIntegrationIT {
      * để kiểm tra rollback của TC-ATOM-02.
      */
     private void executeAtomicDepositLock_withFailure(String userId, String auctionId,
-                                                       long depositAmount) throws Exception {
+                                                      long depositAmount) throws Exception {
         NormalUser user = userDAO.findNormalUserById(userId);
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
@@ -1313,8 +1340,8 @@ class DAOIntegrationIT {
                 String duplicateId = "duplicate-id-that-breaks-constraint";
                 try (PreparedStatement ps = conn.prepareStatement(
                         "INSERT INTO financial_transactions " +
-                        "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)")) {
+                                "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
+                                "VALUES (?, ?, ?, ?, ?, ?)")) {
                     ps.setString(1, duplicateId);
                     ps.setString(2, userId);
                     ps.setString(3, "SYSTEM_LOCKED");
@@ -1343,7 +1370,7 @@ class DAOIntegrationIT {
      * @return ID của FinancialTransaction đã lưu
      */
     private String executeAtomicDepositUnlock(String userId, String auctionId,
-                                               long depositAmount) throws Exception {
+                                              long depositAmount) throws Exception {
         NormalUser user = userDAO.findNormalUserById(userId);
 
         FinancialTransaction tx = FinancialTransaction.create(
@@ -1365,8 +1392,8 @@ class DAOIntegrationIT {
 
                 try (PreparedStatement ps = conn.prepareStatement(
                         "INSERT INTO financial_transactions " +
-                        "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)")) {
+                                "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
+                                "VALUES (?, ?, ?, ?, ?, ?)")) {
                     ps.setString(1, tx.getId());
                     ps.setString(2, tx.getFromUserId());
                     ps.setString(3, tx.getToUserId());
@@ -1392,7 +1419,7 @@ class DAOIntegrationIT {
      * @return ID của FinancialTransaction payment
      */
     private String executeAtomicPayment(String userId, String auctionId,
-                                         long finalPrice, long depositPaid) throws Exception {
+                                        long finalPrice, long depositPaid) throws Exception {
         NormalUser user = userDAO.findNormalUserById(userId);
         long remaining  = finalPrice - depositPaid;
 
@@ -1415,8 +1442,8 @@ class DAOIntegrationIT {
 
                 try (PreparedStatement ps = conn.prepareStatement(
                         "INSERT INTO financial_transactions " +
-                        "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)")) {
+                                "(id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
+                                "VALUES (?, ?, ?, ?, ?, ?)")) {
                     ps.setString(1, paymentTx.getId());
                     ps.setString(2, paymentTx.getFromUserId());
                     ps.setString(3, paymentTx.getToUserId());
@@ -1443,7 +1470,7 @@ class DAOIntegrationIT {
      */
     private void ensureSellerRecord(String userId) {
         String sql = "INSERT IGNORE INTO sellers (user_id, approval_status, approved_date) "
-                   + "VALUES (?, 'APPROVED', CURRENT_TIMESTAMP)";
+                + "VALUES (?, 'APPROVED', CURRENT_TIMESTAMP)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);
@@ -1453,8 +1480,8 @@ class DAOIntegrationIT {
         }
     }
 
-        private void deleteByIds(Connection conn, String table, String column,
-                              List<String> ids) throws SQLException {
+    private void deleteByIds(Connection conn, String table, String column,
+                             List<String> ids) throws SQLException {
         if (ids.isEmpty()) return;
         String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
         String sql = "DELETE FROM " + table + " WHERE " + column + " IN (" + placeholders + ")";
@@ -1517,38 +1544,11 @@ class DAOIntegrationIT {
     }
 
     /**
-     * Reset DatabaseConnection Singleton để trỏ tới Testcontainer.
-     * Dùng reflection vì Singleton không expose setter URL.
-     */
-    private static void resetDatabaseConnectionSingleton(String url,
-                                                          String username,
-                                                          String password) throws Exception {
-        // Reset instance field
-        Field instanceField = DatabaseConnection.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, null);
+     // =========================================================================
+     // Inner helper records/classes
+     // =========================================================================
 
-        // Tạo instance mới với URL của Testcontainer
-        // Vì constructor đọc từ Properties file, ta cần override sau khi tạo
-        DatabaseConnection freshInstance = DatabaseConnection.getInstance();
-        // Override url, username, password
-        setPrivateField(freshInstance, "url", url);
-        setPrivateField(freshInstance, "username", username);
-        setPrivateField(freshInstance, "password", password);
-    }
-
-    private static void setPrivateField(Object target, String fieldName,
-                                         Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    // =========================================================================
-    // Inner helper records/classes
-    // =========================================================================
-
-    /** Context object giữ thông tin auction + bidder cho các test. */
+     /** Context object giữ thông tin auction + bidder cho các test. */
     private static class FullAuctionContext {
         final String auctionId;
         final NormalUser bidder;

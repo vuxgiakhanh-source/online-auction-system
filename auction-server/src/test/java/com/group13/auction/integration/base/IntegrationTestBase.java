@@ -7,7 +7,6 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import org.testcontainers.mysql.MySQLContainer;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -17,12 +16,17 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Cơ sở cho integration test có DB (Testcontainers).
+ * Base class for integration tests using a real DB via Testcontainers.
  *
- * <p><b>Lưu ý:</b> {@link com.group13.auction.service.AuctionService} (và một số luồng khác) gọi
- * {@link com.group13.auction.model.user.SystemAdmin#getInstance()} khi khởi tạo hoặc khi xử lý.
- * Mọi test tạo {@code new AuctionService(...)} phải gọi {@code com.group13.auction.unit.TestFixture.bootstrapSystemAdmin()}
- * trước khi construct, và {@code TestFixture.resetSystemAdmin()} trong tear-down để cô lập.
+ * <p>Uses {@link DatabaseConnection#reconfigure(String, String, String)} (HikariCP)
+ * instead of the old reflection-based hack, which was fragile and caused
+ * CommunicationsExceptions under concurrent load.</p>
+ *
+ * <p><b>Note:</b> {@link com.group13.auction.service.AuctionService} (and some other
+ * components) call {@link com.group13.auction.model.user.SystemAdmin#getInstance()}
+ * during initialization. Any test that creates {@code new AuctionService(...)} must
+ * call {@code com.group13.auction.unit.TestFixture.bootstrapSystemAdmin()} first,
+ * and {@code TestFixture.resetSystemAdmin()} in tear-down for isolation.</p>
  */
 public abstract class IntegrationTestBase {
 
@@ -35,20 +39,23 @@ public abstract class IntegrationTestBase {
     private final List<String> trackedSecondChanceIds = new ArrayList<>();
     private final List<String> trackedQualityIds      = new ArrayList<>();
 
-    protected static void configureTestcontainer(MySQLContainer mysql) throws Exception {
-        Field instanceField = DatabaseConnection.class.getDeclaredField("instance");
-        instanceField.setAccessible(true);
-        instanceField.set(null, null);
-        DatabaseConnection fresh = DatabaseConnection.getInstance();
-        setField(fresh, "url",      mysql.getJdbcUrl());
-        setField(fresh, "username", mysql.getUsername());
-        setField(fresh, "password", mysql.getPassword());
-    }
-
-    private static void setField(Object obj, String name, Object val) throws Exception {
-        Field f = obj.getClass().getDeclaredField(name);
-        f.setAccessible(true);
-        f.set(obj, val);
+    /**
+     * Reconfigure the HikariCP pool to point at the given Testcontainer.
+     *
+     * <p>Call once in a {@code @BeforeAll} of each load/integration test class:</p>
+     * <pre>
+     *   {@literal @}BeforeAll
+     *   static void configureDataSource() throws Exception {
+     *       configureTestcontainer(mysql);
+     *   }
+     * </pre>
+     *
+     * <p>Uses the public {@code reconfigure()} API on the HikariCP-backed singleton,
+     * completely replacing the old reflection hack that broke under concurrent load.</p>
+     */
+    protected static void configureTestcontainer(MySQLContainer mysql) {
+        DatabaseConnection.getInstance()
+                .reconfigure(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
     }
 
     protected void resetTracking() {
@@ -57,13 +64,13 @@ public abstract class IntegrationTestBase {
         trackedSecondChanceIds.clear(); trackedQualityIds.clear();
     }
 
-    protected void trackUser(String id)        { trackedUserIds.add(id); }
-    protected void trackItem(String id)        { trackedItemIds.add(id); }
-    protected void trackAuction(String id)     { trackedAuctionIds.add(id); }
-    protected void trackBidTx(String id)       { trackedBidTxIds.add(id); }
-    protected void trackFinTx(String id)       { trackedFinTxIds.add(id); }
-    protected void trackWinner(String id)      { trackedWinnerIds.add(id); }
-    protected void trackSecondChance(String id){ trackedSecondChanceIds.add(id); }
+    protected void trackUser(String id)         { trackedUserIds.add(id); }
+    protected void trackItem(String id)         { trackedItemIds.add(id); }
+    protected void trackAuction(String id)      { trackedAuctionIds.add(id); }
+    protected void trackBidTx(String id)        { trackedBidTxIds.add(id); }
+    protected void trackFinTx(String id)        { trackedFinTxIds.add(id); }
+    protected void trackWinner(String id)       { trackedWinnerIds.add(id); }
+    protected void trackSecondChance(String id) { trackedSecondChanceIds.add(id); }
     protected void trackQualityReport(String id){ trackedQualityIds.add(id); }
 
     protected void cleanupDB() throws Exception {
@@ -120,7 +127,7 @@ public abstract class IntegrationTestBase {
 
     protected void ensureSellerRecord(String userId) {
         String sql = "INSERT IGNORE INTO sellers (user_id, approval_status, approved_date) "
-                   + "VALUES (?, 'APPROVED', CURRENT_TIMESTAMP)";
+                + "VALUES (?, 'APPROVED', CURRENT_TIMESTAMP)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId);

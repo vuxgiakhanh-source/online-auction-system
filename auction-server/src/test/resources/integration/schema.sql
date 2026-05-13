@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS auction_winners (
                                                winner_id      VARCHAR(36) NOT NULL,
                                                final_price    BIGINT      NOT NULL,
                                                deposit_paid   BIGINT      NOT NULL,
-                                               payment_status ENUM('PENDING','COMPLETED','EXPIRED') DEFAULT 'PENDING',
+                                               payment_status ENUM('PENDING','COMPLETED','EXPIRED', 'FUNDS_HELD') DEFAULT 'PENDING',
                                                created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
                                                FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                                FOREIGN KEY (winner_id)  REFERENCES users(id)    ON DELETE CASCADE
