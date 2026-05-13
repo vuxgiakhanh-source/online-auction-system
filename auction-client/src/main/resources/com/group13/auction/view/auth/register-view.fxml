@@ -54,9 +54,7 @@
                 <HBox alignment="CENTER" spacing="18.0">
                     <Button mnemonicParsing="false" onAction="#handleGoToLogin"
                             styleClass="ghost-tab" text="Đăng nhập"/>
-                    <Button mnemonicParsing="false" onAction="#handleSignUp"
-                            styleClass="ghost-tab" text="Đăng ký" visible="false" managed="false"/>
-                    <Button mnemonicParsing="false" onAction="#handleClearForm"
+                    <Button mnemonicParsing="false"
                             styleClass="active-tab" text="Đăng ký"/>
                 </HBox>
 
