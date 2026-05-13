@@ -23,7 +23,7 @@ public class BidTransactionDAO {
      * 1. Lưu lại lịch sử một lượt đặt giá vào Database
      */
     public boolean saveTransaction(BidTransaction tx) {
-        String sql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result, bid_time) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -33,6 +33,9 @@ public class BidTransactionDAO {
             pstmt.setString(3, tx.getBidder().getId());
             pstmt.setLong(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());
+            pstmt.setTimestamp(6, tx.getTimestamp() != null
+                    ? java.sql.Timestamp.valueOf(tx.getTimestamp())
+                    : java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
 
             boolean saved = pstmt.executeUpdate() > 0;
             log.debug("Bid transaction saved: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
