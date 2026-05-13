@@ -71,7 +71,7 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 👷 Chức năng hệ thống
 
 ### Use Case tổng quát
-![UseCase Diagram](./UsecaseDiagram.png)
+![UseCase Diagram](./UsecaseDiagram.jpg)
 
 ### Chức năng cốt lõi
 * __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
