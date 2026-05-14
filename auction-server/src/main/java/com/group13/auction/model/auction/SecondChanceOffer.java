@@ -3,6 +3,8 @@ package com.group13.auction.model.auction;
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Đề nghị mua thứ cấp cho runner-up khi winner không thanh toán.
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
  * Nếu chấp nhận, sẽ kích hoạt luồng giao dịch tương tự winner ban đầu.
  */
 public class SecondChanceOffer extends Entity {
+
+    private static final Logger log = LoggerFactory.getLogger(SecondChanceOffer.class);
 
     public enum OfferStatus {
         PENDING, // chờ runner-up quyết định
@@ -116,14 +120,14 @@ public class SecondChanceOffer extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.println("CƠ HỘI THỨ HAI DÀNH CHO RUNNER-UP");
-        System.out.printf("Runner-up : %s%n", runnerUp.getUsername());
-        System.out.printf("Auction ID: %s%n", auctionId);
-        System.out.printf("Giá mua : %d%n", offerPrice);
-        System.out.printf("Đã cọc : %d%n", depositPaid);
-        System.out.printf("Còn lại : %d%n", getRemainingAmount());
-        System.out.printf("Hạn chót : %s%n", deadline);
-        System.out.printf("Trạng thái: %s%n", status);
-        System.out.println("======================================");
+        log.info("CƠ HỘI THỨ HAI DÀNH CHO RUNNER-UP");
+        log.info("Runner-up  : {}", runnerUp.getUsername());
+        log.info("Auction ID : {}", auctionId);
+        log.info("Giá mua    : {}", offerPrice);
+        log.info("Đã cọc     : {}", depositPaid);
+        log.info("Còn lại    : {}", getRemainingAmount());
+        log.info("Hạn chót   : {}", deadline);
+        log.info("Trạng thái : {}", status);
+        log.info("======================================");
     }
 }

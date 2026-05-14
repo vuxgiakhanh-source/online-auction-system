@@ -1,0 +1,28 @@
+# Version control
+.git
+.gitignore
+
+# CI/CD & tooling
+.github
+.ai
+.idea
+*.iml
+qodana.yaml
+
+# Build artifacts (Docker stage 1 builds fresh)
+**/target/
+
+# Docs & assets
+*.md
+*.png
+LICENSE
+
+# Runtime-only folders (không cần trong image)
+logs/
+k8s/
+scripts/
+docker/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -7,31 +7,63 @@ import org.slf4j.LoggerFactory;
 /**
  * Kiểu đặt giá thông thường.
  * Bid hợp lệ khi amount >= currentPrice + minIncrement.
- * Dùng khi: muốn tự kiểm soát từng lần đặt giá.
  *
- * <p>minIncrement được tính tự động theo ngưỡng giá hiện tại
- * bởi {@link BidIncrementCalculator}.
+ * ═══════════════════════════════════════════════════════════
+ * PERFORMANCE FIX #4 — Strategy validation tối ưu:
+ *
+ * 1. Cache minIncrement theo price tier:
+ *    BidIncrementCalculator.calculate() chỉ là 2 lần so sánh long,
+ *    nhưng được gọi hàng nghìn lần/giây trong load test.
+ *    Cache 3 giá trị tier tránh method call overhead.
+ *
+ * 2. Tính minBid một lần (currentPrice + increment) thay vì tính 2 lần.
+ *
+ * 3. Log level: chỉ log.warn khi reject — KHÔNG log.debug khi accept.
+ *    Trong lock context (BidService), mỗi log.debug là I/O block.
+ * ═══════════════════════════════════════════════════════════
  */
 public class StandardBidStrategy implements BidStrategy {
 
   private static final Logger log = LoggerFactory.getLogger(StandardBidStrategy.class);
 
-  /**
-   * Khởi tạo StandardBidStrategy.
-   * minIncrement được tính động tại thời điểm validate bid.
-   */
+  // FIX #4: Cache các giá trị tier — tránh method call trong hot path
+  private static final long TIER_LOW      = 1_000_000L;
+  private static final long TIER_MID      = 10_000_000L;
+  private static final long INCREMENT_LOW  = 50_000L;
+  private static final long INCREMENT_MID  = 200_000L;
+  private static final long INCREMENT_HIGH = 500_000L;
+
   public StandardBidStrategy() {}
 
+  /**
+   * Kiểm tra bid hợp lệ: amount >= currentPrice + minIncrement.
+   *
+   * FIX #4: Inline tier logic thay vì gọi BidIncrementCalculator.calculate()
+   * → tránh method dispatch overhead trong hot path (gọi hàng nghìn lần/giây).
+   * Tính minBid một lần duy nhất, so sánh trực tiếp.
+   */
   @Override
   public boolean isValidBid(Auction auction, long amount) {
-    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
-    boolean valid = amount >= auction.getCurrentPrice() + increment;
-    if (!valid) {
-      log.warn("Standard bid rejected: auctionId={}, amount={}, currentPrice={}, minIncrement={}",
-              auction.getId(), amount, auction.getCurrentPrice(), increment);
+    long currentPrice = auction.getCurrentPrice();
+
+    // FIX #4: inline increment tính trực tiếp, không gọi qua BidIncrementCalculator
+    long increment;
+    if (currentPrice < TIER_LOW) {
+      increment = INCREMENT_LOW;
+    } else if (currentPrice <= TIER_MID) {
+      increment = INCREMENT_MID;
     } else {
-      log.debug("Standard bid accepted by strategy: auctionId={}, amount={}, currentPrice={}, minIncrement={}",
-              auction.getId(), amount, auction.getCurrentPrice(), increment);
+      increment = INCREMENT_HIGH;
+    }
+
+    long minBid = currentPrice + increment;
+    boolean valid = amount >= minBid;
+
+    // FIX #1: Chỉ log khi reject (WARN), không log khi accept
+    // → loại bỏ hàng triệu dòng log/s trong load test
+    if (!valid) {
+      log.warn("Bid rejected by strategy: auctionId={}, amount={}, currentPrice={}, minBid={}",
+              auction.getId(), amount, currentPrice, minBid);
     }
     return valid;
   }
@@ -44,9 +76,7 @@ public class StandardBidStrategy implements BidStrategy {
 
   /**
    * Lấy bước giá tối thiểu tại mức giá đã cho.
-   *
-   * @param currentPrice giá hiện tại để tính increment
-   * @return bước giá tối thiểu
+   * Giữ nguyên để tương thích với các caller bên ngoài.
    */
   public long getMinIncrement(long currentPrice) {
     return BidIncrementCalculator.calculate(currentPrice);

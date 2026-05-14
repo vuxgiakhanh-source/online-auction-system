@@ -22,6 +22,7 @@ CREATE TABLE users (
                        password_hash VARCHAR(255) NOT NULL,
                        email VARCHAR(100) UNIQUE NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- rating dùng double ở Java (ngưỡng 1.5, 2.0, 3.0...) nên lưu DECIMAL để giữ phần thập phân
                        rating DECIMAL(3,2) DEFAULT 3.00,
                        balance BIGINT DEFAULT 0,
@@ -138,7 +139,7 @@ CREATE TABLE auction_winners (
                                  winner_id VARCHAR(36) NOT NULL,
                                  final_price BIGINT NOT NULL,
                                  deposit_paid BIGINT NOT NULL,
-                                 payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED') DEFAULT 'PENDING',
+                                 payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED', 'FUNDS_HELD') DEFAULT 'PENDING',
                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                  FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                  FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE
@@ -184,6 +185,9 @@ CREATE TABLE quality_reports (
                                  id VARCHAR(36) PRIMARY KEY,
                                  auction_id VARCHAR(36) NOT NULL,
                                  reporter_id VARCHAR(36) NOT NULL,
+                                 description TEXT NOT NULL DEFAULT '',
+    -- Danh sách URL ảnh minh chứng, lưu dạng JSON array: ["url1","url2",...]
+                                 image_urls TEXT NOT NULL DEFAULT '[]',
                                  status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
                                  seller_refund_deadline DATETIME NULL,
                                  refund_completed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -214,7 +218,8 @@ INSERT INTO admins (id, username, password_hash, email, level)
 VALUES (
            UUID(),
            'superadmin',
-           'omnibiddingForever',
+           -- SHA-256 hash của 'admin123' — đổi password ngay sau lần đầu login!
+           '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
            'system@auction.internal',
            'MASTER'
        );

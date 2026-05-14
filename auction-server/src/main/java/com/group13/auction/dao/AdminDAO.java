@@ -5,21 +5,37 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.UUID;
 
 public class AdminDAO {
     private static final Logger log = LoggerFactory.getLogger(AdminDAO.class);
 
-
     public AdminDAO() {
+    }
+
+    /**
+     * Kiểm tra xem admin với username đã tồn tại trong bảng admins chưa.
+     * Dùng để tránh INSERT trùng khi bootstrap SystemAdmin.
+     */
+    public boolean existsByUsername(String username) {
+        String sql = "SELECT 1 FROM admins WHERE username = ? LIMIT 1";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            log.error("Failed to check admin existence: username={}", username, e);
+            return false;
+        }
     }
 
     /**
      * Tạo Admin mới (STAFF hoặc MASTER)
      */
     public boolean createAdmin(String adminId, String username, String passwordHash, String email, String level) {
-        // Không sinh UUID ở đây nữa
         String sql = "INSERT INTO admins (id, username, password_hash, email, level) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -31,9 +47,13 @@ public class AdminDAO {
             pstmt.setString(4, email);
             pstmt.setString(5, level);
 
-            return pstmt.executeUpdate() > 0;
+            boolean result = pstmt.executeUpdate() > 0;
+            if (result) {
+                log.debug("Admin created: adminId={}, username={}, level={}", adminId, username, level);
+            }
+            return result;
         } catch (SQLException e) {
-            log.error("Lỗi tạo Admin", e);
+            log.error("Failed to create admin: adminId={}, username={}", adminId, username, e);
             return false;
         }
     }

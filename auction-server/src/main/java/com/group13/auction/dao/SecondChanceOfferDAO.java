@@ -4,13 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.group13.auction.model.auction.SecondChanceOffer;
-import com.group13.auction.dao.UserDAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SecondChanceOfferDAO {
     private static final Logger log = LoggerFactory.getLogger(SecondChanceOfferDAO.class);
@@ -109,5 +110,26 @@ public class SecondChanceOfferDAO {
             log.error("Lỗi tìm Second Chance Offer PENDING", e);
         }
         return null;
+    }
+
+    /**
+     * Các phiên có offer PENDING đã quá hạn — dùng cho scheduler.
+     */
+    public List<String> findAuctionIdsWithExpiredPendingOffers(LocalDateTime asOf) {
+        String sql = "SELECT DISTINCT auction_id FROM second_chance_offers "
+                + "WHERE status = 'PENDING' AND deadline < ?";
+        List<String> ids = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setTimestamp(1, Timestamp.valueOf(asOf));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getString("auction_id"));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi quét second_chance_offers hết hạn", e);
+        }
+        return ids;
     }
 }

@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auction-server-pdb
+  namespace: auction-prod
+spec:
+  minAvailable: 2         # Luôn giữ ít nhất 2 pod khi rolling update / node drain
+  selector:
+    matchLabels:
+      app: auction-server

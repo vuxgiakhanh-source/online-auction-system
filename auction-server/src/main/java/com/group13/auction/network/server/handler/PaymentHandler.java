@@ -10,17 +10,18 @@ import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
-import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.PaymentService;
+import com.group13.auction.strategy.AuctionLockRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Xử lý các packet liên quan đến thanh toán:
@@ -30,6 +31,8 @@ import java.util.Set;
 public class PaymentHandler implements PacketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentHandler.class);
+
+    private static final long AUCTION_LOCK_TIMEOUT_SECONDS = 5L;
 
     private static final Set<PacketType> SUPPORTED = EnumSet.of(
             PacketType.DEPOSIT,
@@ -43,6 +46,7 @@ public class PaymentHandler implements PacketHandler {
     private final PaymentService paymentService;
     private final com.group13.auction.service.AccountService accountService;
     private final SessionManager sessionManager;
+    private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
 
     public PaymentHandler(PaymentService paymentService,
                           com.group13.auction.service.AccountService accountService,
@@ -194,29 +198,41 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
-            paymentService.completePayment(auction);
-            log.info("Payment request handled: auctionId={}, winnerId={}, username={}, finalPrice={}, requestId={}",
-                    req.getAuctionId(), caller.getId(), caller.getUsername(), auction.getCurrentPrice(), requestId);
-
-            PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
-            result.setAuctionId(req.getAuctionId());
-            result.setFinalPrice(auction.getCurrentPrice());
-            result.setPaymentStatus("COMPLETED");
-            result.setPaidAt(java.time.LocalDateTime.now());
-
-            session.send(Packet.of(PacketType.PAYMENT_SUCCESS, result, requestId));
-
-            // Notify Seller
-            if (auction.getItem().getSeller() != null) {
-                String sellerId = auction.getItem().getSeller().getId();
-                sessionManager.sendToUser(sellerId,
-                        Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
+            boolean locked = lockRegistry.tryLock(auction.getId(), AUCTION_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("Payment lock timeout: auctionId={}, requestId={}", req.getAuctionId(), requestId);
+                session.send(Packet.of(PacketType.PAYMENT_FAILED,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                return;
             }
+            try {
+                paymentService.completePayment(auction);
+                log.info("Payment request handled: auctionId={}, winnerId={}, username={}, finalPrice={}, requestId={}",
+                        req.getAuctionId(), caller.getId(), caller.getUsername(), auction.getCurrentPrice(), requestId);
 
-            // Push AuctionUpdateDTO cho tất cả watcher
-            AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
-            sessionManager.broadcastToAuction(req.getAuctionId(),
-                    Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+                PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
+                result.setAuctionId(req.getAuctionId());
+                result.setFinalPrice(auction.getCurrentPrice());
+                result.setPaymentStatus("COMPLETED");
+                result.setPaidAt(java.time.LocalDateTime.now());
+
+                session.send(Packet.of(PacketType.PAYMENT_SUCCESS, result, requestId));
+
+                // Notify Seller
+                if (auction.getItem().getSeller() != null) {
+                    String sellerId = auction.getItem().getSeller().getId();
+                    sessionManager.sendToUser(sellerId,
+                            Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
+                }
+
+                // Push AuctionUpdateDTO cho tất cả watcher
+                AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
+                sessionManager.broadcastToAuction(req.getAuctionId(),
+                        Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+            } finally {
+                lockRegistry.unlock(auction.getId());
+            }
 
         } catch (PaymentException e) {
             log.warn("Payment rejected: username={}, requestId={}, reason={}",
@@ -271,15 +287,26 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
-            paymentService.acceptSecondChanceOffer(offer, auction);
-            log.info("Second chance accept handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
-                    auctionId, offer.getId(), caller.getId(), requestId);
+            boolean locked = lockRegistry.tryLock(auctionId, AUCTION_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                return;
+            }
+            try {
+                paymentService.acceptSecondChanceOffer(offer, auction);
+                log.info("Second chance accept handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
+                        auctionId, offer.getId(), caller.getId(), requestId);
 
-            PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
-            result.setAuctionId(auctionId);
-            result.setFinalPrice(offer.getOfferPrice());
-            result.setPaymentStatus("PENDING");
-            session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_SUCCESS, result, requestId));
+                PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
+                result.setAuctionId(auctionId);
+                result.setFinalPrice(offer.getOfferPrice());
+                result.setPaymentStatus("PENDING");
+                session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_SUCCESS, result, requestId));
+            } finally {
+                lockRegistry.unlock(auctionId);
+            }
 
         } catch (Exception e) {
             log.error("Second chance accept failed: username={}, requestId={}",
@@ -329,10 +356,21 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
-            paymentService.declineSecondChanceOffer(offer, auction);
-            session.send(Packet.of(PacketType.SECOND_CHANCE_DECLINE_SUCCESS, null, requestId));
-            log.info("Second chance decline handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
-                    auctionId, offer.getId(), caller.getId(), requestId);
+            boolean locked = lockRegistry.tryLock(auctionId, AUCTION_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                return;
+            }
+            try {
+                paymentService.declineSecondChanceOffer(offer, auction);
+                session.send(Packet.of(PacketType.SECOND_CHANCE_DECLINE_SUCCESS, null, requestId));
+                log.info("Second chance decline handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
+                        auctionId, offer.getId(), caller.getId(), requestId);
+            } finally {
+                lockRegistry.unlock(auctionId);
+            }
 
         } catch (Exception e) {
             log.error("Second chance decline failed: username={}, requestId={}",

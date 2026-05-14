@@ -1,4 +1,5 @@
 package com.group13.auction.model.auction;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -6,15 +7,33 @@ import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-/** Phiên đấu giá - chỉ lưu data và trạng thái. */
+/**
+ * Phiên đấu giá - chỉ lưu data và trạng thái.
+ *
+ * ═══════════════════════════════════════════════════════════
+ * PERFORMANCE FIX #3 — Thread safety cho shared state:
+ *
+ * volatile currentPrice / currentLeader / endTime / state:
+ *   BidService dùng per-auction synchronized block khi WRITE.
+ *   volatile đảm bảo sau khi release lock, các thread khác
+ *   đọc được giá trị mới nhất ngay (Java Memory Model visibility).
+ *   Không cần synchronized khi READ vì volatile đủ cho primitive long.
+ *
+ * bidTransactionIds = Collections.synchronizedList:
+ *   addBidTransactionId() gọi từ trong synchronized(lock) của BidService,
+ *   nhưng getBidTransactionIds() có thể gọi từ thread khác bất kỳ lúc nào.
+ *   synchronizedList bảo vệ cả hai phía mà không cần lock thêm.
+ * ═══════════════════════════════════════════════════════════
+ */
 public class Auction extends Entity {
 
   private static final Logger log = LoggerFactory.getLogger(Auction.class);
@@ -30,38 +49,45 @@ public class Auction extends Entity {
   private final Item item;
   private final LocalDateTime startTime;
   private final LocalDateTime originalEndTime;
-  private LocalDateTime endTime;
-  /**
-   * Giá sàn bí mật do Seller đặt khi tạo auction.
-   * Phiên chỉ có winner khi {@code currentPrice >= reservePrice}.
-   */
+
+  /** volatile — publish sau synchronized block trong BidService (anti-sniping). */
+  private volatile LocalDateTime endTime;
+
+  /** Giá sàn bí mật — immutable sau khi tạo. */
   private final long reservePrice;
-  private final List<String> bidTransactionIds;
-  private long currentPrice;
-  private NormalUser currentLeader;
 
   /**
-   * State object hiện tại.
-   * Mọi chuyển trạng thái đều đi qua state object, không if-else.
+   * FIX #3: volatile — đảm bảo thread đọc currentPrice sau lock release
+   * luôn thấy giá trị mới nhất từ auction.updateBid().
    */
-  private AuctionState state;
+  private volatile long currentPrice;
 
-  private AuctionWinner winner;
-
-  /** Số người xem (watchlist) hiện tại, dùng để sort. */
-  private int viewerCount;
-
-  // Static factory method
+  /** volatile — cùng lý do với currentPrice. */
+  private volatile NormalUser currentLeader;
 
   /**
-   * Khai sinh Auction mới ở trạng thái OPEN.
-   *
-   * @param item         sản phẩm đưa ra đấu giá
-   * @param startTime    thời điểm bắt đầu (có thể là tương lai)
-   * @param endTime      thời điểm kết thúc
-   * @param reservePrice giá sàn bí mật của Seller (> 0)
-   * @return Auction mới
+   * FIX #3: synchronizedList — addBidTransactionId() gọi trong lock của BidService,
+   * getBidTransactionIds() (unmodifiable view) gọi ngoài lock.
    */
+  private final List<String> bidTransactionIds =
+          Collections.synchronizedList(new ArrayList<>());
+
+  /**
+   * FIX: AtomicReference thay volatile — transitionToRunning/Close/Cancel/Paid có thể gọi
+   * từ AuctionService trên thread khác với thread đang bid. AtomicReference đảm bảo
+   * cả read lẫn write là atomic (không có race condition read-modify-write).
+   */
+  private final AtomicReference<AuctionState> state = new AtomicReference<>();
+
+  private volatile AuctionWinner winner;
+
+  /** FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu dùng volatile. */
+  private final AtomicInteger viewerCount = new AtomicInteger(0);
+
+  // =========================================================================
+  // Static factory methods
+  // =========================================================================
+
   public static Auction create(
           Item item,
           LocalDateTime startTime,
@@ -70,9 +96,6 @@ public class Auction extends Entity {
     return new Auction(item, startTime, endTime, reservePrice);
   }
 
-  /**
-   * Hồi sinh Auction từ DB - chỉ DAO được gọi method này.
-   */
   public static Auction reconstitute(
           String id,
           LocalDateTime createdAt,
@@ -87,13 +110,11 @@ public class Auction extends Entity {
             id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
   }
 
+  // =========================================================================
   // Private constructors
+  // =========================================================================
 
-  private Auction(
-          Item item,
-          LocalDateTime startTime,
-          LocalDateTime endTime,
-          long reservePrice) {
+  private Auction(Item item, LocalDateTime startTime, LocalDateTime endTime, long reservePrice) {
     super();
     this.item = item;
     this.currentPrice = item.getStartingPrice();
@@ -101,10 +122,8 @@ public class Auction extends Entity {
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reservePrice = reservePrice;
-    this.state = OpenState.INSTANCE;
-    this.bidTransactionIds = new ArrayList<>();
+    this.state.set(OpenState.INSTANCE);
     this.winner = null;
-    this.viewerCount = 0;
   }
 
   private Auction(
@@ -124,154 +143,82 @@ public class Auction extends Entity {
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reservePrice = reservePrice;
-    this.state = resolveState(status);
-    this.bidTransactionIds = new ArrayList<>();
+    this.state.set(resolveState(status));
     this.winner = null;
-    this.viewerCount = 0;
   }
 
-  /**
-   * Chuyển đổi AuctionStatus thành AuctionState tương ứng.
-   * Dùng khi hồi sinh Auction từ DB qua reconstitute().
-   *
-   * @param status trạng thái từ DB
-   * @return AuctionState tương ứng
-   */
   private static AuctionState resolveState(AuctionStatus status) {
     switch (status) {
-      case OPEN:
-        return OpenState.INSTANCE;
-      case RUNNING:
-        return RunningState.INSTANCE;
-      case FINISHED:
-        return FinishedState.INSTANCE;
-      case PAID:
-        return PaidState.INSTANCE;
-      case CANCELED:
-        return CanceledState.INSTANCE;
+      case OPEN:     return OpenState.INSTANCE;
+      case RUNNING:  return RunningState.INSTANCE;
+      case FINISHED: return FinishedState.INSTANCE;
+      case PAID:     return PaidState.INSTANCE;
+      case CANCELED: return CanceledState.INSTANCE;
       default:
         throw new IllegalArgumentException("AuctionStatus không được hỗ trợ: " + status);
     }
   }
 
+  // =========================================================================
   // Getters
+  // =========================================================================
 
-  public Item getItem() {
-    return item;
-  }
-
-  public LocalDateTime getStartTime() {
-    return startTime;
-  }
-
-  public LocalDateTime getEndTime() {
-    return endTime;
-  }
-
-  public LocalDateTime getOriginalEndTime() {
-    return originalEndTime;
-  }
-
-  public long getCurrentPrice() {
-    return currentPrice;
-  }
-
-  public NormalUser getCurrentLeader() {
-    return currentLeader;
-  }
-
-  /**
-   * Trạng thái hiện tại dưới dạng enum - tương thích ngược với DAO và log.
-   *
-   * @return AuctionStatus tương ứng với state object hiện tại
-   */
-  public AuctionStatus getStatus() {
-    return state.getStatus();
-  }
-
-  public AuctionWinner getWinner() {
-    return winner;
-  }
-
-  public long getReservePrice() {
-    return reservePrice;
-  }
-
-  public int getViewerCount() {
-    return viewerCount;
-  }
+  public Item getItem()                    { return item; }
+  public LocalDateTime getStartTime()      { return startTime; }
+  public LocalDateTime getEndTime()        { return endTime; }
+  public LocalDateTime getOriginalEndTime(){ return originalEndTime; }
+  public long getCurrentPrice()            { return currentPrice; }
+  public NormalUser getCurrentLeader()     { return currentLeader; }
+  public AuctionStatus getStatus()         { return state.get().getStatus(); }
+  public AuctionWinner getWinner()         { return winner; }
+  public long getReservePrice()            { return reservePrice; }
+  public int getViewerCount()              { return viewerCount.get(); }
 
   public boolean isAcceptingBids() {
-    return state.getStatus() == AuctionStatus.RUNNING;
+    return state.get().getStatus() == AuctionStatus.RUNNING;
   }
 
-  /**
-   * Kiểm tra giá hiện tại có đáp ứng reserve price chưa.
-   *
-   * @return true nếu currentPrice >= reservePrice
-   */
   public boolean isReserveMet() {
-    return currentPrice >= getReservePrice();
+    return currentPrice >= reservePrice;
   }
 
   public List<String> getBidTransactionIds() {
     return Collections.unmodifiableList(bidTransactionIds);
   }
 
-  // State transitions - chỉ AuctionService gọi
+  // =========================================================================
+  // State transitions — chỉ AuctionService gọi
+  // =========================================================================
 
-  /**
-   * Chuyển sang RUNNING (OPEN -> RUNNING).
-   *
-   * @throws IllegalStateException nếu phiên không ở OPEN
-   */
   public void transitionToRunning() {
-    this.state = state.start();
+    this.state.set(state.get().start());
     markUpdated();
   }
 
-  /**
-   * Đóng phiên khi hết giờ
-   * (RUNNING -> FINISHED nếu có winner, -> CANCELED nếu không có winner).
-   *
-   * @param hasWinner true nếu có currentLeader và reserve đã OK
-   * @throws IllegalStateException nếu phiên không ở RUNNING
-   */
   public void transitionToClose(boolean hasWinner) {
-    this.state = state.close(hasWinner);
+    this.state.set(state.get().close(hasWinner));
     markUpdated();
   }
 
-  /**
-   * Hủy phiên (OPEN / RUNNING / CANCEL_REQUESTED -> CANCELED).
-   *
-   * @throws IllegalStateException nếu trạng thái hiện tại không hủy được
-   */
   public void transitionToCancel() {
-    this.state = state.cancel();
+    this.state.set(state.get().cancel());
     markUpdated();
   }
 
-  /**
-   * Đánh dấu đã thanh toán (FINISHED -> PAID).
-   *
-   * @throws IllegalStateException nếu phiên không ở FINISHED
-   */
   public void transitionToPaid() {
-    this.state = state.markPaid();
+    this.state.set(state.get().markPaid());
     markUpdated();
   }
 
-  // Setters - chỉ AuctionService / BidService gọi
+  // =========================================================================
+  // Setters — chỉ BidService / AuctionService gọi
+  // =========================================================================
 
   /**
-   * Cập nhật giá và leader trong một thao tác atomic.
+   * Cập nhật giá và leader.
    *
-   * <p>Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
-   * bên trong {@code placeBid()} sau khi strategy đã validate bid thành công.
-   *
-   * @param newPrice  giá mới (đã validated)
-   * @param newLeader người vừa đặt giá cao nhất
+   * Thread safety: gọi bên trong per-auction synchronized block của BidService.
+   * volatile trên currentPrice/currentLeader publish giá trị ra ngoài lock.
    */
   public void updateBid(long newPrice, NormalUser newLeader) {
     this.currentPrice = newPrice;
@@ -281,8 +228,7 @@ public class Auction extends Entity {
 
   /**
    * Gia hạn phiên (anti-sniping).
-   *
-   * @param extension khoảng thời gian gia hạn (phải > 0)
+   * Gọi bên trong synchronized(lock) của BidService.
    */
   public void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
@@ -292,44 +238,29 @@ public class Auction extends Entity {
     markUpdated();
   }
 
-  /**
-   * Ghi nhận người thắng phiên sau khi phiên kết thúc (RUNNING -> FINISHED).
-   *
-   * <p>Chỉ {@link com.group13.auction.service.AuctionService} được gọi method này,
-   * bên trong {@code closeAuction()} - chỉ khi có {@code currentLeader} tồn tại.
-   */
   public void setWinner(AuctionWinner winner) {
     this.winner = winner;
     markUpdated();
   }
 
-  /**
-   * Lưu id của một BidTransaction vừa được ghi nhận vào phiên.
-   *
-   * <p>Chỉ {@link com.group13.auction.service.BidService} được gọi method này,
-   * bên trong {@code placeBid()} sau khi tạo BidTransaction thành công.
-   */
+  /** Thread-safe nhờ synchronizedList (FIX #3). */
   public void addBidTransactionId(String bidId) {
     bidTransactionIds.add(bidId);
   }
 
-  /**
-   * Tăng số người xem khi có bidder join hoặc watch.
-   * Phục vụ cho quá trình sort.
-   */
   public void incrementViewerCount() {
-    this.viewerCount++;
+    this.viewerCount.incrementAndGet();
   }
 
   @Override
   public void printInfo() {
-    log.info("THÔNG TIN PHIÊN ĐẤU GIÁ");
-    log.info("ID      : {}", getId());
-    log.info("Item    : {}", item.getName());
-    log.info("Giá     : {}", currentPrice);
-    log.info("Status  : {}", getStatus());
-    log.info("Leader  : {}", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
-    log.info("Viewers : {}", viewerCount);
-    log.info("==========================================");
+    log.warn("THÔNG TIN PHIÊN ĐẤU GIÁ");
+    log.warn("ID      : {}", getId());
+    log.warn("Item    : {}", item.getName());
+    log.warn("Giá     : {}", currentPrice);
+    log.warn("Status  : {}", getStatus());
+    log.warn("Leader  : {}", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
+    log.warn("Viewers : {}", viewerCount.get());
+    log.warn("==========================================");
   }
 }

@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auction-dev
+
+resources:
+  - ../../base
+
+# Patch: override image tag (CI sẽ dùng `kustomize edit set image` thay thế)
+images:
+  - name: ghcr.io/GITHUB_ORG/auction-server
+    newTag: dev-latest
+
+# Patch: DEV dùng ít resource hơn, 1 replica là đủ
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: auction-server
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              - name: auction-server
+                resources:
+                  requests:
+                    cpu: "100m"
+                    memory: "128Mi"
+                  limits:
+                    cpu: "300m"
+                    memory: "384Mi"
+
+# ConfigMap cho DEV (không nhạy cảm)
+configMapGenerator:
+  - name: auction-config
+    literals:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - WEBSOCKET_PORT=8081
+      - LOG_DIR=/app/logs
+      - DB_HOST=mysql-dev.auction-dev.svc.cluster.local
+      - DB_NAME=auction_dev

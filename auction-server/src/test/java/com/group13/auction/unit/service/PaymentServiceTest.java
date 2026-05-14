@@ -339,38 +339,54 @@ class PaymentServiceTest {
         // --- Second offer winner: cancel ngay ---
 
         @Test
-        @DisplayName("isSecondOffer winner: cancel auction ngay, không forfeit/penalize")
-        void secondOfferWinner_cancelAuctionDirectly() {
-            // Arrange — winner là second-chance offer (isSecondOffer=true)
+        @DisplayName("isSecondOffer winner đã quá hạn: forfeit + penalize + cancel + EXPIRED")
+        void secondOfferWinnerExpired_forfeitsPenalizesCancelsAndMarksExpired() {
+            // Arrange — winner là second-chance offer (isSecondOffer=true) và đã quá hạn thanh toán
             Auction auction = finishedAuction();
-            AuctionWinner secondWinner = TestFixture.secondOfferWinner(
+            AuctionWinner secondWinner = TestFixture.expiredSecondOfferWinner(
                     winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(secondWinner);
 
             // Act
             paymentService.expirePayment(auction);
 
-            // Assert — cancel ngay
+            // Assert
             verify(auctionService).cancelAuction(
                     auction, Admin.CancelReason.NO_WINNER);
-            // Không forfeit, không penalize
-            verifyNoInteractions(walletService, ratingService);
+            verify(walletService, times(1)).forfeitDeposit(winner, DEPOSIT, auction.getId());
+            verify(ratingService, times(1)).penalizeLatePayment(winner);
+            verify(auctionWinnerDAO).updatePaymentStatus(
+                    secondWinner.getId(), PaymentStatus.EXPIRED.name());
         }
 
         @Test
-        @DisplayName("isSecondOffer winner: status KHÔNG thay đổi sang EXPIRED")
-        void secondOfferWinner_statusNotChangedToExpired() {
+        @DisplayName("isSecondOffer winner đã quá hạn: status = EXPIRED")
+        void secondOfferWinnerExpired_statusExpired() {
             // Arrange
             Auction auction = finishedAuction();
-            AuctionWinner secondWinner = TestFixture.secondOfferWinner(
+            AuctionWinner secondWinner = TestFixture.expiredSecondOfferWinner(
                     winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(secondWinner);
 
             // Act
             paymentService.expirePayment(auction);
 
-            // Assert — vẫn PENDING (cancel flow không đổi status này)
-            assertNotEquals(PaymentStatus.EXPIRED, secondWinner.getPaymentStatus());
+            // Assert
+            assertEquals(PaymentStatus.EXPIRED, secondWinner.getPaymentStatus());
+        }
+
+        @Test
+        @DisplayName("isSecondOffer winner chưa quá hạn: không cancel, không forfeit")
+        void secondOfferWinnerNotExpired_noAction() {
+            Auction auction = finishedAuction();
+            AuctionWinner secondWinner = TestFixture.secondOfferWinner(
+                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+            auction.setWinner(secondWinner);
+
+            paymentService.expirePayment(auction);
+
+            verifyNoInteractions(auctionService, walletService, ratingService);
+            assertEquals(PaymentStatus.PENDING, secondWinner.getPaymentStatus());
         }
 
         // --- No winner ---

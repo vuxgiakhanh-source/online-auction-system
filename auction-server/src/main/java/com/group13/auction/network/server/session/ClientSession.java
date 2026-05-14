@@ -7,6 +7,8 @@ import org.java_websocket.WebSocket;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Đại diện cho một kết nối WebSocket từ phía Server.
@@ -22,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Thread-safety: các field mutable dùng volatile + ConcurrentHashSet.
  */
 public class ClientSession {
+
+    private static final Logger log = LoggerFactory.getLogger(ClientSession.class);
 
     private final WebSocket connection;
 
@@ -88,10 +92,12 @@ public class ClientSession {
         this.username = username;
         this.userRole = userRole;
         this.authenticated = true;
+        log.info("Session authenticated: userId={}, username={}, role={}", userId, username, userRole);
     }
 
     /** Reset trạng thái xác thực khi logout. */
     public void deauthenticate() {
+        log.info("Session deauthenticated: username={}", this.username);
         this.userId = null;
         this.username = null;
         this.userRole = null;

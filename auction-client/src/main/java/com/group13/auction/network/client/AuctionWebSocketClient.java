@@ -13,6 +13,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
@@ -65,7 +66,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final long BASE_RECONNECT_DELAY_MS = 1_000;
-    private volatile int reconnectAttempts = 0;
+    private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
     private final ScheduledExecutorService reconnectScheduler =
             Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "ws-reconnect");
@@ -125,7 +126,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        reconnectAttempts = 0;
+        reconnectAttempts.set(0);
         log.info("[CLIENT] ✅ Kết nối thành công tới server: " + getURI());
         startHeartbeat();
     }
@@ -304,15 +305,15 @@ public class AuctionWebSocketClient extends WebSocketClient {
     // ── Reconnect ─────────────────────────────────────────────────────────────
 
     private void scheduleReconnect() {
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        if (reconnectAttempts.get() >= MAX_RECONNECT_ATTEMPTS) {
             log.severe("[CLIENT] Đã thử kết nối lại " + MAX_RECONNECT_ATTEMPTS
                     + " lần không thành công. Dừng.");
             return;
         }
 
-        long delay = BASE_RECONNECT_DELAY_MS * (long) Math.pow(2, reconnectAttempts);
-        reconnectAttempts++;
-        log.info("[CLIENT] Thử kết nối lại lần " + reconnectAttempts
+        long delay = BASE_RECONNECT_DELAY_MS * (long) Math.pow(2, reconnectAttempts.get());
+        reconnectAttempts.incrementAndGet();
+        log.info("[CLIENT] Thử kết nối lại lần " + reconnectAttempts.get()
                 + " sau " + delay + "ms...");
 
         reconnectScheduler.schedule(() -> {
