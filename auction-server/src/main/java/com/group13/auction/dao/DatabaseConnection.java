@@ -13,15 +13,34 @@ import java.util.Properties;
 /**
  * DatabaseConnection — Singleton wrapping a HikariCP connection pool.
  *
- * <p>Thay thế DriverManager.getConnection() cũ (tạo connection mới mỗi lần)
- * bằng HikariCP pool để tránh lỗi "Address already in use" / CommunicationsException
- * khi nhiều thread đồng thời yêu cầu kết nối trong load test.</p>
+ * FIX #5 — HikariCP tuning cho load test:
  *
- * <p><b>Cấu hình pool mặc định:</b>
- * maximumPoolSize=50, minimumIdle=5, connectionTimeout=30s</p>
+ * maximumPoolSize: 50 → 20
+ *   Cũ dùng 50 nhưng load test chỉ có 12 thread bidding.
+ *   Pool quá lớn làm MySQL tốn tài nguyên duy trì idle connections.
+ *   20 là đủ cho 12 bid thread + overhead (join, watch, anti-sniping).
  *
- * <p><b>Để test (Testcontainers):</b> gọi {@link #reconfigure(String, String, String)}
- * sau khi container khởi động.</p>
+ * minimumIdle: 5 → 12
+ *   Pre-warm đủ connection sẵn cho 12 thread → không phải chờ tạo mới.
+ *
+ * connectionTimeout: 30s → 5s
+ *   Load test expect bid nhanh — nếu pool hết connection sau 5s thì
+ *   nên fail nhanh thay vì block thread 30s.
+ *
+ * prepStmtCacheSize + prepStmtCacheSqlLimit:
+ *   Cache prepared statement → tránh parse lại SQL mỗi lần INSERT bid_transactions.
+ *   MySQL driver hỗ trợ server-side prepared statement cache.
+ *
+ * useServerPrepStmts + cachePrepStmts:
+ *   Bật server-side prepared statement → giảm round-trip parse SQL trên MySQL.
+ *
+ * rewriteBatchedStatements:
+ *   Dù hiện tại không dùng batch, bật sẵn để MySQL driver tự gộp INSERT
+ *   nếu sau này chuyển sang executeBatch().
+ *
+ * autoCommit: true (default, giữ nguyên)
+ *   Mỗi saveTransaction() là 1 INSERT đơn → autoCommit phù hợp.
+ *   Nếu sau này dùng batch thì cần tắt và commit thủ công.
  */
 public class DatabaseConnection {
 
@@ -45,7 +64,7 @@ public class DatabaseConnection {
                 this.url      = envUrl;
                 this.username = (envUsername != null) ? envUsername : "";
                 this.password = (envPassword != null) ? envPassword : "";
-                log.info("Database config loaded from environment variables (Docker mode).");
+                log.warn("Database config loaded from environment variables (Docker mode).");
                 buildPool();
             } else {
                 Properties props = new Properties();
@@ -59,7 +78,7 @@ public class DatabaseConnection {
                 this.url      = props.getProperty("db.url");
                 this.username = props.getProperty("db.username");
                 this.password = props.getProperty("db.password");
-                log.info("Database config loaded from data.properties (local dev mode).");
+                log.warn("Database config loaded from data.properties (local dev mode).");
                 buildPool();
             }
         } catch (Exception e) {
@@ -72,26 +91,39 @@ public class DatabaseConnection {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
         }
+
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setUsername(username);
         config.setPassword(password);
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
-        // Pool sizing — enough for 50+ concurrent threads in load tests
-        config.setMaximumPoolSize(50);
-        config.setMinimumIdle(5);
+        // ── FIX #5: Pool sizing ────────────────────────────────────────────
+        // Load test: 12 bid thread + vài thread join/watch/anti-sniping → 20 đủ
+        // Quá lớn (50) gây MySQL overhead duy trì idle connections
+        config.setMaximumPoolSize(20);
+        config.setMinimumIdle(12);  // Pre-warm đủ cho 12 bid thread
 
-        // Timeouts
-        config.setConnectionTimeout(30_000);
-        config.setIdleTimeout(600_000);
-        config.setMaxLifetime(1_800_000);
+        // ── FIX #5: Timeouts ──────────────────────────────────────────────
+        config.setConnectionTimeout(5_000);    // Fail nhanh nếu pool cạn (cũ: 30s)
+        config.setIdleTimeout(300_000);         // 5 phút (cũ: 10 phút)
+        config.setMaxLifetime(900_000);         // 15 phút (cũ: 30 phút)
+
+        // ── FIX #5: MySQL prepared statement cache ────────────────────────
+        // Tránh parse lại SQL mỗi lần INSERT bid_transactions
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "50");       // cache 50 statement
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024"); // max 1024 ký tự/stmt
+        config.addDataSourceProperty("useServerPrepStmts", "true");    // server-side cache
+
+        // FIX #5: Batch insert sẵn sàng khi cần
+        config.addDataSourceProperty("rewriteBatchedStatements", "true");
 
         config.setConnectionTestQuery("SELECT 1");
         config.setPoolName("AuctionPool");
 
         dataSource = new HikariDataSource(config);
-        log.info("HikariCP pool created. URL: {} | maxPoolSize=50", url);
+        log.warn("HikariCP pool created. URL: {} | maxPoolSize=20, minIdle=12", url);
     }
 
     public static DatabaseConnection getInstance() {
@@ -114,7 +146,7 @@ public class DatabaseConnection {
         this.username = newUsername;
         this.password = newPassword;
         buildPool();
-        log.info("DatabaseConnection reconfigured. URL: {}", newUrl);
+        log.warn("DatabaseConnection reconfigured. URL: {}", newUrl);
     }
 
     public Connection getConnection() throws SQLException {
@@ -128,7 +160,7 @@ public class DatabaseConnection {
     public synchronized void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
-            log.info("HikariCP pool closed.");
+            log.warn("HikariCP pool closed.");
         }
     }
 
