@@ -5,6 +5,7 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.server.handler.*;
 import com.group13.auction.network.server.router.PacketRouter;
+import com.group13.auction.chatbot.handler.ChatbotHandler;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.*;
@@ -58,6 +59,8 @@ public class AuctionWebSocketServer extends WebSocketServer {
         // UserAdminHandler tự khởi tạo UserDAO bên trong — dùng cho ADMIN_UNBAN persist.
         router.register(new UserAdminHandler(accountService, ratingService,
                 qualityReportService, sessionManager));
+
+        router.register(new ChatbotHandler());
 
         log.info("AuctionWebSocketServer initialized: port={}", port);
     }

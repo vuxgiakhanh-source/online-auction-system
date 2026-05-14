@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Báo cáo của winner khi hàng không đúng chất lượng.
@@ -17,6 +19,8 @@ import java.util.List;
  * <p>Report phải đính kèm ảnh minh chứng ({@link #imageUrls}).
  */
 public class QualityReport extends Entity {
+
+    private static final Logger log = LoggerFactory.getLogger(QualityReport.class);
 
     public enum ReportStatus {
         PENDING,  // chờ admin xét duyệt
@@ -176,8 +180,7 @@ public class QualityReport extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.printf(
-                "[QUALITY REPORT] %s | Auction: %s | Status: %s | Runđone: %s | Ảnh: %d%n",
+        log.info("[QUALITY REPORT] reporter={} | auctionId={} | status={} | refundCompleted={} | images={}",
                 reporter.getUsername(), auctionId, status, refundCompleted, imageUrls.size());
     }
 }

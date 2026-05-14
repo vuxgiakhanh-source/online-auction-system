@@ -2,6 +2,8 @@ package com.group13.auction.model.bid;
 
 import com.group13.auction.model.entity.Entity;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ghi lại một giao dịch tài chính trong hệ thống.
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
  * trong mỗi bước của luồng giao dịch.
  */
 public class FinancialTransaction extends Entity {
+
+    private static final Logger log = LoggerFactory.getLogger(FinancialTransaction.class);
 
     public enum TransactionType {
         DEPOSIT_LOCK, // khóa tiền cọc khi joinAuction
@@ -75,7 +79,7 @@ public class FinancialTransaction extends Entity {
 
     @Override
     public void printInfo() {
-        System.out.printf("[FINANCIAL TRANSACTION] %s | %d | %s → %s | Auction: %s%n",
+        log.info("[FINANCIAL TRANSACTION] {} | {} | {} -> {} | Auction: {}",
                 type, amount, fromUserId, toUserId, auctionId);
     }
 }

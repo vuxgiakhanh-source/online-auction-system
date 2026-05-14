@@ -28,12 +28,16 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Xử lý tất cả packet còn lại:
  * User profile, Admin management, Rating, Quality Report.
  */
 public class UserAdminHandler implements PacketHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(UserAdminHandler.class);
 
     private static final Set<PacketType> SUPPORTED = EnumSet.of(
             // User
@@ -94,6 +98,8 @@ public class UserAdminHandler implements PacketHandler {
             session.send(Packet.of(PacketType.PONG, System.currentTimeMillis(), requestId));
             return;
         }
+
+        log.info("UserAdminHandler: type={}, user={}, requestId={}", type, session.getUsername(), requestId);
 
         if (!session.isAuthenticated()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,

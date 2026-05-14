@@ -1,6 +1,8 @@
 package com.group13.auction.bank;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Ngân hàng hệ thống — nơi lưu thuế và trung gian chuyển tiền.
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SystemBank {
 
+    private static final Logger log = LoggerFactory.getLogger(SystemBank.class);
     private static final SystemBank INSTANCE = new SystemBank();
 
     private static final long PRICE_TIER_LOW = 1_000_000L;
@@ -78,8 +81,7 @@ public class SystemBank {
      */
     public synchronized void receive(long amount) {
         long current = totalBalance.addAndGet(amount);
-//        System.out.printf("[BANK] Tiếp nhận %d | Tổng quỹ: %d%n",
-//                amount, current);
+        log.info("Bank.receive: amount={}, totalBalance={}", amount, current);
     }
 
     /**
@@ -93,8 +95,8 @@ public class SystemBank {
         long tax = calculateTax(salePrice);
         long payout = salePrice - tax;
         long current = totalBalance.addAndGet(-payout);
-//        System.out.printf("[BANK] Chuyển cho seller %d | Thuế giữ lại: %d | Tổng quỹ: %d%n",
-//                payout, tax, current);
+        log.info("Bank.payoutToSeller: salePrice={}, tax={}, payout={}, totalBalance={}",
+                salePrice, tax, payout, current);
         return payout;
     }
 
@@ -105,8 +107,7 @@ public class SystemBank {
      */
     public synchronized void refundToWinner(long amount) {
         long current = totalBalance.addAndGet(-amount);
-//        System.out.printf("[BANK] Hoàn tiền cho winner %d | Tổng quỹ: %d%n",
-//                amount, current);
+        log.info("Bank.refundToWinner: amount={}, totalBalance={}", amount, current);
     }
 
     /**
@@ -117,8 +118,7 @@ public class SystemBank {
      */
     public synchronized void receiveForfeittedDeposit(long depositAmount) {
         long current = totalBalance.addAndGet(+depositAmount);
-//        System.out.printf("[BANK] Tịch thu cọc %d từ winner vi phạm | Tổng quỹ: %d%n",
-//                depositAmount, current);
+        log.warn("Bank.receiveForfeittedDeposit: depositAmount={}, totalBalance={}", depositAmount, current);
     }
 
     public long getTotalBalance() { return totalBalance.get(); }

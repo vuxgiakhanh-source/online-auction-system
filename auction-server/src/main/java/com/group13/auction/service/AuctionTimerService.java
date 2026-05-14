@@ -5,7 +5,10 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.iservice.IPaymentService;
@@ -13,23 +16,16 @@ import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import com.group13.auction.service.iservice.IScheduler;
+import com.group13.auction.service.scheduler.TaskScheduler;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Scheduler tự động quản lý vòng đời phiên đấu giá.
- *
- * <h3>Cải tiến v2:</h3>
- * <ul>
- *   <li>Logging chuẩn SLF4J (xóa java.util.logging.Logger).</li>
- *   <li>Dùng {@link AuctionLockRegistry#tryLock} với timeout thay vì lock vô hạn.</li>
- *   <li>Double-check anti-sniping sau khi lấy lock.</li>
- *   <li>Resource cleanup (AutoBidRegistry, LockRegistry) khi phiên kết thúc.</li>
- * </ul>
  */
 public class AuctionTimerService {
 
@@ -39,12 +35,13 @@ public class AuctionTimerService {
 
     private static final AuctionTimerService INSTANCE = new AuctionTimerService();
 
-    private ScheduledExecutorService scheduler;
+    private IScheduler scheduler;
     private AuctionService auctionService;
     private IPaymentService paymentService;
     private SessionManager sessionManager;
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
+    private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
     private volatile boolean running = false;
 
     private AuctionTimerService() {}
@@ -67,11 +64,7 @@ public class AuctionTimerService {
         this.paymentService = paymentService;
         this.sessionManager = sessionManager;
 
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "auction-timer");
-            t.setDaemon(true);
-            return t;
-        });
+        this.scheduler = new TaskScheduler(1, "auction-timer");
 
         scheduler.scheduleAtFixedRate(
                 this::scanAndProcess,
@@ -81,23 +74,25 @@ public class AuctionTimerService {
         );
 
         running = true;
-        log.info("AuctionTimerService khởi động — quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
+        log.info("AuctionTimerService khởi động - quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
     }
 
     public synchronized void stop() {
-        if (!running || scheduler == null) return;
+        if (!running || scheduler == null) {
+            return;
+        }
         scheduler.shutdownNow();
         running = false;
         log.info("AuctionTimerService đã dừng.");
     }
-
-    // ── Private ───────────────────────────────────────────────────────────────
 
     private void scanAndProcess() {
         try {
             LocalDateTime now = LocalDateTime.now();
             startPendingAuctions(now);
             closeExpiredAuctions(now);
+            expirePendingWinnerPayments();
+            expirePendingSecondChanceOffers(now);
         } catch (Exception e) {
             log.error("Lỗi không mong muốn trong scan:", e);
         }
@@ -108,22 +103,29 @@ public class AuctionTimerService {
                 .getAuctionsByStatus(Auction.AuctionStatus.OPEN);
 
         for (Auction auction : openAuctions) {
-            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) continue;
+            if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) {
+                continue;
+            }
 
             boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
                 log.warn("startPendingAuctions: lock timeout auctionId={}", auction.getId());
                 continue;
             }
-            try {
-                if (auction.getStatus() != Auction.AuctionStatus.OPEN) continue;
 
+            try {
+                if (auction.getStatus() != Auction.AuctionStatus.OPEN) {
+                    continue;
+                }
+
+                MDC.put("auctionId", auction.getId());
                 auctionService.startAuction(auction);
                 broadcastUpdate(auction, PacketType.AUCTION_STARTED_UPDATE);
                 log.info("Auction started: auctionId={}", auction.getId());
             } catch (Exception e) {
                 log.warn("Không thể start phiên: auctionId={} reason={}", auction.getId(), e.getMessage());
             } finally {
+                MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
             }
         }
@@ -134,7 +136,9 @@ public class AuctionTimerService {
                 .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
 
         for (Auction auction : runningAuctions) {
-            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) continue;
+            if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) {
+                continue;
+            }
 
             boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
@@ -144,12 +148,16 @@ public class AuctionTimerService {
 
             boolean releaseLock = false;
             try {
-                // CRITICAL DOUBLE-CHECK: anti-sniping có thể đã gia hạn trong khi chờ lock
-                if (auction.getStatus() != Auction.AuctionStatus.RUNNING) continue;
+                // Anti-sniping có thể đã gia hạn trong khi chờ lock.
+                if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+                    continue;
+                }
                 if (auction.getEndTime().isAfter(now)) {
                     log.info("Auction vừa được gia hạn, bỏ qua kết thúc: auctionId={}", auction.getId());
                     continue;
                 }
+
+                MDC.put("auctionId", auction.getId());
 
                 NormalUser leaderBeforeClose = auction.getCurrentLeader();
                 boolean reserveMetBeforeClose = auction.isReserveMet();
@@ -183,10 +191,82 @@ public class AuctionTimerService {
             } catch (Exception e) {
                 log.error("Không thể close phiên: auctionId={}", auction.getId(), e);
             } finally {
+                MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
                 }
+            }
+        }
+    }
+
+    /**
+     * Winner (first / second chance) quá hạn 24h thanh toán — đồng bộ với DB qua PaymentService.
+     */
+    private void expirePendingWinnerPayments() {
+        List<Auction> finished = AuctionManager.getInstance()
+                .getAuctionsByStatus(Auction.AuctionStatus.FINISHED);
+
+        for (Auction auction : finished) {
+            AuctionWinner winner = auction.getWinner();
+            if (winner == null || winner.getPaymentStatus() != PaymentStatus.PENDING) {
+                continue;
+            }
+            if (!winner.isExpired()) {
+                continue;
+            }
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("expirePendingWinnerPayments: lock timeout auctionId={}", auction.getId());
+                continue;
+            }
+            try {
+                AuctionWinner w2 = auction.getWinner();
+                if (w2 == null || w2.getPaymentStatus() != PaymentStatus.PENDING || !w2.isExpired()) {
+                    continue;
+                }
+                MDC.put("auctionId", auction.getId());
+                paymentService.expirePayment(auction);
+                if (auction.getStatus() == Auction.AuctionStatus.CANCELED) {
+                    broadcastUpdate(auction, PacketType.AUCTION_CANCELED_UPDATE);
+                }
+            } catch (Exception e) {
+                log.error("expirePendingWinnerPayments: auctionId={}", auction.getId(), e);
+            } finally {
+                MDC.remove("auctionId");
+                lockRegistry.unlock(auction.getId());
+            }
+        }
+    }
+
+    /**
+     * Runner-up không chấp nhận trong thời hạn offer — quét theo deadline trên DB.
+     */
+    private void expirePendingSecondChanceOffers(LocalDateTime now) {
+        List<String> auctionIds = secondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(now);
+        for (String auctionId : auctionIds) {
+            Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+            if (auction == null) {
+                continue;
+            }
+
+            boolean locked = lockRegistry.tryLock(auctionId, CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("expirePendingSecondChanceOffers: lock timeout auctionId={}", auctionId);
+                continue;
+            }
+            try {
+                MDC.put("auctionId", auctionId);
+                paymentService.expireSecondChanceOfferIfDue(auction);
+                if (auction.getStatus() == Auction.AuctionStatus.CANCELED) {
+                    broadcastUpdate(auction, PacketType.AUCTION_CANCELED_UPDATE);
+                }
+            } catch (Exception e) {
+                log.error("expirePendingSecondChanceOffers: auctionId={}", auctionId, e);
+            } finally {
+                MDC.remove("auctionId");
+                lockRegistry.unlock(auctionId);
             }
         }
     }

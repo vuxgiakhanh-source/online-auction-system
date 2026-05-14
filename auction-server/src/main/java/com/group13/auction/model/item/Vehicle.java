@@ -2,9 +2,13 @@ package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Phương tiện. */
 public class Vehicle extends Item {
+
+  private static final Logger log = LoggerFactory.getLogger(Vehicle.class);
 
   private final String manufacturer;
   private final int year;
@@ -52,12 +56,12 @@ public class Vehicle extends Item {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN SẢN PHẨM - VEHICLE");
-    System.out.printf("Tên : %s%n", getName());
-    System.out.printf("Hãng : %s%n", manufacturer);
-    System.out.printf("Năm sản xuất : %d%n", year);
-    System.out.printf("Số km : %.0f%n", mileage);
-    System.out.printf("Giá khởi điểm: %d%n", getStartingPrice());
-    System.out.println("======================================");
+    log.info("THÔNG TIN SẢN PHẨM - VEHICLE");
+    log.info("Tên          : {}", getName());
+    log.info("Hãng         : {}", manufacturer);
+    log.info("Năm sản xuất : {}", year);
+    log.info("Số km        : {}", String.format("%.0f", mileage));
+    log.info("Giá khởi điểm: {}", getStartingPrice());
+    log.info("======================================");
   }
 }

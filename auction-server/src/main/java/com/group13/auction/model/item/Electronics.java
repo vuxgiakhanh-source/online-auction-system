@@ -2,9 +2,13 @@ package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Sản phẩm điện tử. */
 public class Electronics extends Item {
+
+  private static final Logger log = LoggerFactory.getLogger(Electronics.class);
 
   private final String brand;
   private final int warrantyMonths;
@@ -52,12 +56,12 @@ public class Electronics extends Item {
 
   @Override
   public void printInfo() {
-    System.out.println("THÔNG TIN SẢN PHẨM - ELECTRONICS");
-    System.out.printf("Tên : %s%n", getName());
-    System.out.printf("Hãng : %s%n", brand);
-    System.out.printf("Bảo hành : %d tháng%n", warrantyMonths);
-    System.out.printf("Tình trạng : %s%n", condition);
-    System.out.printf("Giá khởi điểm: %d%n", getStartingPrice());
-    System.out.println("======================================");
+    log.info("THÔNG TIN SẢN PHẨM - ELECTRONICS");
+    log.info("Tên          : {}", getName());
+    log.info("Hãng         : {}", brand);
+    log.info("Bảo hành     : {} tháng", warrantyMonths);
+    log.info("Tình trạng   : {}", condition);
+    log.info("Giá khởi điểm: {}", getStartingPrice());
+    log.info("======================================");
   }
 }
