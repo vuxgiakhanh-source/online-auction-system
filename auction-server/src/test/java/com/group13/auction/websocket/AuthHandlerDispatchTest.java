@@ -1,4 +1,4 @@
-package com.group13.auction.websocket.handler;
+package com.group13.auction.websocket;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

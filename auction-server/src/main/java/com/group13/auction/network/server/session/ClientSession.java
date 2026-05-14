@@ -29,12 +29,25 @@ public class ClientSession {
 
     private final WebSocket connection;
 
-    /** null cho đến khi LOGIN_SUCCESS. */
-    private volatile String userId;
-    private volatile String username;
-    /** "NORMAL_USER" | "ADMIN_STAFF" | "ADMIN_MASTER" */
-    private volatile String userRole;
-    private volatile boolean authenticated;
+    /**
+     * FIX: Gom 4 volatile field thành 1 AtomicReference<AuthState> —
+     * tránh race condition khi đọc nhiều field cùng lúc (ví dụ isAuthenticated()=true
+     * nhưng userId đã null do thread khác đang deauthenticate()).
+     * AuthState là immutable record → publish-by-reference an toàn.
+     */
+    private static final class AuthState {
+        final String userId;
+        final String username;
+        final String userRole;
+        final boolean authenticated;
+        AuthState(String userId, String username, String userRole, boolean authenticated) {
+            this.userId = userId; this.username = username;
+            this.userRole = userRole; this.authenticated = authenticated;
+        }
+        static final AuthState ANONYMOUS = new AuthState(null, null, null, false);
+    }
+    private final java.util.concurrent.atomic.AtomicReference<AuthState> authState =
+            new java.util.concurrent.atomic.AtomicReference<>(AuthState.ANONYMOUS);
 
     /**
      * Tập auctionId mà session này đang theo dõi (join hoặc watch).
@@ -44,7 +57,6 @@ public class ClientSession {
 
     public ClientSession(WebSocket connection) {
         this.connection = connection;
-        this.authenticated = false;
     }
 
     // ── Send helpers ──────────────────────────────────────────────────────────
@@ -88,21 +100,15 @@ public class ClientSession {
      * @param userRole role string
      */
     public void authenticate(String userId, String username, String userRole) {
-        this.userId = userId;
-        this.username = username;
-        this.userRole = userRole;
-        this.authenticated = true;
+        authState.set(new AuthState(userId, username, userRole, true));
         log.info("Session authenticated: userId={}, username={}, role={}", userId, username, userRole);
     }
 
     /** Reset trạng thái xác thực khi logout. */
     public void deauthenticate() {
-        log.info("Session deauthenticated: username={}", this.username);
-        this.userId = null;
-        this.username = null;
-        this.userRole = null;
-        this.authenticated = false;
+        AuthState prev = authState.getAndSet(AuthState.ANONYMOUS);
         this.watchingAuctionIds.clear();
+        log.info("Session deauthenticated: username={}", prev.username);
     }
 
     // ── Auction watch management ──────────────────────────────────────────────
@@ -126,23 +132,22 @@ public class ClientSession {
     // ── Getters ───────────────────────────────────────────────────────────────
 
     public WebSocket getConnection() { return connection; }
-    public String getUserId() { return userId; }
-    public String getUsername() { return username; }
-    public String getUserRole() { return userRole; }
-    public boolean isAuthenticated() { return authenticated; }
+    public String getUserId()    { return authState.get().userId; }
+    public String getUsername()  { return authState.get().username; }
+    public String getUserRole()  { return authState.get().userRole; }
+    public boolean isAuthenticated() { return authState.get().authenticated; }
     public boolean isOpen() { return connection != null && connection.isOpen(); }
 
     public boolean isAdmin() {
-        return "ADMIN_STAFF".equals(userRole) || "ADMIN_MASTER".equals(userRole);
+        String r = authState.get().userRole; return "ADMIN_STAFF".equals(r) || "ADMIN_MASTER".equals(r);
     }
 
     public boolean isMasterAdmin() {
-        return "ADMIN_MASTER".equals(userRole);
+        return "ADMIN_MASTER".equals(authState.get().userRole);
     }
 
     @Override
     public String toString() {
-        return "ClientSession{userId='" + userId + "', username='" + username
-                + "', role='" + userRole + "', authenticated=" + authenticated + "}";
+        AuthState s = authState.get(); return "ClientSession{userId='" + s.userId + "', username='" + s.username + "', role='" + s.userRole + "', authenticated=" + s.authenticated + "}";
     }
 }

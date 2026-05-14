@@ -5,9 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/maven.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/maven.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AutoBidDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AutoBidDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/NormalUser.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/NormalUser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/ClientSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/ClientSession.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/PaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/BidServiceLoadIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/BidServiceLoadIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,12 +72,14 @@
     "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
     "Docker.Dockerfile.executor": "Run",
     "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    "JUnit.AccountServiceLoadIT.executor": "Run",
     "JUnit.AccountServiceTest.executor": "Run",
     "JUnit.AdminObserverTest.executor": "Run",
     "JUnit.AdminTest.executor": "Run",
     "JUnit.AuctionEventTest.executor": "Run",
     "JUnit.AuctionLockRegistryConcurrencyTest.executor": "Run",
     "JUnit.AuctionLockRegistryTest.executor": "Run",
+    "JUnit.AuctionManagerLoadTest.executor": "Run",
     "JUnit.AuctionManagerTest.executor": "Run",
     "JUnit.AuctionObserverContractTest.executor": "Run",
     "JUnit.AuctionServiceTest.executor": "Run",
@@ -83,8 +96,10 @@
     "JUnit.AuctionWinnerDAOIT$UpdatePaymentStatusTests.executor": "Run",
     "JUnit.AuctionWinnerDAOIT.executor": "Run",
     "JUnit.AuctionWinnerTest.executor": "Run",
+    "JUnit.AuthHandlerDispatchTest (1).executor": "Run",
     "JUnit.AuthHandlerDispatchTest.executor": "Run",
     "JUnit.AutoBidChainConcurrencyTest.executor": "Run",
+    "JUnit.AutoBidProcessorLoadIT.executor": "Run",
     "JUnit.AutoBidProcessorTest.executor": "Run",
     "JUnit.AutoBidRegistryTest.executor": "Run",
     "JUnit.AutoBidStrategyTest.executor": "Run",
@@ -107,6 +122,7 @@
     "JUnit.BidStrategyContractTest.executor": "Run",
     "JUnit.BidWebSocketIntegrationIT.executor": "Run",
     "JUnit.BidderObserverTest.executor": "Run",
+    "JUnit.ChatbotProviderConcurrentLoadTest.executor": "Run",
     "JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor": "Run",
     "JUnit.ChatbotProviderTest.executor": "Run",
     "JUnit.ConcurrencyBiddingIntegrationTest.executor": "Run",
@@ -128,6 +144,7 @@
     "JUnit.PacketRouterDispatchTest.executor": "Run",
     "JUnit.PacketRouterLoadTest.executor": "Run",
     "JUnit.PaymentExpireAndSecondChanceIT.executor": "Run",
+    "JUnit.PaymentHandlerDispatchTest.executor": "Run",
     "JUnit.PaymentServiceConcurrencyTest.executor": "Run",
     "JUnit.PaymentServiceLoadIT$LockDepositLoadTest.concurrent_lockDeposit_20Users_balanceConsistent.executor": "Run",
     "JUnit.PaymentServiceLoadIT.executor": "Run",
@@ -193,7 +210,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.AuthHandlerDispatchTest">
+  <component name="RunManager" selected="Application.TestLauncher">
     <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
@@ -207,61 +224,61 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionSystemLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="PATTERN" value="com.group13.auction.load.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.AuctionSystemLoadIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuthHandlerDispatchTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.websocket.handler.*" />
+          <option name="PATTERN" value="com.group13.auction.load.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.websocket.handler" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.websocket.handler.AuthHandlerDispatchTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.BidServiceLoadIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="DTOMapperTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SessionManagerLoadTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.protocol.*" />
+          <option name="PATTERN" value="com.group13.auction.load.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.protocol.DTOMapperTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.SessionManagerLoadTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PacketCodecTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="UserDAORatingServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.protocol.*" />
+          <option name="PATTERN" value="com.group13.auction.load.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.protocol.PacketCodecTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.UserDAORatingServiceLoadIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -281,18 +298,18 @@
     </configuration>
     <list>
       <item itemvalue="Application.TestLauncher" />
-      <item itemvalue="JUnit.AuctionWinnerDAOIT" />
-      <item itemvalue="JUnit.AuthHandlerDispatchTest" />
-      <item itemvalue="JUnit.DTOMapperTest" />
-      <item itemvalue="JUnit.PacketCodecTest" />
+      <item itemvalue="JUnit.AuctionSystemLoadIT" />
+      <item itemvalue="JUnit.BidServiceLoadIT" />
+      <item itemvalue="JUnit.SessionManagerLoadTest" />
+      <item itemvalue="JUnit.UserDAORatingServiceLoadIT" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.AuthHandlerDispatchTest" />
-        <item itemvalue="JUnit.DTOMapperTest" />
-        <item itemvalue="JUnit.PacketCodecTest" />
-        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
         <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.BidServiceLoadIT" />
+        <item itemvalue="JUnit.AuctionSystemLoadIT" />
+        <item itemvalue="JUnit.UserDAORatingServiceLoadIT" />
+        <item itemvalue="JUnit.SessionManagerLoadTest" />
       </list>
     </recent_temporary>
   </component>
@@ -328,7 +345,7 @@
       <workItem from="1778716620240" duration="1827000" />
       <workItem from="1778722296380" duration="5011000" />
       <workItem from="1778731693857" duration="1031000" />
-      <workItem from="1778749634831" duration="13646000" />
+      <workItem from="1778749634831" duration="19033000" />
     </task>
     <servers />
   </component>
@@ -392,11 +409,6 @@
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
-          <line>21</line>
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/UserDAORatingServiceLoadIT.java</url>
           <line>51</line>
           <option name="timeStamp" value="37" />
@@ -410,6 +422,11 @@
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/join/JoinAuctionConcurrencyTest.java</url>
           <line>40</line>
           <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>21</line>
+          <option name="timeStamp" value="45" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>

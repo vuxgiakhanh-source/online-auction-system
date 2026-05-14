@@ -191,22 +191,22 @@ public class Auction extends Entity {
   // =========================================================================
 
   public void transitionToRunning() {
-    this.state.set(state.get().start());
+    this.state.updateAndGet(AuctionState::start);
     markUpdated();
   }
 
   public void transitionToClose(boolean hasWinner) {
-    this.state.set(state.get().close(hasWinner));
+    this.state.updateAndGet(s -> s.close(hasWinner));
     markUpdated();
   }
 
   public void transitionToCancel() {
-    this.state.set(state.get().cancel());
+    this.state.updateAndGet(AuctionState::cancel);
     markUpdated();
   }
 
   public void transitionToPaid() {
-    this.state.set(state.get().markPaid());
+    this.state.updateAndGet(AuctionState::markPaid);
     markUpdated();
   }
 
