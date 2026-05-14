@@ -124,6 +124,11 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
     void tearDown() throws Exception {
         // AutoBidRegistry chỉ có clearAuction — registry sẽ được dọn qua reflection để tránh state leak
         clearAutoBidRegistryAll();
+        // Reset AuctionLockRegistry Singleton để không leak lock vào các test khác trong JVM.
+        // Đặc biệt quan trọng vì SizeContract.emptyRegistry_sizeIsZero của AuctionLockRegistryTest
+        // mong đợi size() = 0 sau setUp(). Nếu load test tạo lock (getLock) mà không gọi clearAll(),
+        // Singleton sẽ còn lock orphan và làm fail test đó.
+        com.group13.auction.strategy.AuctionLockRegistry.getInstance().clearAll();
         cleanupDB();
         TestFixture.resetSystemAdmin();
     }

@@ -128,17 +128,25 @@ class BidServiceLoadIT extends IntegrationTestBase {
             final int idx = i;
             futures.add(pool.submit(() -> {
                 for (int r = 0; r < BIDS_PER_BIDDER; r++) {
-                    // Đọc currentPrice ngay trước bid để tính amount hợp lệ.
-                    // Fixed base 1_200_000 bị reject sau vài bid vì price tăng vượt minBid.
-                    long current = auction.getCurrentPrice();
-                    long amount  = current
-                            + BidIncrementCalculator.calculate(current)
-                            + (idx * 10_000L);
-                    try {
-                        bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                        successes.incrementAndGet();
-                    } catch (Exception ignored) {
-                        // Bid bị từ chối do race condition — chấp nhận dưới tải
+                    // FIX: Dùng gap = 2×increment + idx offset nhỏ để đảm bảo amount
+                    // luôn vượt minBid ngay cả khi 1 bid khác vừa được chấp nhận đúng
+                    // lúc này. Retry tối đa 5 lần nếu bị reject do race condition.
+                    boolean placed = false;
+                    int attempts = 0;
+                    while (!placed && attempts < 5) {
+                        attempts++;
+                        long current   = auction.getCurrentPrice();
+                        long increment = BidIncrementCalculator.calculate(current);
+                        long amount    = current + 2 * increment + (idx * 1_000L);
+                        try {
+                            bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
+                            successes.incrementAndGet();
+                            placed = true;
+                        } catch (com.group13.auction.exception.InvalidBidException e) {
+                            // Race: price vừa tăng — retry với price mới
+                        } catch (Exception ignored) {
+                            break; // business rule khác — không retry
+                        }
                     }
                 }
             }));

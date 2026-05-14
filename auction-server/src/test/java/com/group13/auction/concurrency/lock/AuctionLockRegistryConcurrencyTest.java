@@ -35,7 +35,9 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
 
     @AfterEach
     void tearDown() {
-        lockRegistry.release(auction.getId());
+        // Dùng clearAll() để đảm bảo không còn lock nào rò rỉ sau mỗi test,
+        // kể cả UUID-based IDs được tạo trong A2, A5.
+        lockRegistry.clearAll();
     }
 
     // ── A1 ────────────────────────────────────────────────────────────────────
