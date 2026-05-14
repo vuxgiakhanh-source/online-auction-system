@@ -121,9 +121,9 @@ public class PaymentService implements IPaymentService {
     }
 
     long payout = systemBank.payoutToSeller(auctionWinner.getFinalPrice());
-    synchronized (seller) {
-      seller.setBalance(seller.getBalance() + payout);
-    }
+    // FIX: addBalance() dùng AtomicLong.addAndGet — atomic, không cần synchronized(seller)
+    // synchronized(seller) lock trên tham số ngoài → vi phạm Qodana + deadlock risk
+    seller.addBalance(payout);
 
     userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
 
@@ -151,9 +151,8 @@ public class PaymentService implements IPaymentService {
     }
 
     systemBank.refundToWinner(auctionWinner.getFinalPrice());
-    synchronized (winner) {
-      winner.setBalance(winner.getBalance() + auctionWinner.getFinalPrice());
-    }
+    // FIX: addBalance() atomic — không cần synchronized(winner)
+    winner.addBalance(auctionWinner.getFinalPrice());
 
     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 

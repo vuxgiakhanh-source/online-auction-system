@@ -23,7 +23,9 @@ public class BidTransactionDAO {
      * 1. Lưu lại lịch sử một lượt đặt giá vào Database
      */
     public boolean saveTransaction(BidTransaction tx) {
-        String sql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result, bid_time) VALUES (?, ?, ?, ?, ?, ?)";
+        // bid_time sử dụng DEFAULT CURRENT_TIMESTAMP(3) của DB để đảm bảo precision ms và thứ tự đúng.
+        // Không truyền bid_time từ Java vì TIMESTAMP precision chỉ đến giây khi dùng DEFAULT CURRENT_TIMESTAMP.
+        String sql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -33,9 +35,6 @@ public class BidTransactionDAO {
             pstmt.setString(3, tx.getBidder().getId());
             pstmt.setLong(4, tx.getAmount());
             pstmt.setString(5, tx.getResult().name());
-            pstmt.setTimestamp(6, tx.getTimestamp() != null
-                    ? java.sql.Timestamp.valueOf(tx.getTimestamp())
-                    : java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()));
 
             boolean saved = pstmt.executeUpdate() > 0;
             log.debug("Bid transaction saved: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
@@ -97,7 +96,7 @@ public class BidTransactionDAO {
         String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
                 "FROM bid_transactions " +
                 "WHERE auction_id = ? AND result != 'REJECTED' " +
-                "ORDER BY bid_time ASC";
+                "ORDER BY bid_time ASC, seq ASC";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
