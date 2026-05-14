@@ -14,30 +14,37 @@ import com.group13.auction.strategy.StandardBidStrategy;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 /**
  * CI-STABLE VERSION
  *
- * FIXES:
- * - removed Thread.sleep(5)
- * - use ExecutorService instead of raw Thread
- * - assert await() completion
- * - stronger synchronization
- * - reduced flaky timing assumptions
- * - cleanup executor correctly
+ * Goals:
+ * - deterministic synchronization
+ * - CI-friendly timeout margins
+ * - avoid flaky scheduling assumptions
+ * - avoid raw Thread usage
+ * - proper executor cleanup
+ * - explicit deadlock detection
  */
-@DisplayName("Timer: closeAuction() vs placeBid() race (CI stable)")
+@DisplayName("AuctionTimerService concurrency tests")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
+
+    private static final int EXECUTOR_THREADS = 16;
+
+    /**
+     * Internal waits MUST be much smaller than JUnit timeout.
+     */
+    private static final int INTERNAL_WAIT_SECONDS = 10;
 
     private AuctionService auctionService;
     private BidService bidService;
@@ -51,14 +58,21 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     private ExecutorService executor;
 
+    // =========================================================================
+    // Bootstrap
+    // =========================================================================
+
     private static void bootstrapSystemAdminForTest() throws Exception {
+
         java.lang.reflect.Field instanceField =
                 SystemAdmin.class.getDeclaredField("INSTANCE");
 
         instanceField.setAccessible(true);
 
         if (instanceField.get(null) == null) {
+
             SystemAdmin mockAdmin = mock(SystemAdmin.class);
+
             instanceField.set(null, mockAdmin);
         }
     }
@@ -68,7 +82,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
         bootstrapSystemAdminForTest();
 
-        executor = Executors.newFixedThreadPool(16);
+        executor = Executors.newFixedThreadPool(EXECUTOR_THREADS);
 
         mockAuctionDAO = mock(AuctionDAO.class);
         mockBidTransactionDAO = mock(BidTransactionDAO.class);
@@ -76,16 +90,35 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
         mockRatingService = mock(IRatingService.class);
         mockFinancialTransactionDAO = mock(FinancialTransactionDAO.class);
 
-        when(mockRatingService.isEligible(any())).thenReturn(true);
-        when(mockBidTransactionDAO.saveTransaction(any())).thenReturn(true);
-        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any())).thenReturn(true);
-        when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
-        when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
-        when(mockAuctionDAO.updateAuctionStatus(any(), any())).thenReturn(true);
-        when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
-        when(mockUserDAO.saveUserAuctionActivity(any(), any(), any())).thenReturn(true);
-        when(mockUserDAO.addBalance(any(), anyLong())).thenReturn(true);
-        when(mockFinancialTransactionDAO.saveTransaction(any())).thenReturn(true);
+        when(mockRatingService.isEligible(any()))
+                .thenReturn(true);
+
+        when(mockBidTransactionDAO.saveTransaction(any()))
+                .thenReturn(true);
+
+        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any()))
+                .thenReturn(true);
+
+        when(mockAuctionDAO.updateViewerCount(any(), anyInt()))
+                .thenReturn(true);
+
+        when(mockAuctionDAO.updateEndTime(any(), any()))
+                .thenReturn(true);
+
+        when(mockAuctionDAO.updateAuctionStatus(any(), any()))
+                .thenReturn(true);
+
+        when(mockUserDAO.updateBalances(any(), anyLong(), anyLong()))
+                .thenReturn(true);
+
+        when(mockUserDAO.saveUserAuctionActivity(any(), any(), any()))
+                .thenReturn(true);
+
+        when(mockUserDAO.addBalance(any(), anyLong()))
+                .thenReturn(true);
+
+        when(mockFinancialTransactionDAO.saveTransaction(any()))
+                .thenReturn(true);
 
         WalletService walletService =
                 new WalletService(
@@ -95,7 +128,10 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
                 );
 
         auctionService =
-                new AuctionService(mockRatingService, mockAuctionDAO);
+                new AuctionService(
+                        mockRatingService,
+                        mockAuctionDAO
+                );
 
         bidService =
                 new BidService(
@@ -116,28 +152,46 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
     void tearDown() throws Exception {
 
         if (executor != null) {
+
             executor.shutdownNow();
-            executor.awaitTermination(5, TimeUnit.SECONDS);
+
+            boolean terminated =
+                    executor.awaitTermination(
+                            5,
+                            TimeUnit.SECONDS
+                    );
+
+            assertThat(terminated)
+                    .as("Executor failed to terminate")
+                    .isTrue();
         }
 
         resetAuctionManagerUsers();
     }
 
+    // =========================================================================
+    // T1
+    // =========================================================================
+
     @Test
     @Order(1)
-    @DisplayName("T1: close vs bid — auction closes safely")
     @Timeout(30)
+    @DisplayName("T1: closeAuction vs placeBid")
     void timerClose_vs_bidHandler_bidsRejectedAfterClose()
             throws Exception {
 
-        Auction auction = buildRunningAuction(
-                STARTING_PRICE,
-                RESERVE_PRICE,
-                LocalDateTime.now().minusSeconds(1)
-        );
+        Auction auction =
+                buildRunningAuction(
+                        STARTING_PRICE,
+                        RESERVE_PRICE,
+                        LocalDateTime.now().minusSeconds(1)
+                );
 
         NormalUser bidder =
-                buildUser("bidder-T1", USER_BALANCE);
+                buildUser(
+                        "bidder-T1",
+                        USER_BALANCE
+                );
 
         joinBidder(bidder, auction);
 
@@ -158,89 +212,70 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
         AtomicInteger closeCount =
                 new AtomicInteger();
 
-        Runnable timerTask = () -> {
+        // Timer task
+        executor.submit(() -> {
+
             try {
 
                 startGate.await();
 
-                boolean locked =
-                        lockRegistry.tryLock(
-                                auction.getId(),
-                                2,
-                                TimeUnit.SECONDS
-                        );
+                executeWithAuctionLock(
+                        auction,
+                        () -> {
 
-                if (!locked) {
-                    return;
-                }
+                            if (auction.getStatus()
+                                    == Auction.AuctionStatus.RUNNING) {
 
-                try {
+                                auctionService.closeAuction(auction);
 
-                    if (auction.getStatus()
-                            == Auction.AuctionStatus.RUNNING) {
-
-                        auctionService.closeAuction(auction);
-
-                        closeCount.incrementAndGet();
-                    }
-
-                } finally {
-                    lockRegistry.unlock(auction.getId());
-                }
+                                closeCount.incrementAndGet();
+                            }
+                        }
+                );
 
             } catch (Exception e) {
 
                 log.error("Timer task failed", e);
 
             } finally {
+
                 doneGate.countDown();
             }
-        };
+        });
 
-        executor.submit(timerTask);
-
+        // Bid tasks
         for (int i = 0; i < bidThreads; i++) {
 
             final long bidAmount =
                     STARTING_PRICE + (i + 1) * 10_000L;
 
-            Runnable bidTask = () -> {
+            executor.submit(() -> {
 
                 try {
 
                     startGate.await();
 
-                    boolean locked =
-                            lockRegistry.tryLock(
-                                    auction.getId(),
-                                    2,
-                                    TimeUnit.SECONDS
-                            );
+                    executeWithAuctionLock(
+                            auction,
+                            () -> {
 
-                    if (!locked) {
-                        bidRejections.incrementAndGet();
-                        return;
-                    }
+                                try {
 
-                    try {
+                                    bidService.placeBid(
+                                            bidder,
+                                            auction,
+                                            bidAmount,
+                                            new StandardBidStrategy()
+                                    );
 
-                        bidService.placeBid(
-                                bidder,
-                                auction,
-                                bidAmount,
-                                new StandardBidStrategy()
-                        );
+                                    bidSuccesses.incrementAndGet();
 
-                        bidSuccesses.incrementAndGet();
+                                } catch (Exception e) {
 
-                    } catch (Exception e) {
-
-                        bidRejections.incrementAndGet();
-
-                    } finally {
-
-                        lockRegistry.unlock(auction.getId());
-                    }
+                                    bidRejections.incrementAndGet();
+                                }
+                            }
+                    );
 
                 } catch (Exception e) {
 
@@ -250,21 +285,15 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
                     doneGate.countDown();
                 }
-            };
-
-            executor.submit(bidTask);
+            });
         }
 
         startGate.countDown();
 
-        boolean completed =
-                doneGate.await(20, TimeUnit.SECONDS);
-
-        assertThat(completed)
-                .as("Threads timeout/deadlock")
-                .isTrue();
+        assertAwaitCompleted(doneGate);
 
         assertThat(closeCount.get())
+                .as("Auction must close exactly once")
                 .isEqualTo(1);
 
         assertThat(auction.getStatus())
@@ -277,36 +306,28 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
         lockRegistry.release(auction.getId());
     }
 
+    // =========================================================================
+    // T2
+    // =========================================================================
+
     @Test
     @Order(2)
+    @Timeout(20)
     @DisplayName("T2: double close guarded")
-    @Timeout(15)
     void doubleClose_secondCallIgnored()
             throws Exception {
 
-        Auction auction = buildRunningAuction(
-                STARTING_PRICE,
-                STARTING_PRICE - 1,
-                LocalDateTime.now().minusSeconds(1)
-        );
-
-        boolean locked =
-                lockRegistry.tryLock(
-                        auction.getId(),
-                        2,
-                        TimeUnit.SECONDS
+        Auction auction =
+                buildRunningAuction(
+                        STARTING_PRICE,
+                        STARTING_PRICE - 1,
+                        LocalDateTime.now().minusSeconds(1)
                 );
 
-        assertThat(locked).isTrue();
-
-        try {
-
-            auctionService.closeAuction(auction);
-
-        } finally {
-
-            lockRegistry.unlock(auction.getId());
-        }
+        executeWithAuctionLock(
+                auction,
+                () -> auctionService.closeAuction(auction)
+        );
 
         Auction.AuctionStatus statusAfterFirst =
                 auction.getStatus();
@@ -314,30 +335,19 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
         AtomicInteger secondCloseAttempts =
                 new AtomicInteger();
 
-        boolean locked2 =
-                lockRegistry.tryLock(
-                        auction.getId(),
-                        2,
-                        TimeUnit.SECONDS
-                );
+        executeWithAuctionLock(
+                auction,
+                () -> {
 
-        if (locked2) {
+                    if (auction.getStatus()
+                            == Auction.AuctionStatus.RUNNING) {
 
-            try {
+                        auctionService.closeAuction(auction);
 
-                if (auction.getStatus()
-                        == Auction.AuctionStatus.RUNNING) {
-
-                    auctionService.closeAuction(auction);
-
-                    secondCloseAttempts.incrementAndGet();
+                        secondCloseAttempts.incrementAndGet();
+                    }
                 }
-
-            } finally {
-
-                lockRegistry.unlock(auction.getId());
-            }
-        }
+        );
 
         assertThat(secondCloseAttempts.get())
                 .isEqualTo(0);
@@ -348,18 +358,23 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
         lockRegistry.release(auction.getId());
     }
 
+    // =========================================================================
+    // T3
+    // =========================================================================
+
     @Test
     @Order(3)
-    @DisplayName("T3: only one timer closes auction")
-    @Timeout(20)
+    @Timeout(30)
+    @DisplayName("T3: only one timer thread closes")
     void twoTimerThreads_onlyOneCloses()
             throws Exception {
 
-        Auction auction = buildRunningAuction(
-                STARTING_PRICE,
-                RESERVE_PRICE,
-                LocalDateTime.now().minusSeconds(1)
-        );
+        Auction auction =
+                buildRunningAuction(
+                        STARTING_PRICE,
+                        RESERVE_PRICE,
+                        LocalDateTime.now().minusSeconds(1)
+                );
 
         CountDownLatch gate =
                 new CountDownLatch(1);
@@ -376,35 +391,23 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
                 gate.await();
 
-                boolean locked =
-                        lockRegistry.tryLock(
-                                auction.getId(),
-                                2,
-                                TimeUnit.SECONDS
-                        );
+                executeWithAuctionLock(
+                        auction,
+                        () -> {
 
-                if (!locked) {
-                    return;
-                }
+                            if (auction.getStatus()
+                                    == Auction.AuctionStatus.RUNNING) {
 
-                try {
+                                auctionService.closeAuction(auction);
 
-                    if (auction.getStatus()
-                            == Auction.AuctionStatus.RUNNING) {
-
-                        auctionService.closeAuction(auction);
-
-                        closed.incrementAndGet();
-                    }
-
-                } finally {
-
-                    lockRegistry.unlock(auction.getId());
-                }
+                                closed.incrementAndGet();
+                            }
+                        }
+                );
 
             } catch (Exception e) {
 
-                log.error("Timer failed", e);
+                log.error("Timer task failed", e);
 
             } finally {
 
@@ -417,30 +420,32 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
         gate.countDown();
 
-        boolean completed =
-                done.await(10, TimeUnit.SECONDS);
-
-        assertThat(completed)
-                .isTrue();
+        assertAwaitCompleted(done);
 
         assertThat(closed.get())
+                .as("Only one timer may close")
                 .isEqualTo(1);
 
         lockRegistry.release(auction.getId());
     }
 
+    // =========================================================================
+    // T4
+    // =========================================================================
+
     @Test
     @Order(4)
+    @Timeout(45)
     @DisplayName("T4: concurrent bids do not corrupt currentPrice")
-    @Timeout(30)
     void concurrentBidsAndClose_priceNotCorrupted()
             throws Exception {
 
-        Auction auction = buildRunningAuction(
-                STARTING_PRICE,
-                RESERVE_PRICE,
-                LocalDateTime.now().plusSeconds(30)
-        );
+        Auction auction =
+                buildRunningAuction(
+                        STARTING_PRICE,
+                        RESERVE_PRICE,
+                        LocalDateTime.now().plusSeconds(30)
+                );
 
         int bidderCount = 10;
 
@@ -451,104 +456,74 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
             joinBidder(bidder, auction);
         }
 
-        CountDownLatch gate =
+        CountDownLatch startGate =
                 new CountDownLatch(1);
 
-        CountDownLatch done =
+        CountDownLatch doneGate =
                 new CountDownLatch(bidderCount + 1);
-
-        AtomicReference<Long> priceSnapshot =
-                new AtomicReference<>(
-                        auction.getCurrentPrice()
-                );
 
         for (int i = 0; i < bidderCount; i++) {
 
-            final NormalUser bidder = bidders.get(i);
+            final int bidderIndex = i;
 
-            final long amount =
-                    STARTING_PRICE + (i + 1) * 50_000L;
-
-            Runnable bidTask = () -> {
+            executor.submit(() -> {
 
                 try {
 
-                    gate.await();
+                    startGate.await();
 
-                    boolean locked =
-                            lockRegistry.tryLock(
-                                    auction.getId(),
-                                    2,
-                                    TimeUnit.SECONDS
-                            );
+                    NormalUser bidder =
+                            bidders.get(bidderIndex);
 
-                    if (!locked) {
-                        return;
-                    }
+                    long amount =
+                            STARTING_PRICE
+                                    + (bidderIndex + 1) * 50_000L;
 
-                    try {
+                    executeWithAuctionLock(
+                            auction,
+                            () -> {
 
-                        if (auction.isAcceptingBids()) {
+                                if (auction.isAcceptingBids()) {
 
-                            bidService.placeBid(
-                                    bidder,
-                                    auction,
-                                    amount,
-                                    new StandardBidStrategy()
-                            );
-
-                            priceSnapshot.set(
-                                    auction.getCurrentPrice()
-                            );
-                        }
-
-                    } finally {
-
-                        lockRegistry.unlock(auction.getId());
-                    }
+                                    bidService.placeBid(
+                                            bidder,
+                                            auction,
+                                            amount,
+                                            new StandardBidStrategy()
+                                    );
+                                }
+                            }
+                    );
 
                 } catch (Exception e) {
 
-                    log.error("Bid failed", e);
+                    log.error("Bid task failed", e);
 
                 } finally {
 
-                    done.countDown();
+                    doneGate.countDown();
                 }
-            };
-
-            executor.submit(bidTask);
+            });
         }
 
-        Runnable closeTask = () -> {
+        // Close task
+        executor.submit(() -> {
 
             try {
 
-                gate.await();
+                startGate.await();
 
-                boolean locked =
-                        lockRegistry.tryLock(
-                                auction.getId(),
-                                2,
-                                TimeUnit.SECONDS
-                        );
+                executeWithAuctionLock(
+                        auction,
+                        () -> {
 
-                if (!locked) {
-                    return;
-                }
+                            if (auction.getStatus()
+                                    == Auction.AuctionStatus.RUNNING) {
 
-                try {
-
-                    if (auction.getStatus()
-                            == Auction.AuctionStatus.RUNNING) {
-
-                        auctionService.closeAuction(auction);
-                    }
-
-                } finally {
-
-                    lockRegistry.unlock(auction.getId());
-                }
+                                auctionService.closeAuction(auction);
+                            }
+                        }
+                );
 
             } catch (Exception e) {
 
@@ -556,31 +531,74 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
             } finally {
 
-                done.countDown();
+                doneGate.countDown();
             }
-        };
+        });
 
-        executor.submit(closeTask);
+        startGate.countDown();
 
-        gate.countDown();
-
-        boolean completed =
-                done.await(20, TimeUnit.SECONDS);
-
-        assertThat(completed)
-                .as("Concurrent tasks timeout")
-                .isTrue();
+        assertAwaitCompleted(doneGate);
 
         assertThat(auction.getCurrentPrice())
+                .as("Price must never go below starting price")
                 .isGreaterThanOrEqualTo(STARTING_PRICE);
 
         long maxPossibleBid =
-                STARTING_PRICE + (long) bidderCount * 50_000L;
+                STARTING_PRICE
+                        + (long) bidderCount * 50_000L;
 
         assertThat(auction.getCurrentPrice())
+                .as("Price exceeds theoretical max")
                 .isLessThanOrEqualTo(maxPossibleBid);
 
         lockRegistry.release(auction.getId());
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private void executeWithAuctionLock(
+            Auction auction,
+            ThrowingRunnable runnable
+    ) throws Exception {
+
+        boolean locked =
+                lockRegistry.tryLock(
+                        auction.getId(),
+                        5,
+                        TimeUnit.SECONDS
+                );
+
+        if (!locked) {
+            failTest(
+                    "Failed to acquire auction lock within timeout"
+            );
+        }
+
+        try {
+
+            runnable.run();
+
+        } finally {
+
+            lockRegistry.unlock(auction.getId());
+        }
+    }
+
+    private void assertAwaitCompleted(
+            CountDownLatch latch
+    ) throws InterruptedException {
+
+        boolean completed =
+                latch.await(
+                        INTERNAL_WAIT_SECONDS,
+                        TimeUnit.SECONDS
+                );
+
+        assertThat(completed)
+                .as("Concurrent tasks timeout/deadlock")
+                .isTrue();
     }
 
     private void joinBidder(
@@ -600,5 +618,13 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
                 noopObserver()
         );
     }
-}
 
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
+    }
+
+    private void failTest(String message) {
+        Assertions.fail(message);
+    }
+}
