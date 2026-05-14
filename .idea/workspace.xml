@@ -6,7 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/AuctionWebSocketClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/AuctionWebSocketClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/DatabaseConnection.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/StandardBidStrategy.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/StandardBidStrategy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +19,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="306" />
+    <option name="cachedIndexableFilesCount" value="322" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -51,196 +56,209 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ServerMain.executor&quot;: &quot;Run&quot;,
-    &quot;Application.TestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Application.com.group13.auction.unit.TestLauncher.executor&quot;: &quot;Run&quot;,
-    &quot;Docker.Dockerfile.executor&quot;: &quot;Run&quot;,
-    &quot;Docker.docker-compose.yml: Compose Deployment.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AccountServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AdminObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AdminTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionEventTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionLockRegistryConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionLockRegistryTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionManagerTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionObserverContractTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionSortServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionStateMachineTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionSystemLoadIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionTimerServiceConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionTimerServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionWinnerDAOIT (1).executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionWinnerDAOIT$UpdatePaymentStatusTests.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionWinnerDAOIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AuctionWinnerTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AutoBidChainConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AutoBidProcessorTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AutoBidRegistryTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.AutoBidStrategyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidDaoConsistencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidEdgeCasesTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidIncrementCalculatorTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidRaceConditionTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceIntegrationIT$JoinAuctionTests.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceIntegrationIT$JoinAuctionTests.joinAuction_happyPath_depositLockedAndDbConsistent.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceIntegrationIT$PlaceBidTests.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceTest$PlaceBidHappyPath.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidStrategyContractTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidWebSocketIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.BidderObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ChatbotProviderTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ConcurrencyBiddingIntegrationTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DAOIntegrationIT$AuctionDAOIntegrationTests.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DAOIntegrationIT$TransactionIntegrityTests.unlockDeposit_atomic_restoresBalanceCorrectly.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DAOIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DepositRefundIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DepositRefundIT.threeBidders_allReceiveFullDepositRefund_afterCancel.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.DepositRefundIT.winner_doesNotReceiveRefund_onlyLosersRefunded.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.FinancialAuditIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ItemFactoryTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.JoinAuctionConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.NormalUserTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.ObserverConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PacketRouterDispatchTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PacketRouterLoadTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentExpireAndSecondChanceIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentServiceConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentServiceLoadIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PaymentStateTransitionIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.QualityReportIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.QualityReportServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.QualityReportTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RatingConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RatingServiceIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RatingServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RealtimeNotificationIntegrationTest$SandwichIntegration.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RealtimeNotificationIntegrationTest$TopDownEventDispatch.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.RealtimeNotificationIntegrationTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SecondChanceOfferTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SellerObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SessionManagerBroadcastTest$BroadcastToAuction.differentAuctions_onlyMatchingWatcherReceives.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SessionManagerLoadTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.StaffObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.StandardBidStrategyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SystemAdminObserverTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SystemAdminTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SystemBankConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.SystemBankTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserDAORatingServiceLoadIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserFactoryTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserRegistrationIntegrationIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.UserTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.WalletConcurrencyTest.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.WalletPaymentIT.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.WalletServiceTest.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.online-auction-system [clean].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;OOP-logic-testig&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/online-auction-system&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.IntegrationTestLauncher.executor": "Run",
+    "Application.ServerMain.executor": "Run",
+    "Application.TestLauncher.executor": "Run",
+    "Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor": "Run",
+    "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
+    "Docker.Dockerfile.executor": "Run",
+    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    "JUnit.AccountServiceTest.executor": "Run",
+    "JUnit.AdminObserverTest.executor": "Run",
+    "JUnit.AdminTest.executor": "Run",
+    "JUnit.AuctionEventTest.executor": "Run",
+    "JUnit.AuctionLockRegistryConcurrencyTest.executor": "Run",
+    "JUnit.AuctionLockRegistryTest.executor": "Run",
+    "JUnit.AuctionManagerTest.executor": "Run",
+    "JUnit.AuctionObserverContractTest.executor": "Run",
+    "JUnit.AuctionServiceTest.executor": "Run",
+    "JUnit.AuctionSortServiceTest.executor": "Run",
+    "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
+    "JUnit.AuctionStateMachineTest$OpenStateTest.executor": "Run",
+    "JUnit.AuctionStateMachineTest.executor": "Run",
+    "JUnit.AuctionSystemLoadIT$WalletServiceLoadTest.executor": "Run",
+    "JUnit.AuctionSystemLoadIT.executor": "Run",
+    "JUnit.AuctionTest.executor": "Run",
+    "JUnit.AuctionTimerServiceConcurrencyTest.executor": "Run",
+    "JUnit.AuctionTimerServiceTest.executor": "Run",
+    "JUnit.AuctionWinnerDAOIT (1).executor": "Run",
+    "JUnit.AuctionWinnerDAOIT$UpdatePaymentStatusTests.executor": "Run",
+    "JUnit.AuctionWinnerDAOIT.executor": "Run",
+    "JUnit.AuctionWinnerTest.executor": "Run",
+    "JUnit.AutoBidChainConcurrencyTest.executor": "Run",
+    "JUnit.AutoBidProcessorTest.executor": "Run",
+    "JUnit.AutoBidRegistryTest.executor": "Run",
+    "JUnit.AutoBidStrategyTest.executor": "Run",
+    "JUnit.BidConcurrencyTest.executor": "Run",
+    "JUnit.BidDaoConsistencyTest.executor": "Run",
+    "JUnit.BidEdgeCasesTest.executor": "Run",
+    "JUnit.BidIncrementCalculatorTest.executor": "Run",
+    "JUnit.BidRaceConditionTest.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.joinAuction_happyPath_depositLockedAndDbConsistent.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$PlaceBidTests.executor": "Run",
+    "JUnit.BidServiceIntegrationIT.executor": "Run",
+    "JUnit.BidServiceLoadIT.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidHappyPath.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_checksEligibilityFirst.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_savesRejectedTransaction.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_strategyRejectsBid_throwsInvalidBidException.executor": "Run",
+    "JUnit.BidServiceTest.executor": "Run",
+    "JUnit.BidStrategyContractTest.executor": "Run",
+    "JUnit.BidWebSocketIntegrationIT.executor": "Run",
+    "JUnit.BidderObserverTest.executor": "Run",
+    "JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor": "Run",
+    "JUnit.ChatbotProviderTest.executor": "Run",
+    "JUnit.ConcurrencyBiddingIntegrationTest.executor": "Run",
+    "JUnit.DAOIntegrationIT$AuctionDAOIntegrationTests.executor": "Run",
+    "JUnit.DAOIntegrationIT$TransactionIntegrityTests.unlockDeposit_atomic_restoresBalanceCorrectly.executor": "Run",
+    "JUnit.DAOIntegrationIT.executor": "Run",
+    "JUnit.DepositRefundIT.executor": "Run",
+    "JUnit.DepositRefundIT.threeBidders_allReceiveFullDepositRefund_afterCancel.executor": "Run",
+    "JUnit.DepositRefundIT.winner_doesNotReceiveRefund_onlyLosersRefunded.executor": "Run",
+    "JUnit.FinancialAuditIntegrationIT.executor": "Run",
+    "JUnit.ItemFactoryTest.executor": "Run",
+    "JUnit.JoinAuctionConcurrencyTest.executor": "Run",
+    "JUnit.NormalUserTest.executor": "Run",
+    "JUnit.ObserverConcurrencyTest.executor": "Run",
+    "JUnit.PacketRouterDispatchTest.executor": "Run",
+    "JUnit.PacketRouterLoadTest.executor": "Run",
+    "JUnit.PaymentExpireAndSecondChanceIT.executor": "Run",
+    "JUnit.PaymentServiceConcurrencyTest.executor": "Run",
+    "JUnit.PaymentServiceLoadIT.executor": "Run",
+    "JUnit.PaymentServiceTest.executor": "Run",
+    "JUnit.PaymentStateTransitionIT.executor": "Run",
+    "JUnit.QualityReportIntegrationIT.executor": "Run",
+    "JUnit.QualityReportServiceTest.executor": "Run",
+    "JUnit.QualityReportTest.executor": "Run",
+    "JUnit.RatingConcurrencyTest.executor": "Run",
+    "JUnit.RatingServiceIntegrationIT.executor": "Run",
+    "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest$SandwichIntegration.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest$TopDownEventDispatch.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest.executor": "Run",
+    "JUnit.SecondChanceOfferTest.executor": "Run",
+    "JUnit.SellerObserverTest.executor": "Run",
+    "JUnit.SessionManagerBroadcastTest$BroadcastToAuction.differentAuctions_onlyMatchingWatcherReceives.executor": "Run",
+    "JUnit.SessionManagerLoadTest.executor": "Run",
+    "JUnit.StaffObserverTest.executor": "Run",
+    "JUnit.StandardBidStrategyTest.executor": "Run",
+    "JUnit.SystemAdminObserverTest.executor": "Run",
+    "JUnit.SystemAdminTest.executor": "Run",
+    "JUnit.SystemBankConcurrencyTest.executor": "Run",
+    "JUnit.SystemBankTest.executor": "Run",
+    "JUnit.UserDAORatingServiceLoadIT.executor": "Run",
+    "JUnit.UserFactoryTest.executor": "Run",
+    "JUnit.UserRegistrationIntegrationIT.executor": "Run",
+    "JUnit.UserServiceTest.executor": "Run",
+    "JUnit.UserTest.executor": "Run",
+    "JUnit.WalletConcurrencyTest.executor": "Run",
+    "JUnit.WalletPaymentIT.executor": "Run",
+    "JUnit.WalletServiceTest.executor": "Run",
+    "Maven.online-auction-system [clean].executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "OOP-logic-testig",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/online-auction-system",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
     ]
   }
-}</component>
-  <component name="RunManager" selected="Application.TestLauncher">
-    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
+}]]></component>
+  <component name="RunManager" selected="JUnit.BidServiceTest">
+    <configuration name="BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_checksEligibilityFirst" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service.BidServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.BidServiceTest$PlaceBidIneligibleUser" />
+      <option name="METHOD_NAME" value="placeBid_ineligibleBidder_checksEligibilityFirst" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="NormalUserTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_savesRejectedTransaction" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.user.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.user.NormalUserTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service.BidServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.BidServiceTest$PlaceBidIneligibleUser" />
+      <option name="METHOD_NAME" value="placeBid_ineligibleBidder_savesRejectedTransaction" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SystemAdminTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.user.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.user.SystemAdminTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service.BidServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.BidServiceTest$PlaceBidOrchestrationOrder" />
+      <option name="METHOD_NAME" value="placeBid_notJoined_doesNotCallStrategy" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="UserFactoryTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceTest$PlaceBidStrategyOrchestration.placeBid_strategyRejectsBid_throwsInvalidBidException" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.user.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.user.UserFactoryTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service.BidServiceTest" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.BidServiceTest$PlaceBidStrategyOrchestration" />
+      <option name="METHOD_NAME" value="placeBid_strategyRejectsBid_throwsInvalidBidException" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="UserTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="BidServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.user.*" />
+          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.user" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.user.UserTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.BidServiceTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -259,19 +277,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Application.TestLauncher" />
-      <item itemvalue="JUnit.NormalUserTest" />
-      <item itemvalue="JUnit.SystemAdminTest" />
-      <item itemvalue="JUnit.UserFactoryTest" />
-      <item itemvalue="JUnit.UserTest" />
+      <item itemvalue="JUnit.BidServiceTest" />
+      <item itemvalue="JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_checksEligibilityFirst" />
+      <item itemvalue="JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_savesRejectedTransaction" />
+      <item itemvalue="JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy" />
+      <item itemvalue="JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_strategyRejectsBid_throwsInvalidBidException" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.UserTest" />
-        <item itemvalue="JUnit.UserFactoryTest" />
-        <item itemvalue="JUnit.SystemAdminTest" />
-        <item itemvalue="JUnit.NormalUserTest" />
+        <item itemvalue="JUnit.BidServiceTest" />
+        <item itemvalue="JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_savesRejectedTransaction" />
+        <item itemvalue="JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_checksEligibilityFirst" />
+        <item itemvalue="JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_strategyRejectsBid_throwsInvalidBidException" />
+        <item itemvalue="JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy" />
       </list>
     </recent_temporary>
   </component>
@@ -304,7 +322,9 @@
       <workItem from="1778661220092" duration="396000" />
       <workItem from="1778666989410" duration="2303000" />
       <workItem from="1778673314187" duration="28009000" />
-      <workItem from="1778716620240" duration="1025000" />
+      <workItem from="1778716620240" duration="1827000" />
+      <workItem from="1778722296380" duration="5011000" />
+      <workItem from="1778731693857" duration="1031000" />
     </task>
     <servers />
   </component>

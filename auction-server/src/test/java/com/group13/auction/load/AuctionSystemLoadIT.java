@@ -1020,19 +1020,23 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
             ExecutorService pool = Executors.newFixedThreadPool(threads);
             List<Future<?>> futures = new ArrayList<>();
 
+            // FIX: Mỗi thread đọc currentPrice rồi bid vượt đúng minIncrement (200_000).
+            // Offset theo idx để 12 thread không tranh nhau cùng 1 mức giá.
+            // Kết quả: tỷ lệ bid thành công cao, reject chỉ xảy ra khi 2 thread
+            // đọc currentPrice cùng lúc trước khi 1 thread kịp updateBid — không thể tránh hoàn toàn.
             for (int i = 0; i < threads; i++) {
                 final NormalUser bidder = bidders.get(i);
                 final int idx = i;
                 futures.add(pool.submit(() -> {
-                    long r = 0;
                     while (System.currentTimeMillis() < endTime) {
                         totalAttempts.incrementAndGet();
-                        long amount = 1_200_000L + (idx * 5_000L) + (r * 1_000L);
+                        // Đọc currentPrice hiện tại (volatile read) + 1 increment + offset theo thread
+                        long currentPrice = auction.getCurrentPrice();
+                        long amount = currentPrice + 200_000L + (idx * 10_000L);
                         try {
                             bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
                             totalSuccess.incrementAndGet();
                         } catch (Exception ignored) {}
-                        r++;
                     }
                 }));
             }

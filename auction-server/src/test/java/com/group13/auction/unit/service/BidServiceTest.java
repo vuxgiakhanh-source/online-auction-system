@@ -534,7 +534,6 @@ class BidServiceTest {
             NormalUser banned = TestFixture.bannedBidder("bannedUser1");
             banned.addJoinedAuction(runningAuction.getId());
             when(ratingService.isEligible(banned)).thenReturn(false);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             AuthenticationException ex = assertThrows(AuthenticationException.class,
@@ -549,7 +548,6 @@ class BidServiceTest {
             NormalUser suspended = TestFixture.suspendedBidder("suspendUser1");
             suspended.addJoinedAuction(runningAuction.getId());
             when(ratingService.isEligible(suspended)).thenReturn(false);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             AuthenticationException ex = assertThrows(AuthenticationException.class,
@@ -564,7 +562,6 @@ class BidServiceTest {
             NormalUser lowRating = TestFixture.bidderWithRating("lowRateUsr", 1.0);
             lowRating.addJoinedAuction(runningAuction.getId());
             when(ratingService.isEligible(lowRating)).thenReturn(false);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             AuthenticationException ex = assertThrows(AuthenticationException.class,
@@ -598,7 +595,6 @@ class BidServiceTest {
             NormalUser banned = TestFixture.bannedBidder("bannedUser3");
             // Không join auction cũng không quan trọng — eligibility check first
             when(ratingService.isEligible(banned)).thenReturn(false);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(AuthenticationException.class,
@@ -798,7 +794,6 @@ class BidServiceTest {
             when(ratingService.isEligible(bidder)).thenReturn(true);
             when(mockStrategy.isValidBid(any(), anyLong())).thenReturn(false);
             when(mockStrategy.describe()).thenReturn("custom strategy");
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(InvalidBidException.class,
@@ -1164,7 +1159,7 @@ class BidServiceTest {
             BidStrategy mockStrategy = mock(BidStrategy.class);
             NormalUser stranger = TestFixture.bidderWithBalance("strangerEE", 10_000_000L);
             when(ratingService.isEligible(stranger)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
+
 
             // Act
             assertThrows(AuctionBusinessException.class,
