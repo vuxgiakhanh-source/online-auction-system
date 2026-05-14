@@ -100,32 +100,35 @@ public class DatabaseConnection {
         // Giảm anomaly đọc/ghi đồng thời giữa các connection (scheduler vs handler).
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
 
-        // ── FIX #5: Pool sizing ────────────────────────────────────────────
-        // Load test: 12 bid thread + vài thread join/watch/anti-sniping → 20 đủ
-        // Quá lớn (50) gây MySQL overhead duy trì idle connections
-        config.setMaximumPoolSize(20);
-        config.setMinimumIdle(12);  // Pre-warm đủ cho 12 bid thread
+        // ── Pool sizing ───────────────────────────────────────────────────
+        // AuctionSystemLoadIT dùng tối đa 32 thread đồng thời → cần pool >= 32.
+        // minimumIdle = 5: pre-warm vừa phải; tránh tạo nhiều connection khi
+        //   Testcontainers container chưa kịp sẵn sàng.
+        config.setMaximumPoolSize(40);
+        config.setMinimumIdle(5);
 
-        // ── FIX #5: Timeouts ──────────────────────────────────────────────
-        config.setConnectionTimeout(5_000);    // Fail nhanh nếu pool cạn (cũ: 30s)
-        config.setIdleTimeout(300_000);         // 5 phút (cũ: 10 phút)
-        config.setMaxLifetime(900_000);         // 15 phút (cũ: 30 phút)
+        // ── Timeouts ──────────────────────────────────────────────────────
+        // connectionTimeout=30s: đủ cho Testcontainers warm-up và cho 32+ thread
+        //   đợi connection khi pool tạm hết (5s cũ quá ngắn → SQLTransientConnectionException).
+        config.setConnectionTimeout(30_000);
+        config.setIdleTimeout(300_000);   // 5 phút
+        config.setMaxLifetime(900_000);   // 15 phút
 
-        // ── FIX #5: MySQL prepared statement cache ────────────────────────
+        // ── MySQL prepared statement cache ────────────────────────────────
         // Tránh parse lại SQL mỗi lần INSERT bid_transactions
         config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "50");       // cache 50 statement
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024"); // max 1024 ký tự/stmt
-        config.addDataSourceProperty("useServerPrepStmts", "true");    // server-side cache
+        config.addDataSourceProperty("prepStmtCacheSize", "50");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
+        config.addDataSourceProperty("useServerPrepStmts", "true");
 
-        // FIX #5: Batch insert sẵn sàng khi cần
+        // Batch insert sẵn sàng khi cần (không xung đột với cachePrepStmts)
         config.addDataSourceProperty("rewriteBatchedStatements", "true");
 
         config.setConnectionTestQuery("SELECT 1");
         config.setPoolName("AuctionPool");
 
         dataSource = new HikariDataSource(config);
-        log.warn("HikariCP pool created. URL: {} | maxPoolSize=20, minIdle=12", url);
+        log.warn("HikariCP pool created. URL: {} | maxPoolSize=40, minIdle=5", url);
     }
 
     public static DatabaseConnection getInstance() {

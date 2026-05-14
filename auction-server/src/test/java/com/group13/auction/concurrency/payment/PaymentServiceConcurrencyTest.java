@@ -95,8 +95,10 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     @DisplayName("P1: releaseToSeller() concurrent 2 lần — balance phải = 1 lần payout [ENFORCE]")
     @Timeout(value = 5)
     void releaseToSeller_concurrent_exactlyOnePayout() throws InterruptedException {
-        long finalPrice           = 1_000_000L;
-        long expectedPayoutPerCall = 1_000_000L - Math.round(1_000_000L * 0.05); // 950_000
+        // finalPrice < 1_000_000 để đảm bảo rơi vào bracket TAX_RATE_LOW (5%)
+        // Boundary: PRICE_TIER_LOW = 1_000_000 → salePrice < 1_000_000 mới là 5%
+        long finalPrice           = 500_000L;
+        long expectedPayoutPerCall = 500_000L - Math.round(500_000L * 0.05); // 475_000
 
         NormalUser seller = buildUser("seller-P1", 0L);
         NormalUser winner = buildUser("winner-P1", finalPrice * 2);

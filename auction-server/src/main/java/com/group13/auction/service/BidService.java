@@ -91,17 +91,26 @@ public class BidService implements IBidService {
   // Public API
   // =========================================================================
 
-  /** FIX #4: join không cần lock auction — guard hasJoined() là đủ. */
+  /** FIX #4 (rev2): tryMarkJoined() là atomic gate — ConcurrentHashMap.add() trả về false nếu đã tồn tại.
+   * Tránh race window giữa hasJoined() check và addJoinedAuction() call. */
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
-    if (user.hasJoined(auction.getId())) {
+    // Atomic check-and-mark: chỉ 1 thread được phép tiếp tục join
+    if (!user.tryMarkJoined(auction.getId())) {
       log.warn("User already joined: userId={}, auctionId={}", user.getId(), auction.getId());
       return;
     }
-    if (user instanceof NormalUser) {
-      joinAsNormalUser((NormalUser) user, auction, observer);
-    } else {
-      joinAsAdmin(user, auction, observer);
+    // Đã mark joined — nếu join thất bại thì phải unmark để không block join lại sau
+    try {
+      if (user instanceof NormalUser) {
+        joinAsNormalUser((NormalUser) user, auction, observer);
+      } else {
+        joinAsAdmin(user, auction, observer);
+      }
+    } catch (RuntimeException e) {
+      // Rollback mark nếu join thất bại (ineligible, insufficient deposit, v.v.)
+      user.removeJoinedAuction(auction.getId());
+      throw e;
     }
   }
 

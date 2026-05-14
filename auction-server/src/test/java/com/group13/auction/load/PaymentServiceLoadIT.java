@@ -179,8 +179,8 @@ class PaymentServiceLoadIT extends IntegrationTestBase {
             // Mỗi user: balance RAM = initialBalance - deposit, lockedDeposit = deposit
             for (NormalUser u : users) {
                 NormalUser fromDB = userDAO.findNormalUserById(u.getId());
-                assertThat(fromDB.getBalance())
-                        .as("DB balance của %s phải = initialBalance - deposit", u.getUsername())
+                assertThat(fromDB.getAvailableBalance())
+                        .as("DB available balance của %s phải = initialBalance - deposit", u.getUsername())
                         .isEqualTo(initialBalance - depositAmount);
                 assertThat(fromDB.getLockedDeposit())
                         .as("DB lockedDeposit phải = deposit")

@@ -327,7 +327,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
 
         @Test
         @Timeout(value = 60)
-        @DisplayName("L-UD6: 8 thread rewardBidder + 8 thread penalizeLatePayment trên cùng 1 user — không NPE, rating hợp lệ [1.0, 5.0]")
+        @DisplayName("L-UD6: 8 thread rewardBidder + 8 thread penalizeLatePayment trên cùng 1 user — không NPE, rating hợp lệ [0.0, 5.0]")
         void concurrent_rewardAndPenalize_sameUser_ratingInValidRange() throws Exception {
             int rewardThreads  = 8;
             int penaltyThreads = 8;
@@ -383,11 +383,12 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
             assertThat(done.await(60, TimeUnit.SECONDS)).isTrue();
             assertThat(failures.get()).isZero();
 
-            // Rating phải nằm trong khoảng hợp lệ [1.0, 5.0]
+            // Rating phải nằm trong khoảng hợp lệ [RATING_MIN=0.0, RATING_MAX=5.0]
+            // (không phải 1.0 — production RATING_MIN = 0.0, SUSPEND_THRESHOLD = 1.5 là khác nhau)
             NormalUser fromDB = userDAO.findNormalUserById(sharedUser.getId());
             assertThat(fromDB.getRating())
-                    .as("Rating phải nằm trong khoảng [1.0, 5.0] sau reward/penalize đồng thời")
-                    .isBetween(1.0, 5.0);
+                    .as("Rating phải nằm trong khoảng [0.0, 5.0] sau reward/penalize đồng thời")
+                    .isBetween(0.0, 5.0);
         }
     }
 

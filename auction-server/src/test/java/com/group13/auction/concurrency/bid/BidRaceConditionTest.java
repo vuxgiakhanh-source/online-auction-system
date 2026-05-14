@@ -141,7 +141,9 @@ class BidRaceConditionTest extends ConcurrencyTestBase {
                 : bidSequence.stream().mapToLong(Long::longValue).max().getAsLong();
         assertThat(auction.getCurrentPrice()).isEqualTo(expectedFinalPrice);
 
-        verify(mockBidTransactionDAO, times(THREAD_COUNT)).saveTransaction(any(BidTransaction.class));
+        // FIX #2: chỉ ACCEPTED bid mới gọi saveTransaction — không phải tổng THREAD_COUNT
+        // successCount đếm đúng số bid ACCEPTED
+        verify(mockBidTransactionDAO, times(successCount.get())).saveTransaction(any(BidTransaction.class));
     }
 
     // ── B2 ────────────────────────────────────────────────────────────────────
