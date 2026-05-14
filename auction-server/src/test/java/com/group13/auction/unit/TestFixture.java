@@ -399,6 +399,24 @@ public final class TestFixture {
                 false);
     }
 
+    /** Second-chance winner đã quá hạn thanh toán 24h (paymentDeadline trong quá khứ). */
+    public static AuctionWinner expiredSecondOfferWinner(NormalUser runnerUp, String auctionId,
+                                                         long finalPrice, long depositPaid) {
+        return AuctionWinner.reconstitute(
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                runnerUp,
+                auctionId,
+                finalPrice,
+                depositPaid,
+                LocalDateTime.now().minusHours(1),
+                null,
+                null,
+                AuctionWinner.PaymentStatus.PENDING,
+                true);
+    }
+
     /**
      * Tạo AuctionWinner FUNDS_HELD với confirmReceiptDeadline còn trong tương lai.
      * Dùng để test luồng: thanh toán xong, chờ winner xác nhận nhận hàng.
