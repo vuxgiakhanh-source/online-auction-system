@@ -39,6 +39,7 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
 * [Hướng dẫn cài đặt](#-hướng-dẫn-cài-đặt)
   * [Yêu cầu](#yêu-cầu)
   * [Các bước cài đặt](#các-bước-cài-đặt)
+  * [Vị trí file .jar](#vị-trí-file-jar)
   * [Troubleshooting](#troubleshooting)
 * [Testing](#-testing)
 * [Công nghệ & Công cụ sử dụng](#-công-nghệ--công-cụ-sử-dụng)
@@ -66,12 +67,17 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 🎬 Demo
 > Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
+|                    | Link             |
+|--------------------|------------------|
+| 📄 **Báo cáo PDF** | _[Cập nhật sau]_ |
+| 🎥 **Video Demo**  | _[Cập nhật sau]_ |
+
 ---
 
 ## 👷 Chức năng hệ thống
 
 ### Use Case tổng quát
-![UseCase Diagram](./UsecaseDiagram.jpg)
+  > Tham khảo __UseCase Diagram__ [tại đây](./UsecaseDiagram.jpg)
 
 ### Chức năng cốt lõi
 * __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
@@ -83,74 +89,10 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
   > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
-```mermaid
-sequenceDiagram
-    participant Client as "WebSocket Client"
-    participant SessionManager
-    participant AuctionEvent as "AuctionEvent"
-    participant Observers as "5 Observer types<br/>(BidderObserver, SellerObserver, ...)"
-    participant ServerBroadcastNotifier
-    participant WebSocket
-
-    Client->>SessionManager: subscribe(auctionId)
-    SessionManager-->>Client: Session registered
-
-    AuctionEvent->>Observers: notify(eventType: BID_PLACED / AUCTION_ENDED / ...)
-    
-    loop For each matching observer
-        Observers->>ServerBroadcastNotifier: broadcast(event)
-        ServerBroadcastNotifier->>WebSocket: push to specific sessions (per auction/user)
-    end
-
-    WebSocket-->>Client: realtime update (JSON payload)
-    Note right of ServerBroadcastNotifier: Filter theo auctionId + user roles
-```
+  > Tham khảo __Real-time BroadCast via Observer Sequence Diagram__ [tại đây](./RealtimeBroadcastViaObserverSequenceDiagram.md)  
   > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant W as Winner
-    participant S as AuctionWebSocketServer
-    participant PS as PaymentService
-    participant DB as Database
-    participant BNK as SystemBank
-    participant SEL as Seller
-
-    Note over W, SEL: Quy trình Thanh toán Ký quỹ (Escrow Payment)
-
-    S->>S: Auction Finished (Timer Trigger)
-    S->>PS: processAuctionCompletion()
-    
-    activate PS
-    PS->>DB: Lấy thông tin Winner & Final Price
-    
-    rect rgb(30, 40, 50)
-        Note right of PS: Giai đoạn Ký quỹ (Escrow)
-        PS->>BNK: Hold Escrow Amount (Tạm giữ tiền)
-        BNK-->>PS: Escrow Success
-    end
-    
-    PS->>DB: Create FinancialTransaction
-    PS-->>W: Notify "Vui lòng xác nhận thanh toán"
-    deactivate PS
-
-    W->>S: Gửi Packet [ConfirmPayment]
-    S->>PS: completePayment()
-
-    activate PS
-    PS->>BNK: Transfer to Seller (Sau khi trừ phí hệ thống)
-    BNK-->>PS: Transfer Success
-    PS->>DB: Update Auction Status = PAID
-    
-    par Thông báo kết quả
-        PS-->>W: Notify "Thanh toán thành công"
-        PS-->>SEL: Notify "Đã nhận tiền từ phiên đấu giá"
-    end
-    deactivate PS
-```
   > Tham khảo toàn bộ về khâu __Payment and Deposit Escrow__ [tại đây](./PaymentAndDepositEscrowSequenceDiagram.md)
 
 ### Chức năng nâng cao
@@ -240,46 +182,7 @@ Chatbot được xây dựng theo mô hình hướng sự kiện (Event-Driven),
 * __PacketRouter__: Giải mã và điều phối các gói tin CHATBOT_ASK hoặc CHATBOT_GET_FAQ_LIST.
 * __ChatbotProvider__ (Singleton): Đảm bảo hiệu năng bằng cách nạp dữ liệu từ faq_data.json một lần duy nhất vào bộ nhớ và hỗ trợ truy vấn $O(1)$ qua HashMap.
 
-```mermaid
-graph TD
-    %% Định nghĩa Style
-    classDef client fill:#424242,stroke:#333,stroke-width:2px,color:#fff;
-    classDef router fill:#0d47a1,stroke:#333,stroke-width:1px,color:#fff;
-    classDef handler fill:#004d40,stroke:#333,stroke-width:1px,color:#fff;
-    classDef provider fill:#4527a0,stroke:#333,stroke-width:1px,color:#fff;
-    classDef data fill:#3e2723,stroke:#333,stroke-width:1px,color:#fff;
-
-    %% Các thành phần
-    Client["🖥️ Client (WebSocket)<br/>Gửi JSON packet & requestId"]:::client
-    
-    Router["⚙️ PacketRouter<br/>Decode JSON ➔ peekType() ➔ Dispatch"]:::router
-    
-    MainHandler["📦 ChatbotHandler<br/>Supports: CHATBOT_ASK, GET_FAQ_LIST<br/>(Parse ➔ Dispatch ➔ Serialize)"]:::handler
-
-    AskSub["🔍 handleChatbotAsk()<br/>faqId → getAnswerByQuestionId()<br/>query → searchByQuery()"]:::handler
-    
-    ListSub["📋 handleGetFaqList()<br/>getFaqsByCategory()<br/>buildFaqSummaryArray()"]:::handler
-
-    Provider["🧠 ChatbotProvider (Singleton)<br/>HashMap O(1) | Relevance Scoring<br/>Immutable FAQ Data"]:::provider
-
-    JsonDB["📄 faq_data.json (classpath)<br/>10 FAQ · 5 Category · Keywords"]:::data
-
-    %% Luồng dữ liệu
-    Client -- "CHATBOT_ASK / GET_FAQ_LIST" --> Router
-    Router --> MainHandler
-    
-    MainHandler -- "faqId / query?" --> AskSub
-    MainHandler -- "category?" --> ListSub
-    
-    AskSub --> Provider
-    ListSub --> Provider
-    
-    Provider -.->|Load once| JsonDB
-    
-    %% Phản hồi
-    Provider -- "Data" --> MainHandler
-    MainHandler -- "CHATBOT_ANSWER / FAQ_LIST_SUCCESS" --> Client
-```
+  > Tham khảo __Chatbot diagram__ [tại đây](./Chatbot.md)
 
 ### 📂 Cấu trúc project
 
@@ -333,18 +236,24 @@ online-auction-system/
 
 ## ⚙️ Tech Stack
 
-| Lớp               | Công nghệ         | Phiên bản   | Vai trò                                   |
-|-------------------|-------------------|-------------|-------------------------------------------|
-| **Language**      | Java              | 17 LTS      | Ngôn ngữ chính, áp dụng OOP & concurrency |
-| **Build**         | Apache Maven      | 3.8+        | Multi-module project management           |
-| **UI**            | JavaFX            | 17          | Desktop client, kiến trúc MVC             |
-| **Networking**    | Java-WebSocket    | 1.5.5       | Real-time bidding & notifications         |
-| **Database**      | MySQL             | 8.0+        | Persistent storage                        |
-| **Serialization** | Gson              | 2.10.1      | Object ↔ JSON qua network                 |
-| **Testing**       | JUnit 5 + Mockito | 5.10 / 5.2  | Unit tests & mock isolation               |
-| **Boilerplate**   | Lombok            | 1.18.38     | Giảm boilerplate code                     |
-| **CI**            | GitHub Actions    | —           | Auto build & test trên mỗi push           |
-| **Code Style**    | Google Java Style | —           | Quy chuẩn code thống nhất toàn dự án      |
+**Backend (Server)**
+- Java 17, Maven Multi-module (`auction-common` / `auction-server` / `auction-client`)
+- Java-WebSocket — giao tiếp WebSocket
+- Gson — JSON serialization / PacketCodec
+- MySQL 8.0 + JDBC — persistence layer
+- Logback — structured logging (3 file: business / dao / error)
+- JUnit 5 + Mockito + Testcontainers — testing pyramid
+- Lombok — giảm boilerplate
+
+**Frontend (Client)**
+- JavaFX — desktop UI
+- MVC pattern: Controllers ↔ ClientPacketDispatcher ↔ AuctionWebSocketClient
+
+**DevOps**
+- Docker + Docker Compose (multi-stage Dockerfile)
+- GitHub Actions (CI/CD pipeline)
+- Kubernetes / k3s (Kustomize: dev / staging / prod)
+- Qodana — static code analysis
 
 ---
 
@@ -379,10 +288,8 @@ mysql -u root -p < auction-server/src/main/resources/database/database.sql
 Chỉnh sửa file `auction-server/src/main/resources/data.properties`:
 
 ```properties
-db.host=localhost
-db.port=3306
-db.name=auction_db
-db.user=root
+db.url=jdbc:mysql://localhost:3306/auction_db
+db.username=root
 db.password=your_password
 server.port=8887
 ```
@@ -403,7 +310,7 @@ mvn clean install
 
 ```bash
 cd auction-server
-mvn exec:java
+mvn spring-boot:run
 ```
 
 Chờ xuất hiện thông báo: `[Server] Started on port 8887`
@@ -412,10 +319,32 @@ Chờ xuất hiện thông báo: `[Server] Started on port 8887`
 
 ```bash
 cd auction-client
-mvn javafx:run
+mvn spring-boot:run
 ```
 
 > **Lưu ý:** Client mặc định kết nối đến `localhost:8887`. Nếu server chạy trên máy khác, cập nhật host trong file cấu hình của `auction-client`.
+
+---
+
+### Vị trí file JAR
+
+Sau khi build xong (`mvn clean install`), các file JAR nằm tại:
+
+| Module     | Đường dẫn                                                                                    |
+|------------|----------------------------------------------------------------------------------------------|
+| **Server** | `auction-server/target/auction-server-1.0-SNAPSHOT.jar`                                      |
+| **Client** | `auction-client/target/auction-client-1.0-SNAPSHOT.jar`                                      |
+| **Common** | `auction-common/target/auction-common-1.0-SNAPSHOT.jar` _(shared lib, không chạy trực tiếp)_ |
+
+Chạy trực tiếp từ JAR (không cần Maven):
+
+```bash
+# Bước 1 — Server trước (Spring Boot fat JAR)
+java -jar auction-server/target/auction-server-1.0-SNAPSHOT.jar
+
+# Bước 2 — Client sau (terminal mới, chờ Server log "Started on port 8887")
+java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
+```
 
 ---
 
