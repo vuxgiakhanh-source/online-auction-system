@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Phiên đấu giá - chỉ lưu data và trạng thái.
@@ -71,14 +73,16 @@ public class Auction extends Entity {
           Collections.synchronizedList(new ArrayList<>());
 
   /**
-   * volatile — transitionToRunning/Close/Cancel/Paid có thể gọi từ AuctionService
-   * trên thread khác với thread đang bid.
+   * FIX: AtomicReference thay volatile — transitionToRunning/Close/Cancel/Paid có thể gọi
+   * từ AuctionService trên thread khác với thread đang bid. AtomicReference đảm bảo
+   * cả read lẫn write là atomic (không có race condition read-modify-write).
    */
-  private volatile AuctionState state;
+  private final AtomicReference<AuctionState> state = new AtomicReference<>();
 
   private volatile AuctionWinner winner;
 
-  private volatile int viewerCount;
+  /** FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu dùng volatile. */
+  private final AtomicInteger viewerCount = new AtomicInteger(0);
 
   // =========================================================================
   // Static factory methods
@@ -118,9 +122,8 @@ public class Auction extends Entity {
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reservePrice = reservePrice;
-    this.state = OpenState.INSTANCE;
+    this.state.set(OpenState.INSTANCE);
     this.winner = null;
-    this.viewerCount = 0;
   }
 
   private Auction(
@@ -140,9 +143,8 @@ public class Auction extends Entity {
     this.originalEndTime = endTime;
     this.endTime = endTime;
     this.reservePrice = reservePrice;
-    this.state = resolveState(status);
+    this.state.set(resolveState(status));
     this.winner = null;
-    this.viewerCount = 0;
   }
 
   private static AuctionState resolveState(AuctionStatus status) {
@@ -167,13 +169,13 @@ public class Auction extends Entity {
   public LocalDateTime getOriginalEndTime(){ return originalEndTime; }
   public long getCurrentPrice()            { return currentPrice; }
   public NormalUser getCurrentLeader()     { return currentLeader; }
-  public AuctionStatus getStatus()         { return state.getStatus(); }
+  public AuctionStatus getStatus()         { return state.get().getStatus(); }
   public AuctionWinner getWinner()         { return winner; }
   public long getReservePrice()            { return reservePrice; }
-  public int getViewerCount()              { return viewerCount; }
+  public int getViewerCount()              { return viewerCount.get(); }
 
   public boolean isAcceptingBids() {
-    return state.getStatus() == AuctionStatus.RUNNING;
+    return state.get().getStatus() == AuctionStatus.RUNNING;
   }
 
   public boolean isReserveMet() {
@@ -189,22 +191,22 @@ public class Auction extends Entity {
   // =========================================================================
 
   public void transitionToRunning() {
-    this.state = state.start();
+    this.state.set(state.get().start());
     markUpdated();
   }
 
   public void transitionToClose(boolean hasWinner) {
-    this.state = state.close(hasWinner);
+    this.state.set(state.get().close(hasWinner));
     markUpdated();
   }
 
   public void transitionToCancel() {
-    this.state = state.cancel();
+    this.state.set(state.get().cancel());
     markUpdated();
   }
 
   public void transitionToPaid() {
-    this.state = state.markPaid();
+    this.state.set(state.get().markPaid());
     markUpdated();
   }
 
@@ -247,7 +249,7 @@ public class Auction extends Entity {
   }
 
   public void incrementViewerCount() {
-    this.viewerCount++;
+    this.viewerCount.incrementAndGet();
   }
 
   @Override
@@ -258,7 +260,7 @@ public class Auction extends Entity {
     log.warn("Giá     : {}", currentPrice);
     log.warn("Status  : {}", getStatus());
     log.warn("Leader  : {}", currentLeader != null ? currentLeader.getUsername() : "Chưa có");
-    log.warn("Viewers : {}", viewerCount);
+    log.warn("Viewers : {}", viewerCount.get());
     log.warn("==========================================");
   }
 }
