@@ -20,18 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * AuctionWinnerDAOIT — Bottom-up test cho AuctionWinnerDAO.
- *
- * API AuctionWinnerDAO đã xác nhận:
- *   saveWinner(AuctionWinner) → boolean
- *   updatePaymentStatus(String winnerId, String status) → boolean
- *   hasPendingPayment(String userId) → boolean
- *
- * API AuctionWinner đã xác nhận:
- *   AuctionWinner.create(NormalUser winner, String auctionId,
- *                        long finalPrice, long depositPaid, boolean isSecondOffer)
- *   getWinner(), getAuctionId(), getFinalPrice(), getDepositPaid()
- *   getPaymentStatus(), getId()
+ * AuctionWinnerDAOIT — ĐÃ SỬA & CẢI THIỆN
  */
 @RequiresDocker
 @Testcontainers
@@ -76,12 +65,11 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
 
     @Nested
     @Order(1)
-    @DisplayName("TC-AW-01 [CRITICAL] saveWinner() — persist vào DB")
+    @DisplayName("TC-AW-01 [CRITICAL] saveWinner()")
     class SaveWinnerTests {
 
         @Test
         @Order(1)
-        @DisplayName("TC-AW-01a: saveWinner() hợp lệ → true, hasPendingPayment = true")
         void saveWinner_valid_persistsAndHasPending() {
             Context ctx = givenContext("aw01a_s", "aw01a_b");
 
@@ -97,7 +85,6 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
 
         @Test
         @Order(2)
-        @DisplayName("TC-AW-01b: saveWinner() isSecondOffer=true → true")
         void saveWinner_secondOffer_returnsTrue() {
             Context ctx = givenContext("aw01b_s", "aw01b_b");
 
@@ -112,7 +99,6 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
 
         @Test
         @Order(3)
-        @DisplayName("TC-AW-01c: saveWinner() lần 2 cùng auctionId → false (UNIQUE constraint)")
         void saveWinner_duplicateAuction_returnsFalse() {
             Context ctx = givenContext("aw01c_s", "aw01c_b");
 
@@ -125,7 +111,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
                     ctx.winner, ctx.auction.getId(), ctx.finalPrice, ctx.deposit, false);
             boolean saved = auctionWinnerDAO.saveWinner(w2);
 
-            assertThat(saved).isFalse();
+            assertThat(saved).isFalse();   // UNIQUE constraint trên auction_id
         }
     }
 
@@ -135,7 +121,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
 
     @Nested
     @Order(2)
-    @DisplayName("TC-AW-02 [CRITICAL] updatePaymentStatus() — cập nhật đúng")
+    @DisplayName("TC-AW-02 [CRITICAL] updatePaymentStatus()")
     class UpdatePaymentStatusTests {
 
         @Test
@@ -151,13 +137,17 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
             boolean updated = auctionWinnerDAO.updatePaymentStatus(
                     winner.getId(), PaymentStatus.FUNDS_HELD.name());
 
-            assertThat(updated).isTrue();
-            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId())).isFalse();
+            assertThat(updated)
+                    .as("Phải update thành công FUNDS_HELD")
+                    .isTrue();
+
+            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId()))
+                    .as("Sau FUNDS_HELD thì không còn pending")
+                    .isFalse();
         }
 
         @Test
         @Order(2)
-        @DisplayName("TC-AW-02b: updatePaymentStatus(EXPIRED) → hasPendingPayment = false")
         void updatePaymentStatus_expired_noLongerPending() {
             Context ctx = givenContext("aw02b_s", "aw02b_b");
             AuctionWinner winner = AuctionWinner.create(
@@ -165,14 +155,15 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
             auctionWinnerDAO.saveWinner(winner);
             trackWinner(winner.getId());
 
-            auctionWinnerDAO.updatePaymentStatus(winner.getId(), PaymentStatus.EXPIRED.name());
+            boolean updated = auctionWinnerDAO.updatePaymentStatus(
+                    winner.getId(), PaymentStatus.EXPIRED.name());
 
+            assertThat(updated).isTrue();
             assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId())).isFalse();
         }
 
         @Test
         @Order(3)
-        @DisplayName("TC-AW-02c: updatePaymentStatus() ID không tồn tại → false")
         void updatePaymentStatus_nonExistentId_returnsFalse() {
             boolean updated = auctionWinnerDAO.updatePaymentStatus(
                     UUID.randomUUID().toString(), PaymentStatus.FUNDS_HELD.name());
@@ -187,21 +178,16 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
 
     @Nested
     @Order(3)
-    @DisplayName("TC-AW-03 [HIGH] hasPendingPayment() — kiểm tra trạng thái")
+    @DisplayName("TC-AW-03 hasPendingPayment()")
     class HasPendingPaymentTests {
 
         @Test
-        @Order(1)
-        @DisplayName("TC-AW-03a: User không có record nào → false")
         void hasPendingPayment_noRecord_returnsFalse() {
             NormalUser user = buildUserWithBalance("aw03a_u", 0L, userDAO);
-
             assertThat(auctionWinnerDAO.hasPendingPayment(user.getId())).isFalse();
         }
 
         @Test
-        @Order(2)
-        @DisplayName("TC-AW-03b: PENDING → true; sau COMPLETED → false")
         void hasPendingPayment_pendingThenCompleted() {
             Context ctx = givenContext("aw03b_s", "aw03b_b");
             AuctionWinner winner = AuctionWinner.create(
@@ -209,18 +195,15 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
             auctionWinnerDAO.saveWinner(winner);
             trackWinner(winner.getId());
 
-            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId()))
-                    .as("trước khi update: PENDING").isTrue();
+            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId())).isTrue();
 
             auctionWinnerDAO.updatePaymentStatus(winner.getId(), "COMPLETED");
 
-            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId()))
-                    .as("sau COMPLETED").isFalse();
+            assertThat(auctionWinnerDAO.hasPendingPayment(ctx.winner.getId())).isFalse();
         }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
-
     record Context(NormalUser winner, Auction auction, long finalPrice, long deposit) {}
 
     private Context givenContext(String sellerUsername, String winnerUsername) {

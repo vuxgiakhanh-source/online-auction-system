@@ -17,6 +17,7 @@ import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.BidService;
 import com.group13.auction.service.RatingService;
 import com.group13.auction.service.WalletService;
+import com.group13.auction.strategy.BidIncrementCalculator;
 import com.group13.auction.strategy.StandardBidStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -127,12 +128,17 @@ class BidServiceLoadIT extends IntegrationTestBase {
             final int idx = i;
             futures.add(pool.submit(() -> {
                 for (int r = 0; r < BIDS_PER_BIDDER; r++) {
-                    long amount = 1_200_000L + (idx * 10_000L) + (r * 50_000L);
+                    // Đọc currentPrice ngay trước bid để tính amount hợp lệ.
+                    // Fixed base 1_200_000 bị reject sau vài bid vì price tăng vượt minBid.
+                    long current = auction.getCurrentPrice();
+                    long amount  = current
+                            + BidIncrementCalculator.calculate(current)
+                            + (idx * 10_000L);
                     try {
                         bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
                         successes.incrementAndGet();
                     } catch (Exception ignored) {
-                        // Bid bị từ chối do tranh chấp / bước giá — chấp nhận dưới tải
+                        // Bid bị từ chối do race condition — chấp nhận dưới tải
                     }
                 }
             }));

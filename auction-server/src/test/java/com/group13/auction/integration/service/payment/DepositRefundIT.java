@@ -119,9 +119,9 @@ class DepositRefundIT extends IntegrationTestBase {
             bidTransactionDAO.saveTransaction(tx);
         }
 
-        long b1Before = b1.getBalance();
-        long b2Before = b2.getBalance();
-        long b3Before = b3.getBalance();
+        long b1Before = b1.getAvailableBalance();
+        long b2Before = b2.getAvailableBalance();
+        long b3Before = b3.getAvailableBalance();
 
         // Act — hoàn cọc cho tất cả (không có winner)
         paymentService.refundDeposits(auction);
@@ -172,7 +172,7 @@ class DepositRefundIT extends IntegrationTestBase {
         auction.setWinner(aw);
 
         long winnerLockedBefore = winner.getLockedDeposit();
-        long loserBalanceBefore = loser.getBalance();
+        long loserAvailableBalanceBefore = loser.getAvailableBalance();
 
         // Act
         paymentService.refundDeposits(auction);
@@ -180,7 +180,7 @@ class DepositRefundIT extends IntegrationTestBase {
         assertAll("Chỉ loser được hoàn, winner giữ nguyên cọc",
                 () -> assertThat(loser.getBalance())
                         .as("loser nhận lại đúng deposit")
-                        .isEqualTo(loserBalanceBefore + deposit),
+                        .isEqualTo(loserAvailableBalanceBefore + deposit),
                 () -> assertThat(winner.getLockedDeposit())
                         .as("winner KHÔNG được hoàn cọc (cọc đã tính vào finalPrice)")
                         .isEqualTo(winnerLockedBefore)

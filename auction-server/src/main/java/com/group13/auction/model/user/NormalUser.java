@@ -207,6 +207,14 @@ public class NormalUser extends User {
     }
 
     /**
+     * Cộng delta vào balance atomic (AtomicLong.addAndGet).
+     */
+    public long addBalance(long delta) {
+        markUpdated();
+        return this.balance.addAndGet(delta);
+    }
+
+    /**
      * Khóa một khoản cọc - gọi khi joinAuction thành công.
      * <= số dư khả dụng.
      * Không được tự ý gọi, chỉ được gọi trong WalletService.

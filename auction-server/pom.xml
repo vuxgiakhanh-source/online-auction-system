@@ -39,6 +39,11 @@
         </dependency>
 
         <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -118,6 +123,7 @@
                         -Dfile.encoding=UTF-8
                         -Dstdout.encoding=UTF-8
                         -Dstderr.encoding=UTF-8
+                        -Dnet.bytebuddy.experimental=true
                     </argLine>
                     <systemPropertyVariables>
                         <TESTCONTAINERS_RYUK_DISABLED>false</TESTCONTAINERS_RYUK_DISABLED>
@@ -144,6 +150,7 @@
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
                         -Dfile.encoding=UTF-8
+                        -Dnet.bytebuddy.experimental=true
                     </argLine>
                     <systemPropertyVariables>
                         <TESTCONTAINERS_RYUK_DISABLED>false</TESTCONTAINERS_RYUK_DISABLED>

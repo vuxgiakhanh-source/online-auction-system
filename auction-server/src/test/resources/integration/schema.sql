@@ -99,12 +99,13 @@ CREATE TABLE IF NOT EXISTS auctions (
 
 -- 7. Bảng Bid Transactions
 CREATE TABLE IF NOT EXISTS bid_transactions (
-                                                id          VARCHAR(36) PRIMARY KEY,
-                                                auction_id  VARCHAR(36) NOT NULL,
-                                                bidder_id   VARCHAR(36) NOT NULL,
-                                                bid_amount  BIGINT      NOT NULL,
+                                                seq         BIGINT       AUTO_INCREMENT UNIQUE,
+                                                id          VARCHAR(36)  PRIMARY KEY,
+                                                auction_id  VARCHAR(36)  NOT NULL,
+                                                bidder_id   VARCHAR(36)  NOT NULL,
+                                                bid_amount  BIGINT       NOT NULL,
                                                 result      ENUM('ACCEPTED','REJECTED','ACCEPTED_RESERVE_NOT_MET') NOT NULL DEFAULT 'ACCEPTED',
-                                                bid_time    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+                                                bid_time    TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
                                                 FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                                 FOREIGN KEY (bidder_id)  REFERENCES users(id)    ON DELETE CASCADE
 );
@@ -127,7 +128,7 @@ CREATE TABLE IF NOT EXISTS auction_winners (
                                                winner_id      VARCHAR(36) NOT NULL,
                                                final_price    BIGINT      NOT NULL,
                                                deposit_paid   BIGINT      NOT NULL,
-                                               payment_status ENUM('PENDING','COMPLETED','EXPIRED') DEFAULT 'PENDING',
+                                               payment_status ENUM('PENDING','COMPLETED','EXPIRED', 'FUNDS_HELD') DEFAULT 'PENDING',
                                                created_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
                                                FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                                FOREIGN KEY (winner_id)  REFERENCES users(id)    ON DELETE CASCADE

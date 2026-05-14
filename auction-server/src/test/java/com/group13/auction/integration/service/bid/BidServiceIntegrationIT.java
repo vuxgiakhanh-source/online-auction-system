@@ -128,8 +128,8 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
                 () -> assertThat(bidder.getLockedDeposit())
                         .as("lockedDeposit phải = 30% startingPrice")
                         .isEqualTo(depositExpected),
-                () -> assertThat(bidder.getBalance())
-                        .as("balance phải giảm đúng deposit")
+                () -> assertThat(bidder.getAvailableBalance())
+                        .as("số dư khả dụng phải giảm đi bằng với deposit")
                         .isEqualTo(balanceBefore - depositExpected),
                 () -> assertThat(bidder.hasJoined(auction.getId()))
                         .as("bidder phải được đánh dấu đã joined")
@@ -233,7 +233,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
             AuctionObserver obs = new BidderObserver(bidder, null);
             bidService.joinAuction(bidder, auction, obs);
 
-            long bidAmount = 6_000_000L; // > startingPrice, < reserve
+            long bidAmount = 9_000_000L; // > startingPrice, < reserve
             bidService.placeBid(bidder, auction, bidAmount, new StandardBidStrategy());
 
             // currentPrice RAM phải cập nhật

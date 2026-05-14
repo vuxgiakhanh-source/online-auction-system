@@ -226,14 +226,22 @@ public class BidHandler implements PacketHandler {
             return;
         }
 
+        // Capture cho autoBidProcessor.process() ngoài lock (tránh deadlock)
+        Auction placeBidAuction = null;
+        String  placeBidBidderId = null;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
+            // Auth check trước — user phải là NormalUser trước khi lookup auction
+            NormalUser bidder = requireNormalUser(session, requestId);
+            if (bidder == null) return;
+
             Auction auction = requireAuction(session, req.getAuctionId(), requestId);
             if (auction == null) return;
 
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
+            placeBidAuction  = auction;
+            placeBidBidderId = bidder.getId();
 
             LocalDateTime endTimeBefore = auction.getEndTime();
             bidService.placeBid(bidder, auction, req.getAmount(), new StandardBidStrategy());
@@ -275,8 +283,6 @@ public class BidHandler implements PacketHandler {
             sessionManager.broadcastToAuction(req.getAuctionId(),
                     Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
-            autoBidProcessor.process(auction, bidder.getId());
-
         } catch (AuctionClosedException e) {
             log.warn("Place bid rejected because auction is closed: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId);
@@ -300,6 +306,11 @@ public class BidHandler implements PacketHandler {
         } finally {
             lock.unlock();
         }
+        // FIX DEADLOCK: autoBidProcessor.process() gọi bidService.placeBid() bên trong,
+        // phải chạy NGOÀI ReentrantLock để tránh deadlock với BidService's internal lock.
+        if (placeBidAuction != null && placeBidBidderId != null) {
+            autoBidProcessor.process(placeBidAuction, placeBidBidderId);
+        }
     }
 
 
@@ -317,14 +328,20 @@ public class BidHandler implements PacketHandler {
             return;
         }
 
+        Auction registerAutoBidAuction  = null;
+        String  registerAutoBidBidderId = null;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
+            NormalUser bidder = requireNormalUser(session, requestId);
+            if (bidder == null) return;
+
             Auction auction = requireAuction(session, req.getAuctionId(), requestId);
             if (auction == null) return;
 
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
+            registerAutoBidAuction  = auction;
+            registerAutoBidBidderId = bidder.getId();
 
             AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
             long nextBid = strategy.calculateNextBid(auction);
@@ -367,8 +384,6 @@ public class BidHandler implements PacketHandler {
             sessionManager.broadcastToAuction(req.getAuctionId(),
                     Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
 
-            autoBidProcessor.process(auction, bidder.getId());
-
         } catch (AuctionBusinessException e) {
             log.warn("Register auto-bid rejected by business rule: auctionId={}, username={}, requestId={}, reason={}",
                     req.getAuctionId(), session.getUsername(), requestId, e.getReason());
@@ -381,6 +396,10 @@ public class BidHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         } finally {
             lock.unlock();
+        }
+        // FIX DEADLOCK: process ngoài lock
+        if (registerAutoBidAuction != null && registerAutoBidBidderId != null) {
+            autoBidProcessor.process(registerAutoBidAuction, registerAutoBidBidderId);
         }
     }
 
@@ -397,6 +416,9 @@ public class BidHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
             return;
         }
+
+        Auction updateAutoBidAuction  = null;
+        String  updateAutoBidBidderId = null;
 
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
@@ -417,6 +439,9 @@ public class BidHandler implements PacketHandler {
 
             Auction auction = requireAuction(session, req.getAuctionId(), requestId);
             if (auction == null) return;
+
+            updateAutoBidAuction  = auction;
+            updateAutoBidBidderId = bidder.getId();
 
             if (req.getMaxBid() <= existing.getMaxBid()) {
                 log.warn("Update auto-bid rejected because maxBid did not increase: auctionId={}, bidderId={}, oldMaxBid={}, newMaxBid={}",
@@ -443,8 +468,6 @@ public class BidHandler implements PacketHandler {
             log.info("Auto-bid updated: auctionId={}, bidderId={}, username={}, oldMaxBid={}, newMaxBid={}",
                     req.getAuctionId(), bidder.getId(), bidder.getUsername(), oldMaxBid, req.getMaxBid());
 
-            autoBidProcessor.process(auction, bidder.getId());
-
         } catch (Exception e) {
             log.error("Update auto-bid failed: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId, e);
@@ -452,6 +475,10 @@ public class BidHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         } finally {
             lock.unlock();
+        }
+        // FIX DEADLOCK: process ngoài lock
+        if (updateAutoBidAuction != null && updateAutoBidBidderId != null) {
+            autoBidProcessor.process(updateAutoBidAuction, updateAutoBidBidderId);
         }
     }
 

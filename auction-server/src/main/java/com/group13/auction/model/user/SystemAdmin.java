@@ -3,13 +3,9 @@ package com.group13.auction.model.user;
 import com.group13.auction.dao.AdminDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
-import com.group13.auction.model.auction.Auction;
 import com.group13.auction.observer.SystemAdminObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * SystemAdmin — MASTER duy nhất trong hệ thống (Singleton).
@@ -24,6 +20,13 @@ import java.util.List;
  * <ul>
  *   <li>bootstrap() kiểm tra sự tồn tại của SYSTEM trong bảng {@code admins}
  *       (thay vì bảng {@code users}) để tránh Duplicate entry khi restart.</li>
+ * </ul>
+ *
+ * <h3>Fix v4 (Qodana):</h3>
+ * <ul>
+ *   <li>[Non-distinguishable logging] Hai log.error trong autoBanIfNeeded() và
+ *       banUserByStaff() có message giống nhau, Qodana không phân biệt được nguồn.
+ *       Đã thêm context "source=autoBan" / "source=staffBan" để phân biệt.</li>
  * </ul>
  */
 public class SystemAdmin extends Admin {
@@ -43,7 +46,6 @@ public class SystemAdmin extends Admin {
             UserDAO userDAO   = new UserDAO();
             AdminDAO adminDAO = new AdminDAO();
 
-            // FIX: kiểm tra trong bảng admins (không phải bảng users)
             boolean existsInDb = adminDAO.existsByUsername("SYSTEM");
 
             INSTANCE = new SystemAdmin("SYSTEM", password, "system@auction.com");
@@ -105,7 +107,10 @@ public class SystemAdmin extends Admin {
             if (userDAO != null) {
                 boolean updated = userDAO.updateAccountStatus(user.getId(), AccountStatus.BANNED.name());
                 if (!updated) {
-                    log.error("Không thể persist ban cho user: username={}", user.getUsername());
+                    // FIX QODANA [Non-distinguishable logging]: thêm source=autoBan
+                    // để phân biệt với log.error cùng nội dung trong banUserByStaff().
+                    log.error("Không thể persist ban cho user: username={} source=autoBan",
+                            user.getUsername());
                 }
             }
         }
@@ -130,7 +135,10 @@ public class SystemAdmin extends Admin {
         if (userDAO != null) {
             boolean updated = userDAO.updateAccountStatus(user.getId(), AccountStatus.BANNED.name());
             if (!updated) {
-                log.error("Không thể persist ban cho user: username={}", user.getUsername());
+                // FIX QODANA [Non-distinguishable logging]: thêm source=staffBan và staff info
+                // để phân biệt với log.error cùng nội dung trong autoBanIfNeeded().
+                log.error("Không thể persist ban cho user: username={} source=staffBan staff={}",
+                        user.getUsername(), staff.getUsername());
             }
         }
     }

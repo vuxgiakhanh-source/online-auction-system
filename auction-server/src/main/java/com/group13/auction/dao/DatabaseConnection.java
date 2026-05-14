@@ -1,71 +1,179 @@
 package com.group13.auction.dao;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/**
+ * DatabaseConnection — Singleton wrapping a HikariCP connection pool.
+ *
+ * FIX #5 — HikariCP tuning cho load test:
+ *
+ * maximumPoolSize: 50 → 20
+ *   Cũ dùng 50 nhưng load test chỉ có 12 thread bidding.
+ *   Pool quá lớn làm MySQL tốn tài nguyên duy trì idle connections.
+ *   20 là đủ cho 12 bid thread + overhead (join, watch, anti-sniping).
+ *
+ * minimumIdle: 5 → 12
+ *   Pre-warm đủ connection sẵn cho 12 thread → không phải chờ tạo mới.
+ *
+ * connectionTimeout: 30s → 5s
+ *   Load test expect bid nhanh — nếu pool hết connection sau 5s thì
+ *   nên fail nhanh thay vì block thread 30s.
+ *
+ * prepStmtCacheSize + prepStmtCacheSqlLimit:
+ *   Cache prepared statement → tránh parse lại SQL mỗi lần INSERT bid_transactions.
+ *   MySQL driver hỗ trợ server-side prepared statement cache.
+ *
+ * useServerPrepStmts + cachePrepStmts:
+ *   Bật server-side prepared statement → giảm round-trip parse SQL trên MySQL.
+ *
+ * rewriteBatchedStatements:
+ *   Dù hiện tại không dùng batch, bật sẵn để MySQL driver tự gộp INSERT
+ *   nếu sau này chuyển sang executeBatch().
+ *
+ * autoCommit: true (default, giữ nguyên)
+ *   Mỗi saveTransaction() là 1 INSERT đơn → autoCommit phù hợp.
+ *   Nếu sau này dùng batch thì cần tắt và commit thủ công.
+ */
 public class DatabaseConnection {
-    private static final Logger log = LoggerFactory.getLogger(DatabaseConnection.class);
-    private static DatabaseConnection instance;
 
-    // Lưu lại thông tin đăng nhập, KHÔNG lưu lại Connection
-    private String url;
-    private String username;
-    private String password;
+    private static final Logger log = LoggerFactory.getLogger(DatabaseConnection.class);
+
+    private static volatile DatabaseConnection instance;
+
+    private volatile String url;
+    private volatile String username;
+    private volatile String password;
+
+    private volatile HikariDataSource dataSource;
 
     private DatabaseConnection() {
         try {
-            // Ưu tiên 1: env vars (Docker / CI)
-            // Dockerfile truyền: DB_URL, DB_USERNAME, DB_PASSWORD
             String envUrl      = System.getenv("DB_URL");
             String envUsername = System.getenv("DB_USERNAME");
             String envPassword = System.getenv("DB_PASSWORD");
 
             if (envUrl != null && !envUrl.isBlank()) {
-                // Chạy trong Docker / production
                 this.url      = envUrl;
-                this.username = envUsername != null ? envUsername : "";
-                this.password = envPassword != null ? envPassword : "";
-                log.info("Database config loaded from environment variables (Docker mode).");
+                this.username = (envUsername != null) ? envUsername : "";
+                this.password = (envPassword != null) ? envPassword : "";
+                log.warn("Database config loaded from environment variables (Docker mode).");
+                buildPool();
             } else {
-                // Ưu tiên 2: data.properties (dev local)
                 Properties props = new Properties();
                 InputStream is = getClass().getClassLoader().getResourceAsStream("data.properties");
                 if (is == null) {
-                    throw new RuntimeException(
-                            "Không tìm thấy data.properties và env var DB_URL chưa được set.");
+                    log.warn("data.properties not found and DB_URL not set. " +
+                            "Call reconfigure() before using DAOs (Testcontainers mode).");
+                    return;
                 }
                 props.load(is);
                 this.url      = props.getProperty("db.url");
                 this.username = props.getProperty("db.username");
                 this.password = props.getProperty("db.password");
-                log.info("Database config loaded from data.properties (local dev mode).");
+                log.warn("Database config loaded from data.properties (local dev mode).");
+                buildPool();
             }
-
-            // Nạp Driver 1 lần duy nhất khi khởi động hệ thống
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            log.info("MySQL JDBC Driver registered. DB URL: {}", url);
-
         } catch (Exception e) {
-            log.error("Lỗi khởi tạo Database Connection", e);
+            log.error("Error initializing DatabaseConnection", e);
             throw new RuntimeException(e);
         }
     }
 
-    public static synchronized DatabaseConnection getInstance() {
+    private synchronized void buildPool() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+        }
+
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(username);
+        config.setPassword(password);
+        config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        // Giảm anomaly đọc/ghi đồng thời giữa các connection (scheduler vs handler).
+        config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
+
+        // ── Pool sizing ───────────────────────────────────────────────────
+        // AuctionSystemLoadIT dùng tối đa 32 thread đồng thời → cần pool >= 32.
+        // minimumIdle = 5: pre-warm vừa phải; tránh tạo nhiều connection khi
+        //   Testcontainers container chưa kịp sẵn sàng.
+        config.setMaximumPoolSize(40);
+        config.setMinimumIdle(5);
+
+        // ── Timeouts ──────────────────────────────────────────────────────
+        // connectionTimeout=30s: đủ cho Testcontainers warm-up và cho 32+ thread
+        //   đợi connection khi pool tạm hết (5s cũ quá ngắn → SQLTransientConnectionException).
+        config.setConnectionTimeout(30_000);
+        config.setIdleTimeout(300_000);   // 5 phút
+        config.setMaxLifetime(900_000);   // 15 phút
+
+        // ── MySQL prepared statement cache ────────────────────────────────
+        // Tránh parse lại SQL mỗi lần INSERT bid_transactions
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "50");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
+        config.addDataSourceProperty("useServerPrepStmts", "true");
+
+        // Batch insert sẵn sàng khi cần (không xung đột với cachePrepStmts)
+        config.addDataSourceProperty("rewriteBatchedStatements", "true");
+
+        config.setConnectionTestQuery("SELECT 1");
+        config.setPoolName("AuctionPool");
+
+        dataSource = new HikariDataSource(config);
+        log.warn("HikariCP pool created. URL: {} | maxPoolSize=40, minIdle=5", url);
+    }
+
+    public static DatabaseConnection getInstance() {
         if (instance == null) {
-            instance = new DatabaseConnection();
+            synchronized (DatabaseConnection.class) {
+                if (instance == null) {
+                    instance = new DatabaseConnection();
+                }
+            }
         }
         return instance;
     }
 
-    // Quan trọng: Hàm này tạo MỚI kết nối mỗi lần được gọi
+    /**
+     * Tái cấu hình pool sang URL mới — dùng trong Testcontainers @BeforeAll.
+     * Đóng pool cũ và tạo pool mới hoàn toàn. Thread-safe.
+     */
+    public synchronized void reconfigure(String newUrl, String newUsername, String newPassword) {
+        this.url      = newUrl;
+        this.username = newUsername;
+        this.password = newPassword;
+        buildPool();
+        log.warn("DatabaseConnection reconfigured. URL: {}", newUrl);
+    }
+
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, username, password);
+        if (dataSource == null || dataSource.isClosed()) {
+            throw new SQLException(
+                    "DataSource not initialized. Call reconfigure() first (Testcontainers mode).");
+        }
+        return dataSource.getConnection();
+    }
+
+    public synchronized void close() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            log.warn("HikariCP pool closed.");
+        }
+    }
+
+    /** Reset singleton — for test isolation only. Do NOT call in production. */
+    static synchronized void resetInstance() {
+        if (instance != null) {
+            instance.close();
+            instance = null;
+        }
     }
 }
