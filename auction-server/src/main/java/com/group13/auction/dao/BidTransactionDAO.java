@@ -23,6 +23,8 @@ public class BidTransactionDAO {
      * 1. Lưu lại lịch sử một lượt đặt giá vào Database
      */
     public boolean saveTransaction(BidTransaction tx) {
+        // bid_time sử dụng DEFAULT CURRENT_TIMESTAMP(3) của DB để đảm bảo precision ms và thứ tự đúng.
+        // Không truyền bid_time từ Java vì TIMESTAMP precision chỉ đến giây khi dùng DEFAULT CURRENT_TIMESTAMP.
         String sql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -94,7 +96,7 @@ public class BidTransactionDAO {
         String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
                 "FROM bid_transactions " +
                 "WHERE auction_id = ? AND result != 'REJECTED' " +
-                "ORDER BY bid_time ASC";
+                "ORDER BY bid_time ASC, seq ASC";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

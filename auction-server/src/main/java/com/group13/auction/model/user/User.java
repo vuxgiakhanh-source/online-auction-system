@@ -153,6 +153,25 @@ public abstract class User extends Entity {
   }
 
   /**
+   * Atomic check-and-mark: thêm auctionId vào joinedAuctionIds nếu chưa có.
+   * Dùng tính chất của ConcurrentHashMap.newKeySet() — {@code add()} là atomic.
+   *
+   * @return {@code true} nếu đây là lần đầu join (chưa có trước đó),
+   *         {@code false} nếu đã join rồi (duplicate — caller nên bỏ qua).
+   */
+  public boolean tryMarkJoined(String auctionId) {
+    return joinedAuctionIds.add(auctionId);
+  }
+
+  /**
+   * Rollback tryMarkJoined() khi join thất bại (ineligible, insufficient deposit, v.v.).
+   * Cho phép user thử join lại sau khi lỗi được giải quyết.
+   */
+  public void removeJoinedAuction(String auctionId) {
+    joinedAuctionIds.remove(auctionId);
+  }
+
+  /**
    * Thêm phiên vào watchList (idempotent).
    * Chỉ {@link com.group13.auction.service.BidService} gọi.
    *

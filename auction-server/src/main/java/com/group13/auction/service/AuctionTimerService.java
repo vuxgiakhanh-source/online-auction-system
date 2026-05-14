@@ -5,7 +5,10 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.iservice.IPaymentService;
@@ -38,6 +41,7 @@ public class AuctionTimerService {
     private SessionManager sessionManager;
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
+    private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
     private volatile boolean running = false;
 
     private AuctionTimerService() {}
@@ -87,6 +91,8 @@ public class AuctionTimerService {
             LocalDateTime now = LocalDateTime.now();
             startPendingAuctions(now);
             closeExpiredAuctions(now);
+            expirePendingWinnerPayments();
+            expirePendingSecondChanceOffers(now);
         } catch (Exception e) {
             log.error("Lỗi không mong muốn trong scan:", e);
         }
@@ -190,6 +196,77 @@ public class AuctionTimerService {
                 if (releaseLock) {
                     lockRegistry.release(auction.getId());
                 }
+            }
+        }
+    }
+
+    /**
+     * Winner (first / second chance) quá hạn 24h thanh toán — đồng bộ với DB qua PaymentService.
+     */
+    private void expirePendingWinnerPayments() {
+        List<Auction> finished = AuctionManager.getInstance()
+                .getAuctionsByStatus(Auction.AuctionStatus.FINISHED);
+
+        for (Auction auction : finished) {
+            AuctionWinner winner = auction.getWinner();
+            if (winner == null || winner.getPaymentStatus() != PaymentStatus.PENDING) {
+                continue;
+            }
+            if (!winner.isExpired()) {
+                continue;
+            }
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("expirePendingWinnerPayments: lock timeout auctionId={}", auction.getId());
+                continue;
+            }
+            try {
+                AuctionWinner w2 = auction.getWinner();
+                if (w2 == null || w2.getPaymentStatus() != PaymentStatus.PENDING || !w2.isExpired()) {
+                    continue;
+                }
+                MDC.put("auctionId", auction.getId());
+                paymentService.expirePayment(auction);
+                if (auction.getStatus() == Auction.AuctionStatus.CANCELED) {
+                    broadcastUpdate(auction, PacketType.AUCTION_CANCELED_UPDATE);
+                }
+            } catch (Exception e) {
+                log.error("expirePendingWinnerPayments: auctionId={}", auction.getId(), e);
+            } finally {
+                MDC.remove("auctionId");
+                lockRegistry.unlock(auction.getId());
+            }
+        }
+    }
+
+    /**
+     * Runner-up không chấp nhận trong thời hạn offer — quét theo deadline trên DB.
+     */
+    private void expirePendingSecondChanceOffers(LocalDateTime now) {
+        List<String> auctionIds = secondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(now);
+        for (String auctionId : auctionIds) {
+            Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+            if (auction == null) {
+                continue;
+            }
+
+            boolean locked = lockRegistry.tryLock(auctionId, CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("expirePendingSecondChanceOffers: lock timeout auctionId={}", auctionId);
+                continue;
+            }
+            try {
+                MDC.put("auctionId", auctionId);
+                paymentService.expireSecondChanceOfferIfDue(auction);
+                if (auction.getStatus() == Auction.AuctionStatus.CANCELED) {
+                    broadcastUpdate(auction, PacketType.AUCTION_CANCELED_UPDATE);
+                }
+            } catch (Exception e) {
+                log.error("expirePendingSecondChanceOffers: auctionId={}", auctionId, e);
+            } finally {
+                MDC.remove("auctionId");
+                lockRegistry.unlock(auctionId);
             }
         }
     }

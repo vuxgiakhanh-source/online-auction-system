@@ -1,4 +1,5 @@
 package com.group13.auction.integration.service.report;
+
 import com.group13.auction.integration.base.RequiresDocker;
 import com.group13.auction.integration.base.IntegrationTestBase;
 import com.group13.auction.unit.TestFixture;
@@ -27,21 +28,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * ════════════════════════════════════════════════════════════════════
- *  QualityReportIntegrationIT — Integration Tests cho QualityReport flow
- *  Kỹ thuật: Sandwich (QualityReportService thật + DAOs thật + DB thật)
- * ════════════════════════════════════════════════════════════════════
- *
- *  TC-20 [HIGH]: submitReport() + approveReport() — chain đầy đủ
- *    BUG RISK: approveReport() trừ rating seller nhưng không persist.
- *    Hoặc refundToWinnerFromBank() không hoàn đúng số tiền (finalPrice).
- *    Hoặc seller bị ban nhưng DB status không cập nhật.
- *
- *  TC-21 [MEDIUM]: rejectReport() — report bị từ chối, tiền không hoàn
- *    BUG RISK: reject() vẫn trigger refund do logic if sai.
- *
- *  TC-22 [HIGH]: approveReport() khi auction không có winner — IllegalStateException
- *    BUG RISK: NullPointerException thay vì exception xử lý đẹp.
+ * QualityReportIntegrationIT — ĐÃ SỬA
  */
 @RequiresDocker
 @Testcontainers
@@ -93,12 +80,12 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
         walletService  = new WalletService(financialTransactionDAO, userDAO, ratingService);
         auctionService = new AuctionService(ratingService, auctionDAO);
         bidService     = new BidService(auctionService, ratingService, walletService,
-                                        bidTransactionDAO, auctionDAO, userDAO);
+                bidTransactionDAO, auctionDAO, userDAO);
         paymentService = new PaymentService(auctionService, ratingService, walletService,
-                                            auctionWinnerDAO, secondChanceOfferDAO,
-                                            bidTransactionDAO, userDAO);
+                auctionWinnerDAO, secondChanceOfferDAO,
+                bidTransactionDAO, userDAO);
         qualityReportService = new QualityReportService(ratingService, paymentService,
-                                                         qualityReportDAO, userDAO);
+                qualityReportDAO, userDAO);
         resetTracking();
     }
 
@@ -109,7 +96,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
     }
 
     // =========================================================================
-    // TC-20 — submitReport() + approveReport()
+    // TC-20 — approveReport()
     // =========================================================================
 
     @Nested
@@ -123,7 +110,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
         void submitReport_persistsAsPending() {
             NormalUser winner = givenUserWithBalance("qr_winner1", 20_000_000L);
             Auction auction   = givenPaidAuction("qr_seller1", winner, 5_000_000L,
-                                                  7_000_000L, 8_000_000L);
+                    7_000_000L, 8_000_000L);
 
             QualityReport report = QualityReport.create(winner, auction.getId(), "Test quality issue", java.util.List.of("http://img.test/1.jpg"));
             qualityReportService.submitReport(report);
@@ -141,7 +128,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
             NormalUser winner = givenUserWithBalance("qr_winner2", 20_000_000L);
             NormalUser seller = givenUserWithBalance("qr_seller2_user", 0L);
             Auction auction   = givenPaidAuctionWithSeller(seller, winner,
-                                                            5_000_000L, 7_000_000L, 8_000_000L);
+                    5_000_000L, 7_000_000L, 8_000_000L);
 
             double sellerRatingBefore = seller.getRating();
             Admin admin = buildAdmin("qr_admin2");
@@ -152,14 +139,18 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
 
             qualityReportService.approveReport(admin, report, auction);
 
-            // Seller rating phải giảm
-            assertThat(seller.getRating())
-                    .as("Seller rating phải giảm sau approve")
-                    .isLessThan(sellerRatingBefore);
+            // === PHẦN ĐÃ SỬA ===
+            // Fetch lại từ DB vì approveReport() dùng object seller khác (từ ItemDAO)
+            NormalUser sellerAfter = userDAO.findNormalUserById(seller.getId());
 
-            NormalUser sellerDB = userDAO.findNormalUserById(seller.getId());
-            assertThat(sellerDB.getRating())
-                    .as("DB seller rating phải cập nhật")
+            assertThat(sellerAfter.getRating())
+                    .as("Seller rating phải giảm sau approve")
+                    .isLessThan(sellerRatingBefore)
+                    .isGreaterThanOrEqualTo(1.0);
+
+            // Kiểm tra DB (đã có sẵn)
+            assertThat(sellerAfter.getRating())
+                    .as("DB seller rating phải được cập nhật")
                     .isLessThan(sellerRatingBefore);
         }
 
@@ -169,20 +160,18 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
         void approveReport_notPending_throwsIllegalState() {
             NormalUser winner = givenUserWithBalance("qr_winner3", 20_000_000L);
             Auction auction   = givenPaidAuction("qr_seller3", winner, 5_000_000L,
-                                                  7_000_000L, 8_000_000L);
+                    7_000_000L, 8_000_000L);
 
             Admin admin = buildAdmin("qr_admin3");
             QualityReport report = QualityReport.create(winner, auction.getId(), "Test quality issue", java.util.List.of("http://img.test/1.jpg"));
             qualityReportService.submitReport(report);
             trackQualityReport(report.getId());
 
-            // Approve lần 1
             qualityReportService.approveReport(admin, report, auction);
 
-            // Approve lần 2 — report không còn ở PENDING
             assertThatThrownBy(() ->
-                qualityReportService.approveReport(admin, report, auction))
-                .isInstanceOf(IllegalStateException.class);
+                    qualityReportService.approveReport(admin, report, auction))
+                    .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -202,7 +191,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
             NormalUser winner = givenUserWithBalance("qr_rj_winner1", 20_000_000L);
             NormalUser seller = givenUserWithBalance("qr_rj_seller1", 0L);
             Auction auction   = givenPaidAuctionWithSeller(seller, winner,
-                                                            5_000_000L, 7_000_000L, 8_000_000L);
+                    5_000_000L, 7_000_000L, 8_000_000L);
 
             double sellerRatingBefore = seller.getRating();
             Admin admin = buildAdmin("qr_rj_admin1");
@@ -214,12 +203,12 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
             qualityReportService.rejectReport(admin, report);
 
             assertAll("Sau rejectReport()",
-                () -> assertThat(report.getStatus())
-                        .as("Report status phải = REJECTED")
-                        .isEqualTo(QualityReport.ReportStatus.REJECTED),
-                () -> assertThat(seller.getRating())
-                        .as("Seller rating không thay đổi khi report bị từ chối")
-                        .isEqualTo(sellerRatingBefore)
+                    () -> assertThat(report.getStatus())
+                            .as("Report status phải = REJECTED")
+                            .isEqualTo(QualityReport.ReportStatus.REJECTED),
+                    () -> assertThat(seller.getRating())
+                            .as("Seller rating không thay đổi khi report bị từ chối")
+                            .isEqualTo(sellerRatingBefore)
             );
         }
 
@@ -229,7 +218,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
         void rejectReport_notPending_throwsIllegalState() {
             NormalUser winner = givenUserWithBalance("qr_rj_winner2", 20_000_000L);
             Auction auction   = givenPaidAuction("qr_rj_seller2", winner, 5_000_000L,
-                                                  7_000_000L, 8_000_000L);
+                    7_000_000L, 8_000_000L);
 
             Admin admin = buildAdmin("qr_rj_admin2");
             QualityReport report = QualityReport.create(winner, auction.getId(), "Test quality issue", java.util.List.of("http://img.test/1.jpg"));
@@ -238,32 +227,26 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
 
             qualityReportService.rejectReport(admin, report);
 
-            // Reject lần 2 — không còn PENDING
             assertThatThrownBy(() ->
-                qualityReportService.rejectReport(admin, report))
-                .isInstanceOf(IllegalStateException.class);
+                    qualityReportService.rejectReport(admin, report))
+                    .isInstanceOf(IllegalStateException.class);
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    // ── Helpers (giữ nguyên) ───────────────────────────────────────────────────────────────
     private NormalUser givenUserWithBalance(String username, long balance) {
         return buildUserWithBalance(username, balance, userDAO);
     }
 
-    /**
-     * Tạo auction đã ở trạng thái PAID với winner đã thanh toán.
-     * seller mới tạo (dùng sellerUsername).
-     */
     private Auction givenPaidAuction(String sellerUsername, NormalUser winner,
-                                      long startingPrice, long bidAmount, long reservePrice) {
+                                     long startingPrice, long bidAmount, long reservePrice) {
         NormalUser seller = buildUserWithBalance(sellerUsername, 50_000_000L, userDAO);
         return givenPaidAuctionWithSeller(seller, winner, startingPrice, bidAmount, reservePrice);
     }
 
     private Auction givenPaidAuctionWithSeller(NormalUser seller, NormalUser winner,
-                                                long startingPrice, long bidAmount,
-                                                long reservePrice) {
+                                               long startingPrice, long bidAmount,
+                                               long reservePrice) {
         String itemId = buildItem(seller.getId(), "QRItem-" + seller.getUsername(),
                 startingPrice, itemDAO);
         Item item = itemDAO.findItemById(itemId);
