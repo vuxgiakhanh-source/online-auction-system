@@ -4,6 +4,7 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.item.Art;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
@@ -11,8 +12,11 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.AuctionTimerService;
 import com.group13.auction.service.iservice.IPaymentService;
+import com.group13.auction.service.iservice.IScheduler;
+import com.group13.auction.service.scheduler.TaskScheduler;
 import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
+import com.group13.auction.unit.TestFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
@@ -31,9 +34,6 @@ import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +41,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,7 +60,7 @@ class AuctionTimerServiceTest {
     @Mock
     private SessionManager sessionManager;
     @Mock
-    private ScheduledExecutorService scheduler;
+    private IScheduler scheduler;
 
     private AuctionTimerService sut;
 
@@ -81,6 +80,7 @@ class AuctionTimerServiceTest {
 
     @AfterEach
     void tearDown() throws Exception {
+        sut.stop();
         inject("auctionService", null);
         inject("paymentService", null);
         inject("sessionManager", null);
@@ -96,34 +96,26 @@ class AuctionTimerServiceTest {
     class Scheduling {
 
         @Test
-        @DisplayName("start schedules scan at fixed one-second interval")
-        void start_schedulesFixedRateScan() {
-            try (MockedStatic<Executors> executors = mockStatic(Executors.class)) {
-                executors.when(() -> Executors.newSingleThreadScheduledExecutor(any(ThreadFactory.class)))
-                        .thenReturn(scheduler);
+        @DisplayName("start creates TaskScheduler and schedules scan at 1s interval")
+        void start_usesTaskScheduler() throws Exception {
+            sut.start(auctionService, paymentService, sessionManager);
 
-                sut.start(auctionService, paymentService, sessionManager);
+            assertThat(readFieldObject("scheduler")).isInstanceOf(TaskScheduler.class);
+            assertThat(readBoolean("running")).isTrue();
 
-                verify(scheduler).scheduleAtFixedRate(
-                        any(Runnable.class),
-                        eq(0L),
-                        eq(1L),
-                        eq(TimeUnit.SECONDS)
-                );
-            }
+            sut.stop();
+            assertThat(readBoolean("running")).isFalse();
         }
 
         @Test
-        @DisplayName("start while running does not schedule duplicate task")
+        @DisplayName("start while running does not replace scheduler")
         void start_alreadyRunning_skipsDuplicateScheduling() throws Exception {
             inject("running", true);
+            Object before = readFieldObject("scheduler");
 
-            try (MockedStatic<Executors> executors = mockStatic(Executors.class)) {
-                sut.start(auctionService, paymentService, sessionManager);
+            sut.start(auctionService, paymentService, sessionManager);
 
-                executors.verifyNoInteractions();
-                verifyNoInteractions(scheduler);
-            }
+            assertThat(readFieldObject("scheduler")).isSameAs(before);
         }
 
         @Test
@@ -136,6 +128,36 @@ class AuctionTimerServiceTest {
 
             verify(scheduler).shutdownNow();
             assertThat(readBoolean("running")).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("expire pending winner payments")
+    class ExpirePendingWinnerPayments {
+
+        @Test
+        @DisplayName("FINISHED + winner payment expired → expirePayment on payment service")
+        void expiredWinner_callsExpirePayment() throws Exception {
+            Auction auction = finishedAuctionExpiredWinner();
+            register(auction);
+
+            invokeExpirePendingWinnerPayments();
+
+            verify(paymentService).expirePayment(auction);
+        }
+
+        @Test
+        @DisplayName("FINISHED + winner still in 24h window → no expirePayment")
+        void pendingWinner_notExpired_skipsExpirePayment() throws Exception {
+            Auction auction = reconstitutedAuction(NOW.minusHours(2), NOW.minusHours(1), Auction.AuctionStatus.FINISHED);
+            NormalUser w = normalBidder("winner-pending-pay");
+            AuctionWinner aw = AuctionWinner.create(w, auction.getId(), 5_000_000L, 300_000L, false);
+            auction.setWinner(aw);
+            register(auction);
+
+            invokeExpirePendingWinnerPayments();
+
+            verify(paymentService, never()).expirePayment(any());
         }
     }
 
@@ -494,6 +516,20 @@ class AuctionTimerServiceTest {
         method.invoke(sut, now);
     }
 
+    private void invokeExpirePendingWinnerPayments() throws Exception {
+        Method method = AuctionTimerService.class.getDeclaredMethod("expirePendingWinnerPayments");
+        method.setAccessible(true);
+        method.invoke(sut);
+    }
+
+    private static Auction finishedAuctionExpiredWinner() {
+        Auction auction = reconstitutedAuction(
+                NOW.minusHours(48), NOW.minusHours(24), Auction.AuctionStatus.FINISHED);
+        NormalUser w = normalBidder("winner-exp-" + UUID.randomUUID());
+        auction.setWinner(TestFixture.expiredPendingWinner(w, auction.getId(), 5_000_000L, 300_000L));
+        return auction;
+    }
+
     private void inject(String fieldName, Object value) throws Exception {
         Field field = AuctionTimerService.class.getDeclaredField(fieldName);
         field.setAccessible(true);
@@ -504,6 +540,12 @@ class AuctionTimerServiceTest {
         Field field = AuctionTimerService.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         return field.getBoolean(sut);
+    }
+
+    private Object readFieldObject(String fieldName) throws Exception {
+        Field field = AuctionTimerService.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(sut);
     }
 
     private void verifyBroadcast(Auction auction, PacketType packetType) {

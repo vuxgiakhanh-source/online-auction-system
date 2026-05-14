@@ -35,6 +35,12 @@ public interface IPaymentService {
   void expirePayment(Auction auction);
 
   /**
+   * Scheduler: Second Chance Offer vẫn PENDING nhưng đã quá {@code deadline}
+   * — đánh dấu EXPIRED, hủy phiên (no winner).
+   */
+  void expireSecondChanceOfferIfDue(Auction auction);
+
+  /**
    * Report thành công -> SystemBank hoàn toàn bộ tiền lại cho Winner.
    * Chỉ {@link QualityReportService} gọi sau khi Admin approve report.
    *

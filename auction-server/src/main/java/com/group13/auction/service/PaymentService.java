@@ -141,28 +141,36 @@ public class PaymentService implements IPaymentService {
   public void expirePayment(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
 
-    if (auctionWinner.getIsSecondOffer()) {
-      auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
-      return;
-    }
-
     if (!auctionWinner.isExpired()) {
       return;
     }
 
     NormalUser winner = auctionWinner.getWinner();
-
     walletService.forfeitDeposit(winner, auctionWinner.getDepositPaid(), auction.getId());
     ratingService.penalizeLatePayment(winner);
     SystemAdmin.getInstance().autoBanIfNeeded(winner);
-
     auctionWinner.setPaymentStatus(AuctionWinner.PaymentStatus.EXPIRED);
-    offerSecondChance(auction);
 
-    log.info("[PAYMENT] Winner {} không thanh toán | Cọc tịch thu | Rating phạt.",
-            winner.getUsername());
+    if (auctionWinner.getIsSecondOffer()) {
+      auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
+      log.info("[PAYMENT] Second-chance winner {} không thanh toán đúng hạn | hủy phiên.",
+              winner.getUsername());
+    } else {
+      offerSecondChance(auction);
+      log.info("[PAYMENT] Winner {} không thanh toán | Cọc tịch thu | Rating phạt.",
+              winner.getUsername());
+    }
 
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
+  }
+
+  @Override
+  public void expireSecondChanceOfferIfDue(Auction auction) {
+    SecondChanceOffer offer = secondChanceOfferDAO.findPendingOfferByAuctionId(auction.getId());
+    if (offer == null || !offer.isExpired()) {
+      return;
+    }
+    finalizeSecondChanceOfferExpired(offer, auction);
   }
 
   @Override
@@ -191,10 +199,7 @@ public class PaymentService implements IPaymentService {
       throw new IllegalStateException("Second Chance Offer không còn ở PENDING: " + offer.getStatus());
     }
     if (offer.isExpired()) {
-      offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
-      log.info("[PAYMENT] Second Chance Offer hết hạn — phiên {} bị hủy.", auction.getId());
-      auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
-      secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
+      finalizeSecondChanceOfferExpired(offer, auction);
       return;
     }
 
@@ -283,5 +288,12 @@ public class PaymentService implements IPaymentService {
       throw new IllegalStateException("Phiên này không có winner.");
     }
     return w;
+  }
+
+  private void finalizeSecondChanceOfferExpired(SecondChanceOffer offer, Auction auction) {
+    offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
+    log.info("[PAYMENT] Second Chance Offer hết hạn — phiên {} bị hủy.", auction.getId());
+    auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
+    secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }
 }
