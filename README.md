@@ -67,10 +67,10 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 🎬 Demo
 > Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
-|                    | Link             |
-|--------------------|------------------|
-| 📄 **Báo cáo PDF** | _[Cập nhật sau]_ |
-| 🎥 **Video Demo**  | _[Cập nhật sau]_ |
+|                    | Link                        |
+|--------------------|-----------------------------|
+| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAO.pdf)_   |
+| 🎥 **Video Demo**  | _[Cập nhật sau]_            |
 
 ---
 
