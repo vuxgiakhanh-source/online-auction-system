@@ -97,6 +97,8 @@ public class DatabaseConnection {
         config.setUsername(username);
         config.setPassword(password);
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        // Giảm anomaly đọc/ghi đồng thời giữa các connection (scheduler vs handler).
+        config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
 
         // ── FIX #5: Pool sizing ────────────────────────────────────────────
         // Load test: 12 bid thread + vài thread join/watch/anti-sniping → 20 đủ
