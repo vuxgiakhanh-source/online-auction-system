@@ -3,6 +3,10 @@ import com.group13.auction.integration.base.RequiresDocker;
 import com.group13.auction.integration.base.IntegrationTestBase;
 
 import com.group13.auction.dao.*;
+import com.group13.auction.dao.DatabaseConnection;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
@@ -51,6 +55,8 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
             .withInitScript("integration/schema.sql");
 
     private UserDAO              userDAO;
+    private ItemDAO              itemDAO;
+    private AuctionDAO           auctionDAO;
     private FinancialTransactionDAO financialTransactionDAO;
     private RatingService ratingService;
     private WalletService walletService;
@@ -63,6 +69,8 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
     @BeforeEach
     void setUp() {
         userDAO                 = new UserDAO();
+        itemDAO                 = new ItemDAO();
+        auctionDAO              = new AuctionDAO();
         financialTransactionDAO = new FinancialTransactionDAO();
         ratingService           = new com.group13.auction.service.RatingService(userDAO);
         walletService           = new com.group13.auction.service.WalletService(
@@ -264,9 +272,10 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
         @Test
         @Order(4)
         @DisplayName("TC-28d: joinedAuctionIds được inject đúng khi findNormalUserById")
-        void findNormalUserById_joinedAuctionIdsInjected() {
+        void findNormalUserById_joinedAuctionIdsInjected() throws Exception {
             NormalUser user = givenUser("reconstitute2");
-            String auctionId = UUID.randomUUID().toString();
+            // user_auction_activity.auction_id FK → auctions(id): phải tạo auction thật
+            String auctionId = createDummyAuction(user.getId());
             userDAO.saveUserAuctionActivity(user.getId(), auctionId, "JOINED");
 
             NormalUser fromDB = userDAO.findNormalUserById(user.getId());
@@ -281,5 +290,34 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
 
     private NormalUser givenUser(String username) {
         return buildUserWithBalance(username, 0L, userDAO);
+    }
+
+    /**
+     * Tạo auction tối thiểu để thỏa FK user_auction_activity.auction_id → auctions.id.
+     */
+    private String createDummyAuction(String sellerId) throws SQLException {
+        ensureSellerRecord(sellerId);
+        String itemId    = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO items (id, seller_id, name, description, starting_price, category_type) "
+                            + "VALUES (?, ?, 'dummy', 'dummy', 1000000, 'ELECTRONICS')")) {
+                ps.setString(1, itemId);
+                ps.setString(2, sellerId);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO auctions (id, item_id, start_time, end_time, "
+                            + "current_price, status, reserve_price) "
+                            + "VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 HOUR), 1000000, 'OPEN', 1000000)")) {
+                ps.setString(1, auctionId);
+                ps.setString(2, itemId);
+                ps.executeUpdate();
+            }
+        }
+        trackItem(itemId);
+        trackAuction(auctionId);
+        return auctionId;
     }
 }

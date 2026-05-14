@@ -15,7 +15,6 @@ import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.BidIncrementCalculator;
 import com.group13.auction.strategy.StandardBidStrategy;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -107,21 +106,19 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
 
     @Test
     @Order(2)
-    @DisplayName("C2: Bid bị reject (giá thấp) → saveTransaction với BidResult.REJECTED, không gọi updateHighestPrice")
+    @DisplayName("C2: Bid bị reject (giá thấp) → throw exception, KHÔNG gọi saveTransaction (FIX #2), KHÔNG gọi updateHighestPrice")
     void invalidBid_savesRejectedTransaction_noAuctionUpdate() {
         NormalUser bidder = buildUser("bidderC2", USER_BALANCE);
         bidder.addJoinedAuction(auction.getId());
         long invalidBid = STARTING_PRICE - 1;
 
+        // FIX #2: REJECTED bid không được ghi DB — chỉ throw exception
         assertThatThrownBy(() ->
                 bidService.placeBid(bidder, auction, invalidBid, new StandardBidStrategy())
         ).isInstanceOf(RuntimeException.class);
 
-        ArgumentCaptor<BidTransaction> txCaptor = ArgumentCaptor.forClass(BidTransaction.class);
-        verify(mockBidTransactionDAO, times(1)).saveTransaction(txCaptor.capture());
-        assertThat(txCaptor.getValue().getResult())
-                .isEqualTo(BidTransaction.BidResult.REJECTED);
-
+        // Không gọi saveTransaction cho bid bị reject
+        verify(mockBidTransactionDAO, never()).saveTransaction(any());
         verify(mockAuctionDAO, never()).updateHighestPrice(any(), anyLong(), any());
     }
 
@@ -199,6 +196,9 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
         gate.countDown();
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
-        verify(mockBidTransactionDAO, times(attempts.get())).saveTransaction(any());
+        // FIX #2: chỉ ACCEPTED bid mới gọi saveTransaction — không phải tổng attempts
+        // attempts đếm tất cả lần gọi (kể cả rejected), saveTransaction chỉ cho ACCEPTED.
+        // Verify: số lần saveTransaction <= số attempts (không ghi thừa)
+        verify(mockBidTransactionDAO, atMost(attempts.get())).saveTransaction(any());
     }
 }

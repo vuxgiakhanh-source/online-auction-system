@@ -109,14 +109,25 @@ public class PaymentService implements IPaymentService {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser seller = auction.getItem().getSeller();
 
+    synchronized (auctionWinner) {
+      // Idempotency guard: chỉ giải ngân khi đang FUNDS_HELD.
+      // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không sinh tiền ảo.
+      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
+        log.warn("[PAYMENT] releaseToSeller skipped — status already {}",
+                auctionWinner.getPaymentStatus());
+        return;
+      }
+      auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+    }
+
     long payout = systemBank.payoutToSeller(auctionWinner.getFinalPrice());
-    seller.setBalance(seller.getBalance() + payout);
+    synchronized (seller) {
+      seller.setBalance(seller.getBalance() + payout);
+    }
 
     userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
 
     ratingService.rewardSeller(seller);
-
-    auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
 
     log.info("[PAYMENT] Giải ngân {} cho Seller {} từ SystemBank.", payout, seller.getUsername());
 
@@ -128,8 +139,21 @@ public class PaymentService implements IPaymentService {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser winner = auctionWinner.getWinner();
 
+    synchronized (auctionWinner) {
+      // Idempotency guard: chỉ hoàn tiền khi đang FUNDS_HELD.
+      // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không double-refund.
+      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
+        log.warn("[PAYMENT] refundToWinnerFromBank skipped — status already {}",
+                auctionWinner.getPaymentStatus());
+        return;
+      }
+      auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+    }
+
     systemBank.refundToWinner(auctionWinner.getFinalPrice());
-    winner.setBalance(winner.getBalance() + auctionWinner.getFinalPrice());
+    synchronized (winner) {
+      winner.setBalance(winner.getBalance() + auctionWinner.getFinalPrice());
+    }
 
     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
