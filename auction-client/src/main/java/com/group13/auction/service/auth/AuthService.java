@@ -158,7 +158,7 @@ public final class AuthService {
                             () ->
                                     future.completeExceptionally(
                                             new NetworkClientException(
-                                                    "Server không phản hồi. Em kiểm tra server đã chạy chưa nha.")),
+                                                    "Server không phản hồi. Kiểm tra server đã chạy chưa.")),
                             AUTH_TIMEOUT_SECONDS,
                             TimeUnit.SECONDS);
 

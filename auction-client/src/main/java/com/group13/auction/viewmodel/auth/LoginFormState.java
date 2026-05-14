@@ -48,11 +48,11 @@ public final class LoginFormState {
      */
     public Optional<String> validate() {
         if (normalizedUsername().isBlank()) {
-            return Optional.of("Em chưa nhập tên đăng nhập.");
+            return Optional.of("Bạn chưa nhập tên đăng nhập.");
         }
 
         if (password.isBlank()) {
-            return Optional.of("Em chưa nhập mật khẩu.");
+            return Optional.of("Bạn chưa nhập mật khẩu.");
         }
 
         return Optional.empty();
