@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AuctionLockRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AuctionLockRegistry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/lock/AuctionLockRegistryConcurrencyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/lock/AuctionLockRegistryConcurrencyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AuctionSystemLoadIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/BidServiceLoadIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/BidServiceLoadIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AuctionLockRegistryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AuctionLockRegistryTest.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -64,6 +72,7 @@
     "JUnit.AdminTest.executor": "Run",
     "JUnit.AuctionEventTest.executor": "Run",
     "JUnit.AuctionLockRegistryConcurrencyTest.executor": "Run",
+    "JUnit.AuctionLockRegistryTest$SingletonContract.executor": "Run",
     "JUnit.AuctionLockRegistryTest.executor": "Run",
     "JUnit.AuctionManagerLoadTest.executor": "Run",
     "JUnit.AuctionManagerTest.executor": "Run",
@@ -92,6 +101,7 @@
     "JUnit.BidConcurrencyTest.executor": "Run",
     "JUnit.BidDaoConsistencyTest.executor": "Run",
     "JUnit.BidEdgeCasesTest.executor": "Run",
+    "JUnit.BidHandlerWebSocketSecurityTest.executor": "Run",
     "JUnit.BidIncrementCalculatorTest.executor": "Run",
     "JUnit.BidRaceConditionTest.executor": "Run",
     "JUnit.BidServiceIntegrationIT$JoinAuctionTests.executor": "Run",
@@ -125,6 +135,7 @@
     "JUnit.ItemFactoryTest.executor": "Run",
     "JUnit.JoinAuctionConcurrencyTest.executor": "Run",
     "JUnit.NormalUserTest.executor": "Run",
+    "JUnit.NormalUserWalletTest$WatchList.executor": "Run",
     "JUnit.ObserverConcurrencyTest.executor": "Run",
     "JUnit.PacketCodecTest.executor": "Run",
     "JUnit.PacketRouterDispatchTest.executor": "Run",
@@ -196,7 +207,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.AuctionTimerServiceConcurrencyTest">
+  <component name="RunManager" selected="JUnit.AuctionSystemLoadIT">
     <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
@@ -206,21 +217,6 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AccountServiceExtendedTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.AccountServiceExtendedTest" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -240,16 +236,31 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionTimerServiceConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuthHandlerDispatchTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.timer.*" />
+          <option name="PATTERN" value="com.group13.auction.websocket.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.timer" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.timer.AuctionTimerServiceConcurrencyTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.websocket" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.websocket.AuthHandlerDispatchTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="BidHandlerWebSocketSecurityTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.security.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.security" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.security.BidHandlerWebSocketSecurityTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -284,18 +295,18 @@
     </configuration>
     <list>
       <item itemvalue="Application.TestLauncher" />
-      <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
-      <item itemvalue="JUnit.AccountServiceExtendedTest" />
+      <item itemvalue="JUnit.AuthHandlerDispatchTest" />
+      <item itemvalue="JUnit.BidHandlerWebSocketSecurityTest" />
       <item itemvalue="JUnit.AuctionSystemLoadIT" />
       <item itemvalue="JUnit.BidServiceLoadIT" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
-        <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.AccountServiceExtendedTest" />
-        <item itemvalue="JUnit.BidServiceLoadIT" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
+        <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.BidServiceLoadIT" />
+        <item itemvalue="JUnit.AuthHandlerDispatchTest" />
+        <item itemvalue="JUnit.BidHandlerWebSocketSecurityTest" />
       </list>
     </recent_temporary>
   </component>
@@ -410,9 +421,9 @@
           <option name="timeStamp" value="41" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
-          <line>21</line>
-          <option name="timeStamp" value="45" />
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserServiceTest.java</url>
+          <line>317</line>
+          <option name="timeStamp" value="46" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
