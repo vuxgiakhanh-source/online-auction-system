@@ -66,7 +66,7 @@ public final class RegisterFormState {
      */
     public Optional<String> validate() {
         if (normalizedEmail().isBlank()) {
-            return Optional.of("Em chưa nhập email.");
+            return Optional.of("Bạn chưa nhập email.");
         }
 
         if (!EMAIL_PATTERN.matcher(normalizedEmail()).matches()) {
