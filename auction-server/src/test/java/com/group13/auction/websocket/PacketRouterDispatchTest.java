@@ -128,7 +128,9 @@ class PacketRouterDispatchTest {
 
             verify(bidHandler, times(1)).handle(
                     eq(session), eq(PacketType.WATCH_AUCTION), any(JsonElement.class), eq("rid-watch"));
-            verifyNoInteractions(authHandler, paymentHandler);
+            // supports() bị gọi khi router loop — chỉ verify handle() không được gọi
+            verify(authHandler, never()).handle(any(), any(), any(), any());
+            verify(paymentHandler, never()).handle(any(), any(), any(), any());
         }
 
         @Test
@@ -236,7 +238,10 @@ class PacketRouterDispatchTest {
             router.route(session, json);
 
             verify(session).send(argThat(p -> p.getType() == PacketType.SYSTEM_ERROR));
-            verifyNoInteractions(authHandler, bidHandler, paymentHandler);
+            // supports() bị gọi khi router loop qua handlers — chỉ verify handle() không được gọi
+            verify(authHandler, never()).handle(any(), any(), any(), any());
+            verify(bidHandler, never()).handle(any(), any(), any(), any());
+            verify(paymentHandler, never()).handle(any(), any(), any(), any());
         }
     }
 

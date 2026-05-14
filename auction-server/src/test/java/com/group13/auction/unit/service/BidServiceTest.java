@@ -364,8 +364,6 @@ class BidServiceTest {
             NormalUser stranger = TestFixture.bidderWithBalance("strangerBB", 10_000_000L);
             when(ratingService.isEligible(stranger)).thenReturn(true);
             // stranger chưa join runningAuction
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act & Assert
             AuctionBusinessException ex = assertThrows(AuctionBusinessException.class,
                     () -> bidService.placeBid(stranger, runningAuction, 2_000_000L, strategy));
@@ -373,21 +371,18 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("bidder chưa join → transaction REJECTED được lưu")
+        @DisplayName("bidder chưa join → throw exception, KHÔNG lưu transaction (FIX #2)")
         void placeBid_bidderNotJoined_savesRejectedTransaction() {
             // Arrange
             NormalUser stranger = TestFixture.bidderWithBalance("strangerCC", 10_000_000L);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
             when(ratingService.isEligible(stranger)).thenReturn(true);
 
             // Act
             assertThrows(AuctionBusinessException.class,
                     () -> bidService.placeBid(stranger, runningAuction, 2_000_000L, strategy));
 
-            // Assert
-            ArgumentCaptor<BidTransaction> captor = ArgumentCaptor.forClass(BidTransaction.class);
-            verify(bidTransactionDAO).saveTransaction(captor.capture());
-            assertThat(captor.getValue().getResult()).isEqualTo(BidResult.REJECTED);
+            // Assert — FIX #2: REJECTED bid không ghi DB
+            verify(bidTransactionDAO, never()).saveTransaction(any());
         }
 
         @Test
@@ -396,7 +391,6 @@ class BidServiceTest {
             // Arrange
             NormalUser stranger = TestFixture.bidderWithBalance("strangerDD", 10_000_000L);
             when(ratingService.isEligible(stranger)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
             long priceBefore = runningAuction.getCurrentPrice();
 
             // Act
@@ -423,7 +417,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long invalidAmount = runningAuction.getCurrentPrice(); // thiếu increment
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             InvalidBidException ex = assertThrows(InvalidBidException.class,
@@ -437,7 +430,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long invalidAmount = runningAuction.getCurrentPrice() - 1;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(InvalidBidException.class,
@@ -451,7 +443,6 @@ class BidServiceTest {
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long increment = 200_000L; // tier 1-10tr
             long invalidAmount = runningAuction.getCurrentPrice() + increment - 1;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(InvalidBidException.class,
@@ -459,21 +450,18 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("bid không hợp lệ → transaction REJECTED được lưu")
+        @DisplayName("bid không hợp lệ → throw exception, KHÔNG lưu transaction (FIX #2)")
         void placeBid_invalidAmount_savesRejectedTransaction() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long invalidAmount = runningAuction.getCurrentPrice();
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act
             assertThrows(InvalidBidException.class,
                     () -> bidService.placeBid(bidder, runningAuction, invalidAmount, strategy));
 
-            // Assert
-            ArgumentCaptor<BidTransaction> captor = ArgumentCaptor.forClass(BidTransaction.class);
-            verify(bidTransactionDAO).saveTransaction(captor.capture());
-            assertThat(captor.getValue().getResult()).isEqualTo(BidResult.REJECTED);
+            // Assert — FIX #2: REJECTED bid không ghi DB
+            verify(bidTransactionDAO, never()).saveTransaction(any());
         }
 
         @Test
@@ -482,7 +470,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long invalidAmount = runningAuction.getCurrentPrice();
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
             long priceBefore = runningAuction.getCurrentPrice();
 
             // Act
@@ -499,7 +486,6 @@ class BidServiceTest {
         void placeBid_zeroBid_throwsInvalidBidException() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(InvalidBidException.class,
@@ -511,7 +497,6 @@ class BidServiceTest {
         void placeBid_negativeBid_throwsInvalidBidException() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act & Assert
             assertThrows(InvalidBidException.class,
@@ -570,22 +555,19 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("bidder không eligible → transaction REJECTED được lưu")
+        @DisplayName("bidder không eligible → throw exception, KHÔNG lưu transaction (FIX #2)")
         void placeBid_ineligibleBidder_savesRejectedTransaction() {
             // Arrange
             NormalUser banned = TestFixture.bannedBidder("bannedUser2");
             banned.addJoinedAuction(runningAuction.getId());
             when(ratingService.isEligible(banned)).thenReturn(false);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
 
             // Act
             assertThrows(AuthenticationException.class,
                     () -> bidService.placeBid(banned, runningAuction, 2_000_000L, strategy));
 
-            // Assert
-            ArgumentCaptor<BidTransaction> captor = ArgumentCaptor.forClass(BidTransaction.class);
-            verify(bidTransactionDAO).saveTransaction(captor.capture());
-            assertThat(captor.getValue().getResult()).isEqualTo(BidResult.REJECTED);
+            // Assert — FIX #2: REJECTED bid không ghi DB
+            verify(bidTransactionDAO, never()).saveTransaction(any());
         }
 
         @Test

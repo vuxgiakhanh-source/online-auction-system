@@ -229,11 +229,12 @@ public class BidHandler implements PacketHandler {
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
-            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
-            if (auction == null) return;
-
+            // Auth check trước — user phải là NormalUser trước khi lookup auction
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
+
+            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
+            if (auction == null) return;
 
             LocalDateTime endTimeBefore = auction.getEndTime();
             bidService.placeBid(bidder, auction, req.getAmount(), new StandardBidStrategy());
@@ -320,11 +321,12 @@ public class BidHandler implements PacketHandler {
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
-            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
-            if (auction == null) return;
-
+            // Auth check trước — user phải là NormalUser trước khi lookup auction
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
+
+            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
+            if (auction == null) return;
 
             AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
             long nextBid = strategy.calculateNextBid(auction);
