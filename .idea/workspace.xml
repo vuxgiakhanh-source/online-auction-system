@@ -6,6 +6,28 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/auction/AuctionDTOsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/auction/AuctionDTOsTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/QualityReportDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/QualityReportDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Art.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Art.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ArtFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ArtFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Electronics.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Electronics.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ElectronicsFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ElectronicsFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Item.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Item.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ItemFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ItemFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Vehicle.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/VehicleFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/VehicleFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/item/ItemFactoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/item/ItemFactoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/protocol/DTOMapperTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/protocol/DTOMapperTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +89,9 @@
     "JUnit.AdminTest.executor": "Run",
     "JUnit.AuctionDTOsTest.executor": "Run",
     "JUnit.AuctionEventTest.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest$AdminGetAllAuctionsTest.adminGetAll_emptyList_stillSuccess.executor": "Run",
     "JUnit.AuctionHandlerDispatchTest$CancelAuctionRequestTest.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError.executor": "Run",
     "JUnit.AuctionHandlerDispatchTest.executor": "Run",
     "JUnit.AuctionHandlerSecurityTest$SupportsTest.executor": "Run",
     "JUnit.AuctionHandlerSecurityTest.executor": "Run",
@@ -137,6 +161,7 @@
     "JUnit.DepositRefundIT.winner_doesNotReceiveRefund_onlyLosersRefunded.executor": "Run",
     "JUnit.ErrorDTOTest.executor": "Run",
     "JUnit.FinancialAuditIntegrationIT.executor": "Run",
+    "JUnit.ImageUploadServerTest.executor": "Run",
     "JUnit.ItemFactoryTest.executor": "Run",
     "JUnit.JoinAuctionConcurrencyTest.executor": "Run",
     "JUnit.LocalDateTimeAdapterTest.executor": "Run",
@@ -225,8 +250,21 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.AuctionHandlerDispatchTest">
-    <configuration name="AuctionHandlerDispatchTest$CancelAuctionRequestTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="JUnit.BidServiceLoadIT">
+    <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.unit.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
@@ -235,8 +273,9 @@
         </pattern>
       </extension>
       <option name="PACKAGE_NAME" value="com.group13.auction.websocket.AuctionHandlerDispatchTest" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.websocket.AuctionHandlerDispatchTest$CancelAuctionRequestTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.websocket.AuctionHandlerDispatchTest$CreateAuctionTest" />
+      <option name="METHOD_NAME" value="create_serviceIllegalState_validationError" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -256,46 +295,31 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="LocalDateTimeAdapterTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-common" />
+    <configuration name="BidServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.common.protocol.*" />
+          <option name="PATTERN" value="com.group13.auction.load.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.common.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.common.protocol.LocalDateTimeAdapterTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.BidServiceLoadIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PacketCodecTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-common" />
+    <configuration name="DAOIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.common.protocol.*" />
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.common.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.common.protocol.PacketCodecTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="PacketTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-common" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.common.protocol.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.common.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.common.protocol.PacketTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.DAOIntegrationIT" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -314,19 +338,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Application.TestLauncher" />
       <item itemvalue="JUnit.AuctionHandlerDispatchTest" />
-      <item itemvalue="JUnit.AuctionHandlerDispatchTest$CancelAuctionRequestTest" />
-      <item itemvalue="JUnit.LocalDateTimeAdapterTest" />
-      <item itemvalue="JUnit.PacketCodecTest" />
-      <item itemvalue="JUnit.PacketTest" />
+      <item itemvalue="JUnit.AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError" />
+      <item itemvalue="JUnit.BidServiceLoadIT" />
+      <item itemvalue="JUnit.DAOIntegrationIT" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.BidServiceLoadIT" />
+        <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.DAOIntegrationIT" />
         <item itemvalue="JUnit.AuctionHandlerDispatchTest" />
-        <item itemvalue="JUnit.AuctionHandlerDispatchTest$CancelAuctionRequestTest" />
-        <item itemvalue="JUnit.PacketTest" />
-        <item itemvalue="JUnit.PacketCodecTest" />
-        <item itemvalue="JUnit.LocalDateTimeAdapterTest" />
+        <item itemvalue="JUnit.AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError" />
       </list>
     </recent_temporary>
   </component>
@@ -363,7 +387,7 @@
       <workItem from="1778722296380" duration="5011000" />
       <workItem from="1778731693857" duration="1031000" />
       <workItem from="1778749634831" duration="20309000" />
-      <workItem from="1778824300910" duration="2609000" />
+      <workItem from="1778824300910" duration="9680000" />
     </task>
     <servers />
   </component>
@@ -459,6 +483,12 @@
             <option name="WATCH_EXIT" value="false" />
           </properties>
           <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-field">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>24</line>
+          <properties field="WEBSOCKET_UNIT" class="com.group13.auction.unit.TestLauncher" />
+          <option name="timeStamp" value="49" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

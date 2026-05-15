@@ -85,7 +85,9 @@ CREATE TABLE items (
                        manufacturer VARCHAR(255) NULL,
                        `year` INT NULL,
                        mileage DOUBLE NULL,
+                       image_urls TEXT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                        FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
@@ -104,6 +106,7 @@ CREATE TABLE auctions (
                           winning_bidder_id VARCHAR(36) DEFAULT NULL,
                           viewer_count INT DEFAULT 0,
                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                           FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
                           FOREIGN KEY (current_leader_id) REFERENCES users(id) ON DELETE SET NULL,
                           FOREIGN KEY (winning_bidder_id) REFERENCES users(id) ON DELETE SET NULL
@@ -111,12 +114,13 @@ CREATE TABLE auctions (
 
 -- 7. Bảng Bid Transactions (Lịch sử đặt giá)
 CREATE TABLE bid_transactions (
+                                  seq        BIGINT       AUTO_INCREMENT UNIQUE,
                                   id VARCHAR(36) PRIMARY KEY,
                                   auction_id VARCHAR(36) NOT NULL,
                                   bidder_id VARCHAR(36) NOT NULL,
                                   bid_amount BIGINT NOT NULL,
                                   result ENUM('ACCEPTED', 'REJECTED', 'ACCEPTED_RESERVE_NOT_MET') NOT NULL DEFAULT 'ACCEPTED',
-                                  bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                  bid_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
                                   FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                   FOREIGN KEY (bidder_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -166,15 +170,15 @@ CREATE TABLE financial_transactions (
                                         receiver_id VARCHAR(36) NOT NULL,
                                         amount BIGINT NOT NULL,
                                         transaction_type ENUM(
-        'DEPOSIT_LOCK',
-        'DEPOSIT_UNLOCK',
-        'DEPOSIT_FORFEIT',
-        'PAYMENT_FROM_WINNER',
-        'TAX_COLLECTED',
-        'PAYOUT_TO_SELLER',
-        'REFUND_TO_WINNER',
-        'SECOND_CHANCE_PAYMENT'
-    ) NOT NULL,
+                                            'DEPOSIT_LOCK',
+                                            'DEPOSIT_UNLOCK',
+                                            'DEPOSIT_FORFEIT',
+                                            'PAYMENT_FROM_WINNER',
+                                            'TAX_COLLECTED',
+                                            'PAYOUT_TO_SELLER',
+                                            'REFUND_TO_WINNER',
+                                            'SECOND_CHANCE_PAYMENT'
+                                            ) NOT NULL,
                                         auction_id VARCHAR(36),
                                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                         FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
@@ -185,9 +189,9 @@ CREATE TABLE quality_reports (
                                  id VARCHAR(36) PRIMARY KEY,
                                  auction_id VARCHAR(36) NOT NULL,
                                  reporter_id VARCHAR(36) NOT NULL,
-                                 description TEXT NOT NULL DEFAULT '',
+                                 description TEXT NOT NULL,
     -- Danh sách URL ảnh minh chứng, lưu dạng JSON array: ["url1","url2",...]
-                                 image_urls TEXT NOT NULL DEFAULT '[]',
+                                 image_urls TEXT NOT NULL,
                                  status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
                                  seller_refund_deadline DATETIME NULL,
                                  refund_completed BOOLEAN NOT NULL DEFAULT FALSE,

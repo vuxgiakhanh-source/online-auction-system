@@ -17,9 +17,12 @@ public class QualityReportDAO {
 
     /**
      * Lưu báo cáo chất lượng mới vào Database.
+     * Bao gồm description và image_urls (bắt buộc NOT NULL trong schema).
      */
     public boolean saveReport(QualityReport report) {
-        String sql = "INSERT INTO quality_reports (id, auction_id, reporter_id, status, created_at) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO quality_reports "
+                + "(id, auction_id, reporter_id, description, image_urls, status, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -27,8 +30,10 @@ public class QualityReportDAO {
             pstmt.setString(1, report.getId());
             pstmt.setString(2, report.getAuctionId());
             pstmt.setString(3, report.getReporter().getId());
-            pstmt.setString(4, report.getStatus().name());
-            pstmt.setTimestamp(5, Timestamp.valueOf(report.getCreatedAt()));
+            pstmt.setString(4, report.getDescription());
+            pstmt.setString(5, ItemDAO.toJson(report.getImageUrls()));
+            pstmt.setString(6, report.getStatus().name());
+            pstmt.setTimestamp(7, Timestamp.valueOf(report.getCreatedAt()));
 
             return pstmt.executeUpdate() > 0;
 

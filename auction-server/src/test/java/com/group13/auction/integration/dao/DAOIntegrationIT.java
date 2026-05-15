@@ -583,6 +583,52 @@ class DAOIntegrationIT {
                     .extracting(Item::getId)
                     .containsExactly(item3Id);
         }
+
+        @Test
+        @Order(5)
+        @DisplayName("addItem() với imageUrls → findItemById() trả về đúng danh sách ảnh (round-trip)")
+        void addItem_withImageUrls_persistsAndRecovers() {
+            String sellerId = userDAO.registerUser(
+                    "seller_leo", hashPassword("pass"), "leo@omnibid.vn");
+            createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
+
+            List<String> imgs = List.of(
+                    "/uploads/items/img-a.jpg",
+                    "/uploads/items/img-b.jpg");
+
+            String itemId = UUID.randomUUID().toString();
+            boolean saved = itemDAO.addItem(
+                    itemId, sellerId, "Tranh sơn dầu", "Tác phẩm mới",
+                    5_000_000L, "ART", imgs);
+            createdItemIds.add(itemId);
+
+            assertThat(saved).isTrue();
+
+            Item found = itemDAO.findItemById(itemId);
+            assertThat(found).isNotNull();
+            assertThat(found.getImageUrls())
+                    .hasSize(2)
+                    .containsExactlyElementsOf(imgs);
+        }
+
+        @Test
+        @Order(6)
+        @DisplayName("addItem() không có imageUrls → findItemById() trả về list rỗng (không null)")
+        void addItem_noImageUrls_returnsEmptyList() {
+            String sellerId = userDAO.registerUser(
+                    "seller_mia", hashPassword("pass"), "mia@omnibid.vn");
+            createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
+
+            String itemId = UUID.randomUUID().toString();
+            itemDAO.addItem(itemId, sellerId, "Xe đạp", "Cũ", 2_000_000L, "VEHICLE");
+            createdItemIds.add(itemId);
+
+            Item found = itemDAO.findItemById(itemId);
+            assertThat(found).isNotNull();
+            assertThat(found.getImageUrls()).isNotNull().isEmpty();
+        }
     }
 
     // =========================================================================

@@ -368,7 +368,7 @@ class AuctionHandlerDispatchTest {
             Auction auction = TestFixture.openAuction(seller, 500_000L);
             Item item = auction.getItem();
 
-            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any()))
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
                     .thenReturn(item);
             when(auctionService.createAuction(any(), any(), any(), any(), anyLong()))
                     .thenReturn(auction);
@@ -387,7 +387,7 @@ class AuctionHandlerDispatchTest {
         @DisplayName("itemDAO.addItem() trả false → CREATE_AUCTION_FAILED INTERNAL_ERROR, service không gọi")
         void create_itemSaveFails_internalError() throws Exception {
             Item item = TestFixture.openAuction(seller, 500_000L).getItem();
-            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any()))
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
                     .thenReturn(item);
 
             AuctionHandler handler = newHandler();
@@ -406,7 +406,7 @@ class AuctionHandlerDispatchTest {
         @DisplayName("auctionService ném IllegalArgumentException → CREATE_AUCTION_FAILED VALIDATION_ERROR")
         void create_serviceIllegalArgument_validationError() throws Exception {
             Item item = TestFixture.openAuction(seller, 500_000L).getItem();
-            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any()))
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
                     .thenReturn(item);
             when(auctionService.createAuction(any(), any(), any(), any(), anyLong()))
                     .thenThrow(new IllegalArgumentException("endTime phải sau startTime"));
@@ -426,7 +426,7 @@ class AuctionHandlerDispatchTest {
         @DisplayName("auctionService ném IllegalStateException (seller bị ban) → CREATE_AUCTION_FAILED VALIDATION_ERROR")
         void create_serviceIllegalState_validationError() throws Exception {
             Item item = TestFixture.openAuction(seller, 500_000L).getItem();
-            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any()))
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
                     .thenReturn(item);
             when(auctionService.createAuction(any(), any(), any(), any(), anyLong()))
                     .thenThrow(new IllegalStateException("Seller không đủ điều kiện"));
@@ -464,9 +464,94 @@ class AuctionHandlerDispatchTest {
             assertThat(captureLastSent()).contains(PacketType.CREATE_AUCTION_FAILED.name());
         }
 
+        @Test
+        @DisplayName("imageUrls null trong request → vẫn CREATE_AUCTION_SUCCESS (backward-compat)")
+        void create_nullImageUrls_backwardCompat() throws Exception {
+            Auction auction = TestFixture.openAuction(seller, 500_000L);
+            Item item = auction.getItem();
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
+                    .thenReturn(item);
+            when(auctionService.createAuction(any(), any(), any(), any(), anyLong()))
+                    .thenReturn(auction);
+
+            AuctionHandler handler = newHandler();
+            injectMockItemDAO(handler, true);
+
+            // payload không set imageUrls → null
+            handler.handle(session(), PacketType.CREATE_AUCTION,
+                    createPayloadWithImages(null), "r-create-img-1");
+
+            assertThat(captureLastSent()).contains(PacketType.CREATE_AUCTION_SUCCESS.name());
+        }
+
+        @Test
+        @DisplayName("imageUrls vượt MAX_IMAGES (4 ảnh) → CREATE_AUCTION_FAILED VALIDATION_ERROR, service không gọi")
+        void create_tooManyImages_validationError() throws Exception {
+            AuctionHandler handler = newHandler();
+            injectMockItemDAO(handler, true);
+
+            handler.handle(session(), PacketType.CREATE_AUCTION,
+                    createPayloadWithImages(java.util.List.of(
+                            "/uploads/items/a.jpg",
+                            "/uploads/items/b.jpg",
+                            "/uploads/items/c.jpg",
+                            "/uploads/items/d.jpg" // vượt MAX_IMAGES=3
+                    )), "r-create-img-2");
+
+            assertThat(captureLastSent())
+                    .contains(PacketType.CREATE_AUCTION_FAILED.name())
+                    .contains(ErrorDTO.VALIDATION_ERROR);
+            verifyNoInteractions(auctionService);
+        }
+
+        @Test
+        @DisplayName("imageUrls chứa URL path-traversal → CREATE_AUCTION_FAILED VALIDATION_ERROR")
+        void create_maliciousImageUrl_validationError() throws Exception {
+            AuctionHandler handler = newHandler();
+            injectMockItemDAO(handler, true);
+
+            handler.handle(session(), PacketType.CREATE_AUCTION,
+                    createPayloadWithImages(java.util.List.of("../../etc/passwd")),
+                    "r-create-img-3");
+
+            assertThat(captureLastSent())
+                    .contains(PacketType.CREATE_AUCTION_FAILED.name())
+                    .contains(ErrorDTO.VALIDATION_ERROR);
+            verifyNoInteractions(auctionService);
+        }
+
+        @Test
+        @DisplayName("imageUrls hợp lệ (2 ảnh) → itemFactory được gọi với imageUrls, CREATE_AUCTION_SUCCESS")
+        void create_validImageUrls_passedToFactory() throws Exception {
+            Auction auction = TestFixture.openAuction(seller, 500_000L);
+            Item item = auction.getItem();
+            java.util.List<String> imgs = java.util.List.of(
+                    "/uploads/items/x.jpg", "/uploads/items/y.png");
+
+            when(itemFactory.create(any(), any(), any(), anyLong(), any(), any(), any()))
+                    .thenReturn(item);
+            when(auctionService.createAuction(any(), any(), any(), any(), anyLong()))
+                    .thenReturn(auction);
+
+            AuctionHandler handler = newHandler();
+            injectMockItemDAO(handler, true);
+
+            handler.handle(session(), PacketType.CREATE_AUCTION,
+                    createPayloadWithImages(imgs), "r-create-img-4");
+
+            assertThat(captureLastSent()).contains(PacketType.CREATE_AUCTION_SUCCESS.name());
+            // imageUrls phải được truyền vào factory (arg cuối)
+            verify(itemFactory).create(any(), any(), any(), anyLong(), any(), any(),
+                    argThat(list -> list instanceof java.util.List && ((java.util.List<?>) list).size() == 2));
+        }
+
         // ── Private helpers ──────────────────────────────────────────────────
 
         private JsonElement validCreatePayload() {
+            return createPayloadWithImages(java.util.List.of("/uploads/items/img1.jpg"));
+        }
+
+        private JsonElement createPayloadWithImages(java.util.List<String> imageUrls) {
             AuctionDTOs.CreateAuctionRequestDTO req = new AuctionDTOs.CreateAuctionRequestDTO();
             req.setItemName("Tranh sơn dầu cổ điển");
             req.setItemDescription("Mô tả chi tiết sản phẩm");
@@ -475,6 +560,7 @@ class AuctionHandlerDispatchTest {
             req.setReservePrice(800_000);
             req.setStartTime(LocalDateTime.now().plusHours(1));
             req.setEndTime(LocalDateTime.now().plusHours(25));
+            req.setImageUrls(imageUrls);
             return GSON.toJsonTree(req);
         }
 
@@ -482,6 +568,10 @@ class AuctionHandlerDispatchTest {
                 throws Exception {
             com.group13.auction.dao.ItemDAO mockItemDAO =
                     mock(com.group13.auction.dao.ItemDAO.class);
+            // addItem 7-arg (có imageUrls) — đây là method handler thực sự gọi
+            lenient().when(mockItemDAO.addItem(any(), any(), any(), any(), anyLong(), any(), any()))
+                    .thenReturn(saveSuccess);
+            // addItem 6-arg backward-compat (không ảnh) — cũng stub phòng khi test khác gọi
             lenient().when(mockItemDAO.addItem(any(), any(), any(), any(), anyLong(), any()))
                     .thenReturn(saveSuccess);
             Field f = AuctionHandler.class.getDeclaredField("itemDAO");
