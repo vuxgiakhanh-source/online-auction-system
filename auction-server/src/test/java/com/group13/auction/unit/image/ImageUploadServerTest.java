@@ -1,6 +1,6 @@
 package com.group13.auction.unit.image;
 
-import com.group13.auction.network.image.ImageUploadServer;
+import com.group13.auction.network.server.image.ImageUploadServer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

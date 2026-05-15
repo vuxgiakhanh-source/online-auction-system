@@ -237,7 +237,7 @@ public class Auction extends Entity {
    * Gia hạn phiên (anti-sniping).
    * Gọi bên trong synchronized(lock) của BidService.
    */
-  public void extendEndTime(Duration extension) {
+  public synchronized void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
       throw new IllegalArgumentException("extension phải > 0.");
     }

@@ -6,28 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/auction/AuctionDTOsTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/auction/AuctionDTOsTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/ItemDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/QualityReportDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/QualityReportDAO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Art.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Art.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ArtFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ArtFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Electronics.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Electronics.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ElectronicsFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ElectronicsFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Item.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Item.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ItemFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/ItemFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/Vehicle.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/VehicleFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/item/VehicleFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/util/DTOMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/item/ItemFactoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/item/ItemFactoryTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/protocol/DTOMapperTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/protocol/DTOMapperTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/image/ImageUploadServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/image/ImageUploadServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/image/ImageUploadServerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/image/ImageUploadServerTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -250,7 +232,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.BidServiceLoadIT">
+  <component name="RunManager" selected="JUnit.DAOIntegrationIT">
     <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
@@ -346,9 +328,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.BidServiceLoadIT" />
-        <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.DAOIntegrationIT" />
+        <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="JUnit.BidServiceLoadIT" />
         <item itemvalue="JUnit.AuctionHandlerDispatchTest" />
         <item itemvalue="JUnit.AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError" />
       </list>
@@ -387,7 +369,7 @@
       <workItem from="1778722296380" duration="5011000" />
       <workItem from="1778731693857" duration="1031000" />
       <workItem from="1778749634831" duration="20309000" />
-      <workItem from="1778824300910" duration="9680000" />
+      <workItem from="1778824300910" duration="11006000" />
     </task>
     <servers />
   </component>
@@ -474,6 +456,11 @@
           <url>file://$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/rating/RatingDTOsTest.java</url>
           <line>12</line>
           <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>21</line>
+          <option name="timeStamp" value="50" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>

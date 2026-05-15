@@ -1,4 +1,4 @@
-package com.group13.auction.network.image;
+package com.group13.auction.network.server.image;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
