@@ -13,7 +13,7 @@ import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.item.ElectronicsFactory;
 import com.group13.auction.model.item.ItemFactory;
 import com.group13.auction.model.user.SystemAdmin;
-import com.group13.auction.network.image.ImageUploadServer;
+import com.group13.auction.network.server.image.ImageUploadServer;
 import com.group13.auction.network.server.AuctionWebSocketServer;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.AccountService;
