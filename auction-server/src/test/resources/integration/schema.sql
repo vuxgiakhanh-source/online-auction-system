@@ -73,7 +73,9 @@ CREATE TABLE IF NOT EXISTS items (
                                      manufacturer    VARCHAR(255) NULL,
                                      `year`          INT          NULL,
                                      mileage         DOUBLE       NULL,
+                                     image_urls      TEXT NULL,
                                      created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                                     updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                      FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 

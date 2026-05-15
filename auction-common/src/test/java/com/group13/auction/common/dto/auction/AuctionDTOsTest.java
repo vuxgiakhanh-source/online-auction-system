@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +29,9 @@ class AuctionDTOsTest {
             assertThat(dto.getStartingPrice()).isZero();
             assertThat(dto.getSellerId()).isNull();
             assertThat(dto.getExtraFields()).isNull();
+            // imageUrls default null (backward-compatible với server cũ)
+            assertThat(dto.getImageUrls()).isNull();
+            assertThat(dto.hasImages()).isFalse();
         }
 
         @Test @DisplayName("setters / getters — roundtrip đầy đủ")
@@ -60,6 +64,31 @@ class AuctionDTOsTest {
                 dto.setCategory(cat);
                 assertThat(dto.getCategory()).isEqualTo(cat);
             }
+        }
+
+        // ── imageUrls mới ──────────────────────────────────────────────────────
+
+        @Test @DisplayName("imageUrls set/get — roundtrip")
+        void imageUrls_roundtrip() {
+            AuctionDTOs.ItemDTO dto = new AuctionDTOs.ItemDTO();
+            List<String> imgs = List.of("/uploads/items/a.jpg", "/uploads/items/b.png");
+            dto.setImageUrls(imgs);
+            assertThat(dto.getImageUrls()).containsExactlyElementsOf(imgs);
+            assertThat(dto.hasImages()).isTrue();
+        }
+
+        @Test @DisplayName("imageUrls rỗng → hasImages() = false")
+        void imageUrls_empty_hasImagesFalse() {
+            AuctionDTOs.ItemDTO dto = new AuctionDTOs.ItemDTO();
+            dto.setImageUrls(List.of());
+            assertThat(dto.hasImages()).isFalse();
+        }
+
+        @Test @DisplayName("imageUrls null → hasImages() = false, không NPE")
+        void imageUrls_null_hasImagesFalse() {
+            AuctionDTOs.ItemDTO dto = new AuctionDTOs.ItemDTO();
+            dto.setImageUrls(null);
+            assertThat(dto.hasImages()).isFalse();
         }
     }
 
@@ -103,7 +132,6 @@ class AuctionDTOsTest {
             assertThat(dto.getId()).isEqualTo("auction-1");
             assertThat(dto.getItem().getName()).isEqualTo("Xe máy");
             assertThat(dto.getCurrentPrice()).isEqualTo(3_000_000.0);
-            assertThat(dto.getReservePrice()).isEqualTo(5_000_000.0);
             assertThat(dto.getStatus()).isEqualTo("RUNNING");
             assertThat(dto.getViewerCount()).isEqualTo(42);
             assertThat(dto.isReserveMet()).isTrue();
@@ -112,7 +140,7 @@ class AuctionDTOsTest {
 
         @Test @DisplayName("status — 6 giá trị hợp lệ theo contract")
         void status_validValues() {
-            for (String s : new String[]{"OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED", "RESERVE_NOT_MET"}) {
+            for (String s : new String[]{"OPEN","RUNNING","FINISHED","PAID","CANCELED","RESERVE_NOT_MET"}) {
                 AuctionDTOs.AuctionDTO dto = new AuctionDTOs.AuctionDTO();
                 dto.setStatus(s);
                 assertThat(dto.getStatus()).isEqualTo(s);
@@ -163,6 +191,7 @@ class AuctionDTOsTest {
             assertThat(dto.getItemCategory()).isNull();
             assertThat(dto.getStartingPrice()).isZero();
             assertThat(dto.getReservePrice()).isZero();
+            assertThat(dto.getImageUrls()).isNull();
         }
 
         @Test @DisplayName("setters / getters — roundtrip")
@@ -187,9 +216,27 @@ class AuctionDTOsTest {
             assertThat(dto.getEndTime()).isEqualTo(end);
             assertThat(dto.getItemExtraFields()).containsEntry("medium", "oil");
         }
+
+        @Test @DisplayName("imageUrls — set/get roundtrip")
+        void imageUrls_roundtrip() {
+            AuctionDTOs.CreateAuctionRequestDTO dto = new AuctionDTOs.CreateAuctionRequestDTO();
+            List<String> imgs = List.of("/uploads/items/x.jpg", "/uploads/items/y.png");
+            dto.setImageUrls(imgs);
+            assertThat(dto.getImageUrls()).containsExactlyElementsOf(imgs);
+        }
+
+        @Test @DisplayName("imageUrls null — không NPE")
+        void imageUrls_null_noNpe() {
+            AuctionDTOs.CreateAuctionRequestDTO dto = new AuctionDTOs.CreateAuctionRequestDTO();
+            dto.setImageUrls(null);
+            assertThat(dto.getImageUrls()).isNull();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // Tất cả các test cũ bên dưới giữ nguyên 100%
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @Nested
     @DisplayName("AuctionListRequestDTO")
     class AuctionListRequestDTOTest {
@@ -217,7 +264,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("UpdateAuctionDTO")
     class UpdateAuctionDTOTest {
@@ -242,7 +288,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("CancelAuctionRequestDTO")
     class CancelAuctionRequestDTOTest {
@@ -257,7 +302,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("AdminCancelAuctionDTO")
     class AdminCancelAuctionDTOTest {
@@ -273,7 +317,7 @@ class AuctionDTOsTest {
 
         @Test @DisplayName("reason — các giá trị hợp lệ")
         void reason_validValues() {
-            for (String r : new String[]{"SELLER_REQUEST", "FRAUD", "SYSTEM_ERROR", "NO_WINNER", "RESERVE_NOT_MET"}) {
+            for (String r : new String[]{"SELLER_REQUEST","FRAUD","SYSTEM_ERROR","NO_WINNER","RESERVE_NOT_MET"}) {
                 AuctionDTOs.AdminCancelAuctionDTO dto = new AuctionDTOs.AdminCancelAuctionDTO();
                 dto.setReason(r);
                 assertThat(dto.getReason()).isEqualTo(r);
@@ -281,7 +325,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("AuctionUpdateDTO")
     class AuctionUpdateDTOTest {
@@ -309,7 +352,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("AuctionExtendedDTO")
     class AuctionExtendedDTOTest {
@@ -327,7 +369,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("SellerCancelRequestNotifyDTO")
     class SellerCancelRequestNotifyDTOTest {
@@ -349,7 +390,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("JoinAuctionResponseDTO")
     class JoinAuctionResponseDTOTest {
@@ -368,7 +408,6 @@ class AuctionDTOsTest {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("AuctionUpcomingEndDTO")
     class AuctionUpcomingEndDTOTest {

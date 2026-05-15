@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,8 +47,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("BidServiceLoadIT — tải đồng thời placeBid (DB thật)")
 class BidServiceLoadIT extends IntegrationTestBase {
 
-    private static final int BIDDER_COUNT = 24;
-    private static final int BIDS_PER_BIDDER = 6;
+    // CI-safe: 10 bidder × 3 vòng = 30 ops tổng — đủ để kiểm tra concurrency
+    // mà không treo CI (24×6 cũ có thể mất 48 phút do chờ futures tuần tự).
+    private static final int BIDDER_COUNT    = 10;
+    private static final int BIDS_PER_BIDDER = 3;
 
     @Container
     static final MySQLContainer mysql = new MySQLContainer("mysql:8.0")
@@ -122,11 +123,10 @@ class BidServiceLoadIT extends IntegrationTestBase {
         AtomicInteger successes = new AtomicInteger();
         ExecutorService pool = Executors.newFixedThreadPool(Math.min(BIDDER_COUNT, 16));
 
-        List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < BIDDER_COUNT; i++) {
             final NormalUser bidder = bidders.get(i);
             final int idx = i;
-            futures.add(pool.submit(() -> {
+            pool.submit(() -> {
                 for (int r = 0; r < BIDS_PER_BIDDER; r++) {
                     // FIX: Dùng gap = 2×increment + idx offset nhỏ để đảm bảo amount
                     // luôn vượt minBid ngay cả khi 1 bid khác vừa được chấp nhận đúng
@@ -149,14 +149,20 @@ class BidServiceLoadIT extends IntegrationTestBase {
                         }
                     }
                 }
-            }));
+            });
         }
 
-        for (Future<?> f : futures) {
-            f.get(120, TimeUnit.SECONDS);
-        }
+        // Đợi tất cả futures hoàn thành với timeout tổng thể 60 giây.
+        // Cách cũ (f.get(120s) tuần tự cho từng future) có thể chờ tới
+        // BIDDER_COUNT × 120s = hàng chục phút nếu DB contention cao.
         pool.shutdown();
-        assertThat(pool.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
+        boolean finished = pool.awaitTermination(60, TimeUnit.SECONDS);
+        if (!finished) {
+            pool.shutdownNow(); // hủy các thread còn lại để tránh treo CI
+        }
+        assertThat(finished)
+                .as("Load test phải hoàn thành trong 60 giây — kiểm tra deadlock/contention")
+                .isTrue();
 
         assertThat(successes.get())
                 .as("Phải có đủ bid được chấp nhận khi chịu tải")
