@@ -88,6 +88,10 @@ QualityReportService implements IQualityReportService {
      * <li>Notify Staff Admin để theo dõi.</li>
      * </ol>
      *
+     * <p><b>Thread-safety:</b> synchronized trên {@code report} để chặn race condition
+     * khi 2 admin cùng approve/reject cùng một report lúc đó — chỉ admin đầu tiên
+     * qua được, admin thứ hai sẽ thấy status != PENDING và nhận {@link IllegalStateException}.</p>
+     *
      * @param admin   admin thực hiện approve
      * @param report  report cần approve
      * @param auction phiên liên quan (để lấy seller và notify)
@@ -95,57 +99,62 @@ QualityReportService implements IQualityReportService {
      */
     @Override
     public void approveReport(Admin admin, QualityReport report, Auction auction) {
-        if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
-            log.warn("Approve quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
-                    report.getId(), report.getAuctionId(), report.getStatus());
-            throw new IllegalStateException(
-                    "Report không ở trạng thái PENDING: " + report.getStatus());
+        synchronized (report) {
+            if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
+                log.warn("Approve quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
+                        report.getId(), report.getAuctionId(), report.getStatus());
+                throw new IllegalStateException(
+                        "Report không ở trạng thái PENDING: " + report.getStatus());
+            }
+
+            NormalUser winner = report.getReporter();
+            NormalUser seller = auction.getItem().getSeller();
+
+            // Approve report
+            report.approve();
+
+            // Phạt rating Seller
+            ratingService.penalizeSeller(seller);
+            SystemAdmin.getInstance().autoBanIfNeeded(seller);
+
+            // Hoàn tiền từ SystemBank + Seller về Winner
+            long finalPrice = auction.getWinner() != null
+                    ? auction.getWinner().getFinalPrice()
+                    : 0L;
+            if (finalPrice > 0) {
+                paymentService.refundToWinnerFromBank(auction);
+                report.markRefundCompleted();
+            }
+
+            // Cập nhật status + refund_completed xuống DB
+            qualityReportDAO.updateReport(report);
+
+            // Cập nhật account status của seller (có thể đã bị ban)
+            userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
+
+            // Notify Staff Admin theo dõi
+            AuctionEvent event = new AuctionEvent(
+                    AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
+                    auction, winner, 0L,
+                    String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
+            AuctionManager.getInstance().notifyStaffObservers(event);
+            AuctionManager.getInstance().notifyGlobalObservers(event);
+
+            String log = String.format(
+                    "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
+                    admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
+            admin.addActionLog(log);
+            SystemAdmin.getInstance().addActionLog(log);
+            QualityReportService.log.info("Quality report approved: reportId={}, auctionId={}, adminId={}, sellerId={}, winnerId={}, refundAmount={}",
+                    report.getId(), report.getAuctionId(), admin.getId(), seller.getId(), winner.getId(), finalPrice);
         }
-
-        NormalUser winner = report.getReporter();
-        NormalUser seller = auction.getItem().getSeller();
-
-        // Approve report
-        report.approve();
-
-        // Phạt rating Seller
-        ratingService.penalizeSeller(seller);
-        SystemAdmin.getInstance().autoBanIfNeeded(seller);
-
-        // Hoàn tiền từ SystemBank + Seller về Winner
-        long finalPrice = auction.getWinner() != null
-                ? auction.getWinner().getFinalPrice()
-                : 0L;
-        if (finalPrice > 0) {
-            paymentService.refundToWinnerFromBank(auction);
-            report.markRefundCompleted();
-        }
-
-        // Notify Staff Admin theo dõi
-        AuctionEvent event = new AuctionEvent(
-                AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
-                auction, winner, 0L,
-                String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
-        AuctionManager.getInstance().notifyStaffObservers(event);
-        AuctionManager.getInstance().notifyGlobalObservers(event);
-
-        String log = String.format(
-                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
-                admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
-        admin.addActionLog(log);
-        SystemAdmin.getInstance().addActionLog(log);
-        QualityReportService.log.info("Quality report approved: reportId={}, auctionId={}, adminId={}, sellerId={}, winnerId={}, refundAmount={}",
-                report.getId(), report.getAuctionId(), admin.getId(), seller.getId(), winner.getId(), finalPrice);
-
-//        // Thực hiện TODO: qualityReportDAO.update(report) — cập nhật status + sellerRefundDeadline xuống DB
-//        qualityReportDAO.updateReport(report);
-
-        // Thực hiện TODO: userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name())
-        userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
     }
 
     /**
      * Admin reject QualityReport.
+     *
+     * <p><b>Thread-safety:</b> synchronized trên {@code report} — xem javadoc
+     * {@link #approveReport} để biết lý do.</p>
      *
      * @param admin  admin thực hiện reject
      * @param report report cần reject
@@ -153,23 +162,25 @@ QualityReportService implements IQualityReportService {
      */
     @Override
     public void rejectReport(Admin admin, QualityReport report) {
-        if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
-            log.warn("Reject quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
-                    report.getId(), report.getAuctionId(), report.getStatus());
-            throw new IllegalStateException(
-                    "Report không ở trạng thái PENDING: " + report.getStatus());
+        synchronized (report) {
+            if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
+                log.warn("Reject quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
+                        report.getId(), report.getAuctionId(), report.getStatus());
+                throw new IllegalStateException(
+                        "Report không ở trạng thái PENDING: " + report.getStatus());
+            }
+
+            report.reject();
+
+            // Cập nhật status xuống DB
+            qualityReportDAO.updateReport(report);
+
+            String log = String.format(
+                    "[QUALITY] Admin %s từ chối report của %s | Phiên: %s",
+                    admin.getUsername(), report.getReporter().getUsername(), report.getAuctionId());
+            admin.addActionLog(log);
+            QualityReportService.log.info("Quality report rejected: reportId={}, auctionId={}, adminId={}, reporterId={}",
+                    report.getId(), report.getAuctionId(), admin.getId(), report.getReporter().getId());
         }
-
-        report.reject();
-
-        String log = String.format(
-                "[QUALITY] Admin %s từ chối report của %s | Phiên: %s",
-                admin.getUsername(), report.getReporter().getUsername(), report.getAuctionId());
-        admin.addActionLog(log);
-        QualityReportService.log.info("Quality report rejected: reportId={}, auctionId={}, adminId={}, reporterId={}",
-                report.getId(), report.getAuctionId(), admin.getId(), report.getReporter().getId());
-
-//        // Thực hiện TODO: qualityReportDAO.update(report)
-//        qualityReportDAO.updateReport(report);
     }
 }
