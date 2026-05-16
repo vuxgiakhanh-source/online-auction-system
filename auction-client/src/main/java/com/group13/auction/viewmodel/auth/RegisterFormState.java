@@ -20,23 +20,41 @@ public final class RegisterFormState {
     private final String email;
     private final String username;
     private final String password;
+    private final String confirmPassword;
 
     /** Tạo form rỗng. */
     public RegisterFormState() {
-        this("", "", "");
+        this("", "", "", "");
     }
 
     /**
-     * Tạo form đăng ký.
+     * Tạo form đăng ký khi không cần kiểm tra lại mật khẩu.
+     *
+     * <p>Constructor này giữ tương thích với code cũ. Flow UI nên dùng constructor có
+     * {@code confirmPassword} để validate đầy đủ hơn.
      *
      * @param email email người dùng
      * @param username tên đăng nhập
      * @param password mật khẩu
      */
     public RegisterFormState(String email, String username, String password) {
+        this(email, username, password, password);
+    }
+
+    /**
+     * Tạo form đăng ký đầy đủ.
+     *
+     * @param email email người dùng
+     * @param username tên đăng nhập
+     * @param password mật khẩu
+     * @param confirmPassword mật khẩu nhập lại
+     */
+    public RegisterFormState(
+            String email, String username, String password, String confirmPassword) {
         this.email = email == null ? "" : email;
         this.username = username == null ? "" : username;
         this.password = password == null ? "" : password;
+        this.confirmPassword = confirmPassword == null ? "" : confirmPassword;
     }
 
     public String email() {
@@ -59,6 +77,10 @@ public final class RegisterFormState {
         return password;
     }
 
+    public String confirmPassword() {
+        return confirmPassword;
+    }
+
     /**
      * Validate dữ liệu đăng ký ở phía client.
      *
@@ -79,6 +101,14 @@ public final class RegisterFormState {
 
         if (password.length() < MIN_PASSWORD_LENGTH) {
             return Optional.of("Mật khẩu cần có ít nhất 6 ký tự.");
+        }
+
+        if (confirmPassword.isBlank()) {
+            return Optional.of("Bạn chưa nhập lại mật khẩu.");
+        }
+
+        if (!password.equals(confirmPassword)) {
+            return Optional.of("Mật khẩu nhập lại chưa khớp.");
         }
 
         return Optional.empty();

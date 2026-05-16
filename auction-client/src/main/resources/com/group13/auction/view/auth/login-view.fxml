@@ -42,7 +42,8 @@
                             styleClass="active-tab"
                             text="Đăng nhập"/>
 
-                    <Button mnemonicParsing="false"
+                    <Button fx:id="goToRegisterTabButton"
+                            mnemonicParsing="false"
                             onAction="#handleGoToRegister"
                             styleClass="ghost-tab"
                             text="Đăng ký"/>
@@ -58,7 +59,8 @@
                                    styleClass="auth-input"/>
                 </VBox>
 
-                <Button mnemonicParsing="false"
+                <Button fx:id="signInButton"
+                        mnemonicParsing="false"
                         onAction="#handleSignIn"
                         styleClass="primary-action-button"
                         text="Sign in"/>
@@ -67,7 +69,8 @@
                     <Label styleClass="helper-link"
                            text="Chưa có tài khoản?"/>
 
-                    <Button mnemonicParsing="false"
+                    <Button fx:id="goToRegisterLinkButton"
+                            mnemonicParsing="false"
                             onAction="#handleGoToRegister"
                             styleClass="text-link-button"
                             text="Hãy đăng ký."/>
