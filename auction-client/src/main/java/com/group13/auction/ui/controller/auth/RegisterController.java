@@ -8,6 +8,7 @@ import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.viewmodel.auth.RegisterFormState;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -30,6 +31,18 @@ public final class RegisterController {
     @FXML
     private PasswordField passwordField;
 
+    @FXML
+    private PasswordField confirmPasswordField;
+
+    @FXML
+    private Button signUpButton;
+
+    @FXML
+    private Button goToLoginTabButton;
+
+    @FXML
+    private Button goToLoginLinkButton;
+
     /** Chuyển về màn hình đăng nhập. */
     @FXML
     public void handleGoToLogin() {
@@ -43,7 +56,10 @@ public final class RegisterController {
 
         RegisterFormState formState =
                 new RegisterFormState(
-                        emailField.getText(), usernameField.getText(), passwordField.getText());
+                        emailField.getText(),
+                        usernameField.getText(),
+                        passwordField.getText(),
+                        confirmPasswordField.getText());
 
         authService
                 .register(formState)
@@ -61,6 +77,7 @@ public final class RegisterController {
         emailField.clear();
         usernameField.clear();
         passwordField.clear();
+        confirmPasswordField.clear();
         emailField.requestFocus();
     }
 
@@ -79,6 +96,7 @@ public final class RegisterController {
                     setFormDisabled(false);
                     AlertUtil.showError(extractMessage(throwable));
                     passwordField.clear();
+                    confirmPasswordField.clear();
                     passwordField.requestFocus();
                 });
     }
@@ -87,6 +105,11 @@ public final class RegisterController {
         emailField.setDisable(disabled);
         usernameField.setDisable(disabled);
         passwordField.setDisable(disabled);
+        confirmPasswordField.setDisable(disabled);
+        signUpButton.setDisable(disabled);
+        goToLoginTabButton.setDisable(disabled);
+        goToLoginLinkButton.setDisable(disabled);
+        signUpButton.setText(disabled ? "Signing up..." : "Sign up");
     }
 
     private String extractMessage(Throwable throwable) {

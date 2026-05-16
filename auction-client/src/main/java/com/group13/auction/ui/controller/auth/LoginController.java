@@ -8,6 +8,7 @@ import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.viewmodel.auth.LoginFormState;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
@@ -26,6 +27,15 @@ public final class LoginController {
 
     @FXML
     private PasswordField passwordField;
+
+    @FXML
+    private Button signInButton;
+
+    @FXML
+    private Button goToRegisterTabButton;
+
+    @FXML
+    private Button goToRegisterLinkButton;
 
     /** Chuyển sang màn hình đăng ký. */
     @FXML
@@ -81,6 +91,10 @@ public final class LoginController {
     private void setFormDisabled(boolean disabled) {
         usernameField.setDisable(disabled);
         passwordField.setDisable(disabled);
+        signInButton.setDisable(disabled);
+        goToRegisterTabButton.setDisable(disabled);
+        goToRegisterLinkButton.setDisable(disabled);
+        signInButton.setText(disabled ? "Signing in..." : "Sign in");
     }
 
     private String extractMessage(Throwable throwable) {
