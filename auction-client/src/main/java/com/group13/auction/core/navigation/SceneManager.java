@@ -1,6 +1,7 @@
 package com.group13.auction.core.navigation;
 
 import com.group13.auction.config.ResourcePath;
+import com.group13.auction.config.UiConstants;
 import com.group13.auction.util.ResourceUtil;
 import java.io.IOException;
 import java.net.URL;
@@ -10,9 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-/**
- * Quản lý việc load FXML và chuyển scene cho ứng dụng JavaFX.
- */
+/** Quản lý việc load FXML và chuyển scene cho ứng dụng JavaFX. */
 public final class SceneManager {
 
     private final Stage primaryStage;
@@ -42,17 +41,17 @@ public final class SceneManager {
      * @param fxmlPath đường dẫn tuyệt đối trong resources
      */
     public void switchTo(String fxmlPath) {
-        Parent root = loadView(fxmlPath);
+        Parent root = loadView(Objects.requireNonNull(fxmlPath, "fxmlPath must not be null"));
         Scene scene = primaryStage.getScene();
 
         if (scene == null) {
-            scene = new Scene(root);
-            addStylesheet(scene, ResourcePath.APP_CSS);
+            scene = new Scene(root, UiConstants.DEFAULT_WIDTH, UiConstants.DEFAULT_HEIGHT);
             primaryStage.setScene(scene);
         } else {
             scene.setRoot(root);
-            addStylesheet(scene, ResourcePath.APP_CSS);
         }
+
+        addStylesheet(scene, ResourcePath.APP_CSS);
     }
 
     private Parent loadView(String fxmlPath) {

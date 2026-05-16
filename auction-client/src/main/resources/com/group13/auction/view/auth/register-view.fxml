@@ -5,81 +5,101 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <StackPane prefHeight="720.0" prefWidth="1280.0"
-           stylesheets="@../../css/app.css"
+           stylesheets="@../../css/auth.css"
            styleClass="screen-root"
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.group13.auction.ui.controller.auth.RegisterController">
+
     <Pane styleClass="background-layer"/>
 
     <VBox alignment="CENTER" fillWidth="false">
-        <StackPane maxWidth="780.0" minHeight="560.0" prefHeight="560.0" prefWidth="780.0"
-                   styleClass="glass-panel">
-            <VBox alignment="TOP_CENTER" fillWidth="false" prefWidth="780.0" spacing="18.0">
+        <StackPane maxWidth="700.0"
+                   minHeight="540.0"
+                   prefHeight="540.0"
+                   prefWidth="700.0"
+                   styleClass="auth-panel">
+
+            <VBox alignment="TOP_CENTER" fillWidth="false" spacing="24.0">
                 <padding>
-                    <Insets bottom="32.0" left="56.0" right="56.0" top="28.0"/>
+                    <Insets top="26.0" right="54.0" bottom="30.0" left="54.0"/>
                 </padding>
-                <HBox alignment="CENTER" prefWidth="668.0" spacing="18.0">
-                    <!-- TODO: Chừa chỗ để sau này chèn logo cái búa bên trái chữ OmniBid. -->
-                    <Region minHeight="96.0" minWidth="96.0" prefHeight="96.0" prefWidth="96.0"/>
 
-                    <VBox alignment="CENTER" spacing="4.0"
-                          minWidth="520.0" prefWidth="520.0" maxWidth="520.0">
-                        <Label text="OmniBid"
-                               styleClass="brand-title"
-                               minWidth="520.0"
-                               prefWidth="520.0"
-                               maxWidth="520.0"
-                               alignment="CENTER"
-                               textAlignment="CENTER"/>
+                <ImageView fitWidth="430.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
 
-                        <Label text="Connected Bidding Solutions"
-                               styleClass="brand-subtitle"
-                               minWidth="520.0"
-                               prefWidth="520.0"
-                               maxWidth="520.0"
-                               alignment="CENTER"
-                               textAlignment="CENTER"
-                               textOverrun="CLIP"/>
-                    </VBox>
-                </HBox>
-
-                <HBox alignment="CENTER" spacing="18.0">
-                    <Button mnemonicParsing="false" onAction="#handleGoToLogin"
-                            styleClass="ghost-tab" text="Đăng nhập"/>
+                <HBox alignment="CENTER" spacing="28.0">
                     <Button mnemonicParsing="false"
-                            styleClass="active-tab" text="Đăng ký"/>
+                            onAction="#handleGoToLogin"
+                            styleClass="ghost-tab"
+                            text="Đăng nhập"/>
+
+                    <Button mnemonicParsing="false"
+                            styleClass="active-tab"
+                            text="Đăng ký"/>
                 </HBox>
 
-                <VBox alignment="CENTER" fillWidth="false" spacing="14.0">
-                    <TextField fx:id="emailField" promptText="Email"
+                <VBox alignment="CENTER" fillWidth="false" spacing="20.0">
+                    <TextField fx:id="emailField"
+                               promptText="Email"
                                styleClass="auth-input"/>
-                    <TextField fx:id="usernameField" promptText="Tên đăng nhập"
+
+                    <TextField fx:id="usernameField"
+                               promptText="Tên đăng nhập"
                                styleClass="auth-input"/>
-                    <PasswordField fx:id="passwordField" promptText="Mật khẩu"
+
+                    <PasswordField fx:id="passwordField"
+                                   promptText="Mật khẩu"
                                    styleClass="auth-input"/>
                 </VBox>
 
-                <Button mnemonicParsing="false" onAction="#handleSignUp"
-                        styleClass="primary-action-button" text="Sign up"/>
+                <Button mnemonicParsing="false"
+                        onAction="#handleSignUp"
+                        styleClass="primary-action-button"
+                        text="Sign up"/>
+
+                <HBox alignment="CENTER" spacing="4.0">
+                    <Label styleClass="helper-link"
+                           text="Đã có tài khoản?"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleGoToLogin"
+                            styleClass="text-link-button"
+                            text="Đăng nhập."/>
+                </HBox>
             </VBox>
         </StackPane>
     </VBox>
 
-    <VBox alignment="BOTTOM_RIGHT" maxHeight="200.0" maxWidth="160.0" pickOnBounds="false"
-          spacing="8.0" StackPane.alignment="BOTTOM_RIGHT">
+    <VBox alignment="BOTTOM_RIGHT"
+          maxWidth="170.0"
+          pickOnBounds="false"
+          spacing="4.0"
+          StackPane.alignment="BOTTOM_RIGHT">
         <padding>
-            <Insets bottom="12.0" right="18.0"/>
+            <Insets bottom="8.0" right="16.0"/>
         </padding>
-        <!-- TODO: Chừa chỗ để sau này chèn sticker/linh vật ở góc dưới cùng bên phải. -->
-        <Region minHeight="64.0" minWidth="96.0" prefHeight="64.0" prefWidth="96.0"/>
+
+        <HBox alignment="CENTER_RIGHT" spacing="4.0">
+            <ImageView fitHeight="38.0" preserveRatio="true">
+                <Image url="@../../assets/images/mascot-version-2.png"/>
+            </ImageView>
+
+            <ImageView fitHeight="34.0" preserveRatio="true">
+                <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
+            </ImageView>
+        </HBox>
+
+        <Label styleClass="chatbot-label" text="Chat with OMNI"/>
         <Label styleClass="signature-label" text="by CKNT team"/>
     </VBox>
 </StackPane>

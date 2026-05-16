@@ -1,259 +1,42 @@
-/* Import font Montserrat và Bricolage Grotesque trực tiếp từ Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
-
+.root,
 .screen-root {
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", Arial, sans-serif;
+    -fx-text-fill: #ffffff;
+    -fx-background-color: #0f253c;
 }
 
 .background-layer {
     -fx-background-color: #0f253c;
 }
 
-.glass-panel {
-    -fx-background-color: rgba(255, 255, 255, 0.16);
-    -fx-background-radius: 34;
-    -fx-border-radius: 34;
-    -fx-border-color: rgba(255, 255, 255, 0.06);
-    -fx-border-width: 1;
+.label {
+    -fx-text-fill: #ffffff;
 }
 
-.brand-title {
-    -fx-font-family: "Montserrat", "Segoe UI", sans-serif;
-    -fx-font-size: 75px;
-    -fx-font-weight: 500;
-    -fx-text-fill: white;
-}
-
-.brand-subtitle {
-    -fx-font-family: "Montserrat", "Segoe UI", sans-serif;
-    -fx-font-size: 22px;
-    -fx-text-fill: white;
-}
-
-.active-tab,
-.ghost-tab {
+.button {
     -fx-cursor: hand;
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-font-weight: 700;
-    -fx-background-insets: 0;
-    -fx-border-insets: 0;
-    -fx-padding: 10 28 10 28;
 }
 
-.active-tab {
-    -fx-background-color: #61b9ed;
-    -fx-background-radius: 999;
-    -fx-text-fill: #01162b;
-}
-
-.ghost-tab {
-    -fx-background-color: transparent;
-    -fx-text-fill: white;
-}
-
-.auth-input {
-    -fx-background-color: transparent;
-    -fx-background-radius: 999;
-    -fx-border-color: rgba(255, 255, 255, 0.92);
-    -fx-border-radius: 999;
-    -fx-border-width: 1.6;
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: rgba(255, 255, 255, 0.78);
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 16px;
-    -fx-font-weight: 600;
-    -fx-pref-width: 470px;
-    -fx-pref-height: 44px;
-    -fx-padding: 0 22 0 22;
-}
-
-.auth-input:focused {
-    -fx-border-color: #61b9ed;
-}
-
-.primary-action-button,
-.secondary-action-button {
-    -fx-cursor: hand;
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-font-weight: 700;
-    -fx-pref-width: 390px;
-    -fx-pref-height: 44px;
-    -fx-background-radius: 0;
-}
-
-.primary-action-button {
-    -fx-background-color: #61b9ed;
-    -fx-text-fill: white;
-}
-
-.primary-action-button:hover,
-.secondary-action-button:hover {
+.button:hover {
     -fx-opacity: 0.92;
 }
 
-.primary-action-button:pressed,
-.secondary-action-button:pressed {
+.button:pressed {
     -fx-opacity: 0.82;
 }
 
-.helper-link {
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 16px;
-    -fx-text-fill: #1a3a54;
+/* ===== SHARED CHATBOT / SIGNATURE ===== */
+
+.chatbot-label {
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
 }
 
 .signature-label {
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
     -fx-font-size: 12px;
     -fx-font-weight: 700;
-    -fx-text-fill: #1a3a54;
-}
-
-.home-title {
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 34px;
-    -fx-font-weight: 700;
-    -fx-text-fill: white;
-}
-
-.home-subtitle {
-    -fx-font-family: "Bricolage Grotesque", "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-text-fill: rgba(255, 255, 255, 0.88);
-    -fx-wrap-text: true;
-    -fx-text-alignment: center;
-}
-
-.secondary-action-button {
-    -fx-background-color: rgba(255, 255, 255, 0.15);
-    -fx-border-color: rgba(255, 255, 255, 0.45);
-    -fx-border-width: 1;
-    -fx-text-fill: white;
-}
-
-.nav-brand-title {
-    -fx-font-family: "Montserrat", "Segoe UI", sans-serif;
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
-    -fx-text-fill: white;
-}
-
-.nav-brand-subtitle {
-    -fx-font-size: 8px;
-    -fx-text-fill: rgba(255, 255, 255, 0.85);
-}
-
-.nav-link,
-.nav-link-active {
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
-}
-
-.nav-link {
-    -fx-text-fill: white;
-}
-
-.nav-link-active {
-    -fx-text-fill: white;
-}
-
-.nav-auth-button-primary,
-.nav-auth-button-secondary {
-    -fx-cursor: hand;
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
-    -fx-padding: 7 18 7 18;
-    -fx-background-radius: 999;
-}
-
-.nav-auth-button-primary {
-    -fx-background-color: #3fa9f5;
-    -fx-text-fill: white;
-}
-
-.nav-auth-button-secondary {
-    -fx-background-color: rgba(255, 255, 255, 0.10);
-    -fx-border-color: rgba(255, 255, 255, 0.55);
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-    -fx-text-fill: white;
-}
-
-.landing-hero-title-top,
-.landing-hero-title-bottom {
-    -fx-font-family: "Montserrat", "Segoe UI", sans-serif;
-    -fx-font-weight: 800;
-    -fx-text-fill: white;
-}
-
-.landing-hero-title-top {
-    -fx-font-size: 50px;
-}
-
-.landing-hero-title-bottom {
-    -fx-font-size: 48px;
-}
-
-.landing-hero-subtitle {
-    -fx-font-size: 17px;
-    -fx-font-weight: 700;
-    -fx-text-fill: rgba(255, 255, 255, 0.58);
-}
-
-.landing-start-button {
-    -fx-cursor: hand;
-    -fx-background-color: #79c7f7;
-    -fx-text-fill: white;
-    -fx-font-size: 22px;
-    -fx-font-weight: 800;
-    -fx-background-radius: 18;
-    -fx-padding: 14 28 14 28;
-}
-
-.landing-start-button:hover {
-    -fx-opacity: 0.92;
-}
-
-.feature-circle {
-    -fx-background-color: transparent;
-    -fx-border-color: white;
-    -fx-border-width: 3;
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-}
-
-.feature-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: 800;
-    -fx-text-fill: white;
-}
-
-.feature-subtitle {
-    -fx-font-size: 14px;
-    -fx-text-fill: rgba(255, 255, 255, 0.88);
-}
-
-.feature-placeholder,
-.mascot-placeholder,
-.nav-logo-placeholder {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
-    -fx-border-color: rgba(255, 255, 255, 0.28);
-    -fx-border-style: segments(6, 6);
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-}
-
-.home-title {
-    -fx-font-family: "Montserrat", "Segoe UI", sans-serif;
-    -fx-font-size: 34px;
-    -fx-font-weight: 700;
-    -fx-text-fill: white;
-}
-
-.home-subtitle {
-    -fx-font-size: 18px;
-    -fx-text-fill: rgba(255, 255, 255, 0.88);
+    -fx-text-fill: rgba(38, 74, 106, 0.92);
 }
