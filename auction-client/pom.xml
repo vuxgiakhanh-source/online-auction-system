@@ -20,46 +20,57 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.2</javafx.version>
         <main.class>com.group13.auction.Launcher</main.class>
+        <!-- win | linux | mac | mac-aarch64 — đổi nếu chạy trên OS khác -->
+        <javafx.platform>win</javafx.platform>
     </properties>
 
     <dependencies>
-        <!-- Module nội bộ -->
         <dependency>
             <groupId>com.group13.auction</groupId>
             <artifactId>auction-common</artifactId>
             <version>${project.version}</version>
         </dependency>
 
-        <!-- WebSocket client -->
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
         </dependency>
 
-        <!-- Gson: dùng trực tiếp trong AuctionWebSocketClient (JsonParser, JsonElement) -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
         </dependency>
 
-        <!-- JavaFX -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+
+        <!-- Cần đủ 4 module JavaFX + classifier native (win) — thiếu graphics gây lỗi IDE -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
         </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-base</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <!-- Test -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -93,7 +104,6 @@
                 </configuration>
             </plugin>
 
-            <!-- mvn javafx:run để chạy app -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -101,6 +111,28 @@
                 <configuration>
                     <mainClass>${main.class}</mainClass>
                 </configuration>
+            </plugin>
+
+            <!-- Copy JavaFX native jars cho IntelliJ module-path target/javafx-lib -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-javafx</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>org.openjfx</includeGroupIds>
+                            <includeClassifiers>${javafx.platform}</includeClassifiers>
+                            <outputDirectory>${project.build.directory}/javafx-lib</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

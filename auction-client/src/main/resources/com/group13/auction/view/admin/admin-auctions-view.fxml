@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.group13.auction.ui.controller.admin.AdminAuctionsController"
+      styleClass="page-panel" spacing="10" VBox.vgrow="ALWAYS">
+    <TableView fx:id="table" VBox.vgrow="ALWAYS"/>
+    <TextField fx:id="cancelReasonField" promptText="Lý do hủy"/>
+    <Button text="Hủy phiên (Admin)" onAction="#onCancel" styleClass="primary-action-button"/>
+</VBox>

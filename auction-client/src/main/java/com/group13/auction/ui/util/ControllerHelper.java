@@ -1,6 +1,7 @@
 package com.group13.auction.ui.util;
 
 import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.context.ServiceRegistry;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.SessionManager;
 import com.group13.auction.core.state.ScreenStateStore;
@@ -28,5 +29,9 @@ public final class ControllerHelper {
 
     public static ScreenStateStore screenStateStore() {
         return AppContext.getInstance().getScreenStateStore();
+    }
+
+    public static ServiceRegistry services() {
+        return AppContext.getInstance().services();
     }
 }

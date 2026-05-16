@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.group13.auction.ui.controller.admin.AdminUsersController"
+      styleClass="page-panel" spacing="10" VBox.vgrow="ALWAYS">
+    <TableView fx:id="userTable" VBox.vgrow="ALWAYS"/>
+    <TextField fx:id="banReasonField" promptText="Lý do ban (FRAUD, OTHER, ...)"/>
+    <HBox spacing="8">
+        <Button text="Ban" onAction="#onBan"/>
+        <Button text="Unban" onAction="#onUnban"/>
+        <Button text="Approve Seller" onAction="#onApproveSeller"/>
+    </HBox>
+</VBox>

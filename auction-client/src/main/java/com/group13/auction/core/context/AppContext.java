@@ -1,9 +1,11 @@
 package com.group13.auction.core.context;
 
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.ui.controller.home.MainLayoutController;
 import com.group13.auction.core.session.SessionManager;
 import com.group13.auction.core.state.ConnectionState;
 import com.group13.auction.core.state.ScreenStateStore;
+import com.group13.auction.service.support.PermissionService;
 import java.util.Objects;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -24,6 +26,7 @@ public final class AppContext {
             new SimpleObjectProperty<>(ConnectionState.DISCONNECTED);
 
     private Navigator navigator;
+    private MainLayoutController shell;
 
     private AppContext() {}
 
@@ -90,5 +93,26 @@ public final class AppContext {
 
     public void setConnectionState(ConnectionState state) {
         connectionState.set(Objects.requireNonNull(state, "state must not be null"));
+    }
+
+    /** Registry service domain — delegate từ {@link ServiceRegistry}. */
+    public ServiceRegistry services() {
+        return ServiceRegistry.getInstance();
+    }
+
+    public PermissionService permissions() {
+        return ServiceRegistry.getInstance().permissionService();
+    }
+
+    public void setShell(MainLayoutController shell) {
+        this.shell = shell;
+    }
+
+    public MainLayoutController getShell() {
+        return shell;
+    }
+
+    public void clearShell() {
+        shell = null;
     }
 }

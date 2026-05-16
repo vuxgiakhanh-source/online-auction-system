@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fitToWidth="true" VBox.vgrow="ALWAYS"
+            fx:controller="com.group13.auction.ui.controller.seller.CreateAuctionController">
+    <VBox styleClass="page-panel" spacing="8">
+        <Label text="Tên sản phẩm" styleClass="field-label"/><TextField fx:id="nameField"/>
+        <Label text="Mô tả" styleClass="field-label"/><TextArea fx:id="descArea" prefRowCount="3"/>
+        <Label text="Danh mục" styleClass="field-label"/><ComboBox fx:id="categoryBox"/>
+        <Label text="Giá khởi điểm" styleClass="field-label"/><TextField fx:id="startPriceField"/>
+        <Label text="Reserve price" styleClass="field-label"/><TextField fx:id="reservePriceField"/>
+        <Label text="Ngày bắt đầu" styleClass="field-label"/><DatePicker fx:id="startDate"/>
+        <Label text="Ngày kết thúc" styleClass="field-label"/><DatePicker fx:id="endDate"/>
+        <Button text="Chọn &amp; upload ảnh (HTTP 8081)" onAction="#onPickImages" styleClass="secondary-action-button"/>
+        <Label fx:id="imageStatusLabel"/>
+        <Button text="Tạo phiên đấu giá" onAction="#onCreate" styleClass="primary-action-button"/>
+    </VBox>
+</ScrollPane>

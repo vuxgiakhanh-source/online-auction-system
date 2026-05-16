@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/auction-client/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/App.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/App.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/Launcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/Launcher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/config/ViewPath.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/config/ViewPath.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/context/AppContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/context/AppContext.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Navigator.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Navigator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Route.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Route.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/SceneManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/SceneManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/AuctionWebSocketClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/AuctionWebSocketClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/facade/ClientNetworkFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/facade/ClientNetworkFacade.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/request/ClientRequestFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/request/ClientRequestFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientEventListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/session/ClientPacketDispatcher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/support/PacketExpectations.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/network/client/support/PacketExpectations.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminAuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminAuctionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminModerationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminModerationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/admin/AdminUserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AuctionCommandService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AuctionCommandService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AuctionRealtimeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AuctionRealtimeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AutoBidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/AutoBidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/BidHistoryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/BidHistoryService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/BidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/WatchAuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auction/WatchAuctionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/auth/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/notification/NotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/notification/NotificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/profile/ProfileService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/profile/ProfileService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/rating/RatingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/rating/RatingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/report/QualityReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/report/QualityReportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/seller/SellerAuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/seller/SellerAuctionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/ClientNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/ClientNotificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/ErrorHandlingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/ErrorHandlingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/PermissionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/support/PermissionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/wallet/WalletService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/wallet/WalletService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/AuctionDetailController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/AuctionDetailController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/AuctionListController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/AuctionListController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/LiveBiddingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/LiveBiddingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auth/LoginController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auth/LoginController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auth/RegisterController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auth/RegisterController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/home/MainLayoutController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/home/MainLayoutController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/CreateAuctionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/CreateAuctionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/EditAuctionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/EditAuctionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerAuctionDetailController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerAuctionDetailController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerAuctionListController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerAuctionListController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerDashboardController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/SellerDashboardController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/util/ControllerHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/util/ControllerHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/auction-detail-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/auction-detail-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/auction-list-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/auction-list-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/live-bidding-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auction/live-bidding-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/login-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/login-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/register-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/register-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/main-layout.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/main-layout.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="329" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="OOP-logic-testig" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{ &quot;associatedIndex&quot;: 5 }</component>
+  <component name="ProjectId" id="3Bf1olCAfW6Jtpf69fu91Kj7oE4" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.App.executor": "Run",
+    "Application.IntegrationTestLauncher.executor": "Run",
+    "Application.Launcher.executor": "Run",
+    "Application.ServerMain.executor": "Run",
+    "Application.TestLauncher.executor": "Run",
+    "Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor": "Run",
+    "Application.com.group13.auction.unit.TestLauncher.executor": "Run",
+    "Docker.Dockerfile.executor": "Run",
+    "Docker.docker-compose.yml: Compose Deployment.executor": "Run",
+    "JUnit.AccountServiceExtendedTest.executor": "Run",
+    "JUnit.AccountServiceLoadIT.executor": "Run",
+    "JUnit.AccountServiceTest.executor": "Run",
+    "JUnit.AdminDTOsTest.executor": "Run",
+    "JUnit.AdminObserverTest.executor": "Run",
+    "JUnit.AdminTest.executor": "Run",
+    "JUnit.AuctionDTOsTest.executor": "Run",
+    "JUnit.AuctionEventTest.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest$AdminGetAllAuctionsTest.adminGetAll_emptyList_stillSuccess.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest$CancelAuctionRequestTest.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest$CreateAuctionTest.create_serviceIllegalState_validationError.executor": "Run",
+    "JUnit.AuctionHandlerDispatchTest.executor": "Run",
+    "JUnit.AuctionHandlerSecurityTest$SupportsTest.executor": "Run",
+    "JUnit.AuctionHandlerSecurityTest.executor": "Run",
+    "JUnit.AuctionLockRegistryConcurrencyTest.executor": "Run",
+    "JUnit.AuctionLockRegistryTest$SingletonContract.executor": "Run",
+    "JUnit.AuctionLockRegistryTest.executor": "Run",
+    "JUnit.AuctionManagerLoadTest.executor": "Run",
+    "JUnit.AuctionManagerTest.executor": "Run",
+    "JUnit.AuctionObserverContractTest.executor": "Run",
+    "JUnit.AuctionServiceIntegrationIT.executor": "Run",
+    "JUnit.AuctionServiceTest.executor": "Run",
+    "JUnit.AuctionSortServiceTest.executor": "Run",
+    "JUnit.AuctionStateMachineTest$AuctionTransitionTest.eachState_returnsDistinctAuctionStatus.executor": "Run",
+    "JUnit.AuctionStateMachineTest$OpenStateTest.executor": "Run",
+    "JUnit.AuctionStateMachineTest.executor": "Run",
+    "JUnit.AuctionSystemLoadIT$WalletServiceLoadTest.executor": "Run",
+    "JUnit.AuctionSystemLoadIT.executor": "Run",
+    "JUnit.AuctionTest.executor": "Run",
+    "JUnit.AuctionTimerServiceConcurrencyTest.executor": "Run",
+    "JUnit.AuctionTimerServiceTest.executor": "Run",
+    "JUnit.AuctionWinnerDAOIT (1).executor": "Run",
+    "JUnit.AuctionWinnerDAOIT$UpdatePaymentStatusTests.executor": "Run",
+    "JUnit.AuctionWinnerDAOIT.executor": "Run",
+    "JUnit.AuctionWinnerTest.executor": "Run",
+    "JUnit.AuthHandlerDispatchTest (1).executor": "Run",
+    "JUnit.AuthHandlerDispatchTest.executor": "Run",
+    "JUnit.AutoBidChainConcurrencyTest.executor": "Run",
+    "JUnit.AutoBidProcessorLoadIT.executor": "Run",
+    "JUnit.AutoBidProcessorStressTest.executor": "Run",
+    "JUnit.AutoBidProcessorTest.executor": "Run",
+    "JUnit.AutoBidRegistryTest.executor": "Run",
+    "JUnit.AutoBidStrategyTest.executor": "Run",
+    "JUnit.BidConcurrencyTest.executor": "Run",
+    "JUnit.BidDTOsTest.executor": "Run",
+    "JUnit.BidDaoConsistencyTest.executor": "Run",
+    "JUnit.BidEdgeCasesTest.executor": "Run",
+    "JUnit.BidHandlerWebSocketSecurityTest.executor": "Run",
+    "JUnit.BidIncrementCalculatorTest.executor": "Run",
+    "JUnit.BidRaceConditionTest.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$JoinAuctionTests.joinAuction_happyPath_depositLockedAndDbConsistent.executor": "Run",
+    "JUnit.BidServiceIntegrationIT$PlaceBidTests.executor": "Run",
+    "JUnit.BidServiceIntegrationIT.executor": "Run",
+    "JUnit.BidServiceLoadIT.executor": "Run",
+    "JUnit.BidServiceStressTest.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidHappyPath.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_checksEligibilityFirst.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidIneligibleUser.placeBid_ineligibleBidder_savesRejectedTransaction.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidOrchestrationOrder.placeBid_notJoined_doesNotCallStrategy.executor": "Run",
+    "JUnit.BidServiceTest$PlaceBidStrategyOrchestration.placeBid_strategyRejectsBid_throwsInvalidBidException.executor": "Run",
+    "JUnit.BidServiceTest.executor": "Run",
+    "JUnit.BidStrategyContractTest.executor": "Run",
+    "JUnit.BidWebSocketIntegrationIT.executor": "Run",
+    "JUnit.BidderObserverTest.executor": "Run",
+    "JUnit.ChatbotProviderConcurrentLoadTest.executor": "Run",
+    "JUnit.ChatbotProviderTest$SearchByQueryTest.randomQuery_returnsNotFound.executor": "Run",
+    "JUnit.ChatbotProviderTest.executor": "Run",
+    "JUnit.ConcurrencyBiddingIntegrationTest.executor": "Run",
+    "JUnit.DAOIntegrationIT$AuctionDAOIntegrationTests.executor": "Run",
+    "JUnit.DAOIntegrationIT$TransactionIntegrityTests.concurrentLockDeposit_noLostUpdate.executor": "Run",
+    "JUnit.DAOIntegrationIT$TransactionIntegrityTests.paymentFlow_multiStep_allTransactionsConsistent.executor": "Run",
+    "JUnit.DAOIntegrationIT$TransactionIntegrityTests.unlockDeposit_atomic_restoresBalanceCorrectly.executor": "Run",
+    "JUnit.DAOIntegrationIT.executor": "Run",
+    "JUnit.DTOMapperTest.executor": "Run",
+    "JUnit.DepositRefundIT.executor": "Run",
+    "JUnit.DepositRefundIT.threeBidders_allReceiveFullDepositRefund_afterCancel.executor": "Run",
+    "JUnit.DepositRefundIT.winner_doesNotReceiveRefund_onlyLosersRefunded.executor": "Run",
+    "JUnit.ErrorDTOTest.executor": "Run",
+    "JUnit.FinancialAuditIntegrationIT.executor": "Run",
+    "JUnit.ImageUploadServerTest.executor": "Run",
+    "JUnit.ItemFactoryTest.executor": "Run",
+    "JUnit.JoinAuctionConcurrencyTest.executor": "Run",
+    "JUnit.LocalDateTimeAdapterTest.executor": "Run",
+    "JUnit.LoginRequestDTOTest.executor": "Run",
+    "JUnit.LoginResponseDTOTest.executor": "Run",
+    "JUnit.NormalUserTest.executor": "Run",
+    "JUnit.NormalUserWalletTest$WatchList.executor": "Run",
+    "JUnit.ObserverConcurrencyTest.executor": "Run",
+    "JUnit.PacketCodecTest.executor": "Run",
+    "JUnit.PacketRouterDispatchTest.executor": "Run",
+    "JUnit.PacketRouterLoadTest.executor": "Run",
+    "JUnit.PacketTest.executor": "Run",
+    "JUnit.PaymentDTOsTest.executor": "Run",
+    "JUnit.PaymentExpireAndSecondChanceIT.executor": "Run",
+    "JUnit.PaymentHandlerDispatchTest.executor": "Run",
+    "JUnit.PaymentServiceConcurrencyTest.executor": "Run",
+    "JUnit.PaymentServiceLoadIT$LockDepositLoadTest.concurrent_lockDeposit_20Users_balanceConsistent.executor": "Run",
+    "JUnit.PaymentServiceLoadIT.executor": "Run",
+    "JUnit.PaymentServiceTest.executor": "Run",
+    "JUnit.PaymentStateTransitionIT.executor": "Run",
+    "JUnit.QualityReportIntegrationIT.executor": "Run",
+    "JUnit.QualityReportServiceTest.executor": "Run",
+    "JUnit.QualityReportTest.executor": "Run",
+    "JUnit.RatingConcurrencyTest.executor": "Run",
+    "JUnit.RatingDTOsTest.executor": "Run",
+    "JUnit.RatingServiceIntegrationIT.executor": "Run",
+    "JUnit.RatingServiceTest.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest$SandwichIntegration.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest$TopDownEventDispatch.executor": "Run",
+    "JUnit.RealtimeNotificationIntegrationTest.executor": "Run",
+    "JUnit.RefundDepositsConcurrencyTest.executor": "Run",
+    "JUnit.RegisterRequestDTOTest.executor": "Run",
+    "JUnit.ReportDTOsTest.executor": "Run",
+    "JUnit.SecondChanceOfferTest.executor": "Run",
+    "JUnit.SellerObserverTest.executor": "Run",
+    "JUnit.SessionManagerBroadcastTest$BroadcastToAuction.differentAuctions_onlyMatchingWatcherReceives.executor": "Run",
+    "JUnit.SessionManagerConcurrencyTest.executor": "Run",
+    "JUnit.SessionManagerLoadTest.executor": "Run",
+    "JUnit.SessionManagerStressTest.executor": "Run",
+    "JUnit.StaffObserverTest.executor": "Run",
+    "JUnit.StandardBidStrategyTest.executor": "Run",
+    "JUnit.SystemAdminObserverTest.executor": "Run",
+    "JUnit.SystemAdminTest.executor": "Run",
+    "JUnit.SystemBankConcurrencyTest.executor": "Run",
+    "JUnit.SystemBankTest.executor": "Run",
+    "JUnit.UserAdminHandlerDispatchTest.executor": "Run",
+    "JUnit.UserDAORatingServiceLoadIT$RatingPenaltyLoadTest.executor": "Run",
+    "JUnit.UserDAORatingServiceLoadIT.executor": "Run",
+    "JUnit.UserDTOTest.executor": "Run",
+    "JUnit.UserFactoryTest.executor": "Run",
+    "JUnit.UserRegistrationIntegrationIT.executor": "Run",
+    "JUnit.UserServiceTest.executor": "Run",
+    "JUnit.UserTest.executor": "Run",
+    "JUnit.WalletConcurrencyTest.executor": "Run",
+    "JUnit.WalletPaymentIT.executor": "Run",
+    "JUnit.WalletServiceStressTest.executor": "Run",
+    "JUnit.WalletServiceTest.executor": "Run",
+    "Maven.online-auction-system [clean].executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "feature/client",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/online-auction-main",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ]
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Application.App">
+    <configuration name="App" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.App" />
+      <module name="auction-client" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Launcher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
+      <module name="auction-client" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="DAOIntegrationIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.DAOIntegrationIT" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
+      <deployment type="dockerfile">
+        <settings />
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Application.OmniBid Client (Launcher)" />
+      <item itemvalue="Application.App" />
+      <item itemvalue="Application.Launcher" />
+      <item itemvalue="Application.ServerMain" />
+      <item itemvalue="JUnit.AuctionWinnerDAOIT" />
+      <item itemvalue="JUnit.DAOIntegrationIT" />
+      <item itemvalue="Maven.OmniBid Client (Maven javafx:run)" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.App" />
+        <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
+        <item itemvalue="JUnit.DAOIntegrationIT" />
+        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
+      <created>1774865487288</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1774865487288</updated>
+      <workItem from="1778548394280" duration="12663000" />
+      <workItem from="1778562699280" duration="3969000" />
+      <workItem from="1778567820675" duration="3273000" />
+      <workItem from="1778572388012" duration="275000" />
+      <workItem from="1778572761637" duration="173000" />
+      <workItem from="1778572986537" duration="3905000" />
+      <workItem from="1778577604924" duration="1381000" />
+      <workItem from="1778579203240" duration="689000" />
+      <workItem from="1778589156605" duration="2445000" />
+      <workItem from="1778593867386" duration="289000" />
+      <workItem from="1778594531842" duration="3169000" />
+      <workItem from="1778598162091" duration="7291000" />
+      <workItem from="1778661220092" duration="396000" />
+      <workItem from="1778666989410" duration="2303000" />
+      <workItem from="1778673314187" duration="28009000" />
+      <workItem from="1778716620240" duration="1827000" />
+      <workItem from="1778722296380" duration="5011000" />
+      <workItem from="1778731693857" duration="1031000" />
+      <workItem from="1778749634831" duration="20309000" />
+      <workItem from="1778824300910" duration="11006000" />
+      <workItem from="1778859787382" duration="1459000" />
+      <workItem from="1778912719615" duration="13596000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="synchronized" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/base/IntegrationTestLauncher.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
+          <line>111</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/autobid/AutoBidChainConcurrencyTest.java</url>
+          <line>34</line>
+          <option name="timeStamp" value="20" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/bid/BidServiceIntegrationIT.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/SystemAdminTest.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AuctionServiceTest.java</url>
+          <line>43</line>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AutoBidRegistryTest.java</url>
+          <line>28</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/StandardBidStrategyTest.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserTest.java</url>
+          <line>26</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserFactoryTest.java</url>
+          <line>30</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/UserDAORatingServiceLoadIT.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/PaymentServiceLoadIT.java</url>
+          <line>130</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/join/JoinAuctionConcurrencyTest.java</url>
+          <line>40</line>
+          <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserServiceTest.java</url>
+          <line>317</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/dto/rating/RatingDTOsTest.java</url>
+          <line>12</line>
+          <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>21</line>
+          <option name="timeStamp" value="50" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-method">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>36</line>
+          <properties class="com.group13.auction.unit.TestLauncher">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-field">
+          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
+          <line>24</line>
+          <properties field="WEBSOCKET_UNIT" class="com.group13.auction.unit.TestLauncher" />
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

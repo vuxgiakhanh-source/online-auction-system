@@ -18,6 +18,6 @@ public final class Launcher {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-        App.main(args);
+        javafx.application.Application.launch(App.class, args);
     }
 }

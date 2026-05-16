@@ -256,3 +256,77 @@
     -fx-font-size: 18px;
     -fx-text-fill: rgba(255, 255, 255, 0.88);
 }
+
+.shell-sidebar {
+    -fx-background-color: rgba(1, 22, 43, 0.92);
+}
+
+.shell-brand {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: white;
+}
+
+.shell-section-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.6);
+    -fx-font-size: 12px;
+}
+
+.shell-nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+}
+
+.shell-nav-button:hover {
+    -fx-background-color: rgba(97, 185, 237, 0.25);
+    -fx-background-radius: 8;
+}
+
+.shell-header {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+}
+
+.shell-page-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #01162b;
+}
+
+.shell-meta {
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
+}
+
+.shell-content {
+    -fx-background-color: #eef2f7;
+    -fx-padding: 16;
+}
+
+.page-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+}
+
+.field-label {
+    -fx-font-weight: 600;
+    -fx-text-fill: #334155;
+}
+
+.form-error-label {
+    -fx-text-fill: #dc2626;
+    -fx-font-size: 13px;
+}
+
+.shell-badge {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 10;
+    -fx-min-width: 18;
+    -fx-alignment: center;
+}

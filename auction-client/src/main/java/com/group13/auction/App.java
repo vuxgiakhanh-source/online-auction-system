@@ -1,6 +1,7 @@
 package com.group13.auction;
 
 import com.group13.auction.config.UiConstants;
+import com.group13.auction.core.bootstrap.AppBootstrap;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.navigation.Route;
 import com.group13.auction.core.navigation.SceneManager;
@@ -22,17 +23,21 @@ public final class App extends Application {
 
         SceneManager sceneManager = new SceneManager(primaryStage);
         Navigator navigator = new Navigator(sceneManager);
+        AppBootstrap.initialize();
         navigator.goTo(Route.LANDING);
 
         primaryStage.show();
     }
 
+    @Override
+    public void stop() {
+        AppBootstrap.shutdown();
+    }
+
     /**
-     * Khởi chạy JavaFX application.
-     *
-     * @param args command line arguments
+     * IDE đôi khi chạy nhầm class này — chuyển sang {@link Launcher}.
      */
     public static void main(String[] args) {
-        launch(args);
+        Launcher.main(args);
     }
 }

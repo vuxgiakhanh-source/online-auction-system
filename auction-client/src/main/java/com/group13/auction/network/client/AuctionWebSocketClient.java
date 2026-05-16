@@ -66,6 +66,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final long BASE_RECONNECT_DELAY_MS = 1_000;
     private volatile int reconnectAttempts = 0;
+    private volatile boolean shuttingDown = false;
     private final ScheduledExecutorService reconnectScheduler =
             Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "ws-reconnect");
@@ -184,7 +185,9 @@ public class AuctionWebSocketClient extends WebSocketClient {
         stopHeartbeat();
         log.warning("[CLIENT] ❌ Mất kết nối | code=" + code + " | reason=" + reason
                 + " | remote=" + remote);
-        scheduleReconnect();
+        if (!shuttingDown) {
+            scheduleReconnect();
+        }
     }
 
     @Override
@@ -304,6 +307,9 @@ public class AuctionWebSocketClient extends WebSocketClient {
     // ── Reconnect ─────────────────────────────────────────────────────────────
 
     private void scheduleReconnect() {
+        if (shuttingDown || reconnectScheduler.isShutdown()) {
+            return;
+        }
         if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
             log.severe("[CLIENT] Đã thử kết nối lại " + MAX_RECONNECT_ATTEMPTS
                     + " lần không thành công. Dừng.");
@@ -330,11 +336,15 @@ public class AuctionWebSocketClient extends WebSocketClient {
      * Gọi khi ứng dụng tắt.
      */
     public void shutdown() {
+        shuttingDown = true;
         stopHeartbeat();
+        pendingRequests.clear();
         reconnectScheduler.shutdownNow();
         heartbeatScheduler.shutdownNow();
         try {
-            closeBlocking();
+            if (isOpen()) {
+                close();
+            }
         } catch (Exception e) {
             log.warning("[CLIENT] Shutdown error: " + e.getMessage());
         }

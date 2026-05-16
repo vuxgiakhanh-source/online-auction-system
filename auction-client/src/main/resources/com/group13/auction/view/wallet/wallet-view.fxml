@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.group13.auction.ui.controller.wallet.WalletController"
+      styleClass="page-panel" spacing="12">
+    <Label text="Số dư" styleClass="field-label"/>
+    <Label fx:id="balanceLabel"/>
+    <Label text="Đang khóa (cọc)" styleClass="field-label"/>
+    <Label fx:id="lockedLabel"/>
+    <Label text="Khả dụng" styleClass="field-label"/>
+    <Label fx:id="availableLabel"/>
+    <HBox spacing="10">
+        <TextField fx:id="depositField" promptText="Số tiền nạp" prefWidth="160"/>
+        <Button text="Nạp tiền" onAction="#onDeposit" styleClass="primary-action-button"/>
+    </HBox>
+    <HBox spacing="10">
+        <TextField fx:id="withdrawField" promptText="Số tiền rút" prefWidth="160"/>
+        <Button text="Rút tiền" onAction="#onWithdraw" styleClass="secondary-action-button"/>
+    </HBox>
+</VBox>

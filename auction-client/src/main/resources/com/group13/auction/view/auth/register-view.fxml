@@ -67,6 +67,8 @@
                                styleClass="auth-input"/>
                     <PasswordField fx:id="passwordField" promptText="Mật khẩu"
                                    styleClass="auth-input"/>
+                    <Label fx:id="errorLabel" styleClass="form-error-label" wrapText="true"
+                           maxWidth="420" visible="false" managed="false"/>
                 </VBox>
 
                 <Button mnemonicParsing="false" onAction="#handleSignUp"

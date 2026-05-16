@@ -1,31 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+<BorderPane prefHeight="720.0" prefWidth="1280.0"
             stylesheets="@../../css/app.css"
             styleClass="screen-root"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.group13.auction.ui.controller.home.MainLayoutController">
 
-    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+    <left>
+        <VBox styleClass="shell-sidebar" prefWidth="220.0" spacing="6.0">
+            <padding><Insets top="20" right="12" bottom="20" left="12"/></padding>
+            <Label text="OmniBid" styleClass="shell-brand"/>
+            <Separator/>
+            <Button text="Đấu giá" onAction="#onAuctions" styleClass="shell-nav-button"/>
+            <Button text="Ví" onAction="#onWallet" styleClass="shell-nav-button"/>
+            <Button text="Hồ sơ" onAction="#onProfile" styleClass="shell-nav-button"/>
+            <HBox alignment="CENTER_LEFT" spacing="6">
+                <Button text="Thông báo" onAction="#onNotifications" styleClass="shell-nav-button"/>
+                <Label fx:id="notificationBadge" text="" styleClass="shell-badge" visible="false" managed="false"/>
+            </HBox>
+            <Button text="FAQ / Chatbot" onAction="#onChatbot" styleClass="shell-nav-button"/>
+            <VBox fx:id="sellerNav" spacing="6.0" visible="false" managed="false">
+                <Separator/>
+                <Label text="Seller" styleClass="shell-section-label"/>
+                <Button text="Khu Seller" onAction="#onSeller" styleClass="shell-nav-button"/>
+            </VBox>
+            <VBox fx:id="adminNav" spacing="6.0" visible="false" managed="false">
+                <Separator/>
+                <Label text="Admin" styleClass="shell-section-label"/>
+                <Button text="Quản trị" onAction="#onAdmin" styleClass="shell-nav-button"/>
+            </VBox>
+            <VBox VBox.vgrow="ALWAYS"/>
+            <Button text="Đăng xuất" onAction="#onLogout" styleClass="secondary-action-button"/>
+        </VBox>
+    </left>
 
-    <VBox alignment="CENTER" spacing="12.0"
-          AnchorPane.topAnchor="0.0"
-          AnchorPane.bottomAnchor="0.0"
-          AnchorPane.leftAnchor="0.0"
-          AnchorPane.rightAnchor="0.0">
-        <padding>
-            <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
-        </padding>
+    <top>
+        <HBox styleClass="shell-header" alignment="CENTER_LEFT" spacing="16.0">
+            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+            <Label fx:id="pageTitleLabel" text="OmniBid" styleClass="shell-page-title"/>
+            <HBox HBox.hgrow="ALWAYS"/>
+            <Label fx:id="connectionLabel" styleClass="shell-meta"/>
+            <Label fx:id="balanceLabel" styleClass="shell-meta"/>
+            <Label fx:id="userLabel" styleClass="shell-meta"/>
+        </HBox>
+    </top>
 
-        <Label text="Trang chủ OmniBid" styleClass="home-title"/>
-        <Label text="Đây là trang chủ tạm thời sau khi đăng nhập hoặc đăng ký thành công."
-               styleClass="home-subtitle"/>
-    </VBox>
-</AnchorPane>
+    <center>
+        <StackPane fx:id="contentHost" styleClass="shell-content"/>
+    </center>
+</BorderPane>

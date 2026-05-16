@@ -11,40 +11,38 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
- * Quản lý việc load FXML và chuyển scene cho ứng dụng JavaFX.
+ * Quản lý scene gốc và load FXML (full scene hoặc nhúng vào shell).
  */
 public final class SceneManager {
 
     private final Stage primaryStage;
 
-    /**
-     * Khởi tạo scene manager với stage chính của ứng dụng.
-     *
-     * @param primaryStage stage chính
-     */
     public SceneManager(Stage primaryStage) {
-        this.primaryStage = Objects.requireNonNull(primaryStage, "primaryStage must not be null");
+        this.primaryStage = Objects.requireNonNull(primaryStage, "primaryStage");
     }
 
-    /**
-     * Chuyển đến màn hình tương ứng với route.
-     *
-     * @param route route cần mở
-     */
     public void switchTo(Route route) {
-        Objects.requireNonNull(route, "route must not be null");
         switchTo(route.getFxmlPath());
     }
 
-    /**
-     * Chuyển đến màn hình có đường dẫn FXML tương ứng.
-     *
-     * @param fxmlPath đường dẫn tuyệt đối trong resources
-     */
     public void switchTo(String fxmlPath) {
-        Parent root = loadView(fxmlPath);
-        Scene scene = primaryStage.getScene();
+        LoadedView loaded = loadView(fxmlPath);
+        applyRoot(loaded.root());
+    }
 
+    public LoadedView loadView(String fxmlPath) {
+        URL resource = ResourceUtil.requireResource(fxmlPath);
+        FXMLLoader loader = new FXMLLoader(resource);
+        try {
+            Parent root = loader.load();
+            return new LoadedView(root, loader.getController());
+        } catch (IOException exception) {
+            throw new IllegalStateException("Không thể load FXML: " + fxmlPath, exception);
+        }
+    }
+
+    public void applyRoot(Parent root) {
+        Scene scene = primaryStage.getScene();
         if (scene == null) {
             scene = new Scene(root);
             addStylesheet(scene, ResourcePath.APP_CSS);
@@ -55,22 +53,10 @@ public final class SceneManager {
         }
     }
 
-    private Parent loadView(String fxmlPath) {
-        URL resource = ResourceUtil.requireResource(fxmlPath);
-        FXMLLoader loader = new FXMLLoader(resource);
-
-        try {
-            return loader.load();
-        } catch (IOException exception) {
-            throw new IllegalStateException("Không thể load màn hình từ FXML: " + fxmlPath, exception);
-        }
-    }
-
     private void addStylesheet(Scene scene, String stylesheetPath) {
         if (!ResourceUtil.exists(stylesheetPath)) {
             return;
         }
-
         String stylesheet = ResourceUtil.toExternalForm(stylesheetPath);
         if (!scene.getStylesheets().contains(stylesheet)) {
             scene.getStylesheets().add(stylesheet);

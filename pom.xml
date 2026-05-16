@@ -83,7 +83,6 @@
                 <artifactId>javafx-base</artifactId>
                 <version>${javafx.version}</version>
             </dependency>
-
             <!-- Database -->
             <dependency>
                 <groupId>com.mysql</groupId>
