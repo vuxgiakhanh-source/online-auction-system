@@ -15,11 +15,11 @@
 <?import javafx.scene.layout.VBox?>
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0"
-            stylesheets="@../../css/auction.css"
+            stylesheets="@../../css/seller.css"
             styleClass="screen-root"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.group13.auction.ui.controller.auction.AuctionListController">
+            fx:controller="com.group13.auction.ui.controller.seller.SellerAuctionListController">
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
@@ -35,9 +35,9 @@
         <!-- Header -->
         <HBox alignment="CENTER_LEFT" spacing="16.0">
             <Button mnemonicParsing="false"
-                    onAction="#handleBackToHome"
-                    styleClass="auction-ghost-button"
-                    text="← Dashboard"/>
+                    onAction="#handleBackToSellerDashboard"
+                    styleClass="seller-ghost-button"
+                    text="← Kênh Seller"/>
 
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                 <ImageView fitWidth="210.0" preserveRatio="true">
@@ -52,42 +52,40 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button mnemonicParsing="false"
+                    onAction="#handleCreateAuction"
+                    styleClass="seller-primary-button"
+                    text="Tạo phiên mới"/>
+
+            <Button mnemonicParsing="false"
                     onAction="#handleRefresh"
-                    styleClass="auction-secondary-button"
+                    styleClass="seller-secondary-button"
                     text="Tải lại"/>
         </HBox>
 
         <!-- Title -->
         <VBox spacing="6.0">
-            <Label text="Danh sách phiên đấu giá"
-                   styleClass="auction-page-title"/>
+            <Label text="Phiên đấu giá của người bán"
+                   styleClass="seller-page-title"/>
 
-            <Label text="Theo dõi các phiên đang mở, xem chi tiết sản phẩm và vào phòng đấu giá realtime."
+            <Label text="Theo dõi các phiên đã tạo, kiểm tra trạng thái và gửi yêu cầu hủy đối với phiên chưa mở."
                    wrapText="true"
-                   styleClass="auction-page-subtitle"/>
+                   styleClass="seller-page-subtitle"/>
         </VBox>
 
-        <!-- Filter bar -->
+        <!-- Filter -->
         <HBox alignment="CENTER_LEFT"
               spacing="14.0"
-              styleClass="auction-filter-bar">
+              styleClass="seller-filter-bar">
             <Label text="Trạng thái"
-                   styleClass="auction-filter-label"/>
+                   styleClass="seller-filter-label"/>
 
             <ComboBox fx:id="statusFilterComboBox"
-                      prefWidth="180.0"
-                      styleClass="auction-combo-box"/>
-
-            <Label text="Sắp xếp"
-                   styleClass="auction-filter-label"/>
-
-            <ComboBox fx:id="sortByComboBox"
-                      prefWidth="190.0"
-                      styleClass="auction-combo-box"/>
+                      prefWidth="220.0"
+                      styleClass="seller-combo-box"/>
 
             <Button mnemonicParsing="false"
                     onAction="#handleApplyFilter"
-                    styleClass="auction-primary-button"
+                    styleClass="seller-primary-button"
                     text="Áp dụng"/>
 
             <Region HBox.hgrow="ALWAYS"/>
@@ -102,25 +100,23 @@
 
             <Label fx:id="statusLabel"
                    text="Sẵn sàng."
-                   styleClass="auction-muted-text"/>
+                   styleClass="seller-muted-text"/>
         </HBox>
 
-        <!-- Auction list -->
+        <!-- List -->
         <ScrollPane fitToWidth="true"
                     VBox.vgrow="ALWAYS"
-                    styleClass="auction-scroll-pane">
-            <content>
-                <VBox fx:id="auctionCardContainer"
-                      spacing="14.0"
-                      styleClass="auction-list-container">
-                    <padding>
-                        <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
-                    </padding>
-                </VBox>
-            </content>
+                    styleClass="seller-scroll-pane">
+            <VBox fx:id="sellerAuctionContainer"
+                  spacing="14.0"
+                  styleClass="seller-list-container">
+                <padding>
+                    <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
+                </padding>
+            </VBox>
         </ScrollPane>
 
-        <!-- Footer signature -->
+        <!-- Footer -->
         <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
             <Region HBox.hgrow="ALWAYS"/>
 

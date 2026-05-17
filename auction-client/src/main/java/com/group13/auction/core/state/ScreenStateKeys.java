@@ -4,6 +4,7 @@ package com.group13.auction.core.state;
 public final class ScreenStateKeys {
 
     public static final String SELECTED_AUCTION_ID = "selectedAuctionId";
+    public static final String SELECTED_SELLER_AUCTION_ROW = "selectedSellerAuctionRow";
 
     private ScreenStateKeys() {
         // Utility class.

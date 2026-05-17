@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /** Helper nội bộ cho các service đấu giá phía client. */
-final class AuctionServiceSupport {
+public final class AuctionServiceSupport {
 
     private static final long REQUEST_TIMEOUT_SECONDS = 12L;
 
@@ -31,7 +31,7 @@ final class AuctionServiceSupport {
         // Utility class.
     }
 
-    static <T> CompletableFuture<T> sendRequest(
+    public static <T> CompletableFuture<T> sendRequest(
             ClientNetworkFacade networkFacade,
             Packet<?> packet,
             PacketType successType,
@@ -67,7 +67,7 @@ final class AuctionServiceSupport {
         return future;
     }
 
-    static CompletableFuture<Void> sendVoidRequest(
+    public static CompletableFuture<Void> sendVoidRequest(
             ClientNetworkFacade networkFacade,
             Packet<?> packet,
             PacketType successType,
@@ -101,7 +101,7 @@ final class AuctionServiceSupport {
         return future;
     }
 
-    static <T> CompletableFuture<T> failedFuture(String message) {
+    public static <T> CompletableFuture<T> failedFuture(String message) {
         CompletableFuture<T> future = new CompletableFuture<>();
         future.completeExceptionally(new IllegalArgumentException(message));
         return future;
