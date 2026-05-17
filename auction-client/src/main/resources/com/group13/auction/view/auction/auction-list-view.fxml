@@ -1,14 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/auction.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.auction.AuctionListController">
 
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="22.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="26.0" right="42.0" bottom="26.0" left="42.0"/>
+        </padding>
+
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToHome"
+                    styleClass="auction-ghost-button"
+                    text="← Dashboard"/>
+
+            <ImageView fitWidth="210.0" preserveRatio="true">
+                <Image url="@../../assets/images/logo.png"/>
+            </ImageView>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleRefresh"
+                    styleClass="auction-secondary-button"
+                    text="Tải lại"/>
+        </HBox>
+
+        <!-- Title -->
+        <VBox spacing="6.0">
+            <Label text="Danh sách phiên đấu giá"
+                   styleClass="auction-page-title"/>
+
+            <Label text="Theo dõi các phiên đang mở, xem chi tiết sản phẩm và vào phòng đấu giá realtime."
+                   wrapText="true"
+                   styleClass="auction-page-subtitle"/>
+        </VBox>
+
+        <!-- Filter bar -->
+        <HBox alignment="CENTER_LEFT"
+              spacing="14.0"
+              styleClass="auction-filter-bar">
+            <Label text="Trạng thái"
+                   styleClass="auction-filter-label"/>
+
+            <ComboBox fx:id="statusFilterComboBox"
+                      prefWidth="180.0"
+                      styleClass="auction-combo-box"/>
+
+            <Label text="Sắp xếp"
+                   styleClass="auction-filter-label"/>
+
+            <ComboBox fx:id="sortByComboBox"
+                      prefWidth="190.0"
+                      styleClass="auction-combo-box"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleApplyFilter"
+                    styleClass="auction-primary-button"
+                    text="Áp dụng"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="28.0"
+                               maxWidth="28.0"
+                               prefHeight="28.0"
+                               prefWidth="28.0"
+                               visible="false"
+                               managed="false"/>
+
+            <Label fx:id="statusLabel"
+                   text="Sẵn sàng."
+                   styleClass="auction-muted-text"/>
+        </HBox>
+
+        <!-- Auction list -->
+        <ScrollPane fitToWidth="true"
+                    VBox.vgrow="ALWAYS"
+                    styleClass="auction-scroll-pane">
+            <content>
+                <VBox fx:id="auctionCardContainer"
+                      spacing="14.0"
+                      styleClass="auction-list-container">
+                    <padding>
+                        <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+
+        <!-- Footer signature -->
+        <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                <HBox alignment="CENTER_RIGHT" spacing="6.0">
+                    <ImageView fitHeight="40.0" preserveRatio="true">
+                        <Image url="@../../assets/images/mascot-version-2.png"/>
+                    </ImageView>
+
+                    <ImageView fitHeight="32.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
+                    </ImageView>
+                </HBox>
+
+                <Label styleClass="chatbot-label" text="Chat with OMNI"/>
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
 </AnchorPane>

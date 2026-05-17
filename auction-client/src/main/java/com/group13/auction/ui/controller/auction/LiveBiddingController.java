@@ -1,4 +1,336 @@
 package com.group13.auction.ui.controller.auction;
 
-public class LiveBiddingController {
+import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.common.dto.core.ErrorDTO;
+import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.state.ScreenStateKeys;
+import com.group13.auction.mapper.BidViewModelMapper;
+import com.group13.auction.network.client.facade.ClientNetworkFacade;
+import com.group13.auction.network.client.session.ClientEventListener;
+import com.group13.auction.service.auction.BidHistoryService;
+import com.group13.auction.service.auction.BidService;
+import com.group13.auction.service.auction.WatchAuctionService;
+import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.util.CurrencyUtil;
+import com.group13.auction.util.DateTimeUtil;
+import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
+import com.group13.auction.viewmodel.auction.BidHistoryPointViewModel;
+import com.group13.auction.viewmodel.auction.LiveBidViewModel;
+import java.util.List;
+import java.util.concurrent.CompletionException;
+import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TextField;
+
+/** Controller cho màn đấu giá trực tiếp và realtime bid chart. */
+public final class LiveBiddingController implements ClientEventListener {
+
+    private static final int MAX_CHART_POINTS = 40;
+
+    private final ClientNetworkFacade networkFacade = ClientNetworkFacade.getDefault();
+    private final WatchAuctionService watchAuctionService = new WatchAuctionService();
+    private final BidService bidService = new BidService();
+    private final BidHistoryService bidHistoryService = new BidHistoryService();
+    private final XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+
+    private String auctionId;
+    private boolean bidAllowed;
+
+    @FXML
+    private Label titleLabel;
+
+    @FXML
+    private Label statusLabel;
+
+    @FXML
+    private Label currentPriceLabel;
+
+    @FXML
+    private Label leaderLabel;
+
+    @FXML
+    private Label reserveLabel;
+
+    @FXML
+    private Label endTimeLabel;
+
+    @FXML
+    private Label messageLabel;
+
+    @FXML
+    private TextField bidAmountField;
+
+    @FXML
+    private Button placeBidButton;
+
+    @FXML
+    private ProgressIndicator loadingIndicator;
+
+    @FXML
+    private LineChart<String, Number> bidLineChart;
+
+    @FXML
+    private ListView<String> bidHistoryListView;
+
+    /** Đăng ký realtime listener, watch auction và tải lịch sử bid ban đầu. */
+    @FXML
+    public void initialize() {
+        priceSeries.setName("Giá cao nhất");
+        bidLineChart.getData().clear();
+        bidLineChart.getData().add(priceSeries);
+        bidLineChart.setAnimated(false);
+        bidLineChart.setLegendVisible(false);
+
+        auctionId = AppContext.getInstance()
+                .getScreenStateStore()
+                .get(ScreenStateKeys.SELECTED_AUCTION_ID, String.class)
+                .orElse("");
+
+        if (auctionId.isBlank()) {
+            setMessage("Thiếu mã phiên đấu giá. Hãy quay lại danh sách và chọn lại phiên.");
+            placeBidButton.setDisable(true);
+            return;
+        }
+
+        networkFacade.addListener(this);
+        watchCurrentAuction();
+        loadBidHistory();
+    }
+
+    /** Quay lại màn chi tiết và hủy listener realtime của controller hiện tại. */
+    @FXML
+    public void handleBackToDetail() {
+        cleanupRealtimeListener();
+        watchAuctionService.leaveAuction(auctionId);
+        Navigator.getInstance().goToAuctionDetail();
+    }
+
+    /** Gửi yêu cầu đặt giá. */
+    @FXML
+    public void handlePlaceBid() {
+        setLoading(true, "Đang gửi giá đặt...");
+
+        bidService
+                .placeBid(auctionId, bidAmountField.getText())
+                .thenAccept(
+                        liveBid ->
+                                FxThreadUtil.runOnFxThread(
+                                        () -> {
+                                            renderLiveBid(liveBid);
+                                            bidAmountField.clear();
+                                            setLoading(false, "Đặt giá thành công. Đang chờ realtime update...");
+                                        }))
+                .exceptionally(
+                        throwable -> {
+                            FxThreadUtil.runOnFxThread(
+                                    () -> {
+                                        setLoading(false, "Đặt giá thất bại.");
+                                        AlertUtil.showError(extractMessage(throwable));
+                                        bidAmountField.requestFocus();
+                                    });
+                            return null;
+                        });
+    }
+
+    /** Tải lại lịch sử bid và biểu đồ. */
+    @FXML
+    public void handleRefreshHistory() {
+        loadBidHistory();
+    }
+
+    @Override
+    public void onBidUpdate(BidDTOs.BidUpdateDTO update) {
+        if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> renderLiveBid(BidViewModelMapper.toLiveBidViewModel(update)));
+    }
+
+    @Override
+    public void onBidReserveNotMet(BidDTOs.BidUpdateDTO update) {
+        if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> renderLiveBid(BidViewModelMapper.toLiveBidViewModel(update)));
+    }
+
+    @Override
+    public void onBidChartPointUpdate(BidDTOs.BidChartPointDTO point) {
+        if (!isCurrentAuction(point == null ? null : point.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> appendHistoryPoint(BidViewModelMapper.toHistoryPointViewModel(point)));
+    }
+
+    @Override
+    public void onAuctionExtended(AuctionDTOs.AuctionExtendedDTO dto) {
+        if (!isCurrentAuction(dto == null ? null : dto.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> {
+                    endTimeLabel.setText(DateTimeUtil.formatDateTime(dto.getNewEndTime()));
+                    setMessage("Phiên được gia hạn thêm " + dto.getExtendedBySeconds() + " giây.");
+                });
+    }
+
+    @Override
+    public void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {
+        if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> {
+                    statusLabel.setText("Đã kết thúc");
+                    bidAllowed = false;
+                    placeBidButton.setDisable(true);
+                    setMessage(update.getMessage() == null ? "Phiên đấu giá đã kết thúc." : update.getMessage());
+                });
+    }
+
+    @Override
+    public void onAuctionCanceled(AuctionDTOs.AuctionUpdateDTO update) {
+        if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () -> {
+                    statusLabel.setText("Đã hủy");
+                    bidAllowed = false;
+                    placeBidButton.setDisable(true);
+                    setMessage(update.getMessage() == null ? "Phiên đấu giá đã bị hủy." : update.getMessage());
+                });
+    }
+
+    @Override
+    public void onPlaceBidFailed(ErrorDTO error) {
+        FxThreadUtil.runOnFxThread(
+                () -> AlertUtil.showError(error == null ? "Đặt giá thất bại." : error.getMessage()));
+    }
+
+    private void watchCurrentAuction() {
+        setLoading(true, "Đang kết nối phòng đấu giá realtime...");
+
+        watchAuctionService
+                .watchAuction(auctionId)
+                .thenAccept(detail -> FxThreadUtil.runOnFxThread(() -> renderAuctionDetail(detail)))
+                .exceptionally(
+                        throwable -> {
+                            FxThreadUtil.runOnFxThread(
+                                    () -> {
+                                        setLoading(false, "Không vào được phòng đấu giá.");
+                                        AlertUtil.showError(extractMessage(throwable));
+                                    });
+                            return null;
+                        });
+    }
+
+    private void loadBidHistory() {
+        bidHistoryService
+                .getBidHistory(auctionId)
+                .thenAccept(points -> FxThreadUtil.runOnFxThread(() -> renderBidHistory(points)))
+                .exceptionally(
+                        throwable -> {
+                            FxThreadUtil.runOnFxThread(
+                                    () -> setMessage("Chưa tải được lịch sử bid: " + extractMessage(throwable)));
+                            return null;
+                        });
+    }
+
+    private void renderAuctionDetail(AuctionDetailViewModel detail) {
+        titleLabel.setText(detail.itemName());
+        statusLabel.setText(detail.statusText());
+        currentPriceLabel.setText(detail.currentPriceText());
+        leaderLabel.setText(detail.leaderText());
+        reserveLabel.setText(detail.reservePriceText());
+        endTimeLabel.setText(detail.endTimeText());
+
+        bidAllowed = detail.liveBiddingAllowed();
+        setLoading(false, "Đã kết nối realtime. " + detail.remainingTimeText());
+    }
+
+    private void renderLiveBid(LiveBidViewModel liveBid) {
+        currentPriceLabel.setText(liveBid.currentPriceText());
+        leaderLabel.setText(liveBid.leaderText());
+        reserveLabel.setText(liveBid.reserveText());
+
+        if (!"--".equals(liveBid.endTimeText())) {
+            endTimeLabel.setText(liveBid.endTimeText());
+        }
+
+        setMessage("Cập nhật lúc " + liveBid.timestampText());
+    }
+
+    private void renderBidHistory(List<BidHistoryPointViewModel> points) {
+        priceSeries.getData().clear();
+        bidHistoryListView.getItems().clear();
+
+        if (points.isEmpty()) {
+            setMessage("Phiên này chưa có lịch sử đặt giá.");
+            return;
+        }
+
+        points.forEach(this::appendHistoryPoint);
+        setMessage("Đã tải " + points.size() + " điểm lịch sử bid.");
+    }
+
+    private void appendHistoryPoint(BidHistoryPointViewModel point) {
+        priceSeries.getData().add(new XYChart.Data<>(point.timestampText(), point.price()));
+
+        if (priceSeries.getData().size() > MAX_CHART_POINTS) {
+            priceSeries.getData().remove(0);
+        }
+
+        bidHistoryListView
+                .getItems()
+                .add(0, point.timestampText() + " • " + point.bidderUsername() + " • " + point.priceText());
+
+        currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
+    }
+
+    private boolean isCurrentAuction(String incomingAuctionId) {
+        return incomingAuctionId != null && incomingAuctionId.equals(auctionId);
+    }
+
+    private void cleanupRealtimeListener() {
+        networkFacade.removeListener(this);
+    }
+
+    private void setLoading(boolean loading, String message) {
+        loadingIndicator.setVisible(loading);
+        loadingIndicator.setManaged(loading);
+        placeBidButton.setDisable(loading || !bidAllowed);
+        setMessage(message);
+    }
+
+    private void setMessage(String message) {
+        messageLabel.setText(message == null ? "" : message);
+    }
+
+    private String extractMessage(Throwable throwable) {
+        Throwable current = throwable;
+        if (current instanceof CompletionException && current.getCause() != null) {
+            current = current.getCause();
+        }
+
+        String message = current.getMessage();
+        return message == null || message.isBlank() ? "Không tải được dữ liệu." : message;
+    }
 }
