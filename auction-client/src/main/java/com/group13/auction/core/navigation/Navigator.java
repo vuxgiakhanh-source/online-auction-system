@@ -93,4 +93,29 @@ public final class Navigator {
     public void goToLiveBidding() {
         goTo(ViewPath.LIVE_BIDDING_VIEW);
     }
+
+    /** Chuyển tới dashboard Seller. */
+    public void goToSellerDashboard() {
+        goTo(ViewPath.SELLER_DASHBOARD_VIEW);
+    }
+
+    /** Chuyển tới danh sách phiên của Seller. */
+    public void goToSellerAuctionList() {
+        goTo(ViewPath.SELLER_AUCTION_LIST_VIEW);
+    }
+
+    /** Chuyển tới form tạo phiên đấu giá. */
+    public void goToCreateAuction() {
+        goTo(ViewPath.CREATE_AUCTION_VIEW);
+    }
+
+    /** Chuyển tới form sửa phiên đấu giá. */
+    public void goToEditAuction() {
+        goTo(ViewPath.EDIT_AUCTION_VIEW);
+    }
+
+    /** Chuyển tới chi tiết phiên phía Seller. */
+    public void goToSellerAuctionDetail() {
+        goTo(ViewPath.SELLER_AUCTION_DETAIL_VIEW);
+    }
 }

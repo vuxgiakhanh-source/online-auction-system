@@ -1,0 +1,374 @@
+/* SELLER PAGE TEXT */
+
+.seller-page-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}
+
+.seller-page-subtitle {
+    -fx-font-size: 16px;
+    -fx-font-weight: 500;
+    -fx-text-fill: rgba(255, 255, 255, 0.76);
+}
+
+.seller-card-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}
+
+.seller-muted-text {
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: rgba(255, 255, 255, 0.70);
+}
+
+.seller-summary-number {
+    -fx-font-size: 42px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+
+/* SELLER CARDS */
+
+.seller-summary-card,
+.seller-action-card {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 26;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.seller-summary-card {
+    -fx-padding: 18 22 18 22;
+}
+
+.seller-action-card {
+    -fx-padding: 24;
+}
+
+
+/* SELLER BUTTONS */
+
+.seller-primary-button,
+.seller-secondary-button,
+.seller-ghost-button {
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+}
+
+.seller-primary-button {
+    -fx-background-color: #67b8ea;
+    -fx-background-radius: 999;
+    -fx-text-fill: #0f253c;
+}
+
+.seller-secondary-button {
+    -fx-background-color: rgba(255, 255, 255, 0.14);
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(255, 255, 255, 0.20);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-text-fill: #ffffff;
+}
+
+.seller-ghost-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(255, 255, 255, 0.18);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-text-fill: #ffffff;
+}
+
+.seller-primary-button:hover,
+.seller-secondary-button:hover,
+.seller-ghost-button:hover {
+    -fx-opacity: 0.92;
+}
+
+.seller-primary-button:disabled,
+.seller-secondary-button:disabled,
+.seller-ghost-button:disabled {
+    -fx-opacity: 0.55;
+}
+
+
+/* SELLER FILTER BAR */
+
+.seller-filter-bar {
+    -fx-padding: 14 18 14 18;
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+    -fx-background-radius: 24;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 24;
+    -fx-border-width: 1;
+}
+
+.seller-filter-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.82);
+}
+
+.seller-combo-box {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(255, 255, 255, 0.18);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-padding: 2 8 2 8;
+}
+
+.seller-combo-box .list-cell {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #ffffff;
+    -fx-background-color: transparent;
+}
+
+.seller-combo-box .arrow {
+    -fx-background-color: #ffffff;
+}
+
+.seller-combo-box .combo-box-popup .list-view {
+    -fx-background-color: #173452;
+    -fx-background-radius: 14;
+
+    -fx-border-color: rgba(255, 255, 255, 0.16);
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+}
+
+.seller-combo-box .combo-box-popup .list-cell {
+    -fx-padding: 8 14 8 14;
+    -fx-text-fill: #ffffff;
+    -fx-background-color: #173452;
+}
+
+.seller-combo-box .combo-box-popup .list-cell:hover {
+    -fx-background-color: rgba(103, 184, 234, 0.26);
+}
+
+
+/* SELLER AUCTION LIST */
+
+.seller-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.seller-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.seller-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.seller-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.24);
+    -fx-background-radius: 999;
+}
+
+.seller-list-container {
+    -fx-background-color: transparent;
+}
+
+.seller-auction-card {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 26;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.seller-status-badge {
+    -fx-padding: 7 13 7 13;
+
+    -fx-background-color: rgba(103, 184, 234, 0.20);
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(103, 184, 234, 0.45);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #dff4ff;
+}
+
+.seller-metric-box {
+    -fx-padding: 10 14 10 14;
+
+    -fx-background-color: rgba(255, 255, 255, 0.075);
+    -fx-background-radius: 18;
+
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+}
+
+.seller-metric-value {
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}
+
+.seller-empty-state {
+    -fx-padding: 34 20 34 20;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+.seller-danger-button {
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-background-color: rgba(255, 119, 119, 0.16);
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(255, 119, 119, 0.36);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+    -fx-text-fill: #ffd6d6;
+}
+
+.seller-danger-button:hover {
+    -fx-background-color: rgba(255, 119, 119, 0.22);
+}
+
+.seller-danger-button:disabled {
+    -fx-opacity: 0.55;
+}
+
+
+/* SELLER CREATE FORM */
+
+.seller-form-card {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 28;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 28;
+    -fx-border-width: 1;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.seller-form-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.84);
+}
+
+.seller-text-field,
+.seller-text-area,
+.seller-date-picker {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-background-radius: 16;
+
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: rgba(255, 255, 255, 0.44);
+}
+
+.seller-text-field {
+    -fx-padding: 11 14 11 14;
+}
+
+.seller-text-area {
+    -fx-padding: 8;
+}
+
+.seller-text-area .content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 16;
+}
+
+.seller-date-picker {
+    -fx-padding: 4 8 4 8;
+}
+
+.seller-date-picker .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: rgba(255, 255, 255, 0.44);
+}
+
+.seller-date-picker .arrow-button {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 12;
+}
+
+.seller-date-picker .arrow-button .arrow {
+    -fx-background-color: #ffffff;
+}
+
+.seller-text-field:focused,
+.seller-text-area:focused,
+.seller-date-picker:focused {
+    -fx-border-color: rgba(103, 184, 234, 0.68);
+}
+
+
+/* SELLER AUCTION DETAIL */
+
+.seller-detail-card {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 28;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 28;
+    -fx-border-width: 1;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.seller-detail-grid {
+    -fx-padding: 18 0 8 0;
+}
+
+.seller-detail-value {
+    -fx-padding: 10 14 10 14;
+
+    -fx-background-color: rgba(255, 255, 255, 0.075);
+    -fx-background-radius: 16;
+
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}

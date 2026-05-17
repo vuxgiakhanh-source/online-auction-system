@@ -31,9 +31,15 @@
 
         <!-- Header -->
         <HBox alignment="CENTER_LEFT" spacing="18.0">
-            <ImageView fitWidth="250.0" preserveRatio="true">
-                <Image url="@../../assets/images/logo.png"/>
-            </ImageView>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>
 
@@ -112,24 +118,25 @@
                   prefWidth="360.0"
                   prefHeight="210.0"
                   style="-fx-background-color: rgba(255, 255, 255, 0.07);
-                         -fx-background-radius: 26;
-                         -fx-padding: 24;">
+             -fx-background-radius: 26;
+             -fx-padding: 24;">
                 <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-profile.png"/>
+                    <Image url="@../../assets/icons/accent/icon-gavel.png"/>
                 </ImageView>
 
-                <Label text="Hồ sơ cá nhân"
+                <Label text="Kênh Seller"
                        style="-fx-font-size: 24px; -fx-font-weight: 800;"/>
 
-                <Label text="Thông tin tài khoản, vai trò Seller/Admin và các chức năng mở rộng."
+                <Label text="Tạo phiên đấu giá, theo dõi các phiên của bạn và gửi yêu cầu hủy."
                        wrapText="true"
                        style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.68);"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
-                <Button disable="true"
+                <Button fx:id="sellerDashboardButton"
                         mnemonicParsing="false"
-                        text="Coming soon"/>
+                        onAction="#handleOpenSellerDashboard"
+                        text="Mở kênh Seller"/>
             </VBox>
         </HBox>
 

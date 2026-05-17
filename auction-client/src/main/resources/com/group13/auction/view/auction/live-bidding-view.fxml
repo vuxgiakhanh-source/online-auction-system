@@ -42,9 +42,15 @@
                     styleClass="auction-ghost-button"
                     text="← Chi tiết"/>
 
-            <ImageView fitWidth="210.0" preserveRatio="true">
-                <Image url="@../../assets/images/logo.png"/>
-            </ImageView>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>
 
