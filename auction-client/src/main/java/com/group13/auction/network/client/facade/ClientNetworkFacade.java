@@ -409,6 +409,17 @@ public final class ClientNetworkFacade {
         send(ClientRequestFactory.ping());
     }
 
+    // ── Chatbot ─────────────────────────────────────────────────────────────
+
+    public void chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
+        send(ClientRequestFactory.chatbotAsk(request));
+    }
+
+    public void chatbotGetFaqList(
+            com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
+        send(ClientRequestFactory.chatbotGetFaqList(request));
+    }
+
     private AuctionWebSocketClient ensureClient() {
         if (client == null) {
             client = AuctionWebSocketClient.getInstance(serverUri);

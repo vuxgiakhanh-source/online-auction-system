@@ -118,6 +118,9 @@ public final class PacketExpectations {
         successOnly(map, PacketType.MARK_NOTIFICATION_READ, PacketType.MARK_NOTIFICATION_READ_SUCCESS);
         successOnly(map, PacketType.PING, PacketType.PONG);
 
+        put(map, PacketType.CHATBOT_ASK, PacketType.CHATBOT_ANSWER, PacketType.CHATBOT_NOT_FOUND);
+        successOnly(map, PacketType.CHATBOT_GET_FAQ_LIST, PacketType.CHATBOT_FAQ_LIST_SUCCESS);
+
         return Map.copyOf(map);
     }
 

@@ -16,8 +16,7 @@ import java.util.List;
 
 /**
  * Utility class chuyển đổi domain model → DTO.
- *
- * <p>Tập trung mapping tại một nơi, tránh lặp code trong các handler.
+ * Tập trung mapping tại một nơi, tránh lặp code trong các handler.
  */
 public final class DTOMapper {
 
@@ -25,12 +24,6 @@ public final class DTOMapper {
 
     // ── User ──────────────────────────────────────────────────────────────────
 
-    /**
-     * Chuyển {@link User} thành {@link UserDTO}.
-     *
-     * @param user        domain user
-     * @param showBalance true nếu gửi về chính chủ hoặc Admin (ẩn balance với người khác)
-     */
     public static UserDTO toUserDTO(User user, boolean showBalance) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
@@ -40,21 +33,18 @@ public final class DTOMapper {
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
 
-        // Roles
         List<String> roles = new ArrayList<>();
         for (User.UserRole role : User.UserRole.values()) {
             if (user.hasRole(role)) roles.add(role.name());
         }
         dto.setRoles(roles);
 
-        // Admin type
         if (user instanceof SystemAdmin) {
             dto.setAdminType("MASTER");
         } else if (user instanceof Admin) {
             dto.setAdminType("STAFF");
         }
 
-        // Balance (chỉ gửi khi được phép)
         if (showBalance && user instanceof NormalUser normalUser) {
             dto.setBalance(normalUser.getBalance());
             dto.setLockedDeposit(normalUser.getLockedDeposit());
@@ -62,7 +52,6 @@ public final class DTOMapper {
             dto.setHasEverBeenPenalized(normalUser.isHasEverBeenPenalized());
         }
 
-        // Email
         if (user instanceof NormalUser normalUser) {
             dto.setEmail(normalUser.getEmail());
         } else if (user instanceof Admin admin) {
@@ -92,10 +81,13 @@ public final class DTOMapper {
             dto.setCurrentLeaderId(auction.getCurrentLeader().getId());
             dto.setCurrentLeaderUsername(auction.getCurrentLeader().getUsername());
         }
-
         return dto;
     }
 
+    /**
+     * Map Item domain → ItemDTO.
+     * imageUrls được map luôn — list rỗng nếu item không có ảnh.
+     */
     public static AuctionDTOs.ItemDTO toItemDTO(Item item) {
         AuctionDTOs.ItemDTO dto = new AuctionDTOs.ItemDTO();
         dto.setId(item.getId());
@@ -107,10 +99,13 @@ public final class DTOMapper {
             dto.setSellerId(item.getSeller().getId());
             dto.setSellerUsername(item.getSeller().getUsername());
         }
+        // Map imageUrls — trả về list rỗng (không null) khi item không có ảnh
+        dto.setImageUrls(item.getImageUrls());
         return dto;
     }
 
-    public static AuctionDTOs.AuctionUpdateDTO toAuctionUpdateDTO(Auction auction, String cancelReason) {
+    public static AuctionDTOs.AuctionUpdateDTO toAuctionUpdateDTO(Auction auction,
+                                                                  String cancelReason) {
         AuctionDTOs.AuctionUpdateDTO dto = new AuctionDTOs.AuctionUpdateDTO();
         dto.setAuctionId(auction.getId());
         dto.setNewStatus(auction.getStatus().name());
@@ -141,7 +136,8 @@ public final class DTOMapper {
     }
 
     public static BidDTOs.BidChartPointDTO toBidChartPoint(String auctionId, long price,
-                                                           String bidderUsername, boolean isAutoBid) {
+                                                           String bidderUsername,
+                                                           boolean isAutoBid) {
         BidDTOs.BidChartPointDTO dto = new BidDTOs.BidChartPointDTO();
         dto.setAuctionId(auctionId);
         dto.setPrice(price);

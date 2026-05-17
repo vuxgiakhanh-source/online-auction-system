@@ -240,4 +240,17 @@ public final class ClientRequestFactory {
     public static Packet<Long> ping() {
         return Packet.of(PacketType.PING, System.currentTimeMillis());
     }
+
+    // ── Chatbot ─────────────────────────────────────────────────────────────
+
+    public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO>
+            chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
+        return Packet.of(PacketType.CHATBOT_ASK, request);
+    }
+
+    public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO>
+            chatbotGetFaqList(
+                    com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
+        return Packet.of(PacketType.CHATBOT_GET_FAQ_LIST, request);
+    }
 }
