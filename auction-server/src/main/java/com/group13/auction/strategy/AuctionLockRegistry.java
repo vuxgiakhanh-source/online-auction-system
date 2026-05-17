@@ -104,4 +104,18 @@ public final class AuctionLockRegistry {
     public int size() {
         return locks.size();
     }
+
+    /**
+     * Xóa toàn bộ lock khỏi registry.
+     * <b>CHỈ dùng trong unit/integration test để reset state giữa các test.</b>
+     * Không bao giờ gọi trong production code.
+     *
+     * <p>Lưu ý: nếu có lock đang bị giữ khi gọi method này, lock đó vẫn tồn tại
+     * trong memory nhưng sẽ không còn được registry quản lý nữa. Đảm bảo tất cả
+     * lock đã được unlock trước khi gọi clearAll().
+     */
+    public void clearAll() {
+        locks.clear();
+        log.debug("AuctionLockRegistry cleared (test-only operation)");
+    }
 }

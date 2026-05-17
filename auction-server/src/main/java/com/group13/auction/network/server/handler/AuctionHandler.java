@@ -55,18 +55,20 @@ public class AuctionHandler implements PacketHandler {
         this.auctionService = auctionService;
         this.accountService = accountService;
         this.sessionManager = sessionManager;
-        this.itemFactory = itemFactory;
-        this.itemDAO = new ItemDAO();
-        this.auctionDAO = new AuctionDAO();
+        this.itemFactory    = itemFactory;
+        this.itemDAO        = new ItemDAO();
+        this.auctionDAO     = new AuctionDAO();
     }
 
     @Override
     public boolean supports(PacketType type) { return SUPPORTED.contains(type); }
 
     @Override
-    public void handle(ClientSession session, PacketType type, JsonElement payload, String requestId) {
+    public void handle(ClientSession session, PacketType type,
+                       JsonElement payload, String requestId) {
         if (!session.isAuthenticated()) {
-            log.warn("Reject auction packet from unauthenticated session: type={}, requestId={}", type, requestId);
+            log.warn("Reject auction packet from unauthenticated session: type={}, requestId={}",
+                    type, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId)));
             return;
@@ -84,7 +86,8 @@ public class AuctionHandler implements PacketHandler {
         }
     }
 
-    // ── CREATE: Đã xóa ReservePriceStrategy ──────────────────────────────────
+    // ── CREATE ────────────────────────────────────────────────────────────────
+
     private void handleCreate(ClientSession session, JsonElement payload, String requestId) {
         try {
             AuctionDTOs.CreateAuctionRequestDTO req = PacketCodec.fromElement(
@@ -93,23 +96,50 @@ public class AuctionHandler implements PacketHandler {
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
-            // 1. Tạo Item từ Factory
+            // Lấy imageUrls từ request (null-safe — client cũ không gửi field này)
+            List<String> imageUrls = req.getImageUrls() != null
+                    ? req.getImageUrls() : List.of();
+
+            // Validate số lượng ảnh
+            if (imageUrls.size() > Item.MAX_IMAGES) {
+                session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                "Tối đa " + Item.MAX_IMAGES + " ảnh mỗi sản phẩm.",
+                                requestId)));
+                return;
+            }
+
+            // Validate format URL — phải bắt đầu bằng /uploads/items/ và không chứa ký tự nguy hiểm
+            for (String url : imageUrls) {
+                if (url == null || !url.startsWith("/uploads/items/")
+                        || url.contains("..") || url.contains("\\")
+                        || url.length() > 200) {
+                    session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
+                            ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                    "URL ảnh không hợp lệ: " + url, requestId)));
+                    return;
+                }
+            }
+
+            // 1. Tạo Item từ Factory (truyền imageUrls)
             Item item = itemFactory.create(
                     req.getItemCategory(),
                     req.getItemName(),
                     req.getItemDescription(),
                     (long) req.getStartingPrice(),
                     seller,
-                    req.getItemExtraFields());
+                    req.getItemExtraFields(),
+                    imageUrls);
 
-            // 2. Lưu Item vào DB trước (để có ID cho FK trong bảng auctions)
+            // 2. Lưu Item vào DB (truyền imageUrls để lưu cột image_urls)
             boolean itemSaved = itemDAO.addItem(
                     item.getId(),
                     seller.getId(),
                     item.getName(),
                     item.getDescription(),
                     item.getStartingPrice(),
-                    req.getItemCategory().trim().toUpperCase());
+                    req.getItemCategory().trim().toUpperCase(),
+                    imageUrls);
 
             if (!itemSaved) {
                 session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
@@ -117,20 +147,18 @@ public class AuctionHandler implements PacketHandler {
                 return;
             }
 
-            // 3. Gọi Service tạo Auction (Truyền reservePrice trực tiếp dạng long)
-            // KHÔNG CÒN ReservePriceStrategy reserveStrategy = ...
+            // 3. Tạo Auction
             Auction auction = auctionService.createAuction(
                     seller,
                     item,
                     req.getStartTime(),
                     req.getEndTime(),
-                    (long) req.getReservePrice() // Truyền thẳng giá trị từ DTO
-            );
+                    (long) req.getReservePrice());
 
             session.send(Packet.of(PacketType.CREATE_AUCTION_SUCCESS,
                     DTOMapper.toAuctionDTO(auction), requestId));
-            log.info("Create auction handled: auctionId={}, sellerId={}, username={}, itemId={}, requestId={}",
-                    auction.getId(), seller.getId(), seller.getUsername(), item.getId(), requestId);
+            log.info("Create auction: auctionId={}, sellerId={}, images={}, requestId={}",
+                    auction.getId(), seller.getId(), imageUrls.size(), requestId);
 
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.warn("Create auction rejected: username={}, requestId={}, reason={}",
@@ -145,7 +173,7 @@ public class AuctionHandler implements PacketHandler {
         }
     }
 
-    // ── CÁC HÀM KHÁC GIỮ NGUYÊN LOGIC ────────────────────────────────────────
+    // ── GET LIST ──────────────────────────────────────────────────────────────
 
     private void handleGetList(ClientSession session, JsonElement payload, String requestId) {
         try {
@@ -167,122 +195,157 @@ public class AuctionHandler implements PacketHandler {
 
             session.send(Packet.of(PacketType.GET_AUCTION_LIST_SUCCESS,
                     new AuctionDTOs.AuctionListDTO(dtos, dtos.size()), requestId));
-            log.debug("Auction list returned: username={}, statusFilter={}, count={}, requestId={}",
-                    session.getUsername(), req.getStatusFilter(), dtos.size(), requestId);
+            log.debug("Auction list returned: username={}, count={}, requestId={}",
+                    session.getUsername(), dtos.size(), requestId);
         } catch (Exception e) {
             log.error("Get auction list failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
-            session.send(Packet.of(PacketType.SYSTEM_ERROR, ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+            session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
+
+    // ── GET DETAIL ────────────────────────────────────────────────────────────
 
     private void handleGetDetail(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
-            Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+            Auction auction  = AuctionManager.getInstance().findAuctionById(auctionId);
             if (auction == null) {
-                log.warn("Auction detail not found: auctionId={}, username={}, requestId={}",
-                        auctionId, session.getUsername(), requestId);
-                session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED, ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId)));
+                session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED,
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId)));
                 return;
             }
-            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS, DTOMapper.toAuctionDTO(auction), requestId));
-            log.debug("Auction detail returned: auctionId={}, username={}, requestId={}",
-                    auctionId, session.getUsername(), requestId);
+            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS,
+                    DTOMapper.toAuctionDTO(auction), requestId));
         } catch (Exception e) {
             log.error("Get auction detail failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
-            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED, ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
 
+    // ── UPDATE ────────────────────────────────────────────────────────────────
+
     private void handleUpdate(ClientSession session, JsonElement payload, String requestId) {
         try {
-            AuctionDTOs.UpdateAuctionDTO req = PacketCodec.fromElement(payload, AuctionDTOs.UpdateAuctionDTO.class);
+            AuctionDTOs.UpdateAuctionDTO req = PacketCodec.fromElement(
+                    payload, AuctionDTOs.UpdateAuctionDTO.class);
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
             if (auction == null || auction.getStatus() != Auction.AuctionStatus.OPEN) {
-                log.warn("Update auction rejected: auctionId={}, sellerId={}, username={}, requestId={}",
-                        req.getAuctionId(), seller.getId(), seller.getUsername(), requestId);
-                session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED, ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên không tồn tại hoặc đã bắt đầu.", requestId)));
+                session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                                "Phiên không tồn tại hoặc đã bắt đầu.", requestId)));
                 return;
             }
 
-            if (req.getNewEndTime() != null && req.getNewEndTime().isAfter(auction.getStartTime())) {
-                auction.extendEndTime(java.time.Duration.between(auction.getEndTime(), req.getNewEndTime()));
+            if (req.getNewEndTime() != null
+                    && req.getNewEndTime().isAfter(auction.getStartTime())) {
+                auction.extendEndTime(
+                        java.time.Duration.between(auction.getEndTime(), req.getNewEndTime()));
                 auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
             }
 
-            session.send(Packet.of(PacketType.UPDATE_AUCTION_SUCCESS, DTOMapper.toAuctionDTO(auction), requestId));
-            log.info("Update auction handled: auctionId={}, sellerId={}, username={}, requestId={}",
-                    auction.getId(), seller.getId(), seller.getUsername(), requestId);
+            session.send(Packet.of(PacketType.UPDATE_AUCTION_SUCCESS,
+                    DTOMapper.toAuctionDTO(auction), requestId));
+            log.info("Update auction: auctionId={}, sellerId={}, requestId={}",
+                    auction.getId(), seller.getId(), requestId);
         } catch (Exception e) {
             log.error("Update auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
-            session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED, ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+            session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
 
+    // ── CANCEL REQUEST ────────────────────────────────────────────────────────
+
     private void handleCancelRequest(ClientSession session, JsonElement payload, String requestId) {
         try {
-            AuctionDTOs.CancelAuctionRequestDTO req = PacketCodec.fromElement(payload, AuctionDTOs.CancelAuctionRequestDTO.class);
+            AuctionDTOs.CancelAuctionRequestDTO req = PacketCodec.fromElement(
+                    payload, AuctionDTOs.CancelAuctionRequestDTO.class);
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
             accountService.requestCancelAuction(seller, auction, req.getReason());
 
-            session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS, req.getAuctionId(), requestId));
-            log.info("Cancel auction request handled: auctionId={}, sellerId={}, username={}, requestId={}",
-                    req.getAuctionId(), seller.getId(), seller.getUsername(), requestId);
+            session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
+                    req.getAuctionId(), requestId));
+
+            // Notify Staff Admin về yêu cầu hủy phiên của Seller
+            AuctionDTOs.SellerCancelRequestNotifyDTO notifyDTO = new AuctionDTOs.SellerCancelRequestNotifyDTO();
+            notifyDTO.setAuctionId(auction.getId());
+            notifyDTO.setAuctionName(auction.getItem() != null ? auction.getItem().getName() : auction.getId());
+            notifyDTO.setSellerUsername(seller.getUsername());
+            notifyDTO.setReason(req.getReason());
+            notifyDTO.setRequestTime(java.time.LocalDateTime.now());
+            sessionManager.broadcastToAdmins(Packet.of(PacketType.SELLER_CANCEL_REQUEST_NOTIFY, notifyDTO));
+
+            log.info("Cancel request: auctionId={}, sellerId={}, requestId={}",
+                    req.getAuctionId(), seller.getId(), requestId);
         } catch (Exception e) {
             log.error("Cancel auction request failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
-            session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_FAILED, ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+            session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_FAILED,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
+
+    // ── ADMIN CANCEL ──────────────────────────────────────────────────────────
 
     private void handleAdminCancel(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
-            log.warn("Reject admin cancel from non-admin: username={}, requestId={}", session.getUsername(), requestId);
+            log.warn("Reject admin cancel from non-admin: username={}, requestId={}",
+                    session.getUsername(), requestId);
             return;
         }
         try {
-            AuctionDTOs.AdminCancelAuctionDTO req = PacketCodec.fromElement(payload, AuctionDTOs.AdminCancelAuctionDTO.class);
+            AuctionDTOs.AdminCancelAuctionDTO req = PacketCodec.fromElement(
+                    payload, AuctionDTOs.AdminCancelAuctionDTO.class);
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
-            Admin admin = (Admin) AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            Admin admin = (Admin) AuctionManager.getInstance()
+                    .findUserByUsername(session.getUsername());
 
             auctionService.cancelAuction(admin, auction, Admin.CancelReason.valueOf(req.getReason()));
-            session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_SUCCESS, DTOMapper.toAuctionDTO(auction), requestId));
-            log.info("Admin cancel auction handled: auctionId={}, adminId={}, username={}, reason={}, requestId={}",
-                    req.getAuctionId(), admin.getId(), admin.getUsername(), req.getReason(), requestId);
+            session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_SUCCESS,
+                    DTOMapper.toAuctionDTO(auction), requestId));
+            log.info("Admin cancel: auctionId={}, adminId={}, reason={}, requestId={}",
+                    req.getAuctionId(), admin.getId(), req.getReason(), requestId);
         } catch (Exception e) {
-            log.error("Admin cancel auction failed: username={}, requestId={}",
+            log.error("Admin cancel failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
-            session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_FAILED, ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+            session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_FAILED,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
         }
     }
+
+    // ── ADMIN GET ALL ─────────────────────────────────────────────────────────
 
     private void handleAdminGetAll(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
-            log.warn("Reject admin get all auctions from non-admin: username={}, requestId={}", session.getUsername(), requestId);
+            log.warn("Reject admin get all from non-admin: username={}, requestId={}",
+                    session.getUsername(), requestId);
             return;
         }
-        List<AuctionDTOs.AuctionDTO> dtos = AuctionManager.getInstance().getAllAuctions().stream()
-                .map(DTOMapper::toAuctionDTO).collect(Collectors.toList());
-        session.send(Packet.of(PacketType.ADMIN_GET_ALL_AUCTIONS_SUCCESS, new AuctionDTOs.AuctionListDTO(dtos, dtos.size()), requestId));
-        log.debug("Admin auction list returned: username={}, count={}, requestId={}",
-                session.getUsername(), dtos.size(), requestId);
+        List<AuctionDTOs.AuctionDTO> dtos = AuctionManager.getInstance().getAllAuctions()
+                .stream().map(DTOMapper::toAuctionDTO).collect(Collectors.toList());
+        session.send(Packet.of(PacketType.ADMIN_GET_ALL_AUCTIONS_SUCCESS,
+                new AuctionDTOs.AuctionListDTO(dtos, dtos.size()), requestId));
     }
 
+    // ── Helper ────────────────────────────────────────────────────────────────
+
     private NormalUser requireNormalUser(ClientSession session, String requestId) {
-        com.group13.auction.model.user.User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
+        com.group13.auction.model.user.User user =
+                AuctionManager.getInstance().findUserByUsername(session.getUsername());
         if (!(user instanceof NormalUser)) {
-            log.warn("NormalUser required for auction handler: username={}, requestId={}",
-                    session.getUsername(), requestId);
-            session.send(Packet.of(PacketType.SYSTEM_ERROR, ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Quyền hạn không hợp lệ.", requestId)));
+            session.send(Packet.of(PacketType.SYSTEM_ERROR,
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Quyền hạn không hợp lệ.", requestId)));
             return null;
         }
         return (NormalUser) user;

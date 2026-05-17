@@ -2,6 +2,7 @@ package com.group13.auction.model.item;
 
 import com.group13.auction.model.user.NormalUser;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,45 +15,75 @@ public class Electronics extends Item {
   private final int warrantyMonths;
   private final String condition;
 
-  // Static factory method
+  // ── Static factory methods ────────────────────────────────────────────────
 
+  /** Khai sinh — không ảnh (backward-compatible). */
   protected static Electronics create(String name, String description, long startingPrice,
-                                      NormalUser seller, String brand, int warrantyMonths, String condition) {
-    return new Electronics(name, description, startingPrice, seller, brand, warrantyMonths, condition);
+                                      NormalUser seller,
+                                      String brand, int warrantyMonths, String condition) {
+    return new Electronics(name, description, startingPrice, seller,
+            brand, warrantyMonths, condition, List.of());
   }
 
+  /** Khai sinh — có ảnh. */
+  protected static Electronics create(String name, String description, long startingPrice,
+                                      NormalUser seller,
+                                      String brand, int warrantyMonths, String condition,
+                                      List<String> imageUrls) {
+    return new Electronics(name, description, startingPrice, seller,
+            brand, warrantyMonths, condition, imageUrls);
+  }
+
+  /** Hồi sinh từ DB — không ảnh (backward-compatible, TestFixture dùng). */
   public static Electronics reconstitute(String id, LocalDateTime createdAt,
-                                         LocalDateTime updatedAt, String name, String description, long startingPrice,
-                                         NormalUser seller, String brand, int warrantyMonths, String condition) {
+                                         LocalDateTime updatedAt,
+                                         String name, String description, long startingPrice,
+                                         NormalUser seller,
+                                         String brand, int warrantyMonths, String condition) {
     return new Electronics(id, createdAt, updatedAt, name, description, startingPrice,
-            seller, brand, warrantyMonths, condition);
+            seller, brand, warrantyMonths, condition, List.of());
   }
 
-  // Private Constructors: Ngăn chặn new cứng
+  /** Hồi sinh từ DB — có ảnh (ItemDAO dùng). */
+  public static Electronics reconstitute(String id, LocalDateTime createdAt,
+                                         LocalDateTime updatedAt,
+                                         String name, String description, long startingPrice,
+                                         NormalUser seller,
+                                         String brand, int warrantyMonths, String condition,
+                                         List<String> imageUrls) {
+    return new Electronics(id, createdAt, updatedAt, name, description, startingPrice,
+            seller, brand, warrantyMonths, condition, imageUrls);
+  }
 
-  /** Khai sinh */
+  // ── Private constructors ──────────────────────────────────────────────────
+
   private Electronics(String name, String description, long startingPrice,
-                      NormalUser seller, String brand, int warrantyMonths, String condition) {
-    super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
-    this.brand = brand;
+                      NormalUser seller,
+                      String brand, int warrantyMonths, String condition,
+                      List<String> imageUrls) {
+    super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller, imageUrls);
+    this.brand          = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition = condition;
+    this.condition      = condition;
   }
 
-  /** Hồi sinh từ DB */
   private Electronics(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                      String name, String description, long startingPrice, NormalUser seller,
-                      String brand, int warrantyMonths, String condition) {
-    super(id, createdAt, updatedAt, name, description, startingPrice, ItemCategory.ELECTRONICS, seller);
-    this.brand = brand;
+                      String name, String description, long startingPrice,
+                      NormalUser seller,
+                      String brand, int warrantyMonths, String condition,
+                      List<String> imageUrls) {
+    super(id, createdAt, updatedAt, name, description, startingPrice,
+            ItemCategory.ELECTRONICS, seller, imageUrls);
+    this.brand          = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition = condition;
+    this.condition      = condition;
   }
 
-  // Getters
-  public String getBrand() { return brand; }
+  // ── Getters ───────────────────────────────────────────────────────────────
+
+  public String getBrand()       { return brand; }
   public int getWarrantyMonths() { return warrantyMonths; }
-  public String getCondition() { return condition; }
+  public String getCondition()   { return condition; }
 
   @Override
   public void printInfo() {
@@ -62,6 +93,7 @@ public class Electronics extends Item {
     log.info("Bảo hành     : {} tháng", warrantyMonths);
     log.info("Tình trạng   : {}", condition);
     log.info("Giá khởi điểm: {}", getStartingPrice());
+    log.info("Số ảnh       : {}", getImageUrls().size());
     log.info("======================================");
   }
 }

@@ -18,6 +18,7 @@ import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
+import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.BidStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +68,11 @@ public class BidService implements IBidService {
   private final UserDAO userDAO;
 
   /**
-   * FIX #3: Per-auction lock.
-   * Mỗi auctionId có 1 Object lock riêng — auction khác nhau không block nhau.
+   * FIX: Dùng AuctionLockRegistry thay vì map riêng —
+   * (1) cùng lock với BidHandler nên ReentrantLock reentrant tránh deadlock,
+   * (2) lockRegistry.release() trong AuctionTimerService dọn sạch entry → không leak.
    */
-  private final ConcurrentHashMap<String, Object> auctionLocks = new ConcurrentHashMap<>();
+  private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
 
   public BidService(
           IAuctionService auctionService,
@@ -155,11 +157,12 @@ public class BidService implements IBidService {
     }
 
     // ── TRONG LOCK: critical section per-auction ──────────────────────────
-    Object lock = auctionLocks.computeIfAbsent(auction.getId(), k -> new Object());
+    java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     BidTransaction tx;
     boolean reserveMet;
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       // Re-check sau khi acquire lock (auction có thể vừa đóng)
       if (!auction.isAcceptingBids()) {
         log.warn("Bid rejected — auction closed (in lock): auctionId={}, bidderId={}",
@@ -185,7 +188,7 @@ public class BidService implements IBidService {
       BidResult result = reserveMet ? BidResult.ACCEPTED : BidResult.ACCEPTED_RESERVE_NOT_MET;
       tx = recordTransaction(bidder, auction, amount, result);
       auction.addBidTransactionId(tx.getId());
-    }
+    } finally { lock.unlock(); }
     // ── Hết critical section ──────────────────────────────────────────────
 
     // ── NGOÀI LOCK: DB + notify (không block bid tiếp theo) ──────────────
@@ -203,9 +206,10 @@ public class BidService implements IBidService {
     if (currentEnd != null) {
       long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
       if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
-        synchronized (lock) {
+        lock.lock();
+        try {
           auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
-        }
+        } finally { lock.unlock(); }
         auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
         auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
                 String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));

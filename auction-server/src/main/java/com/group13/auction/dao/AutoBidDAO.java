@@ -46,7 +46,9 @@ public class AutoBidDAO {
             log.debug("upsert auto_bid: userId={} auctionId={} maxBid={} ok={}", userId, auctionId, maxBid, ok);
             return ok;
         } catch (SQLException e) {
-            log.error("Lỗi upsert auto_bid: userId={} auctionId={}", userId, auctionId, e);
+            // Dùng warn thay vì error vì caller (AutoBidRegistry.register) đã bắt và xử lý gracefully.
+            // Lỗi phổ biến nhất là FK violation khi user/auction chưa có trong DB (test env).
+            log.warn("Lỗi upsert auto_bid: userId={} auctionId={} — {}", userId, auctionId, e.getMessage());
             return false;
         }
     }

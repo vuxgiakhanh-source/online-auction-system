@@ -79,7 +79,14 @@ public class Auction extends Entity {
    */
   private final AtomicReference<AuctionState> state = new AtomicReference<>();
 
-  private volatile AuctionWinner winner;
+  /**
+   * FIX: AtomicReference thay volatile — setWinner() là compound operation (write + markUpdated).
+   * volatile chỉ đảm bảo visibility của phép ghi đơn lẻ, không đủ cho compound write + side-effect.
+   * AtomicReference.set() + markUpdated() vẫn không atomic với nhau, nhưng winner chỉ được set
+   * một lần duy nhất bởi AuctionService sau khi đấu giá kết thúc (không có concurrent writers),
+   * nên AtomicReference đảm bảo visibility an toàn hơn volatile và loại bỏ cảnh báo IDE/SpotBugs.
+   */
+  private final AtomicReference<AuctionWinner> winner = new AtomicReference<>(null);
 
   /** FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu dùng volatile. */
   private final AtomicInteger viewerCount = new AtomicInteger(0);
@@ -123,7 +130,7 @@ public class Auction extends Entity {
     this.endTime = endTime;
     this.reservePrice = reservePrice;
     this.state.set(OpenState.INSTANCE);
-    this.winner = null;
+    // winner khởi tạo null qua AtomicReference(null) ở khai báo field
   }
 
   private Auction(
@@ -144,7 +151,7 @@ public class Auction extends Entity {
     this.endTime = endTime;
     this.reservePrice = reservePrice;
     this.state.set(resolveState(status));
-    this.winner = null;
+    // winner khởi tạo null qua AtomicReference(null) ở khai báo field
   }
 
   private static AuctionState resolveState(AuctionStatus status) {
@@ -170,7 +177,7 @@ public class Auction extends Entity {
   public long getCurrentPrice()            { return currentPrice; }
   public NormalUser getCurrentLeader()     { return currentLeader; }
   public AuctionStatus getStatus()         { return state.get().getStatus(); }
-  public AuctionWinner getWinner()         { return winner; }
+  public AuctionWinner getWinner()         { return winner.get(); }
   public long getReservePrice()            { return reservePrice; }
   public int getViewerCount()              { return viewerCount.get(); }
 
@@ -191,22 +198,22 @@ public class Auction extends Entity {
   // =========================================================================
 
   public void transitionToRunning() {
-    this.state.set(state.get().start());
+    this.state.updateAndGet(AuctionState::start);
     markUpdated();
   }
 
   public void transitionToClose(boolean hasWinner) {
-    this.state.set(state.get().close(hasWinner));
+    this.state.updateAndGet(s -> s.close(hasWinner));
     markUpdated();
   }
 
   public void transitionToCancel() {
-    this.state.set(state.get().cancel());
+    this.state.updateAndGet(AuctionState::cancel);
     markUpdated();
   }
 
   public void transitionToPaid() {
-    this.state.set(state.get().markPaid());
+    this.state.updateAndGet(AuctionState::markPaid);
     markUpdated();
   }
 
@@ -230,7 +237,7 @@ public class Auction extends Entity {
    * Gia hạn phiên (anti-sniping).
    * Gọi bên trong synchronized(lock) của BidService.
    */
-  public void extendEndTime(Duration extension) {
+  public synchronized void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
       throw new IllegalArgumentException("extension phải > 0.");
     }
@@ -239,7 +246,7 @@ public class Auction extends Entity {
   }
 
   public void setWinner(AuctionWinner winner) {
-    this.winner = winner;
+    this.winner.set(winner);
     markUpdated();
   }
 
