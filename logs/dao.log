@@ -1,7 +1,189 @@
-2026-05-11 02:24:59.235 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 02:48:52.472 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 10:40:52.438 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 11:36:54.094 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 11:39:07.942 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 13:51:05.591 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
-2026-05-11 16:55:00.305 INFO  [main] c.g.auction.dao.DatabaseConnection - Cấu hình Database thuần Java đã sẵn sàng!
+2026-05-18 04:29:07.716 WARN  [main] c.group13.auction.dao.DatabaseConnection — Database config loaded from environment variables (Docker mode).
+2026-05-18 04:29:09.130 ERROR [main] c.group13.auction.dao.DatabaseConnection — Error initializing DatabaseConnection
+com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at com.zaxxer.hikari.pool.HikariPool.throwPoolInitializationException(HikariPool.java:584)
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:571)
+	at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:98)
+	at com.zaxxer.hikari.HikariDataSource.<init>(HikariDataSource.java:80)
+	at com.group13.auction.dao.DatabaseConnection.buildPool(DatabaseConnection.java:130)
+	at com.group13.auction.dao.DatabaseConnection.<init>(DatabaseConnection.java:68)
+	at com.group13.auction.dao.DatabaseConnection.getInstance(DatabaseConnection.java:138)
+	at com.group13.auction.dao.AdminDAO.existsByUsername(AdminDAO.java:23)
+	at com.group13.auction.model.user.SystemAdmin.bootstrap(SystemAdmin.java:49)
+	at com.group13.auction.ServerMain.main(ServerMain.java:79)
+Caused by: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at com.mysql.cj.jdbc.exceptions.SQLError.createCommunicationsException(SQLError.java:174)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:64)
+	at com.mysql.cj.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:815)
+	at com.mysql.cj.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:438)
+	at com.mysql.cj.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:241)
+	at com.mysql.cj.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:189)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:137)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:360)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:202)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:461)
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:550)
+	... 8 common frames omitted
+Caused by: com.mysql.cj.exceptions.CJCommunicationsException: Communications link failure
+
+The last packet sent successfully to the server was 0 milliseconds ago. The driver has not received any packets from the server.
+	at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Unknown Source)
+	at java.base/java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.mysql.cj.exceptions.ExceptionFactory.createException(ExceptionFactory.java:61)
+	at com.mysql.cj.exceptions.ExceptionFactory.createException(ExceptionFactory.java:104)
+	at com.mysql.cj.exceptions.ExceptionFactory.createException(ExceptionFactory.java:149)
+	at com.mysql.cj.exceptions.ExceptionFactory.createCommunicationsException(ExceptionFactory.java:165)
+	at com.mysql.cj.protocol.a.NativeSocketConnection.connect(NativeSocketConnection.java:88)
+	at com.mysql.cj.NativeSession.connect(NativeSession.java:120)
+	at com.mysql.cj.jdbc.ConnectionImpl.connectOneTryOnly(ConnectionImpl.java:935)
+	at com.mysql.cj.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:805)
+	... 16 common frames omitted
+Caused by: java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.Net.pollConnect(Native Method)
+	at java.base/sun.nio.ch.Net.pollConnectNow(Unknown Source)
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(Unknown Source)
+	at java.base/sun.nio.ch.NioSocketImpl.connect(Unknown Source)
+	at java.base/java.net.SocksSocketImpl.connect(Unknown Source)
+	at java.base/java.net.Socket.connect(Unknown Source)
+	at com.mysql.cj.protocol.StandardSocketFactory.connect(StandardSocketFactory.java:153)
+	at com.mysql.cj.protocol.a.NativeSocketConnection.connect(NativeSocketConnection.java:62)
+	... 19 common frames omitted
+2026-05-18 04:29:10.333 WARN  [main] c.group13.auction.dao.DatabaseConnection — Database config loaded from environment variables (Docker mode).
+2026-05-18 04:29:10.728 WARN  [main] c.group13.auction.dao.DatabaseConnection — HikariCP pool created. URL: jdbc:mysql://db:3306/auction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC | maxPoolSize=40, minIdle=5
+2026-05-18 04:29:10.764 ERROR [main] com.group13.auction.dao.AdminDAO — Failed to check admin existence: username=SYSTEM
+java.sql.SQLSyntaxErrorException: Table 'auction_db.admins' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.AdminDAO.existsByUsername(AdminDAO.java:26)
+	at com.group13.auction.model.user.SystemAdmin.bootstrap(SystemAdmin.java:49)
+	at com.group13.auction.ServerMain.main(ServerMain.java:79)
+2026-05-18 04:29:10.776 ERROR [main] com.group13.auction.dao.AdminDAO — Failed to create admin: adminId=09cb0fbc-b803-4e81-ab9f-00d341445c23, username=SYSTEM
+java.sql.SQLSyntaxErrorException: Table 'auction_db.admins' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1054)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1003)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1312)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:988)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.AdminDAO.createAdmin(AdminDAO.java:50)
+	at com.group13.auction.model.user.SystemAdmin.bootstrap(SystemAdmin.java:56)
+	at com.group13.auction.ServerMain.main(ServerMain.java:79)
+2026-05-18 04:29:10.826 ERROR [main] com.group13.auction.dao.AuctionDAO — Lỗi lấy danh sách Auction
+java.sql.SQLSyntaxErrorException: Table 'auction_db.auctions' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.AuctionDAO.findAll(AuctionDAO.java:268)
+	at com.group13.auction.manager.AuctionManager.loadDataFromDatabase(AuctionManager.java:57)
+	at com.group13.auction.ServerMain.main(ServerMain.java:112)
+2026-05-18 04:29:10.833 ERROR [main] com.group13.auction.dao.UserDAO — Lỗi lấy danh sách User: 
+java.sql.SQLSyntaxErrorException: Table 'auction_db.users' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.UserDAO.findAll(UserDAO.java:343)
+	at com.group13.auction.manager.AuctionManager.loadDataFromDatabase(AuctionManager.java:61)
+	at com.group13.auction.ServerMain.main(ServerMain.java:112)
+2026-05-18 04:29:10.842 ERROR [main] com.group13.auction.dao.AutoBidDAO — Lỗi findAll auto_bids
+java.sql.SQLSyntaxErrorException: Table 'auction_db.auto_bids' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.AutoBidDAO.findAll(AutoBidDAO.java:91)
+	at com.group13.auction.strategy.AutoBidRegistry.loadFromDatabase(AutoBidRegistry.java:127)
+	at com.group13.auction.ServerMain.main(ServerMain.java:113)
+2026-05-18 04:29:10.872 ERROR [auction-timer] c.g.auction.dao.SecondChanceOfferDAO — Lỗi quét second_chance_offers hết hạn
+java.sql.SQLSyntaxErrorException: Table 'auction_db.second_chance_offers' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.SecondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(SecondChanceOfferDAO.java:125)
+	at com.group13.auction.service.AuctionTimerService.expirePendingSecondChanceOffers(AuctionTimerService.java:247)
+	at com.group13.auction.service.AuctionTimerService.scanAndProcess(AuctionTimerService.java:95)
+	at com.group13.auction.service.scheduler.TaskScheduler.lambda$scheduleAtFixedRate$1(TaskScheduler.java:34)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+2026-05-18 04:29:11.854 ERROR [auction-timer] c.g.auction.dao.SecondChanceOfferDAO — Lỗi quét second_chance_offers hết hạn
+java.sql.SQLSyntaxErrorException: Table 'auction_db.second_chance_offers' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.SecondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(SecondChanceOfferDAO.java:125)
+	at com.group13.auction.service.AuctionTimerService.expirePendingSecondChanceOffers(AuctionTimerService.java:247)
+	at com.group13.auction.service.AuctionTimerService.scanAndProcess(AuctionTimerService.java:95)
+	at com.group13.auction.service.scheduler.TaskScheduler.lambda$scheduleAtFixedRate$1(TaskScheduler.java:34)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+2026-05-18 04:29:12.854 ERROR [auction-timer] c.g.auction.dao.SecondChanceOfferDAO — Lỗi quét second_chance_offers hết hạn
+java.sql.SQLSyntaxErrorException: Table 'auction_db.second_chance_offers' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.SecondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(SecondChanceOfferDAO.java:125)
+	at com.group13.auction.service.AuctionTimerService.expirePendingSecondChanceOffers(AuctionTimerService.java:247)
+	at com.group13.auction.service.AuctionTimerService.scanAndProcess(AuctionTimerService.java:95)
+	at com.group13.auction.service.scheduler.TaskScheduler.lambda$scheduleAtFixedRate$1(TaskScheduler.java:34)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+2026-05-18 04:29:13.855 ERROR [auction-timer] c.g.auction.dao.SecondChanceOfferDAO — Lỗi quét second_chance_offers hết hạn
+java.sql.SQLSyntaxErrorException: Table 'auction_db.second_chance_offers' doesn't exist
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:122)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:912)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery(ClientPreparedStatement.java:968)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java)
+	at com.group13.auction.dao.SecondChanceOfferDAO.findAuctionIdsWithExpiredPendingOffers(SecondChanceOfferDAO.java:125)
+	at com.group13.auction.service.AuctionTimerService.expirePendingSecondChanceOffers(AuctionTimerService.java:247)
+	at com.group13.auction.service.AuctionTimerService.scanAndProcess(AuctionTimerService.java:95)
+	at com.group13.auction.service.scheduler.TaskScheduler.lambda$scheduleAtFixedRate$1(TaskScheduler.java:34)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(Unknown Source)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
