@@ -44,31 +44,19 @@ class AuctionLockRegistryTest {
     private AuctionLockRegistry registry;
 
     /**
-     * Lấy Singleton và dọn sạch tất cả lock trước mỗi test để đảm bảo isolation.
-     * Dùng release() thay vì reflection để không test implementation detail.
+     * Lấy Singleton và dọn sạch toàn bộ lock trước mỗi test để đảm bảo isolation.
+     *
+     * <p>Dùng {@link AuctionLockRegistry#clearAll()} thay vì release từng id cố định
+     * vì Singleton này được chia sẻ với tất cả test khác trong cùng JVM
+     * (concurrency tests, load tests…). Các test đó có thể đã tạo lock với UUID
+     * ngẫu nhiên mà không cleanup → {@code size()} khác 0 khi chạy tuần tự.
      */
     @BeforeEach
     void setUp() {
         registry = AuctionLockRegistry.getInstance();
-        // Dọn sạch toàn bộ lock còn sót từ test trước bằng cách release từng cái
-        // Lấy danh sách id thông qua getLock rồi release — hoặc dùng set cố định
-        // Ở đây dùng danh sách id được tạo trong test trước không khả thi,
-        // nên ta release các id cố định dùng trong test suite này để giữ size() = 0
-        releaseKnownTestIds();
-    }
-
-    /** Release tất cả auctionId cố định mà test suite này có thể đã tạo. */
-    private void releaseKnownTestIds() {
-        String[] knownIds = {
-                "auction-001", "auction-002", "auction-003", "auction-A", "auction-B",
-                "", " ", "   ", "\t", "\n",
-                "special-!@#$%", "unicode-拍卖", "with spaces in id"
-        };
-        for (String id : knownIds) {
-            registry.release(id);
-        }
-        // Release UUID-based ids không được vì không biết trước → dùng pattern khác:
-        // test nào dùng UUID tự release trong @AfterEach qua try-finally hoặc local cleanup
+        // Reset toàn bộ registry — an toàn vì không có lock nào đang bị giữ
+        // trong khoảng giữa các test (JUnit chạy test tuần tự trong cùng thread).
+        registry.clearAll();
     }
 
     // =========================================================================

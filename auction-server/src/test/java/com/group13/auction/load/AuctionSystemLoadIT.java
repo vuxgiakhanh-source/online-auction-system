@@ -21,6 +21,7 @@ import com.group13.auction.service.WalletService;
 import com.group13.auction.strategy.AuctionLockRegistry;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.StandardBidStrategy;
+import com.group13.auction.strategy.BidIncrementCalculator;
 import com.group13.auction.unit.TestFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -123,6 +124,11 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
     void tearDown() throws Exception {
         // AutoBidRegistry chỉ có clearAuction — registry sẽ được dọn qua reflection để tránh state leak
         clearAutoBidRegistryAll();
+        // Reset AuctionLockRegistry Singleton để không leak lock vào các test khác trong JVM.
+        // Đặc biệt quan trọng vì SizeContract.emptyRegistry_sizeIsZero của AuctionLockRegistryTest
+        // mong đợi size() = 0 sau setUp(). Nếu load test tạo lock (getLock) mà không gọi clearAll(),
+        // Singleton sẽ còn lock orphan và làm fail test đó.
+        com.group13.auction.strategy.AuctionLockRegistry.getInstance().clearAll();
         cleanupDB();
         TestFixture.resetSystemAdmin();
     }
@@ -468,17 +474,37 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
         @DisplayName("L-AB2: AutoBidRegistry.register/clearAuction song song 32 thread — không NPE, không corruption")
         void autoBidRegistry_concurrentRegisterAndClear_noCorruption() throws Exception {
             int threads = 32;
-            String auctionId = UUID.randomUUID().toString();
+
+            // FIX: Tạo auction + users thật trong DB để tránh FK violation
+            // (auto_bids.user_id REFERENCES users.id và auto_bids.auction_id REFERENCES auctions.id)
+            NormalUser seller = buildUserWithBalance("ab2_sel", 80_000_000L, userDAO);
+            String itemId = buildItem(seller.getId(), "AB2-Item", 1_000_000L, itemDAO);
+            Item item = itemDAO.findItemById(itemId);
+            Auction auction = Auction.create(item,
+                    LocalDateTime.now().minusMinutes(1),
+                    LocalDateTime.now().plusHours(2),
+                    5_000_000L);
+            auctionDAO.createAuction(auction);
+            auctionService.startAuction(auction);
+            trackAuction(auction.getId());
+            String auctionId = auction.getId();
+
+            // Tạo 32 user thật tuần tự trên main thread (buildUserWithBalance không thread-safe)
+            List<NormalUser> users = new ArrayList<>(threads);
+            for (int i = 0; i < threads; i++) {
+                users.add(buildUserWithBalance("ab2_u" + i, 1_000_000L, userDAO));
+            }
+
             CountDownLatch gate = new CountDownLatch(1);
             CountDownLatch done = new CountDownLatch(threads);
             AtomicInteger failures = new AtomicInteger();
 
             for (int i = 0; i < threads; i++) {
                 final int idx = i;
+                final String userId = users.get(i).getId();
                 new Thread(() -> {
                     try {
                         gate.await();
-                        String userId = UUID.randomUUID().toString();
                         long maxBid = 1_000_000L + (idx * 10_000L);
                         AutoBidRegistry.getInstance().register(userId, auctionId, maxBid);
                         // Nửa thread thực hiện clear, nửa còn lại check
@@ -1032,7 +1058,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
                         totalAttempts.incrementAndGet();
                         // Đọc currentPrice hiện tại (volatile read) + 1 increment + offset theo thread
                         long currentPrice = auction.getCurrentPrice();
-                        long amount = currentPrice + 200_000L + (idx * 10_000L);
+                        long amount = currentPrice + BidIncrementCalculator.calculate(currentPrice) + (idx * 10_000L);
                         try {
                             bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
                             totalSuccess.incrementAndGet();

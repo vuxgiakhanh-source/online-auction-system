@@ -1,4 +1,4 @@
-package com.group13.auction.websocket.handler;
+package com.group13.auction.websocket;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -158,10 +158,12 @@ class PaymentHandlerDispatchTest {
             doAnswer(inv -> {
                 NormalUser u = inv.getArgument(0);
                 long amt = inv.getArgument(1);
-                // simulate deposit: add to balance
-                java.lang.reflect.Field f = u.getClass().getSuperclass().getDeclaredField("balance");
+                // balance là AtomicLong — phải dùng .get()/.set(), không cast trực tiếp
+                java.lang.reflect.Field f = u.getClass().getDeclaredField("balance");
                 f.setAccessible(true);
-                f.set(u, ((long) f.get(u)) + amt);
+                java.util.concurrent.atomic.AtomicLong bal =
+                        (java.util.concurrent.atomic.AtomicLong) f.get(u);
+                bal.set(bal.get() + amt);
                 return null;
             }).when(accountService).deposit(eq(user), anyLong());
 

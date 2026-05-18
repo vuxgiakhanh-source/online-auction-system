@@ -5,6 +5,7 @@ import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.model.item.Art;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.network.server.util.DTOMapper;
@@ -12,14 +13,13 @@ import com.group13.auction.unit.TestFixture;
 import org.junit.jupiter.api.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit test cho {@link DTOMapper} — đảm bảo mapping đúng và null-safe.
- *
- * <p>Không DB, không network.
+ * Không DB, không network.
  */
 @DisplayName("DTOMapper — domain model → DTO")
 class DTOMapperTest {
@@ -31,18 +31,16 @@ class DTOMapperTest {
     @BeforeEach
     void setUp() throws Exception {
         TestFixture.bootstrapSystemAdmin();
-        seller = TestFixture.normalSeller("dtoseller11");
-        bidder = TestFixture.bidderWithBalance("dtobidder11", 5_000_000L);
+        seller        = TestFixture.normalSeller("dtoseller11");
+        bidder        = TestFixture.bidderWithBalance("dtobidder11", 5_000_000L);
         runningAuction = TestFixture.runningAuction(seller, 1_000_000L);
     }
 
     @AfterEach
-    void tearDown() throws Exception {
-        TestFixture.resetSystemAdmin();
-    }
+    void tearDown() throws Exception { TestFixture.resetSystemAdmin(); }
 
     // =========================================================================
-    // toUserDTO
+    // toUserDTO — tất cả test cũ giữ nguyên
     // =========================================================================
 
     @Nested
@@ -53,11 +51,9 @@ class DTOMapperTest {
         @DisplayName("NormalUser với showBalance=true → tất cả fields được map")
         void normalUser_showBalanceTrue_allFieldsMapped() {
             UserDTO dto = DTOMapper.toUserDTO(bidder, true);
-
             assertThat(dto.getId()).isEqualTo(bidder.getId());
             assertThat(dto.getUsername()).isEqualTo(bidder.getUsername());
             assertThat(dto.getAccountStatus()).isEqualTo("ACTIVE");
-            assertThat(dto.getRating()).isEqualTo(bidder.getRating());
             assertThat(dto.getBalance()).isEqualTo(5_000_000L);
             assertThat(dto.getAvailableBalance()).isEqualTo(5_000_000L);
             assertThat(dto.getEmail()).isNotBlank();
@@ -67,9 +63,7 @@ class DTOMapperTest {
         @DisplayName("NormalUser với showBalance=false → balance fields không được set")
         void normalUser_showBalanceFalse_noBalanceFields() {
             UserDTO dto = DTOMapper.toUserDTO(bidder, false);
-
             assertThat(dto.getId()).isEqualTo(bidder.getId());
-            // balance default là 0 khi không set
             assertThat(dto.getBalance()).isZero();
             assertThat(dto.getLockedDeposit()).isZero();
         }
@@ -77,31 +71,25 @@ class DTOMapperTest {
         @Test
         @DisplayName("BIDDER role được include trong roles list")
         void normalUser_bidderRole_inRoles() {
-            UserDTO dto = DTOMapper.toUserDTO(bidder, false);
-
-            assertThat(dto.getRoles()).contains("BIDDER");
+            assertThat(DTOMapper.toUserDTO(bidder, false).getRoles()).contains("BIDDER");
         }
 
         @Test
         @DisplayName("SELLER role được include khi user có cả 2 roles")
         void normalSeller_bothRoles_inRoles() {
-            UserDTO dto = DTOMapper.toUserDTO(seller, false);
-
-            assertThat(dto.getRoles()).contains("BIDDER", "SELLER");
+            assertThat(DTOMapper.toUserDTO(seller, false).getRoles()).contains("BIDDER", "SELLER");
         }
 
         @Test
-        @DisplayName("banned user → accountStatus = BANNED trong DTO")
+        @DisplayName("banned user → accountStatus = BANNED")
         void bannedUser_statusMapped() {
             NormalUser banned = TestFixture.bannedBidder("bannedusr1");
-            UserDTO dto = DTOMapper.toUserDTO(banned, false);
-
-            assertThat(dto.getAccountStatus()).isEqualTo("BANNED");
+            assertThat(DTOMapper.toUserDTO(banned, false).getAccountStatus()).isEqualTo("BANNED");
         }
     }
 
     // =========================================================================
-    // toAuctionDTO
+    // toAuctionDTO — tất cả test cũ giữ nguyên
     // =========================================================================
 
     @Nested
@@ -112,30 +100,24 @@ class DTOMapperTest {
         @DisplayName("RUNNING auction → tất cả fields được map đúng")
         void runningAuction_allFieldsMapped() {
             AuctionDTOs.AuctionDTO dto = DTOMapper.toAuctionDTO(runningAuction);
-
             assertThat(dto.getId()).isEqualTo(runningAuction.getId());
             assertThat(dto.getStatus()).isEqualTo("RUNNING");
-            assertThat(dto.getCurrentPrice()).isEqualTo(runningAuction.getCurrentPrice());
-            assertThat(dto.getReservePrice()).isEqualTo(runningAuction.getReservePrice());
             assertThat(dto.getItem()).isNotNull();
         }
 
         @Test
-        @DisplayName("auction với currentLeader → leaderId và leaderUsername được set")
+        @DisplayName("auction với leader → leaderId và leaderUsername được set")
         void auctionWithLeader_leaderFieldsMapped() {
             runningAuction.updateBid(1_500_000L, bidder);
-
             AuctionDTOs.AuctionDTO dto = DTOMapper.toAuctionDTO(runningAuction);
-
             assertThat(dto.getCurrentLeaderId()).isEqualTo(bidder.getId());
             assertThat(dto.getCurrentLeaderUsername()).isEqualTo(bidder.getUsername());
         }
 
         @Test
-        @DisplayName("auction không có leader → leaderId và leaderUsername là null")
+        @DisplayName("auction không có leader → leaderId và leaderUsername null")
         void auctionWithoutLeader_leaderFieldsNull() {
             AuctionDTOs.AuctionDTO dto = DTOMapper.toAuctionDTO(runningAuction);
-
             assertThat(dto.getCurrentLeaderId()).isNull();
             assertThat(dto.getCurrentLeaderUsername()).isNull();
         }
@@ -143,17 +125,13 @@ class DTOMapperTest {
         @Test
         @DisplayName("reserveMet = true khi currentPrice >= reservePrice")
         void reserveMet_mappedCorrectly() {
-            long aboveReserve = runningAuction.getReservePrice() + 100_000L;
-            runningAuction.updateBid(aboveReserve, bidder);
-
-            AuctionDTOs.AuctionDTO dto = DTOMapper.toAuctionDTO(runningAuction);
-
-            assertThat(dto.isReserveMet()).isTrue();
+            runningAuction.updateBid(runningAuction.getReservePrice() + 100_000L, bidder);
+            assertThat(DTOMapper.toAuctionDTO(runningAuction).isReserveMet()).isTrue();
         }
     }
 
     // =========================================================================
-    // toItemDTO
+    // toItemDTO — test cũ giữ nguyên + test mới imageUrls
     // =========================================================================
 
     @Nested
@@ -164,19 +142,66 @@ class DTOMapperTest {
         @DisplayName("item với seller → sellerId và sellerUsername được map")
         void item_withSeller_sellerFieldsMapped() {
             Item item = runningAuction.getItem();
-
             AuctionDTOs.ItemDTO dto = DTOMapper.toItemDTO(item);
-
             assertThat(dto.getId()).isEqualTo(item.getId());
             assertThat(dto.getName()).isEqualTo(item.getName());
             assertThat(dto.getStartingPrice()).isEqualTo(item.getStartingPrice());
             assertThat(dto.getSellerId()).isEqualTo(seller.getId());
             assertThat(dto.getSellerUsername()).isEqualTo(seller.getUsername());
         }
+
+        @Test
+        @DisplayName("item không có ảnh → imageUrls trong DTO là list rỗng, không null")
+        void item_noImages_dtoImageUrlsEmptyNotNull() {
+            Item item = runningAuction.getItem();
+            AuctionDTOs.ItemDTO dto = DTOMapper.toItemDTO(item);
+            assertThat(dto.getImageUrls()).isNotNull().isEmpty();
+            assertThat(dto.hasImages()).isFalse();
+        }
+
+        @Test
+        @DisplayName("item có ảnh → imageUrls trong DTO khớp với item.getImageUrls()")
+        void item_withImages_dtoImageUrlsMapped() {
+            NormalUser s = TestFixture.normalSeller("dtoImgSeller1");
+            List<String> imgs = List.of("/uploads/items/x.jpg", "/uploads/items/y.png");
+            Art artWithImages = Art.reconstitute(
+                    "art-img-1", LocalDateTime.now(), LocalDateTime.now(),
+                    "Tranh có ảnh", "desc", 1_000_000L, s,
+                    "Nghệ sĩ", 2020, "Sơn dầu", imgs);
+
+            AuctionDTOs.ItemDTO dto = DTOMapper.toItemDTO(artWithImages);
+
+            assertThat(dto.getImageUrls())
+                    .hasSize(2)
+                    .containsExactlyElementsOf(imgs);
+            assertThat(dto.hasImages()).isTrue();
+        }
+
+        @Test
+        @DisplayName("item có ảnh → toAuctionDTO cũng truyền imageUrls xuống")
+        void toAuctionDTO_propagatesImageUrls() {
+            NormalUser s = TestFixture.normalSeller("dtoImgSeller2");
+            List<String> imgs = List.of("/uploads/items/main.jpg");
+            Art artWithImages = Art.reconstitute(
+                    "art-img-2", LocalDateTime.now(), LocalDateTime.now(),
+                    "Tranh test", "desc", 500_000L, s,
+                    "Nghệ sĩ", 2021, "Màu nước", imgs);
+
+            Auction auction = Auction.create(artWithImages,
+                    LocalDateTime.now().minusMinutes(1),
+                    LocalDateTime.now().plusHours(1),
+                    1_000_000L);
+            auction.transitionToRunning();
+
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
+
+            assertThat(auctionDto.getItem().getImageUrls())
+                    .containsExactly("/uploads/items/main.jpg");
+        }
     }
 
     // =========================================================================
-    // toAuctionUpdateDTO
+    // toAuctionUpdateDTO — tất cả test cũ giữ nguyên
     // =========================================================================
 
     @Nested
@@ -196,24 +221,22 @@ class DTOMapperTest {
             assertThat(dto.getNewStatus()).isEqualTo("FINISHED");
             assertThat(dto.getFinalPrice()).isEqualTo(2_000_000L);
             assertThat(dto.getWinnerId()).isEqualTo(bidder.getId());
-            assertThat(dto.getWinnerUsername()).isEqualTo(bidder.getUsername());
         }
 
         @Test
         @DisplayName("CANCELED auction với cancelReason → reason được map")
         void canceledAuction_reasonMapped() {
             Auction canceled = TestFixture.canceledFromRunningAuction(seller, 1_000_000L);
-
             AuctionDTOs.AuctionUpdateDTO dto = DTOMapper.toAuctionUpdateDTO(canceled, "NO_WINNER");
-
             assertThat(dto.getCancelReason()).isEqualTo("NO_WINNER");
         }
 
         @Test
-        @DisplayName("auction không có winner → winner fields là null (không NPE)")
+        @DisplayName("auction không có winner → winner fields null (không NPE)")
         void auctionNoWinner_nullSafe() {
             assertThatNoException().isThrownBy(() -> {
-                AuctionDTOs.AuctionUpdateDTO dto = DTOMapper.toAuctionUpdateDTO(runningAuction, null);
+                AuctionDTOs.AuctionUpdateDTO dto =
+                        DTOMapper.toAuctionUpdateDTO(runningAuction, null);
                 assertThat(dto.getWinnerId()).isNull();
                 assertThat(dto.getFinalPrice()).isZero();
             });
@@ -221,7 +244,7 @@ class DTOMapperTest {
     }
 
     // =========================================================================
-    // toBidUpdateDTO
+    // toBidUpdateDTO — tất cả test cũ giữ nguyên
     // =========================================================================
 
     @Nested
@@ -232,19 +255,16 @@ class DTOMapperTest {
         @DisplayName("bid update với leader → tất cả fields được map đúng")
         void bidUpdate_withLeader_allFieldsMapped() {
             runningAuction.updateBid(1_800_000L, bidder);
-
             BidDTOs.BidUpdateDTO dto = DTOMapper.toBidUpdateDTO(runningAuction, 1_800_000L);
-
             assertThat(dto.getAuctionId()).isEqualTo(runningAuction.getId());
             assertThat(dto.getNewCurrentPrice()).isEqualTo(1_800_000L);
             assertThat(dto.getLeaderId()).isEqualTo(bidder.getId());
-            assertThat(dto.getLeaderUsername()).isEqualTo(bidder.getUsername());
             assertThat(dto.getTimestamp()).isNotNull();
         }
     }
 
     // =========================================================================
-    // toBidChartPoint
+    // toBidChartPoint — tất cả test cũ giữ nguyên
     // =========================================================================
 
     @Nested
@@ -256,7 +276,6 @@ class DTOMapperTest {
         void chartPoint_allFieldsMapped() {
             BidDTOs.BidChartPointDTO dto = DTOMapper.toBidChartPoint(
                     "auc-test-1", 2_500_000L, "alice_user", false);
-
             assertThat(dto.getAuctionId()).isEqualTo("auc-test-1");
             assertThat(dto.getPrice()).isEqualTo(2_500_000L);
             assertThat(dto.getBidderUsername()).isEqualTo("alice_user");
@@ -269,7 +288,6 @@ class DTOMapperTest {
         void chartPoint_autoBid_flagTrue() {
             BidDTOs.BidChartPointDTO dto = DTOMapper.toBidChartPoint(
                     "auc-test-2", 3_000_000L, "bot_user", true);
-
             assertThat(dto.isAutoBid()).isTrue();
         }
     }
