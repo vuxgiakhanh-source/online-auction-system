@@ -21,6 +21,7 @@
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
     <VBox spacing="26.0"
+          styleClass="main-shell"
           AnchorPane.topAnchor="0.0"
           AnchorPane.bottomAnchor="0.0"
           AnchorPane.leftAnchor="0.0"
@@ -30,8 +31,8 @@
         </padding>
 
         <!-- Header -->
-        <HBox alignment="CENTER_LEFT" spacing="18.0">
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
+        <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="main-header">
+            <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="main-brand">
                 <ImageView fitWidth="210.0" preserveRatio="true">
                     <Image url="@../../assets/images/logo.png"/>
                 </ImageView>
@@ -45,102 +46,147 @@
 
             <Button mnemonicParsing="false"
                     onAction="#handleOpenProfile"
+                    styleClass="main-header-button"
                     text="Hồ sơ"/>
 
             <Button mnemonicParsing="false"
+                    onAction="#handleOpenNotificationCenter"
+                    styleClass="main-header-button"
+                    text="Thông báo"/>
+
+            <Button mnemonicParsing="false"
                     onAction="#handleGoToLanding"
+                    styleClass="main-header-button"
                     text="Landing"/>
 
             <Button mnemonicParsing="false"
                     onAction="#handleLogout"
+                    styleClass="main-header-danger-button"
                     text="Đăng xuất"/>
         </HBox>
 
         <!-- Welcome section -->
-        <VBox spacing="8.0">
+        <VBox spacing="8.0" styleClass="main-welcome-section">
             <Label fx:id="welcomeLabel"
                    text="Xin chào!"
-                   style="-fx-font-size: 34px; -fx-font-weight: 800;"/>
+                   styleClass="main-welcome-title"/>
 
             <Label fx:id="accountInfoLabel"
                    text="Đang tải thông tin tài khoản..."
                    wrapText="true"
-                   style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.76);"/>
+                   styleClass="main-account-info"/>
         </VBox>
 
         <!-- Main cards -->
-        <HBox spacing="22.0">
+        <HBox spacing="22.0" styleClass="main-card-row">
             <VBox spacing="14.0"
                   prefWidth="360.0"
-                  prefHeight="210.0"
-                  style="-fx-background-color: rgba(255, 255, 255, 0.10);
-                         -fx-background-radius: 26;
-                         -fx-padding: 24;">
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card">
                 <ImageView fitHeight="46.0" preserveRatio="true">
                     <Image url="@../../assets/icons/accent/icon-auction.png"/>
                 </ImageView>
 
                 <Label text="Phiên đấu giá"
-                       style="-fx-font-size: 24px; -fx-font-weight: 800;"/>
+                       styleClass="main-card-title"/>
 
                 <Label text="Xem danh sách phiên đấu giá, mở chi tiết sản phẩm và vào phòng đấu giá realtime."
                        wrapText="true"
-                       style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.78);"/>
+                       styleClass="main-card-description"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button mnemonicParsing="false"
                         onAction="#handleOpenAuctionList"
+                        styleClass="main-card-button"
                         text="Mở danh sách phiên đấu giá"/>
             </VBox>
 
             <VBox spacing="14.0"
                   prefWidth="360.0"
-                  prefHeight="210.0"
-                  style="-fx-background-color: rgba(255, 255, 255, 0.10);
-             -fx-background-radius: 26;
-             -fx-padding: 24;">
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card">
                 <ImageView fitHeight="46.0" preserveRatio="true">
                     <Image url="@../../assets/icons/accent/icon-wallet.png"/>
                 </ImageView>
 
                 <Label text="Ví &amp; thanh toán"
-                       style="-fx-font-size: 24px; -fx-font-weight: 800;"/>
+                       styleClass="main-card-title"/>
 
                 <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
                        wrapText="true"
-                       style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.78);"/>
+                       styleClass="main-card-description"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button mnemonicParsing="false"
                         onAction="#handleOpenWallet"
+                        styleClass="main-card-button"
                         text="Mở ví"/>
             </VBox>
 
             <VBox spacing="14.0"
                   prefWidth="360.0"
-                  prefHeight="210.0"
-                  style="-fx-background-color: rgba(255, 255, 255, 0.07);
-             -fx-background-radius: 26;
-             -fx-padding: 24;">
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card-muted">
                 <ImageView fitHeight="46.0" preserveRatio="true">
                     <Image url="@../../assets/icons/accent/icon-gavel.png"/>
                 </ImageView>
 
                 <Label text="Kênh Seller"
-                       style="-fx-font-size: 24px; -fx-font-weight: 800;"/>
+                       styleClass="main-card-title"/>
 
                 <Label text="Tạo phiên đấu giá, theo dõi các phiên của bạn và gửi yêu cầu hủy."
                        wrapText="true"
-                       style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.68);"/>
+                       styleClass="main-card-description-muted"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button fx:id="sellerDashboardButton"
                         mnemonicParsing="false"
                         onAction="#handleOpenSellerDashboard"
+                        styleClass="main-card-button"
                         text="Mở kênh Seller"/>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="22.0" styleClass="main-card-row">
+            <VBox spacing="14.0"
+                  prefWidth="360.0"
+                  prefHeight="168.0"
+                  styleClass="main-secondary-card">
+                <Label text="Hồ sơ cá nhân"
+                       styleClass="main-secondary-card-title"/>
+
+                <Label text="Xem thông tin tài khoản, vai trò và trạng thái hồ sơ."
+                       wrapText="true"
+                       styleClass="main-secondary-card-description"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenProfile"
+                        styleClass="main-secondary-button"
+                        text="Mở hồ sơ"/>
+            </VBox>
+
+            <VBox spacing="14.0"
+                  prefWidth="360.0"
+                  prefHeight="168.0"
+                  styleClass="main-secondary-card">
+                <Label text="Trung tâm thông báo"
+                       styleClass="main-secondary-card-title"/>
+
+                <Label text="Theo dõi thông báo hệ thống, thanh toán và Second Chance Offer."
+                       wrapText="true"
+                       styleClass="main-secondary-card-description"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenNotificationCenter"
+                        styleClass="main-secondary-button"
+                        text="Mở thông báo"/>
             </VBox>
         </HBox>
 
