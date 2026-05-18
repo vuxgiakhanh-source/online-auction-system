@@ -73,7 +73,9 @@ CREATE TABLE IF NOT EXISTS items (
                                      manufacturer    VARCHAR(255) NULL,
                                      `year`          INT          NULL,
                                      mileage         DOUBLE       NULL,
+                                     image_urls      TEXT NULL,
                                      created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                                     updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                      FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
@@ -99,12 +101,13 @@ CREATE TABLE IF NOT EXISTS auctions (
 
 -- 7. Bảng Bid Transactions
 CREATE TABLE IF NOT EXISTS bid_transactions (
-                                                id          VARCHAR(36) PRIMARY KEY,
-                                                auction_id  VARCHAR(36) NOT NULL,
-                                                bidder_id   VARCHAR(36) NOT NULL,
-                                                bid_amount  BIGINT      NOT NULL,
+                                                seq         BIGINT       AUTO_INCREMENT UNIQUE,
+                                                id          VARCHAR(36)  PRIMARY KEY,
+                                                auction_id  VARCHAR(36)  NOT NULL,
+                                                bidder_id   VARCHAR(36)  NOT NULL,
+                                                bid_amount  BIGINT       NOT NULL,
                                                 result      ENUM('ACCEPTED','REJECTED','ACCEPTED_RESERVE_NOT_MET') NOT NULL DEFAULT 'ACCEPTED',
-                                                bid_time    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+                                                bid_time    TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
                                                 FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                                 FOREIGN KEY (bidder_id)  REFERENCES users(id)    ON DELETE CASCADE
 );

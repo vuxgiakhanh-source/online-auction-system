@@ -276,16 +276,6 @@ public class AuctionHandler implements PacketHandler {
 
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
                     req.getAuctionId(), requestId));
-
-            // Notify Staff Admin về yêu cầu hủy phiên của Seller
-            AuctionDTOs.SellerCancelRequestNotifyDTO notifyDTO = new AuctionDTOs.SellerCancelRequestNotifyDTO();
-            notifyDTO.setAuctionId(auction.getId());
-            notifyDTO.setAuctionName(auction.getItem() != null ? auction.getItem().getName() : auction.getId());
-            notifyDTO.setSellerUsername(seller.getUsername());
-            notifyDTO.setReason(req.getReason());
-            notifyDTO.setRequestTime(java.time.LocalDateTime.now());
-            sessionManager.broadcastToAdmins(Packet.of(PacketType.SELLER_CANCEL_REQUEST_NOTIFY, notifyDTO));
-
             log.info("Cancel request: auctionId={}, sellerId={}, requestId={}",
                     req.getAuctionId(), seller.getId(), requestId);
         } catch (Exception e) {

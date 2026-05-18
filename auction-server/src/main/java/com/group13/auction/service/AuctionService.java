@@ -219,6 +219,7 @@ public class AuctionService implements IAuctionService {
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+    cleanupObservers(auction.getId());
   }
 
   /**
@@ -249,6 +250,7 @@ public class AuctionService implements IAuctionService {
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+    cleanupObservers(auction.getId());
   }
 
   /**
@@ -284,6 +286,7 @@ public class AuctionService implements IAuctionService {
 
     // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+    cleanupObservers(auction.getId());
   }
 
   /**
@@ -361,5 +364,14 @@ public class AuctionService implements IAuctionService {
     // Global (SystemAdmin) và Staff observers
     AuctionManager.getInstance().notifyGlobalObservers(event);
     AuctionManager.getInstance().notifyStaffObservers(event);
+  }
+
+  // Sau khi notify ended/canceled thành công
+  private void cleanupObservers(String auctionId) {
+    List<AuctionObserver> observers = observersMap.remove(auctionId);
+    if (observers != null) {
+      observers.clear();           // optional
+      log.info("Cleaned up {} observers for auction {}", observers.size(), auctionId);
+    }
   }
 }
