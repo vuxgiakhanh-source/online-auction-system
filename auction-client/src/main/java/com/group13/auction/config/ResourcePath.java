@@ -14,10 +14,12 @@ public final class ResourcePath {
     public static final String ICON_ACCENT_DIR = ICON_DIR + "accent/";
     public static final String ICON_NAVY_DIR = ICON_DIR + "navy/";
     public static final String FONT_DIR = "/com/group13/auction/assets/fonts/";
+    public static final String MUSIC_DIR = "/com/group13/auction/music/";
 
     public static final String LOGO_IMAGE = IMAGE_DIR + "logo.png";
     public static final String MASCOT_IMAGE = IMAGE_DIR + "mascot-version-1.png";
     public static final String MASCOT_SECONDARY_IMAGE = IMAGE_DIR + "mascot-version-2.png";
+    public static final String BACKGROUND_MUSIC = MUSIC_DIR + "bg.mp3";
 
     public static final String ICON_AUCTION = ICON_ACCENT_DIR + "icon-auction.png";
     public static final String ICON_BID = ICON_ACCENT_DIR + "icon-bid.png";
