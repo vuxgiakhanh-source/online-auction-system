@@ -6,6 +6,7 @@ import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.auction.AuctionCardViewModel;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.auction.AuctionTimerViewModel;
+import com.group13.auction.viewmodel.admin.AuctionModerationViewModel;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -84,6 +85,59 @@ public final class AuctionViewModelMapper {
                 canJoinOrWatch(auction),
                 canBidLive(auction),
                 currentPrice);
+    }
+
+    /**
+     * Chuyển danh sách auction DTO sang danh sách view model dành cho Admin moderation.
+     *
+     * @param auctions danh sách auction DTO server trả về
+     * @return danh sách auction moderation view model
+     */
+    public static List<AuctionModerationViewModel> toModerationViewModels(
+            List<AuctionDTOs.AuctionDTO> auctions) {
+        if (auctions == null) {
+            return List.of();
+        }
+
+        return auctions.stream()
+                .map(AuctionViewModelMapper::toModerationViewModel)
+                .toList();
+    }
+
+    /**
+     * Chuyển một auction DTO sang view model dành cho Admin moderation.
+     *
+     * @param auction auction DTO
+     * @return auction moderation view model
+     */
+    public static AuctionModerationViewModel toModerationViewModel(
+            AuctionDTOs.AuctionDTO auction) {
+        AuctionDTOs.ItemDTO item = auction == null ? null : auction.getItem();
+        LocalDateTime effectiveEndTime = effectiveEndTime(auction);
+        String status = auction == null ? null : auction.getStatus();
+
+        return new AuctionModerationViewModel(
+                safeAuctionId(auction),
+                itemName(item),
+                sellerName(item),
+                CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
+                statusText(status),
+                DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
+                DateTimeUtil.formatDateTime(effectiveEndTime),
+                canAdminCancel(status));
+    }
+
+    private static String sellerName(AuctionDTOs.ItemDTO item) {
+        if (item == null || isBlank(item.getSellerUsername())) {
+            return "--";
+        }
+
+        return item.getSellerUsername();
+    }
+
+    private static boolean canAdminCancel(String status) {
+        String normalizedStatus = normalize(status);
+        return "OPEN".equals(normalizedStatus) || "RUNNING".equals(normalizedStatus);
     }
 
     /** Tạo view model đếm ngược dựa trên end time của auction. */

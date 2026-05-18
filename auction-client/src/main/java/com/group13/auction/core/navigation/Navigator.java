@@ -133,4 +133,39 @@ public final class Navigator {
     public void goToNotificationCenter() {
         goTo(ViewPath.NOTIFICATION_CENTER_VIEW);
     }
+
+    /** Chuyển tới màn rating. */
+    public void goToRating() {
+        goTo(ViewPath.RATING_VIEW);
+    }
+
+    /** Chuyển tới màn gửi báo cáo chất lượng. */
+    public void goToQualityReport() {
+        goTo(ViewPath.QUALITY_REPORT_VIEW);
+    }
+
+    /** Chuyển tới dashboard Admin. */
+    public void goToAdminDashboard() {
+        goTo(ViewPath.ADMIN_DASHBOARD_VIEW);
+    }
+
+    /** Chuyển tới màn Admin quản lý người dùng. */
+    public void goToAdminUsers() {
+        goTo(ViewPath.ADMIN_USERS_VIEW);
+    }
+
+    /** Chuyển tới màn Admin quản lý phiên đấu giá. */
+    public void goToAdminAuctions() {
+        goTo(ViewPath.ADMIN_AUCTIONS_VIEW);
+    }
+
+    /** Chuyển tới màn Admin duyệt Seller. */
+    public void goToAdminSellerApproval() {
+        goTo(ViewPath.ADMIN_SELLER_APPROVAL_VIEW);
+    }
+
+    /** Chuyển tới màn Admin duyệt báo cáo chất lượng. */
+    public void goToAdminReportReview() {
+        goTo(ViewPath.ADMIN_REPORT_REVIEW_VIEW);
+    }
 }

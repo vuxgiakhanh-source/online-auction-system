@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/admin.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.admin.AuctionModerationController">
+
+    <VBox spacing="20.0" styleClass="admin-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Quản lý phiên đấu giá" styleClass="page-title"/>
+                <Label
+                        text="Admin có thể xem toàn bộ phiên đấu giá và hủy phiên khi backend cho phép."
+                        wrapText="true"
+                        styleClass="page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang Admin"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToDashboard"/>
+        </HBox>
+
+        <VBox spacing="12.0" styleClass="table-panel" VBox.vgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <VBox spacing="4.0">
+                    <Label text="Danh sách phiên đấu giá" styleClass="section-title"/>
+                    <Label
+                            text="Chỉ các phiên có trạng thái phù hợp mới có thể hủy từ màn này."
+                            styleClass="muted-label"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label text="Lý do hủy" styleClass="form-label"/>
+                <ChoiceBox fx:id="cancelReasonChoiceBox" prefWidth="210.0"/>
+
+                <Button
+                        fx:id="refreshButton"
+                        text="Tải lại"
+                        styleClass="secondary-button"
+                        onAction="#handleRefresh"/>
+                <Button
+                        fx:id="cancelButton"
+                        text="Hủy phiên"
+                        styleClass="danger-button"
+                        onAction="#handleCancelAuction"/>
+            </HBox>
+
+            <StackPane VBox.vgrow="ALWAYS">
+                <TableView fx:id="auctionTable" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="auctionIdColumn" text="Mã phiên" prefWidth="160.0"/>
+                        <TableColumn fx:id="titleColumn" text="Tên sản phẩm" prefWidth="210.0"/>
+                        <TableColumn fx:id="sellerColumn" text="Seller" prefWidth="150.0"/>
+                        <TableColumn fx:id="currentPriceColumn" text="Giá hiện tại" prefWidth="140.0"/>
+                        <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="120.0"/>
+                        <TableColumn fx:id="startTimeColumn" text="Bắt đầu" prefWidth="155.0"/>
+                        <TableColumn fx:id="endTimeColumn" text="Kết thúc" prefWidth="155.0"/>
+                    </columns>
+                </TableView>
+
+                <Label
+                        fx:id="emptyStateLabel"
+                        text="Chưa có dữ liệu phiên đấu giá."
+                        styleClass="empty-state-label"/>
+            </StackPane>
+        </VBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+    </VBox>
+</StackPane>

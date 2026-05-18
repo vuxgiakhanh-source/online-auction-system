@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/report.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.report.QualityReportController">
+
+    <VBox spacing="20.0" styleClass="report-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Báo cáo chất lượng" styleClass="page-title"/>
+                <Label
+                        text="Gửi báo cáo chất lượng sản phẩm, có thể đính kèm ảnh bằng chứng."
+                        styleClass="page-subtitle"
+                        wrapText="true"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang chính"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToMain"/>
+        </HBox>
+
+        <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" styleClass="form-panel" prefWidth="520.0">
+                <Label text="Thông tin báo cáo" styleClass="section-title"/>
+
+                <Label text="Mã phiên đấu giá" styleClass="form-label"/>
+                <TextField
+                        fx:id="auctionIdField"
+                        promptText="Mã phiên đấu giá liên quan đến vấn đề"
+                        styleClass="form-field"/>
+
+                <Label text="Mô tả vấn đề" styleClass="form-label"/>
+                <TextArea
+                        fx:id="descriptionArea"
+                        promptText="Mô tả rõ vấn đề chất lượng. Tối thiểu 10 ký tự."
+                        prefRowCount="8"
+                        wrapText="true"
+                        styleClass="form-area"/>
+
+                <Label text="Ảnh bằng chứng" styleClass="form-label"/>
+                <ListView
+                        fx:id="selectedImagesListView"
+                        prefHeight="140.0"
+                        styleClass="image-list"/>
+
+                <HBox spacing="10.0">
+                    <Button
+                            fx:id="chooseImagesButton"
+                            text="Chọn ảnh"
+                            styleClass="secondary-button"
+                            onAction="#handleChooseImages"/>
+                    <Button
+                            fx:id="removeSelectedImageButton"
+                            text="Xóa ảnh đã chọn"
+                            styleClass="secondary-button"
+                            onAction="#handleRemoveSelectedImage"/>
+                    <Button
+                            fx:id="clearImagesButton"
+                            text="Xóa toàn bộ ảnh"
+                            styleClass="secondary-button"
+                            onAction="#handleClearImages"/>
+                </HBox>
+
+                <HBox spacing="10.0">
+                    <Button
+                            fx:id="submitButton"
+                            text="Gửi báo cáo"
+                            maxWidth="Infinity"
+                            HBox.hgrow="ALWAYS"
+                            styleClass="primary-button"
+                            onAction="#handleSubmitReport"/>
+                    <Button
+                            fx:id="clearButton"
+                            text="Xóa form"
+                            maxWidth="Infinity"
+                            HBox.hgrow="ALWAYS"
+                            styleClass="secondary-button"
+                            onAction="#handleClearForm"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="result-panel" HBox.hgrow="ALWAYS">
+                <Label text="Kết quả gửi báo cáo" styleClass="section-title"/>
+                <Label
+                        text="Ảnh bằng chứng sẽ được upload trước, sau đó URL ảnh được gửi kèm báo cáo."
+                        wrapText="true"
+                        styleClass="muted-label"/>
+
+                <Label
+                        fx:id="resultLabel"
+                        wrapText="true"
+                        visible="false"
+                        managed="false"
+                        styleClass="result-label"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <VBox spacing="8.0" styleClass="report-note-box">
+                    <Label text="Ghi chú" styleClass="card-title"/>
+                    <Label
+                            text="Client không tự quyết định báo cáo có hợp lệ hay không. Server xử lý việc duyệt, từ chối và các hành động liên quan."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                </VBox>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+    </VBox>
+</StackPane>

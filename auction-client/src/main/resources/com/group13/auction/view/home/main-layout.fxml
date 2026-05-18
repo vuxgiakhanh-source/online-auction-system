@@ -45,6 +45,22 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button mnemonicParsing="false"
+                    onAction="#handleOpenRating"
+                    styleClass="main-header-button"
+                    text="Rating"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleOpenQualityReport"
+                    styleClass="main-header-button"
+                    text="Quality Report"/>
+
+            <Button fx:id="adminDashboardButton"
+                    mnemonicParsing="false"
+                    onAction="#handleOpenAdminDashboard"
+                    styleClass="main-header-button"
+                    text="Admin"/>
+
+            <Button mnemonicParsing="false"
                     onAction="#handleOpenProfile"
                     styleClass="main-header-button"
                     text="Hồ sơ"/>

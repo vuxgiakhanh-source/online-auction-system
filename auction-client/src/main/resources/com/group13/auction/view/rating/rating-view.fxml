@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/rating.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.rating.RatingController">
+
+    <VBox spacing="20.0" styleClass="rating-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Trung tâm đánh giá" styleClass="page-title"/>
+                <Label
+                        text="Gửi đánh giá hoặc xem lịch sử đánh giá thông qua API của server."
+                        styleClass="page-subtitle"
+                        wrapText="true"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang chính"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToMain"/>
+        </HBox>
+
+        <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" styleClass="form-panel" prefWidth="390.0">
+                <Label text="Gửi đánh giá" styleClass="section-title"/>
+
+                <Label text="Loại người được đánh giá" styleClass="form-label"/>
+                <ChoiceBox fx:id="targetTypeChoiceBox" maxWidth="Infinity"/>
+
+                <Label text="Mã người được đánh giá" styleClass="form-label"/>
+                <TextField
+                        fx:id="targetUserIdField"
+                        promptText="Mã Seller hoặc Bidder"
+                        styleClass="form-field"/>
+
+                <Label text="Mã phiên đấu giá" styleClass="form-label"/>
+                <TextField
+                        fx:id="auctionIdField"
+                        promptText="Mã phiên đấu giá liên quan"
+                        styleClass="form-field"/>
+
+                <Label text="Điểm đánh giá" styleClass="form-label"/>
+                <ChoiceBox fx:id="ratingChoiceBox" maxWidth="Infinity"/>
+
+                <Label text="Nhận xét" styleClass="form-label"/>
+                <TextArea
+                        fx:id="commentArea"
+                        promptText="Nhập nhận xét ngắn gọn, rõ ràng..."
+                        prefRowCount="5"
+                        wrapText="true"
+                        styleClass="form-area"/>
+
+                <Button
+                        fx:id="submitButton"
+                        text="Gửi đánh giá"
+                        maxWidth="Infinity"
+                        styleClass="primary-button"
+                        onAction="#handleSubmitRating"/>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="table-panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <VBox spacing="4.0">
+                        <Label text="Lịch sử đánh giá" styleClass="section-title"/>
+                        <Label
+                                text="Tải lịch sử đánh giá theo mã người dùng."
+                                styleClass="muted-label"/>
+                    </VBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <TextField
+                            fx:id="lookupUserIdField"
+                            promptText="Mã người dùng"
+                            prefWidth="220.0"
+                            styleClass="form-field"/>
+
+                    <Button
+                            fx:id="refreshButton"
+                            text="Tải"
+                            styleClass="secondary-button"
+                            onAction="#handleLoadRatings"/>
+                </HBox>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <TableView fx:id="ratingTable" styleClass="data-table">
+                        <columns>
+                            <TableColumn fx:id="reviewerColumn" text="Người đánh giá" prefWidth="150.0"/>
+                            <TableColumn fx:id="targetUserColumn" text="Người được đánh giá" prefWidth="160.0"/>
+                            <TableColumn fx:id="auctionColumn" text="Phiên đấu giá" prefWidth="140.0"/>
+                            <TableColumn fx:id="scoreColumn" text="Điểm" prefWidth="90.0"/>
+                            <TableColumn fx:id="commentColumn" text="Nhận xét" prefWidth="280.0"/>
+                            <TableColumn fx:id="createdAtColumn" text="Thời gian tạo" prefWidth="160.0"/>
+                        </columns>
+                    </TableView>
+
+                    <Label
+                            fx:id="emptyStateLabel"
+                            text="Chưa tải lịch sử đánh giá."
+                            styleClass="empty-state-label"/>
+                </StackPane>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+    </VBox>
+</StackPane>
