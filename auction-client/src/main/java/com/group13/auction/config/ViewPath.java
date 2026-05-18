@@ -34,6 +34,15 @@ public final class ViewPath {
     public static final String SELLER_AUCTION_DETAIL_VIEW =
             "/com/group13/auction/view/seller/seller-auction-detail-view.fxml";
 
+    public static final String WALLET_VIEW =
+            "/com/group13/auction/view/wallet/wallet-view.fxml";
+
+    public static final String PROFILE_VIEW =
+            "/com/group13/auction/view/profile/profile-view.fxml";
+
+    public static final String NOTIFICATION_CENTER_VIEW =
+            "/com/group13/auction/view/notification/notification-center-view.fxml";
+
     private ViewPath() {
         // Utility class.
     }

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/wallet.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.wallet.WalletController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="24.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="18.0">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleRefresh"
+                    text="Làm mới"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToHome"
+                    text="Dashboard"/>
+        </HBox>
+
+        <VBox spacing="8.0">
+            <Label styleClass="wallet-title" text="Ví &amp; thanh toán"/>
+            <Label styleClass="wallet-subtitle"
+                   text="Theo dõi số dư ví, khoản đặt cọc đang khóa và thực hiện nạp/rút tiền qua server."/>
+        </VBox>
+
+        <HBox spacing="18.0">
+            <VBox spacing="8.0" styleClass="wallet-summary-card">
+                <Label styleClass="wallet-card-title" text="Tổng số dư"/>
+                <Label fx:id="balanceLabel" styleClass="wallet-main-balance" text="--"/>
+            </VBox>
+
+            <VBox spacing="8.0" styleClass="wallet-summary-card">
+                <Label styleClass="wallet-card-title" text="Có thể sử dụng"/>
+                <Label fx:id="availableBalanceLabel" styleClass="wallet-balance-value" text="--"/>
+            </VBox>
+
+            <VBox spacing="8.0" styleClass="wallet-summary-card">
+                <Label styleClass="wallet-card-title" text="Đang giữ đặt cọc"/>
+                <Label fx:id="lockedDepositLabel" styleClass="wallet-balance-value" text="--"/>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="22.0">
+            <VBox spacing="14.0" styleClass="wallet-action-card">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitHeight="38.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-plus.png"/>
+                    </ImageView>
+                    <Label styleClass="wallet-section-title" text="Nạp tiền"/>
+                </HBox>
+
+                <Label styleClass="wallet-muted-text"
+                       wrapText="true"
+                       text="Nhập số tiền cần nạp vào ví. Server sẽ trả về số dư mới sau khi xử lý."/>
+
+                <TextField fx:id="depositAmountField"
+                           promptText="Ví dụ: 1000000"/>
+
+                <Button fx:id="depositButton"
+                        mnemonicParsing="false"
+                        onAction="#handleDeposit"
+                        text="Nạp tiền"/>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="wallet-action-card">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitHeight="38.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-minus.png"/>
+                    </ImageView>
+                    <Label styleClass="wallet-section-title" text="Rút tiền"/>
+                </HBox>
+
+                <Label styleClass="wallet-muted-text"
+                       wrapText="true"
+                       text="Nhập số tiền cần rút. Server sẽ kiểm tra số dư khả dụng trước khi xác nhận."/>
+
+                <TextField fx:id="withdrawAmountField"
+                           promptText="Ví dụ: 500000"/>
+
+                <Button fx:id="withdrawButton"
+                        mnemonicParsing="false"
+                        onAction="#handleWithdraw"
+                        text="Rút tiền"/>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="22.0"
+                               maxWidth="22.0"
+                               visible="false"
+                               managed="false"/>
+            <Label fx:id="statusLabel"
+                   styleClass="wallet-muted-text"
+                   text="Sẵn sàng."/>
+        </HBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</AnchorPane>

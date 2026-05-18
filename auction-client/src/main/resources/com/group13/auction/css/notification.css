@@ -1,0 +1,79 @@
+.notification-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 900;
+}
+
+.notification-subtitle,
+.notification-muted-text {
+    -fx-font-size: 15px;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+.notification-list-card,
+.notification-detail-card {
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+    -fx-background-radius: 26;
+    -fx-padding: 24;
+}
+
+.notification-list-card {
+    -fx-pref-width: 470px;
+}
+
+.notification-detail-card {
+    -fx-pref-width: 700px;
+}
+
+.notification-section-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 900;
+}
+
+.notification-empty-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+
+.notification-detail-title {
+    -fx-font-size: 27px;
+    -fx-font-weight: 900;
+}
+
+.notification-body-text {
+    -fx-font-size: 16px;
+    -fx-text-fill: rgba(255, 255, 255, 0.82);
+}
+
+.notification-field-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.56);
+}
+
+.notification-field-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
+.list-view {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.list-cell {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 18;
+    -fx-padding: 14;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 14px;
+}
+
+.list-cell:empty {
+    -fx-background-color: transparent;
+}
+
+.list-cell:selected {
+    -fx-background-color: rgba(103, 184, 234, 0.32);
+}

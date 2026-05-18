@@ -28,7 +28,7 @@ public final class App extends Application {
 
     @Override
     public void stop() {
-        // Đợt 1 chưa mở kết nối network tự động, nên chỉ giữ hook stop cho các đợt sau.
+        // Dùng để giải phóng tài nguyên phía client khi ứng dụng dừng.
     }
 
     /**

@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0"
-            stylesheets="@../../css/app.css"
+            stylesheets="@../../css/home.css"
             styleClass="screen-root"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -42,6 +42,10 @@
             </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleOpenProfile"
+                    text="Hồ sơ"/>
 
             <Button mnemonicParsing="false"
                     onAction="#handleGoToLanding"
@@ -93,9 +97,9 @@
             <VBox spacing="14.0"
                   prefWidth="360.0"
                   prefHeight="210.0"
-                  style="-fx-background-color: rgba(255, 255, 255, 0.07);
-                         -fx-background-radius: 26;
-                         -fx-padding: 24;">
+                  style="-fx-background-color: rgba(255, 255, 255, 0.10);
+             -fx-background-radius: 26;
+             -fx-padding: 24;">
                 <ImageView fitHeight="46.0" preserveRatio="true">
                     <Image url="@../../assets/icons/accent/icon-wallet.png"/>
                 </ImageView>
@@ -103,15 +107,15 @@
                 <Label text="Ví &amp; thanh toán"
                        style="-fx-font-size: 24px; -fx-font-weight: 800;"/>
 
-                <Label text="Sẽ nối ở các đợt sau sau khi hoàn thiện auction flow chính."
+                <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
                        wrapText="true"
-                       style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.68);"/>
+                       style="-fx-font-size: 15px; -fx-text-fill: rgba(255, 255, 255, 0.78);"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
-                <Button disable="true"
-                        mnemonicParsing="false"
-                        text="Coming soon"/>
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenWallet"
+                        text="Mở ví"/>
             </VBox>
 
             <VBox spacing="14.0"
