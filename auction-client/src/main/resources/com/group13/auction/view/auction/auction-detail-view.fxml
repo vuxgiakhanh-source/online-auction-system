@@ -69,131 +69,144 @@
         <ScrollPane fitToWidth="true"
                     VBox.vgrow="ALWAYS"
                     styleClass="auction-scroll-pane">
-            <content>
-                <VBox spacing="18.0">
-                    <padding>
-                        <Insets top="4.0" right="4.0" bottom="16.0" left="4.0"/>
-                    </padding>
+            <VBox spacing="18.0">
+                <padding>
+                    <Insets top="4.0" right="4.0" bottom="16.0" left="4.0"/>
+                </padding>
 
-                    <!-- Title card -->
-                    <VBox spacing="10.0" styleClass="auction-detail-hero">
-                        <HBox alignment="CENTER_LEFT" spacing="12.0">
-                            <VBox spacing="6.0">
-                                <Label fx:id="titleLabel"
-                                       text="Đang tải phiên đấu giá..."
-                                       wrapText="true"
-                                       styleClass="auction-detail-title"/>
+                <!-- Title card -->
+                <VBox spacing="10.0" styleClass="auction-detail-hero">
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <VBox spacing="6.0">
+                            <Label fx:id="titleLabel"
+                                   text="Đang tải phiên đấu giá..."
+                                   wrapText="true"
+                                   styleClass="auction-detail-title"/>
 
-                                <HBox spacing="10.0">
-                                    <Label fx:id="categoryLabel"
-                                           text="--"
-                                           styleClass="auction-status-badge"/>
-
-                                    <Label fx:id="statusLabel"
-                                           text="--"
-                                           styleClass="auction-status-badge"/>
-                                </HBox>
-                            </VBox>
-
-                            <Region HBox.hgrow="ALWAYS"/>
-
-                            <VBox alignment="CENTER_RIGHT" spacing="4.0">
-                                <Label text="Giá hiện tại"
-                                       styleClass="auction-muted-text"/>
-
-                                <Label fx:id="currentPriceLabel"
+                            <HBox spacing="10.0">
+                                <Label fx:id="categoryLabel"
                                        text="--"
-                                       styleClass="auction-current-price"/>
-                            </VBox>
-                        </HBox>
+                                       styleClass="auction-status-badge"/>
 
-                        <Label fx:id="descriptionLabel"
-                               text="Đang tải mô tả sản phẩm..."
-                               wrapText="true"
-                               styleClass="auction-description-text"/>
-                    </VBox>
-
-                    <!-- Metrics -->
-                    <GridPane hgap="14.0" vgap="14.0">
-                        <VBox GridPane.columnIndex="0"
-                              GridPane.rowIndex="0"
-                              styleClass="auction-info-box">
-                            <Label text="Người bán" styleClass="auction-muted-text"/>
-                            <Label fx:id="sellerLabel" text="--" styleClass="auction-info-value"/>
+                                <Label fx:id="statusLabel"
+                                       text="--"
+                                       styleClass="auction-status-badge"/>
+                            </HBox>
                         </VBox>
 
-                        <VBox GridPane.columnIndex="1"
-                              GridPane.rowIndex="0"
-                              styleClass="auction-info-box">
-                            <Label text="Giá khởi điểm" styleClass="auction-muted-text"/>
-                            <Label fx:id="startingPriceLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
 
-                        <VBox GridPane.columnIndex="2"
-                              GridPane.rowIndex="0"
-                              styleClass="auction-info-box">
-                            <Label text="Giá sàn" styleClass="auction-muted-text"/>
-                            <Label fx:id="reservePriceLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
+                        <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                            <Label text="Giá hiện tại"
+                                   styleClass="auction-muted-text"/>
 
-                        <VBox GridPane.columnIndex="0"
-                              GridPane.rowIndex="1"
-                              styleClass="auction-info-box">
-                            <Label text="Người dẫn đầu" styleClass="auction-muted-text"/>
-                            <Label fx:id="leaderLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
-
-                        <VBox GridPane.columnIndex="1"
-                              GridPane.rowIndex="1"
-                              styleClass="auction-info-box">
-                            <Label text="Lượt xem realtime" styleClass="auction-muted-text"/>
-                            <Label fx:id="viewerCountLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
-
-                        <VBox GridPane.columnIndex="2"
-                              GridPane.rowIndex="1"
-                              styleClass="auction-info-box">
-                            <Label text="Thời gian còn lại" styleClass="auction-muted-text"/>
-                            <Label fx:id="remainingTimeLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
-                    </GridPane>
-
-                    <!-- Time card -->
-                    <HBox spacing="14.0">
-                        <VBox HBox.hgrow="ALWAYS" styleClass="auction-info-box">
-                            <Label text="Bắt đầu" styleClass="auction-muted-text"/>
-                            <Label fx:id="startTimeLabel" text="--" styleClass="auction-info-value"/>
-                        </VBox>
-
-                        <VBox HBox.hgrow="ALWAYS" styleClass="auction-info-box">
-                            <Label text="Kết thúc" styleClass="auction-muted-text"/>
-                            <Label fx:id="endTimeLabel" text="--" styleClass="auction-info-value"/>
+                            <Label fx:id="currentPriceLabel"
+                                   text="--"
+                                   styleClass="auction-current-price"/>
                         </VBox>
                     </HBox>
 
-                    <!-- Actions -->
-                    <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="auction-action-bar">
-                        <Button fx:id="watchLiveButton"
-                                mnemonicParsing="false"
-                                onAction="#handleWatchLive"
-                                styleClass="auction-secondary-button"
-                                text="Watch realtime"/>
+                    <Label fx:id="descriptionLabel"
+                           text="Đang tải mô tả sản phẩm..."
+                           wrapText="true"
+                           styleClass="auction-description-text"/>
+                </VBox>
 
-                        <Button fx:id="joinLiveButton"
-                                mnemonicParsing="false"
-                                onAction="#handleJoinLive"
-                                styleClass="auction-primary-button"
-                                text="Join &amp; đặt giá"/>
+                <!-- Metrics -->
+                <GridPane hgap="14.0" vgap="14.0">
+                    <VBox GridPane.columnIndex="0"
+                          GridPane.rowIndex="0"
+                          styleClass="auction-info-box">
+                        <Label text="Người bán" styleClass="auction-muted-text"/>
+                        <Label fx:id="sellerLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
 
-                        <Region HBox.hgrow="ALWAYS"/>
+                    <VBox GridPane.columnIndex="1"
+                          GridPane.rowIndex="0"
+                          styleClass="auction-info-box">
+                        <Label text="Giá khởi điểm" styleClass="auction-muted-text"/>
+                        <Label fx:id="startingPriceLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+
+                    <VBox GridPane.columnIndex="2"
+                          GridPane.rowIndex="0"
+                          styleClass="auction-info-box">
+                        <Label text="Giá sàn" styleClass="auction-muted-text"/>
+                        <Label fx:id="reservePriceLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+
+                    <VBox GridPane.columnIndex="0"
+                          GridPane.rowIndex="1"
+                          styleClass="auction-info-box">
+                        <Label text="Người dẫn đầu" styleClass="auction-muted-text"/>
+                        <Label fx:id="leaderLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+
+                    <VBox GridPane.columnIndex="1"
+                          GridPane.rowIndex="1"
+                          styleClass="auction-info-box">
+                        <Label text="Lượt xem realtime" styleClass="auction-muted-text"/>
+                        <Label fx:id="viewerCountLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+
+                    <VBox GridPane.columnIndex="2"
+                          GridPane.rowIndex="1"
+                          styleClass="auction-info-box">
+                        <Label text="Thời gian còn lại" styleClass="auction-muted-text"/>
+                        <Label fx:id="remainingTimeLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+                </GridPane>
+
+                <!-- Time card -->
+                <HBox spacing="14.0">
+                    <VBox HBox.hgrow="ALWAYS" styleClass="auction-info-box">
+                        <Label text="Bắt đầu" styleClass="auction-muted-text"/>
+                        <Label fx:id="startTimeLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+
+                    <VBox HBox.hgrow="ALWAYS" styleClass="auction-info-box">
+                        <Label text="Kết thúc" styleClass="auction-muted-text"/>
+                        <Label fx:id="endTimeLabel" text="--" styleClass="auction-info-value"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Actions -->
+                <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="auction-action-bar">
+                    <Button fx:id="watchLiveButton"
+                            mnemonicParsing="false"
+                            onAction="#handleWatchLive"
+                            styleClass="auction-secondary-button"
+                            text="Watch realtime"/>
+
+                    <Button fx:id="joinLiveButton"
+                            mnemonicParsing="false"
+                            onAction="#handleJoinLive"
+                            styleClass="auction-primary-button"
+                            text="Join &amp; đặt giá"/>
+
+                    <Button fx:id="paymentButton"
+                            mnemonicParsing="false"
+                            managed="false"
+                            visible="false"
+                            onAction="#handleRequestPayment"
+                            styleClass="auction-payment-button"
+                            text="Thanh toán phiên này"/>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                        <Label fx:id="paymentStatusLabel"
+                               text="Thanh toán sẽ mở sau khi phiên đấu giá kết thúc."
+                               wrapText="true"
+                               styleClass="auction-payment-status"/>
 
                         <Label fx:id="messageLabel"
                                text="Sẵn sàng."
                                wrapText="true"
                                styleClass="auction-muted-text"/>
-                    </HBox>
-                </VBox>
-            </content>
+                    </VBox>
+                </HBox>
+            </VBox>
         </ScrollPane>
 
         <!-- Footer signature -->

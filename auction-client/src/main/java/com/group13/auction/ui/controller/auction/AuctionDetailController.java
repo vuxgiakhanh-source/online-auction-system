@@ -2,12 +2,15 @@ package com.group13.auction.ui.controller.auction;
 
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.auction.AuctionQueryService;
 import com.group13.auction.service.auction.WatchAuctionService;
+import com.group13.auction.service.payment.PaymentService;
 import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
+import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -19,9 +22,12 @@ public final class AuctionDetailController {
 
     private final AuctionQueryService auctionQueryService = new AuctionQueryService();
     private final WatchAuctionService watchAuctionService = new WatchAuctionService();
+    private final PaymentService paymentService = new PaymentService();
 
     private String auctionId;
     private boolean currentAuctionJoinable;
+    private boolean paymentAllowed;
+    private AuctionDetailViewModel currentDetail;
 
     @FXML
     private Label titleLabel;
@@ -63,6 +69,9 @@ public final class AuctionDetailController {
     private Label remainingTimeLabel;
 
     @FXML
+    private Label paymentStatusLabel;
+
+    @FXML
     private Label messageLabel;
 
     @FXML
@@ -70,6 +79,9 @@ public final class AuctionDetailController {
 
     @FXML
     private Button watchLiveButton;
+
+    @FXML
+    private Button paymentButton;
 
     @FXML
     private ProgressIndicator loadingIndicator;
@@ -86,6 +98,10 @@ public final class AuctionDetailController {
             setMessage("Thiếu mã phiên đấu giá. Hãy quay lại danh sách và chọn lại phiên.");
             joinLiveButton.setDisable(true);
             watchLiveButton.setDisable(true);
+            paymentButton.setDisable(true);
+            paymentButton.setVisible(false);
+            paymentButton.setManaged(false);
+            paymentStatusLabel.setText("Không thể xác định phiên cần thanh toán.");
             return;
         }
 
@@ -154,6 +170,51 @@ public final class AuctionDetailController {
                         });
     }
 
+    /** Gửi yêu cầu thanh toán phiên đấu giá đã thắng. */
+    @FXML
+    public void handleRequestPayment() {
+        if (currentDetail == null) {
+            AlertUtil.showWarning("Chưa có dữ liệu phiên đấu giá để thanh toán.");
+            return;
+        }
+
+        if (!paymentAllowed) {
+            AlertUtil.showWarning("Chỉ người thắng phiên đấu giá đã kết thúc mới có thể thanh toán.");
+            return;
+        }
+
+        boolean confirmed =
+                AlertUtil.confirm(
+                        "Xác nhận thanh toán cho phiên \""
+                                + currentDetail.itemName()
+                                + "\"?\nHệ thống sẽ kiểm tra quyền thanh toán và số dư ví trước khi xử lý.");
+        if (!confirmed) {
+            return;
+        }
+
+        setLoading(true, "Đang gửi yêu cầu thanh toán...");
+
+        paymentService
+                .requestPayment(auctionId)
+                .thenAccept(
+                        result ->
+                                FxThreadUtil.runOnFxThread(
+                                        () -> {
+                                            renderPaymentResult(result);
+                                            AlertUtil.showInfo(buildPaymentSuccessMessage(result));
+                                            loadAuctionDetail();
+                                        }))
+                .exceptionally(
+                        throwable -> {
+                            FxThreadUtil.runOnFxThread(
+                                    () -> {
+                                        setLoading(false, "Thanh toán không thành công.");
+                                        AlertUtil.showError(extractMessage(throwable));
+                                    });
+                            return null;
+                        });
+    }
+
     private void loadAuctionDetail() {
         setLoading(true, "Đang tải chi tiết phiên đấu giá...");
 
@@ -172,6 +233,7 @@ public final class AuctionDetailController {
     }
 
     private void renderDetail(AuctionDetailViewModel detail) {
+        currentDetail = detail;
         setLoading(false, "Chi tiết phiên đã được cập nhật.");
 
         titleLabel.setText(detail.itemName());
@@ -191,6 +253,72 @@ public final class AuctionDetailController {
         currentAuctionJoinable = detail.joinable();
         joinLiveButton.setDisable(!currentAuctionJoinable);
         watchLiveButton.setDisable(!currentAuctionJoinable);
+
+        updatePaymentControls(detail);
+    }
+
+    private void updatePaymentControls(AuctionDetailViewModel detail) {
+        String currentUserId = currentUserId();
+        paymentAllowed = detail.canRequestPayment(currentUserId);
+
+        boolean finishedButNotPaid = detail.finished() && !detail.paid();
+        paymentButton.setVisible(finishedButNotPaid);
+        paymentButton.setManaged(finishedButNotPaid);
+        paymentButton.setDisable(!paymentAllowed);
+
+        if (detail.paid()) {
+            paymentStatusLabel.setText("Phiên đấu giá này đã được thanh toán.");
+            return;
+        }
+
+        if (paymentAllowed) {
+            paymentStatusLabel.setText(
+                    "Bạn là người dẫn đầu khi phiên kết thúc. Có thể thanh toán phiên này.");
+            return;
+        }
+
+        if (finishedButNotPaid) {
+            paymentStatusLabel.setText(
+                    "Phiên đã kết thúc. Chỉ người thắng phiên đấu giá mới có thể thanh toán.");
+            return;
+        }
+
+        paymentStatusLabel.setText("Thanh toán sẽ mở sau khi phiên đấu giá kết thúc.");
+    }
+
+    private void renderPaymentResult(PaymentResultViewModel result) {
+        paymentAllowed = false;
+        paymentButton.setDisable(true);
+        paymentStatusLabel.setText(
+                "Thanh toán thành công. Số dư mới: "
+                        + result.newBalanceText()
+                        + ". Thời điểm: "
+                        + result.paidAtText()
+                        + ".");
+        setMessage("Thanh toán thành công.");
+    }
+
+    private String buildPaymentSuccessMessage(PaymentResultViewModel result) {
+        return "Thanh toán thành công.\n"
+                + "Giá chốt: "
+                + result.finalPriceText()
+                + "\n"
+                + "Tiền cọc đã trừ: "
+                + result.depositDeductedText()
+                + "\n"
+                + "Phần thanh toán thêm: "
+                + result.remainingToPayText()
+                + "\n"
+                + "Số dư mới: "
+                + result.newBalanceText();
+    }
+
+    private String currentUserId() {
+        return AppContext.getInstance()
+                .getSessionManager()
+                .getCurrentSession()
+                .map(UserSession::getUserId)
+                .orElse("");
     }
 
     private void openLiveBidding() {
@@ -206,6 +334,7 @@ public final class AuctionDetailController {
 
         joinLiveButton.setDisable(loading || !currentAuctionJoinable);
         watchLiveButton.setDisable(loading || !currentAuctionJoinable);
+        paymentButton.setDisable(loading || !paymentAllowed);
 
         setMessage(message);
     }

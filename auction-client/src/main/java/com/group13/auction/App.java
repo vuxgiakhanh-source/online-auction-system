@@ -5,6 +5,8 @@ import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.navigation.Route;
 import com.group13.auction.core.navigation.SceneManager;
 import com.group13.auction.ui.util.StageUtil;
+import com.group13.auction.network.client.facade.ClientNetworkFacade;
+import com.group13.auction.service.support.ClientNotificationService;
 import java.io.InputStream;
 import javafx.application.Application;
 import javafx.scene.text.Font;
@@ -20,6 +22,9 @@ public final class App extends Application {
 
         SceneManager sceneManager = new SceneManager(primaryStage);
         Navigator navigator = new Navigator(sceneManager);
+
+        ClientNotificationService.getInstance().start();
+
         navigator.goTo(Route.LANDING);
 
         primaryStage.show();
@@ -28,7 +33,8 @@ public final class App extends Application {
 
     @Override
     public void stop() {
-        // Dùng để giải phóng tài nguyên phía client khi ứng dụng dừng.
+        ClientNotificationService.getInstance().stop();
+        ClientNetworkFacade.getDefault().shutdown();
     }
 
     /**

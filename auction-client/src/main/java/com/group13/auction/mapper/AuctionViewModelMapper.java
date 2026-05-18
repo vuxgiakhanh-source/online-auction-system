@@ -53,6 +53,15 @@ public final class AuctionViewModelMapper {
         AuctionDTOs.ItemDTO item = auction == null ? null : auction.getItem();
         LocalDateTime effectiveEndTime = effectiveEndTime(auction);
         double currentPrice = auction == null ? 0 : auction.getCurrentPrice();
+        String rawStatus = normalize(auction == null ? null : auction.getStatus());
+        String currentLeaderId =
+                auction == null || auction.getCurrentLeaderId() == null
+                        ? ""
+                        : auction.getCurrentLeaderId();
+        String currentLeaderUsername =
+                auction == null || auction.getCurrentLeaderUsername() == null
+                        ? ""
+                        : auction.getCurrentLeaderUsername();
 
         return new AuctionDetailViewModel(
                 safeAuctionId(auction),
@@ -60,7 +69,10 @@ public final class AuctionViewModelMapper {
                 descriptionText(item),
                 categoryText(item),
                 sellerText(item),
+                rawStatus,
                 statusText(auction == null ? null : auction.getStatus()),
+                currentLeaderId,
+                currentLeaderUsername,
                 CurrencyUtil.formatVnd(currentPrice),
                 CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
                 CurrencyUtil.formatVnd(auction == null ? 0 : auction.getReservePrice()),

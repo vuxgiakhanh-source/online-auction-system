@@ -22,7 +22,7 @@
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
-    <VBox spacing="24.0"
+    <VBox spacing="20.0"
           AnchorPane.topAnchor="0.0"
           AnchorPane.bottomAnchor="0.0"
           AnchorPane.leftAnchor="0.0"
@@ -64,11 +64,32 @@
             </HBox>
 
             <Label styleClass="notification-subtitle"
-                   text="Theo dõi thông báo hệ thống, trạng thái phiên đấu giá và các cập nhật liên quan đến tài khoản."/>
+                   text="Theo dõi thông báo hệ thống, Second Chance Offer và các cập nhật liên quan đến tài khoản."/>
         </VBox>
 
         <HBox spacing="22.0" VBox.vgrow="ALWAYS">
-            <VBox spacing="14.0" styleClass="notification-list-card">
+            <VBox spacing="16.0" styleClass="notification-list-card">
+                <VBox spacing="10.0" styleClass="notification-second-chance-panel">
+                    <Label styleClass="notification-section-title" text="Second Chance đang chờ"/>
+
+                    <VBox fx:id="secondChanceEmptyBox"
+                          alignment="CENTER"
+                          spacing="8.0"
+                          prefHeight="105.0">
+                        <Label styleClass="notification-empty-title"
+                               text="Chưa có lời mời"/>
+                        <Label styleClass="notification-muted-text"
+                               textAlignment="CENTER"
+                               wrapText="true"
+                               text="Client chỉ hiển thị Second Chance Offer nhận được từ realtime event của server."/>
+                    </VBox>
+
+                    <ListView fx:id="secondChanceListView"
+                              prefHeight="142.0"
+                              visible="false"
+                              managed="false"/>
+                </VBox>
+
                 <Label styleClass="notification-section-title" text="Danh sách thông báo"/>
 
                 <VBox fx:id="emptyStateBox"
@@ -94,50 +115,98 @@
                           VBox.vgrow="ALWAYS"/>
             </VBox>
 
-            <VBox spacing="16.0" styleClass="notification-detail-card">
-                <Label styleClass="notification-section-title" text="Chi tiết thông báo"/>
+            <VBox spacing="14.0" styleClass="notification-detail-card">
+                <VBox spacing="12.0" styleClass="notification-offer-detail-card">
+                    <Label styleClass="notification-section-title" text="Xử lý Second Chance"/>
 
-                <VBox spacing="8.0">
-                    <Label fx:id="titleLabel"
-                           styleClass="notification-detail-title"
-                           wrapText="true"
-                           text="Chưa chọn thông báo"/>
+                    <VBox spacing="8.0">
+                        <Label fx:id="offerItemNameLabel"
+                               styleClass="notification-detail-title"
+                               wrapText="true"
+                               text="Chưa có Second Chance Offer"/>
 
-                    <Label fx:id="bodyLabel"
-                           styleClass="notification-body-text"
-                           wrapText="true"
-                           text="Chọn một thông báo ở danh sách bên trái để xem chi tiết."/>
+                        <Label styleClass="notification-field-title" text="Mã phiên đấu giá"/>
+                        <Label fx:id="offerAuctionIdLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Giá đề nghị"/>
+                        <Label fx:id="offerPriceLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Tiền cọc yêu cầu"/>
+                        <Label fx:id="offerDepositLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Hạn phản hồi"/>
+                        <Label fx:id="offerDeadlineLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Trạng thái"/>
+                        <Label fx:id="offerStatusLabel" styleClass="notification-field-value" text="--"/>
+                    </VBox>
+
+                    <HBox spacing="12.0">
+                        <Button fx:id="acceptSecondChanceButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleAcceptSecondChance"
+                                styleClass="notification-accept-button"
+                                text="Chấp nhận"/>
+
+                        <Button fx:id="declineSecondChanceButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleDeclineSecondChance"
+                                styleClass="notification-danger-button"
+                                text="Từ chối"/>
+
+                        <Button mnemonicParsing="false"
+                                onAction="#handleOpenSecondChanceAuction"
+                                text="Mở phiên"/>
+                    </HBox>
                 </VBox>
 
-                <VBox spacing="10.0">
-                    <Label styleClass="notification-field-title" text="Loại thông báo"/>
-                    <Label fx:id="typeLabel" styleClass="notification-field-value" text="--"/>
+                <VBox spacing="12.0" VBox.vgrow="ALWAYS">
+                    <Label styleClass="notification-section-title" text="Chi tiết thông báo"/>
 
-                    <Label styleClass="notification-field-title" text="Thời điểm tạo"/>
-                    <Label fx:id="createdAtLabel" styleClass="notification-field-value" text="--"/>
+                    <VBox spacing="8.0">
+                        <Label fx:id="titleLabel"
+                               styleClass="notification-detail-title"
+                               wrapText="true"
+                               text="Chưa chọn thông báo"/>
 
-                    <Label styleClass="notification-field-title" text="Trạng thái đọc"/>
-                    <Label fx:id="readStateLabel" styleClass="notification-field-value" text="--"/>
+                        <Label fx:id="bodyLabel"
+                               styleClass="notification-body-text"
+                               wrapText="true"
+                               text="Chọn một thông báo ở danh sách bên trái để xem chi tiết."/>
+                    </VBox>
 
-                    <Label styleClass="notification-field-title" text="Phiên đấu giá liên quan"/>
-                    <Label fx:id="relatedAuctionLabel" styleClass="notification-field-value" text="--"/>
+                    <VBox spacing="10.0">
+                        <Label styleClass="notification-field-title" text="Loại thông báo"/>
+                        <Label fx:id="typeLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Thời điểm tạo"/>
+                        <Label fx:id="createdAtLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Trạng thái đọc"/>
+                        <Label fx:id="readStateLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Phiên đấu giá liên quan"/>
+                        <Label fx:id="relatedAuctionLabel" styleClass="notification-field-value" text="--"/>
+                    </VBox>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <HBox spacing="12.0">
+                        <Button fx:id="markReadButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleMarkRead"
+                                text="Đánh dấu đã đọc"/>
+
+                        <Button fx:id="openAuctionButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleOpenRelatedAuction"
+                                text="Mở phiên liên quan"/>
+                    </HBox>
                 </VBox>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <HBox spacing="12.0">
-                    <Button fx:id="markReadButton"
-                            disable="true"
-                            mnemonicParsing="false"
-                            onAction="#handleMarkRead"
-                            text="Đánh dấu đã đọc"/>
-
-                    <Button fx:id="openAuctionButton"
-                            disable="true"
-                            mnemonicParsing="false"
-                            onAction="#handleOpenRelatedAuction"
-                            text="Mở phiên liên quan"/>
-                </HBox>
             </VBox>
         </HBox>
 

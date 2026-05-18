@@ -8,7 +8,10 @@ public final class AuctionDetailViewModel {
     private final String description;
     private final String categoryText;
     private final String sellerText;
+    private final String rawStatus;
     private final String statusText;
+    private final String currentLeaderId;
+    private final String currentLeaderUsername;
     private final String currentPriceText;
     private final String startingPriceText;
     private final String reservePriceText;
@@ -28,7 +31,10 @@ public final class AuctionDetailViewModel {
             String description,
             String categoryText,
             String sellerText,
+            String rawStatus,
             String statusText,
+            String currentLeaderId,
+            String currentLeaderUsername,
             String currentPriceText,
             String startingPriceText,
             String reservePriceText,
@@ -45,7 +51,10 @@ public final class AuctionDetailViewModel {
         this.description = description;
         this.categoryText = categoryText;
         this.sellerText = sellerText;
+        this.rawStatus = rawStatus == null ? "" : rawStatus;
         this.statusText = statusText;
+        this.currentLeaderId = currentLeaderId == null ? "" : currentLeaderId;
+        this.currentLeaderUsername = currentLeaderUsername == null ? "" : currentLeaderUsername;
         this.currentPriceText = currentPriceText;
         this.startingPriceText = startingPriceText;
         this.reservePriceText = reservePriceText;
@@ -79,8 +88,20 @@ public final class AuctionDetailViewModel {
         return sellerText;
     }
 
+    public String rawStatus() {
+        return rawStatus;
+    }
+
     public String statusText() {
         return statusText;
+    }
+
+    public String currentLeaderId() {
+        return currentLeaderId;
+    }
+
+    public String currentLeaderUsername() {
+        return currentLeaderUsername;
     }
 
     public String currentPriceText() {
@@ -125,5 +146,30 @@ public final class AuctionDetailViewModel {
 
     public double currentPrice() {
         return currentPrice;
+    }
+
+    public boolean finished() {
+        return "FINISHED".equalsIgnoreCase(rawStatus);
+    }
+
+    public boolean paid() {
+        return "PAID".equalsIgnoreCase(rawStatus);
+    }
+
+    /**
+     * Kiểm tra điều kiện hiển thị nút thanh toán ở client.
+     *
+     * <p>Đây chỉ là kiểm tra UI. Server vẫn là nơi xác thực winner và xử lý nghiệp vụ thanh toán.
+     *
+     * @param currentUserId id người dùng hiện tại
+     * @return true nếu client có thể cho hiển thị nút thanh toán
+     */
+    public boolean canRequestPayment(String currentUserId) {
+        return finished()
+                && !paid()
+                && currentUserId != null
+                && !currentUserId.isBlank()
+                && !currentLeaderId.isBlank()
+                && currentLeaderId.equals(currentUserId);
     }
 }

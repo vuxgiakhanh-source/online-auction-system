@@ -4,6 +4,7 @@ import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.service.payment.SecondChanceRealtimeService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,9 +18,14 @@ public final class MainLayoutController {
 
     @FXML private Button sellerDashboardButton;
 
+    private final SecondChanceRealtimeService secondChanceRealtimeService =
+            SecondChanceRealtimeService.getInstance();
+
     /** Hiển thị thông tin session hiện tại lên dashboard. */
     @FXML
     public void initialize() {
+        secondChanceRealtimeService.start();
+
         AppContext.getInstance()
                 .getSessionManager()
                 .getCurrentSession()
@@ -53,6 +59,7 @@ public final class MainLayoutController {
     /** Đăng xuất ở phía client và đưa người dùng về màn đăng nhập. */
     @FXML
     public void handleLogout() {
+        secondChanceRealtimeService.clear();
         AppContext.getInstance().getSessionManager().clearSession();
         Navigator.getInstance().goToLogin();
     }
