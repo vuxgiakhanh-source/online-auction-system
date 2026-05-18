@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/profile.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.profile.ProfileController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="24.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="18.0">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="refreshButton"
+                    mnemonicParsing="false"
+                    onAction="#handleRefresh"
+                    text="Làm mới"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToHome"
+                    text="Dashboard"/>
+        </HBox>
+
+        <VBox spacing="8.0">
+            <Label styleClass="profile-title" text="Hồ sơ người dùng"/>
+            <Label styleClass="profile-subtitle"
+                   text="Thông tin tài khoản được tải trực tiếp từ server qua profile API."/>
+        </VBox>
+
+        <HBox spacing="22.0">
+            <VBox spacing="14.0" styleClass="profile-card">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitHeight="38.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-profile.png"/>
+                    </ImageView>
+                    <Label styleClass="profile-section-title" text="Thông tin tài khoản"/>
+                </HBox>
+
+                <VBox spacing="10.0">
+                    <Label styleClass="profile-field-title" text="Username"/>
+                    <Label fx:id="usernameLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Email"/>
+                    <Label fx:id="emailLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Vai trò"/>
+                    <Label fx:id="rolesLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Vai trò chính"/>
+                    <Label fx:id="primaryRoleLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Trạng thái"/>
+                    <Label fx:id="accountStatusLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Đánh giá"/>
+                    <Label fx:id="ratingLabel" styleClass="profile-field-value" text="--"/>
+                </VBox>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="profile-card">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitHeight="38.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-wallet.png"/>
+                    </ImageView>
+                    <Label styleClass="profile-section-title" text="Ví tài khoản"/>
+                </HBox>
+
+                <VBox spacing="10.0">
+                    <Label styleClass="profile-field-title" text="Tổng số dư"/>
+                    <Label fx:id="balanceLabel" styleClass="profile-money-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Số dư khả dụng"/>
+                    <Label fx:id="availableBalanceLabel" styleClass="profile-money-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Đang giữ đặt cọc"/>
+                    <Label fx:id="lockedDepositLabel" styleClass="profile-money-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Ngày tạo tài khoản"/>
+                    <Label fx:id="createdAtLabel" styleClass="profile-field-value" text="--"/>
+
+                    <Label styleClass="profile-field-title" text="Cập nhật lần cuối"/>
+                    <Label fx:id="updatedAtLabel" styleClass="profile-field-value" text="--"/>
+                </VBox>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="profile-card">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitHeight="38.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-gavel.png"/>
+                    </ImageView>
+                    <Label styleClass="profile-section-title" text="Quyền Seller"/>
+                </HBox>
+
+                <Label fx:id="sellerRequestHintLabel"
+                       styleClass="profile-muted-text"
+                       wrapText="true"
+                       text="Đang kiểm tra điều kiện nâng cấp Seller..."/>
+
+                <Button fx:id="requestSellerRoleButton"
+                        mnemonicParsing="false"
+                        onAction="#handleRequestSellerRole"
+                        text="Yêu cầu quyền Seller"/>
+
+                <Label styleClass="profile-muted-text"
+                       wrapText="true"
+                       text="Client chỉ gửi yêu cầu. Việc duyệt hoặc từ chối quyền Seller do server xử lý."/>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="22.0"
+                               maxWidth="22.0"
+                               visible="false"
+                               managed="false"/>
+            <Label fx:id="statusLabel"
+                   styleClass="profile-muted-text"
+                   text="Sẵn sàng."/>
+        </HBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</AnchorPane>

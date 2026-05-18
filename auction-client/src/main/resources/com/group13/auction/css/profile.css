@@ -1,0 +1,41 @@
+.profile-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 900;
+}
+
+.profile-subtitle,
+.profile-muted-text {
+    -fx-font-size: 15px;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+.profile-card {
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+    -fx-background-radius: 26;
+    -fx-padding: 24;
+    -fx-pref-width: 365px;
+    -fx-pref-height: 395px;
+}
+
+.profile-section-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 900;
+}
+
+.profile-field-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.56);
+}
+
+.profile-field-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+}
+
+.profile-money-value {
+    -fx-font-size: 20px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #67b8ea;
+}

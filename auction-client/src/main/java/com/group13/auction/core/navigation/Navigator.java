@@ -118,4 +118,19 @@ public final class Navigator {
     public void goToSellerAuctionDetail() {
         goTo(ViewPath.SELLER_AUCTION_DETAIL_VIEW);
     }
+
+    /** Chuyển tới màn ví người dùng. */
+    public void goToWallet() {
+        goTo(ViewPath.WALLET_VIEW);
+    }
+
+    /** Chuyển tới màn hồ sơ người dùng. */
+    public void goToProfile() {
+        goTo(ViewPath.PROFILE_VIEW);
+    }
+
+    /** Chuyển tới trung tâm thông báo. */
+    public void goToNotificationCenter() {
+        goTo(ViewPath.NOTIFICATION_CENTER_VIEW);
+    }
 }

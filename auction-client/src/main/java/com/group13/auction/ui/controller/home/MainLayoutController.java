@@ -87,4 +87,22 @@ public final class MainLayoutController {
         sellerDashboardButton.setDisable(!seller);
         sellerDashboardButton.setText(seller ? "Mở kênh Seller" : "Cần quyền Seller");
     }
+
+    /** Mở màn ví người dùng. */
+    @FXML
+    public void handleOpenWallet() {
+        Navigator.getInstance().goToWallet();
+    }
+
+    /** Mở màn hồ sơ người dùng. */
+    @FXML
+    public void handleOpenProfile() {
+        Navigator.getInstance().goToProfile();
+    }
+
+    /** Mở trung tâm thông báo. */
+    @FXML
+    public void handleOpenNotificationCenter() {
+        Navigator.getInstance().goToNotificationCenter();
+    }
 }
