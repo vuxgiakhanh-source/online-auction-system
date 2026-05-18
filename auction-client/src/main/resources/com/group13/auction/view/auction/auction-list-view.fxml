@@ -109,15 +109,13 @@
         <ScrollPane fitToWidth="true"
                     VBox.vgrow="ALWAYS"
                     styleClass="auction-scroll-pane">
-            <content>
-                <VBox fx:id="auctionCardContainer"
-                      spacing="14.0"
-                      styleClass="auction-list-container">
-                    <padding>
-                        <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
-                    </padding>
-                </VBox>
-            </content>
+            <VBox fx:id="auctionCardContainer"
+                  spacing="14.0"
+                  styleClass="auction-list-container">
+                <padding>
+                    <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
+                </padding>
+            </VBox>
         </ScrollPane>
 
         <!-- Footer signature -->
