@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/data.properties" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/data.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -231,7 +229,21 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.AuctionSystemLoadIT">
+  <component name="RunManager" selected="Application.ServerMain">
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
+      <module name="auction-server" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
@@ -290,21 +302,6 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="QualityReportServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.unit.service.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.unit.service" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.service.QualityReportServiceTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
       <deployment type="docker-compose.yml">
         <settings />
@@ -318,19 +315,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Application.ServerMain" />
       <item itemvalue="Application.TestLauncher" />
       <item itemvalue="JUnit.AccountServiceLoadIT" />
       <item itemvalue="JUnit.AuctionManagerLoadTest" />
       <item itemvalue="JUnit.AuctionSystemLoadIT" />
-      <item itemvalue="JUnit.QualityReportServiceTest" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
         <item itemvalue="JUnit.AuctionManagerLoadTest" />
         <item itemvalue="JUnit.AccountServiceLoadIT" />
         <item itemvalue="Application.TestLauncher" />
-        <item itemvalue="JUnit.QualityReportServiceTest" />
       </list>
     </recent_temporary>
   </component>
@@ -464,7 +461,7 @@
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
           <line>36</line>
-          <properties class="com.group13.auction.unit.TestLauncher" method="main">
+          <properties class="com.group13.auction.unit.TestLauncher">
             <option name="EMULATED" value="true" />
             <option name="WATCH_EXIT" value="false" />
           </properties>
