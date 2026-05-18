@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/admin.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.admin.QualityReportReviewController">
+
+    <VBox spacing="20.0" styleClass="admin-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Duyệt báo cáo chất lượng" styleClass="page-title"/>
+                <Label
+                        text="Admin xem chi tiết báo cáo và duyệt hoặc từ chối theo API backend."
+                        wrapText="true"
+                        styleClass="page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang Admin"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToDashboard"/>
+        </HBox>
+
+        <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="12.0" styleClass="table-panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <VBox spacing="4.0">
+                        <Label text="Danh sách báo cáo" styleClass="section-title"/>
+                        <Label
+                                text="Chọn một report để xem chi tiết và xử lý."
+                                styleClass="muted-label"/>
+                    </VBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Button
+                            fx:id="refreshButton"
+                            text="Tải lại"
+                            styleClass="secondary-button"
+                            onAction="#handleRefresh"/>
+                    <Button
+                            fx:id="approveButton"
+                            text="Duyệt"
+                            styleClass="primary-button"
+                            onAction="#handleApproveReport"/>
+                    <Button
+                            fx:id="rejectButton"
+                            text="Từ chối"
+                            styleClass="danger-button"
+                            onAction="#handleRejectReport"/>
+                </HBox>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <TableView fx:id="reportTable" styleClass="data-table">
+                        <columns>
+                            <TableColumn fx:id="reportIdColumn" text="Mã report" prefWidth="150.0"/>
+                            <TableColumn fx:id="reporterColumn" text="Người gửi" prefWidth="140.0"/>
+                            <TableColumn fx:id="auctionColumn" text="Phiên đấu giá" prefWidth="145.0"/>
+                            <TableColumn fx:id="titleColumn" text="Tiêu đề" prefWidth="190.0"/>
+                            <TableColumn fx:id="reasonColumn" text="Lý do" prefWidth="150.0"/>
+                            <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="120.0"/>
+                            <TableColumn fx:id="createdAtColumn" text="Thời gian tạo" prefWidth="150.0"/>
+                        </columns>
+                    </TableView>
+
+                    <Label
+                            fx:id="emptyStateLabel"
+                            text="Chưa có báo cáo chất lượng."
+                            styleClass="empty-state-label"/>
+                </StackPane>
+            </VBox>
+
+            <VBox spacing="12.0" styleClass="detail-panel" prefWidth="360.0">
+                <Label text="Chi tiết báo cáo" styleClass="section-title"/>
+                <Label
+                        text="Nội dung chi tiết của report được chọn."
+                        wrapText="true"
+                        styleClass="muted-label"/>
+
+                <TextArea
+                        fx:id="reportDetailArea"
+                        editable="false"
+                        wrapText="true"
+                        VBox.vgrow="ALWAYS"
+                        styleClass="form-area"/>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+    </VBox>
+</StackPane>

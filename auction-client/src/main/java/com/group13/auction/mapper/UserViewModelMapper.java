@@ -4,6 +4,9 @@ import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.profile.UserProfileViewModel;
+import com.group13.auction.viewmodel.admin.SellerApprovalViewModel;
+import com.group13.auction.viewmodel.admin.UserModerationViewModel;
+import java.util.Arrays;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -50,6 +53,126 @@ public final class UserViewModelMapper {
                 admin,
                 canRequestSellerRole(dto, roles, admin, seller),
                 dto.isHasEverBeenPenalized());
+    }
+
+    /**
+     * Chuyển mảng user DTO sang danh sách view model quản lý người dùng.
+     *
+     * @param users mảng user DTO server trả về
+     * @return danh sách user moderation view model
+     */
+    public static List<UserModerationViewModel> toModerationViewModels(UserDTO[] users) {
+        if (users == null) {
+            return List.of();
+        }
+
+        return Arrays.stream(users)
+                .map(UserViewModelMapper::toModerationViewModel)
+                .toList();
+    }
+
+    /**
+     * Chuyển danh sách user DTO sang danh sách view model quản lý người dùng.
+     *
+     * @param users danh sách user DTO server trả về
+     * @return danh sách user moderation view model
+     */
+    public static List<UserModerationViewModel> toModerationViewModels(List<UserDTO> users) {
+        if (users == null) {
+            return List.of();
+        }
+
+        return users.stream()
+                .map(UserViewModelMapper::toModerationViewModel)
+                .toList();
+    }
+
+    /**
+     * Chuyển một user DTO sang view model quản lý người dùng.
+     *
+     * @param dto user DTO
+     * @return user moderation view model
+     */
+    public static UserModerationViewModel toModerationViewModel(UserDTO dto) {
+        if (dto == null) {
+            return new UserModerationViewModel("--", "--", "--", "--", "--", false);
+        }
+
+        List<String> roles = safeRoles(dto.getRoles());
+        String status = accountStatusText(dto.getAccountStatus());
+
+        return new UserModerationViewModel(
+                fallback(dto.getId()),
+                fallback(dto.getUsername()),
+                fallback(dto.getEmail()),
+                rolesText(roles),
+                status,
+                isBanned(dto));
+    }
+
+    /**
+     * Chuyển mảng user DTO sang danh sách candidate duyệt Seller.
+     *
+     * <p>Backend hiện có API approve seller role, nhưng chưa có API riêng để list pending seller
+     * request. Vì vậy client lọc từ danh sách user hiện có và chỉ hiển thị candidate phù hợp.
+     *
+     * @param users mảng user DTO server trả về
+     * @return danh sách seller approval view model
+     */
+    public static List<SellerApprovalViewModel> toSellerApprovalViewModels(UserDTO[] users) {
+        if (users == null) {
+            return List.of();
+        }
+
+        return Arrays.stream(users)
+                .map(UserViewModelMapper::toSellerApprovalViewModel)
+                .filter(SellerApprovalViewModel::isApprovable)
+                .toList();
+    }
+
+    /**
+     * Chuyển một user DTO sang candidate duyệt Seller.
+     *
+     * @param dto user DTO
+     * @return seller approval view model
+     */
+    public static SellerApprovalViewModel toSellerApprovalViewModel(UserDTO dto) {
+        if (dto == null) {
+            return new SellerApprovalViewModel("--", "--", "--", "--", "--", false);
+        }
+
+        List<String> roles = safeRoles(dto.getRoles());
+        boolean alreadySeller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
+        boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
+        boolean active = dto.getAccountStatus() != null && dto.getAccountStatus().equalsIgnoreCase("ACTIVE");
+        boolean approvable = !alreadySeller && !admin && active && !dto.isHasEverBeenPenalized();
+
+        String note;
+        if (alreadySeller) {
+            note = "Người dùng đã có quyền Seller.";
+        } else if (admin) {
+            note = "Tài khoản Admin không cần duyệt Seller.";
+        } else if (!active) {
+            note = "Chỉ tài khoản ACTIVE mới có thể duyệt Seller.";
+        } else if (dto.isHasEverBeenPenalized()) {
+            note = "Tài khoản từng bị phạt, không auto-approve Seller.";
+        } else {
+            note = "Có thể duyệt quyền Seller bằng API hiện có.";
+        }
+
+        return new SellerApprovalViewModel(
+                fallback(dto.getId()),
+                fallback(dto.getUsername()),
+                fallback(dto.getEmail()),
+                rolesText(roles),
+                note,
+                approvable);
+    }
+
+    private static boolean isBanned(UserDTO dto) {
+        return dto != null
+                && dto.getAccountStatus() != null
+                && dto.getAccountStatus().equalsIgnoreCase("BANNED");
     }
 
     private static UserProfileViewModel emptyProfile() {

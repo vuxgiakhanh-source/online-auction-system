@@ -43,6 +43,23 @@ public final class ViewPath {
     public static final String NOTIFICATION_CENTER_VIEW =
             "/com/group13/auction/view/notification/notification-center-view.fxml";
 
+    public static final String RATING_VIEW =
+            "/com/group13/auction/view/rating/rating-view.fxml";
+
+    public static final String QUALITY_REPORT_VIEW =
+            "/com/group13/auction/view/report/quality-report-view.fxml";
+
+    public static final String ADMIN_DASHBOARD_VIEW =
+            "/com/group13/auction/view/admin/admin-dashboard-view.fxml";
+    public static final String ADMIN_USERS_VIEW =
+            "/com/group13/auction/view/admin/user-moderation-view.fxml";
+    public static final String ADMIN_AUCTIONS_VIEW =
+            "/com/group13/auction/view/admin/auction-moderation-view.fxml";
+    public static final String ADMIN_SELLER_APPROVAL_VIEW =
+            "/com/group13/auction/view/admin/seller-approval-view.fxml";
+    public static final String ADMIN_REPORT_REVIEW_VIEW =
+            "/com/group13/auction/view/admin/quality-report-review-view.fxml";
+
     private ViewPath() {
         // Utility class.
     }
