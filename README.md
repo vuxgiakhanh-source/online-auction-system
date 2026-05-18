@@ -67,10 +67,10 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 🎬 Demo
 > Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
-|                    | Link                        |
-|--------------------|-----------------------------|
-| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAO.pdf)_   |
-| 🎥 **Video Demo**  | _[Cập nhật sau]_            |
+|                    | Link                         |
+|--------------------|------------------------------|
+| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL.pdf)_ |
+| 🎥 **Video Demo**  | _[Cập nhật sau]_             |
 
 ---
 
@@ -365,16 +365,16 @@ Project áp dụng __testing pyramid__ mạnh mẽ và có tổ chức rõ ràng
 
 __Thống kê số files và test methods tính đến ngày `13-5-2026`__
 
-| Loại Test              | Files          | Test Methods             | Công cụ / Đặc điểm                              |
-|------------------------|----------------|--------------------------|-------------------------------------------------|
-| **Unit Tests**         | 38             | 1,670                    | JUnit 5 + Mockito, kiểm tra từng class độc lập  |
-| **Integration Tests**  | 11             | 163                      | Docker + MySQL thật, @RequiresDocker            |
-| **Concurrency Tests**  | 1              | 23                       | Multi-thread race condition, ExecutorService    |
-| **Security Tests**     | 1              | 4                        | WebSocket auth bypass, unauthorized bid         |
-| **Load Tests**         | 2              | 3                        | Throughput benchmark, BidService + Chatbot      |
-| **WebSocket Tests**    | 3              | 39                       | End-to-end packet routing & broadcast           |
-| **TỔNG CỘNG**          | **56 files**   | **1,902 test methods**   |                                                 |
-
+| Loại Test             | Files        | Test Methods           | Công cụ / Đặc điểm                                                                      |
+|-----------------------|--------------|------------------------|-----------------------------------------------------------------------------------------|
+| **Unit Tests**        | 46           | 1,802                  | JUnit 5 + Mockito, kiểm tra từng class độc lập                                          |
+| **Integration Tests** | 12           | 157                    | Docker + MySQL thật, @RequiresDocker                                                    |
+| **Concurrency Tests** | 14           | 63                     | Multi-thread race condition, ExecutorService                                            |
+| **Security Tests**    | 2            | 17                     | WebSocket auth bypass, unauthorized bid                                                 |
+| **Load Tests**        | 10           | 74                     | Throughput benchmark, BidService + Chatbot                                              |
+| **WebSocket Tests**   | 7            | 121                    | End-to-end packet routing & broadcast                                                   |
+| **Stress Tests**      | 4            | 11                     | ExecutorService / đa luồng, kiểm tra hệ thống dưới tải cao và thao tác lặp lại liên tục |
+| **TỔNG CỘNG**         | **95 files** | **2,245 test methods** |                                                                                         | 
 ```bash
 # Chạy toàn bộ tests
 mvn clean test
@@ -383,7 +383,7 @@ mvn clean test
 cd auction-server && mvn test
 ```
 
-### Phân bổ test theo tầng
+### Phân bổ Unit test theo tầng
 
 | Tầng                       | Test Classes                                                                                                                                                                                | Scenarios tiêu biểu                                 |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
@@ -417,12 +417,12 @@ Foundation    Core Logic        Advanced Features      Testing       Integration
 24/3–30/3     31/3–13/4         14/4–27/4              28/4–11/5     12/5–18/5       19/5–25/5
 ```
  
-⭐ [Chi tiết phase 1](./CONTRIBUTORS.md#-phase-1--project-foundation--architecture-design)  
-⭐ [Chi tết phase 2](./CONTRIBUTORS.md#-phase-2--core-domain--data-layer-implementation)  
-⭐ [Chi tiết phase 3](./CONTRIBUTORS.md#-phase-3--advanced-features--business-logic-completion)  
-⭐ [Chi tiết phase 4](./CONTRIBUTORS.md#-phase-4--testing--quality-assurance)  
-⭐ [Chi tiết phase 5](./CONTRIBUTORS.md#-phase-5--integration-cicd--containerization)  
-⭐ [Chi tiết phase 6](./CONTRIBUTORS.md#-phase-6--documentation-polish--demo-preparation)
+⭐ [Chi tiết phase 1 và contributors](./CONTRIBUTORS.md#-phase-1--project-foundation--architecture-design)  
+⭐ [Chi tết phase 2 và contributors](./CONTRIBUTORS.md#-phase-2--core-domain--data-layer-implementation)  
+⭐ [Chi tiết phase 3 và contributors](./CONTRIBUTORS.md#-phase-3--advanced-features--business-logic-completion)  
+⭐ [Chi tiết phase 4 và contributors](./CONTRIBUTORS.md#-phase-4--testing--quality-assurance)  
+⭐ [Chi tiết phase 5 và contributors](./CONTRIBUTORS.md#-phase-5--integration-cicd--containerization)  
+⭐ [Chi tiết phase 6 và contributors](./CONTRIBUTORS.md#-phase-6--documentation-polish--demo-preparation)
 
 ---
 
