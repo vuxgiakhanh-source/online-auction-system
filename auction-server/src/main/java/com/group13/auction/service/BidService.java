@@ -127,11 +127,17 @@ public class BidService implements IBidService {
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     lock.lock();
     try {
+      // FIX viewCount +2: addToWatchList() đã idempotent (check contains trước khi add),
+      // nhưng incrementViewerCount() không có guard — gọi 2 lần (vd: join rồi watch,
+      // hoặc click 2 lần) sẽ cộng +2. Check watchList TRƯỚC khi increment để đảm bảo
+      // mỗi user chỉ đóng góp đúng 1 vào viewerCount.
+      boolean alreadyWatching = bidder.getWatchListAuctionIds().contains(auction.getId());
       bidder.addToWatchList(auction.getId());
-      auction.incrementViewerCount();
-      int viewerCount = auction.getViewerCount();
       auctionService.addObserver(auction.getId(), observer);
-      auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      if (!alreadyWatching) {
+        auction.incrementViewerCount();
+        auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
+      }
       userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
     } finally {
       lock.unlock();
@@ -252,7 +258,8 @@ public class BidService implements IBidService {
       throw buildIneligibleException(bidder);
     }
     if (bidder.hasRole(User.UserRole.SELLER)
-            && bidder.getAllAuctionIds().contains(auction.getId())) {
+            && auction.getItem().getSeller() != null
+            && auction.getItem().getSeller().getId().equals(bidder.getId())) {
       log.warn("Join rejected — seller bid own auction: auctionId={}, bidderId={}",
               auction.getId(), bidder.getId());
       throw new AuctionBusinessException(AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
@@ -287,6 +294,21 @@ public class BidService implements IBidService {
   // recordTransaction() đã bị xóa:
   // TX object được tạo trực tiếp trong placeBid() bên trong lock.
   // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
+
+  /**
+   * Rời phiên: xóa join state khỏi in-memory VÀ DB.
+   *
+   * <p>Root cause bug TC-WS-04d: AuctionManager.findUserByUsername() luôn load user
+   * mới từ DB — nên removeJoinedAuction() chỉ xóa in-memory trên object hiện tại,
+   * nhưng lần load tiếp theo (PLACE_BID) sẽ tạo object mới từ DB và thấy vẫn JOINED.
+   * Fix: persist xóa xuống DB ngay khi rời phiên.
+   */
+  @Override
+  public void leaveAuction(User user, String auctionId) {
+    user.removeJoinedAuction(auctionId);
+    userDAO.removeJoinedActivity(user.getId(), auctionId);
+    log.info("User left auction: userId={}, auctionId={}", user.getId(), auctionId);
+  }
 
   private static AuthenticationException buildIneligibleException(NormalUser bidder) {
     switch (bidder.getAccountStatus()) {
