@@ -12,13 +12,148 @@ import java.sql.Timestamp;
 public class QualityReportDAO {
     private static final Logger log = LoggerFactory.getLogger(QualityReportDAO.class);
 
-
     public QualityReportDAO() {}
+
+    /**
+     * Lấy tất cả report đang ở trạng thái PENDING để admin xem xét.
+     * Chỉ load core data của reporter (không gọi findNormalUserById để tránh N+1 query).
+     */
+    public java.util.List<com.group13.auction.model.bid.QualityReport> findPending() {
+        String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, " +
+                "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, " +
+                "u.username as reporter_username, u.password_hash, u.email, u.rating, " +
+                "u.balance, u.locked_balance, u.status as user_status " +
+                "FROM quality_reports qr " +
+                "LEFT JOIN users u ON qr.reporter_id = u.id " +
+                "WHERE qr.status = 'PENDING' ORDER BY qr.created_at ASC";
+
+        java.util.List<com.group13.auction.model.bid.QualityReport> result = new java.util.ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             java.sql.ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String reporterId       = rs.getString("reporter_id");
+                String reporterUsername = rs.getString("reporter_username");
+                String pwHash           = rs.getString("password_hash");
+                String email            = rs.getString("email");
+                double rating           = rs.getDouble("rating");
+                long   balance          = rs.getLong("balance");
+                long   locked           = rs.getLong("locked_balance");
+                String userStatus       = rs.getString("user_status");
+
+                java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+                java.time.LocalDateTime createdAt = createdTs != null ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+                java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+                        java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+                com.group13.auction.model.user.NormalUser reporter =
+                        com.group13.auction.model.user.NormalUser.reconstitute(
+                                reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
+                                parseStatus(userStatus), rating, balance, locked, roles, false, false, null);
+
+                String imageUrlsJson = rs.getString("image_urls");
+                java.util.List<String> imageUrls = parseJsonList(imageUrlsJson);
+
+                String statusStr = rs.getString("status");
+                com.group13.auction.model.bid.QualityReport.ReportStatus status =
+                        com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
+
+                com.group13.auction.model.bid.QualityReport report =
+                        com.group13.auction.model.bid.QualityReport.reconstitute(
+                                rs.getString("id"), createdAt, createdAt,
+                                reporter, rs.getString("auction_id"),
+                                rs.getString("description"), imageUrls,
+                                status, null, rs.getBoolean("refund_completed"));
+                result.add(report);
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi findPending quality reports", e);
+        }
+        return result;
+    }
+
+    private com.group13.auction.model.user.User.AccountStatus parseStatus(String s) {
+        if (s == null) return com.group13.auction.model.user.User.AccountStatus.ACTIVE;
+        try { return com.group13.auction.model.user.User.AccountStatus.valueOf(s); }
+        catch (Exception e) { return com.group13.auction.model.user.User.AccountStatus.ACTIVE; }
+    }
+
+    @SuppressWarnings("unchecked")
+    private java.util.List<String> parseJsonList(String json) {
+        if (json == null || json.isBlank()) return java.util.Collections.emptyList();
+        try {
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            return gson.fromJson(json, java.util.List.class);
+        } catch (Exception e) {
+            return java.util.Collections.emptyList();
+        }
+    }
 
     /**
      * Lưu báo cáo chất lượng mới vào Database.
      * Bao gồm description và image_urls (bắt buộc NOT NULL trong schema).
      */
+    /**
+     * Tìm QualityReport theo reportId — dùng cho approve/reject.
+     * JOIN users để load reporter cùng lúc (tránh N+1).
+     */
+    public com.group13.auction.model.bid.QualityReport findById(String reportId) {
+        String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, "
+                + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
+                + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
+                + "u.balance, u.locked_balance, u.status as user_status "
+                + "FROM quality_reports qr "
+                + "LEFT JOIN users u ON qr.reporter_id = u.id "
+                + "WHERE qr.id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, reportId);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String rId            = rs.getString("reporter_id");
+                    String rUsername      = rs.getString("reporter_username");
+                    String pwHash         = rs.getString("password_hash");
+                    String email          = rs.getString("email");
+                    double rating         = rs.getDouble("rating");
+                    long   balance        = rs.getLong("balance");
+                    long   locked         = rs.getLong("locked_balance");
+                    String userStatus     = rs.getString("user_status");
+
+                    java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+                    java.time.LocalDateTime createdAt = createdTs != null
+                            ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+                    com.group13.auction.model.user.NormalUser reporter =
+                            com.group13.auction.model.user.NormalUser.reconstitute(
+                                    rId, createdAt, createdAt, rUsername, pwHash, email,
+                                    parseStatus(userStatus), rating, balance, locked,
+                                    roles, false, false, null);
+
+                    java.util.List<String> imageUrls = parseJsonList(rs.getString("image_urls"));
+                    String statusStr = rs.getString("status");
+                    com.group13.auction.model.bid.QualityReport.ReportStatus status =
+                            com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
+
+                    return com.group13.auction.model.bid.QualityReport.reconstitute(
+                            rs.getString("id"), createdAt, createdAt,
+                            reporter, rs.getString("auction_id"),
+                            rs.getString("description"), imageUrls,
+                            status, null, rs.getBoolean("refund_completed"));
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi findById quality report: reportId={}", reportId, e);
+        }
+        return null;
+    }
+
     public boolean saveReport(QualityReport report) {
         String sql = "INSERT INTO quality_reports "
                 + "(id, auction_id, reporter_id, description, image_urls, status, created_at) "

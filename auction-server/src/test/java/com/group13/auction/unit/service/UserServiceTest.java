@@ -1,12 +1,14 @@
 package com.group13.auction.unit.service;
 
 import com.group13.auction.dao.UserDAO;
+import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.AuthenticationException.Reason;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +45,23 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         sut = new UserService(userDAO);
+        // Đảm bảo AuctionManager không chứa user nào trước mỗi test
+        // để UserService.login() không tìm thấy trong memory và luôn đi qua findUserCoreByUsername()
+        clearAuctionManagerUsers();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Dọn user được addToUserList() bởi login() thành công
+        clearAuctionManagerUsers();
+    }
+
+    private void clearAuctionManagerUsers() {
+        try {
+            java.lang.reflect.Field f = AuctionManager.class.getDeclaredField("allUsers");
+            f.setAccessible(true);
+            ((java.util.Map<?, ?>) f.get(AuctionManager.getInstance())).clear();
+        } catch (Exception ignored) {}
     }
 
     @Test
@@ -48,7 +69,7 @@ class UserServiceTest {
     void login_validCredentials_activeAccount_returnsUser() {
         String rawPassword = "correctPass1";
         NormalUser user = normalBidder("bidder01", rawPassword, AccountStatus.ACTIVE, 3.0);
-        when(userDAO.findUserByUsername("bidder01")).thenReturn(user);
+        when(userDAO.findUserCoreByUsername("bidder01")).thenReturn(user);
 
         User result = sut.login("bidder01", rawPassword);
 
@@ -60,17 +81,19 @@ class UserServiceTest {
     void login_callsUserDAOExactlyOnce() {
         String rawPassword = "correctPass1";
         NormalUser user = normalBidder("bidder01", rawPassword, AccountStatus.ACTIVE, 3.0);
-        when(userDAO.findUserByUsername("bidder01")).thenReturn(user);
+        when(userDAO.findUserCoreByUsername("bidder01")).thenReturn(user);
 
         sut.login("bidder01", rawPassword);
 
-        verify(userDAO, times(1)).findUserByUsername("bidder01");
+        // FIX: login() dùng findUserCoreByUsername() — lightweight 1-query auth
+        verify(userDAO, times(1)).findUserCoreByUsername("bidder01");
+        verify(userDAO, never()).findUserByUsername(any());
     }
 
     @Test
     @DisplayName("login - missing username throws USER_NOT_FOUND")
     void login_usernameNotFound_throwsUserNotFound() {
-        when(userDAO.findUserByUsername("unknown")).thenReturn(null);
+        when(userDAO.findUserCoreByUsername("unknown")).thenReturn(null);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("unknown", "anyPassword"),
@@ -84,7 +107,7 @@ class UserServiceTest {
     @DisplayName("login - BANNED account throws ACCOUNT_BANNED before password check")
     void login_bannedAccount_throwsBanned_beforePasswordCheck() {
         NormalUser bannedUser = normalBidder("banned01", "actualPass", AccountStatus.BANNED, 0.0);
-        when(userDAO.findUserByUsername("banned01")).thenReturn(bannedUser);
+        when(userDAO.findUserCoreByUsername("banned01")).thenReturn(bannedUser);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("banned01", "wrongPass"),
@@ -98,7 +121,7 @@ class UserServiceTest {
     @DisplayName("login - SUSPENDED account throws ACCOUNT_SUSPENDED")
     void login_suspendedAccount_throwsSuspended() {
         NormalUser suspendedUser = normalBidder("susp01", "pass123", AccountStatus.SUSPENDED, 1.0);
-        when(userDAO.findUserByUsername("susp01")).thenReturn(suspendedUser);
+        when(userDAO.findUserCoreByUsername("susp01")).thenReturn(suspendedUser);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("susp01", "pass123"),
@@ -113,7 +136,7 @@ class UserServiceTest {
     void login_suspended_doesNotReachPasswordCheck() {
         String rawPassword = "correctPass";
         NormalUser suspendedUser = normalBidder("susp02", rawPassword, AccountStatus.SUSPENDED, 1.0);
-        when(userDAO.findUserByUsername("susp02")).thenReturn(suspendedUser);
+        when(userDAO.findUserCoreByUsername("susp02")).thenReturn(suspendedUser);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("susp02", rawPassword),
@@ -127,7 +150,7 @@ class UserServiceTest {
     @DisplayName("login - ACTIVE account with wrong password throws WRONG_PASSWORD")
     void login_activeAccount_wrongPassword_throwsWrongPassword() {
         NormalUser user = normalBidder("active01", "correctPass", AccountStatus.ACTIVE, 3.0);
-        when(userDAO.findUserByUsername("active01")).thenReturn(user);
+        when(userDAO.findUserCoreByUsername("active01")).thenReturn(user);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("active01", "wrongPass"),
@@ -141,7 +164,7 @@ class UserServiceTest {
     @DisplayName("login - empty password throws WRONG_PASSWORD")
     void login_emptyPassword_throwsWrongPassword() {
         NormalUser user = normalBidder("active02", "correctPass", AccountStatus.ACTIVE, 3.0);
-        when(userDAO.findUserByUsername("active02")).thenReturn(user);
+        when(userDAO.findUserCoreByUsername("active02")).thenReturn(user);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("active02", ""),
@@ -155,7 +178,7 @@ class UserServiceTest {
     @DisplayName("login - password comparison is case-sensitive")
     void login_passwordCaseSensitive_throwsWrongPassword() {
         NormalUser user = normalBidder("active03", "Password1", AccountStatus.ACTIVE, 3.0);
-        when(userDAO.findUserByUsername("active03")).thenReturn(user);
+        when(userDAO.findUserCoreByUsername("active03")).thenReturn(user);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("active03", "password1"),
@@ -168,7 +191,7 @@ class UserServiceTest {
     @Test
     @DisplayName("login - USER_NOT_FOUND is checked before password")
     void login_checkOrder_notFoundBeforePassword() {
-        when(userDAO.findUserByUsername("ghost")).thenReturn(null);
+        when(userDAO.findUserCoreByUsername("ghost")).thenReturn(null);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("ghost", "anyPass"),
@@ -182,7 +205,7 @@ class UserServiceTest {
     @DisplayName("login - BANNED is checked before wrong password")
     void login_checkOrder_bannedBeforePassword() {
         NormalUser bannedUser = normalBidder("banned02", "realPass", AccountStatus.BANNED, 0.0);
-        when(userDAO.findUserByUsername("banned02")).thenReturn(bannedUser);
+        when(userDAO.findUserCoreByUsername("banned02")).thenReturn(bannedUser);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("banned02", "wrongPass"),
@@ -195,7 +218,7 @@ class UserServiceTest {
     @Test
     @DisplayName("login - AuthenticationException has descriptive message")
     void login_exceptionContainsDescriptiveMessage() {
-        when(userDAO.findUserByUsername("nobody")).thenReturn(null);
+        when(userDAO.findUserCoreByUsername("nobody")).thenReturn(null);
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("nobody", "pass"),
@@ -210,7 +233,7 @@ class UserServiceTest {
     void login_returnsExactObjectFromDAO() {
         String rawPassword = "correctPass1";
         NormalUser expected = normalBidder("bidder99", rawPassword, AccountStatus.ACTIVE, 4.5);
-        when(userDAO.findUserByUsername("bidder99")).thenReturn(expected);
+        when(userDAO.findUserCoreByUsername("bidder99")).thenReturn(expected);
 
         User result = sut.login("bidder99", rawPassword);
 
