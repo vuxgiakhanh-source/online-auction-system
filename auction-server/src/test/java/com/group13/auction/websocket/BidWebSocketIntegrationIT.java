@@ -27,6 +27,7 @@ import com.group13.auction.service.RatingService;
 import com.group13.auction.service.WalletService;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import com.group13.auction.strategy.BidRateLimiter;
 import org.java_websocket.WebSocket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -48,6 +49,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -139,6 +141,7 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
 
     @AfterEach
     void tearDown() throws Exception {
+        BidRateLimiter.getInstance().clearAll();
         sessionManager.unregister(webSocket);
         sessionManager.unregister(webSocketPeer);
         resetInMemorySingletons();
@@ -304,10 +307,11 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
             bidHandler.handle(sessA, PacketType.PLACE_BID,
                     GSON.toJsonTree(new BidDTOs.BidRequestDTO(auction.getId(), 3_000_000L)), "bid-a");
 
-            // SessionManager.broadcast* gọi ClientSession.sendRaw → org.java_websocket.WebSocket#send(String)
-            // (interface không có sendRaw — chỉ có send).
+            // FIX ASYNC BROADCAST: broadcastToAuctionAsync() gửi qua thread pool riêng.
+            // Phải dùng timeout() để Mockito chờ đến khi async send hoàn thành.
+            // 2000ms là đủ rộng cho thread pool khởi động và gửi xong.
             ArgumentCaptor<String> broadcastJson = ArgumentCaptor.forClass(String.class);
-            verify(webSocketPeer, atLeastOnce()).send(broadcastJson.capture());
+            verify(webSocketPeer, timeout(2000).atLeastOnce()).send(broadcastJson.capture());
             assertThat(broadcastJson.getAllValues().stream().anyMatch(s -> s.contains("BID_RESERVE_NOT_MET_UPDATE")))
                     .as("Peer đang watch phải nhận broadcast reserve-not-met khi bid < reserve")
                     .isTrue();
@@ -340,7 +344,7 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
             assertThat(cap.getAllValues().stream().noneMatch(s -> s.contains("PLACE_BID_SUCCESS")))
                     .isTrue();
             assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("PLACE_BID_FAILED")
-                            || s.contains(ErrorDTO.NOT_JOINED_AUCTION)))
+                    || s.contains(ErrorDTO.NOT_JOINED_AUCTION)))
                     .isTrue();
         }
 

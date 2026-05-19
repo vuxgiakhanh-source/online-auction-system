@@ -121,10 +121,19 @@ public final class DTOMapper {
 
     // ── Bid ───────────────────────────────────────────────────────────────────
 
-    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, long newPrice) {
+    /**
+     * Tạo BidUpdateDTO với đầy đủ thông tin bao gồm delta giá.
+     *
+     * @param auction      phiên đấu giá (đã update currentPrice + leader sau bid)
+     * @param newPrice     giá vừa được chấp nhận
+     * @param previousPrice giá trước khi bid này xảy ra (capture TRƯỚC khi placeBid)
+     */
+    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, long newPrice, long previousPrice) {
         BidDTOs.BidUpdateDTO dto = new BidDTOs.BidUpdateDTO();
         dto.setAuctionId(auction.getId());
         dto.setNewCurrentPrice(newPrice);
+        dto.setPreviousPrice(previousPrice);
+        dto.setPriceChange(newPrice - previousPrice);   // luôn dương trong đấu giá hợp lệ
         dto.setReserveMet(auction.isReserveMet());
         dto.setTimestamp(LocalDateTime.now());
 
@@ -133,6 +142,12 @@ public final class DTOMapper {
             dto.setLeaderUsername(auction.getCurrentLeader().getUsername());
         }
         return dto;
+    }
+
+    /** @deprecated Dùng {@link #toBidUpdateDTO(Auction, long, long)} để có previousPrice. */
+    @Deprecated
+    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, long newPrice) {
+        return toBidUpdateDTO(auction, newPrice, 0L);
     }
 
     public static BidDTOs.BidChartPointDTO toBidChartPoint(String auctionId, long price,
