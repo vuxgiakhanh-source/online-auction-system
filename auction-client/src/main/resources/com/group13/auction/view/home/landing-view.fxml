@@ -81,6 +81,7 @@
 
                 <StackPane fx:id="revealBlock"
                            prefHeight="450.0"
+                           style="-fx-background-color: #0f253c;"
                            AnchorPane.topAnchor="850.0"
                            AnchorPane.leftAnchor="0.0"
                            AnchorPane.rightAnchor="0.0">
