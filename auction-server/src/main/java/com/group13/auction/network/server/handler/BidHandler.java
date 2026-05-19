@@ -254,10 +254,15 @@ public class BidHandler implements PacketHandler {
         Auction placeBidAuction = null;
         String  placeBidBidderId = null;
 
+        // FIX BROADCAST STALENESS: thu thập dữ liệu broadcast TRONG lock,
+        // gửi NGOÀI lock → không block bid tiếp theo trong khi loop gửi N clients.
+        Packet<?> broadcastBidUpdate   = null;
+        Packet<?> broadcastChartPoint  = null;
+        Packet<?> broadcastExtended    = null;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
-            // Auth check trước — user phải là NormalUser trước khi lookup auction
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
 
@@ -267,11 +272,15 @@ public class BidHandler implements PacketHandler {
             placeBidAuction  = auction;
             placeBidBidderId = bidder.getId();
 
+            // FIX BID DIRECTION: capture giá TRƯỚC khi bid để tính delta
+            long previousPrice  = auction.getCurrentPrice();
             LocalDateTime endTimeBefore = auction.getEndTime();
+
             bidService.placeBid(bidder, auction, req.getAmount(), new StandardBidStrategy());
             log.info("Place bid handled: auctionId={}, bidderId={}, username={}, amount={}, requestId={}",
                     req.getAuctionId(), bidder.getId(), bidder.getUsername(), req.getAmount(), requestId);
 
+            // Gửi kết quả cho người bid (1 send, OK trong lock)
             BidDTOs.BidResultDTO result = new BidDTOs.BidResultDTO();
             result.setAuctionId(req.getAuctionId());
             result.setAmount(req.getAmount());
@@ -280,32 +289,25 @@ public class BidHandler implements PacketHandler {
             result.setTimestamp(LocalDateTime.now());
             session.send(Packet.of(PacketType.PLACE_BID_SUCCESS, result, requestId));
 
-            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, req.getAmount());
+            // Chuẩn bị broadcast payload (KHÔNG gửi ngay — gửi ngoài lock)
+            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, req.getAmount(), previousPrice);
             LocalDateTime endTimeAfter = auction.getEndTime();
             if (!endTimeAfter.equals(endTimeBefore)) {
                 update.setNewEndTime(endTimeAfter);
-
-                // FIX BUG #3: Broadcast AUCTION_EXTENDED_NOTIFY riêng để client
-                // cập nhật countdown timer ngay lập tức (không chờ BID_UPDATE)
                 AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
                 extDto.setAuctionId(req.getAuctionId());
                 extDto.setNewEndTime(endTimeAfter);
-                extDto.setExtendedBySeconds(60); // = BidService.ANTI_SNIPING_EXTENSION_SECONDS
-                sessionManager.broadcastToAuction(req.getAuctionId(),
-                        Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto));
-                log.info("Auction extension broadcast: auctionId={}, newEndTime={}, requestId={}",
-                        req.getAuctionId(), endTimeAfter, requestId);
+                extDto.setExtendedBySeconds(60);
+                broadcastExtended = Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto);
             }
 
             PacketType broadcastType = auction.isReserveMet()
-                    ? PacketType.BID_UPDATE
-                    : PacketType.BID_RESERVE_NOT_MET_UPDATE;
-            sessionManager.broadcastToAuction(req.getAuctionId(), Packet.of(broadcastType, update));
+                    ? PacketType.BID_UPDATE : PacketType.BID_RESERVE_NOT_MET_UPDATE;
+            broadcastBidUpdate = Packet.of(broadcastType, update);
 
             BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
                     req.getAuctionId(), req.getAmount(), bidder.getUsername(), false);
-            sessionManager.broadcastToAuction(req.getAuctionId(),
-                    Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+            broadcastChartPoint = Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint);
 
         } catch (AuctionClosedException e) {
             log.warn("Place bid rejected because auction is closed: auctionId={}, username={}, requestId={}",
@@ -330,8 +332,21 @@ public class BidHandler implements PacketHandler {
         } finally {
             lock.unlock();
         }
-        // FIX DEADLOCK: autoBidProcessor.process() gọi bidService.placeBid() bên trong,
-        // phải chạy NGOÀI ReentrantLock để tránh deadlock với BidService's internal lock.
+        // FIX BROADCAST STALENESS: gửi broadcast NGOÀI lock qua async executor
+        // → bid tiếp theo có thể bắt đầu ngay, không chờ N WebSocket sends.
+        // Thứ tự broadcast vẫn đảm bảo (FIFO queue trong broadcastExecutor).
+        if (broadcastExtended != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastExtended);
+            log.info("Auction extension broadcast queued: auctionId={}, requestId={}", req.getAuctionId(), requestId);
+        }
+        if (broadcastBidUpdate != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastBidUpdate);
+        }
+        if (broadcastChartPoint != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastChartPoint);
+        }
+
+        // AutoBid cũng ngoài lock
         if (placeBidAuction != null && placeBidBidderId != null) {
             autoBidProcessor.process(placeBidAuction, placeBidBidderId);
         }

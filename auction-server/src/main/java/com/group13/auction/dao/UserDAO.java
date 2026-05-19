@@ -259,6 +259,57 @@ public class UserDAO {
     }
 
     /**
+     * Tìm user theo username CHỈ để xác thực — 1 query duy nhất, KHÔNG load
+     * joinedAuctionIds + watchListAuctionIds (2 subquery không cần thiết cho auth).
+     *
+     * FIX LOGIN SLOWNESS: findUserByUsername() cũ làm 3 queries cho mỗi lần login.
+     * Method này chỉ cần 1 query → giảm latency login ~60-70%.
+     * Sau khi xác thực xong, UserService trả về user đầy đủ từ AuctionManager (in-memory).
+     */
+    public NormalUser findUserCoreByUsername(String username) {
+        String sql = "SELECT id, username, password_hash, email, rating, balance, " +
+                "locked_balance, status, has_ever_been_penalized, has_ever_been_restored, " +
+                "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
+
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String id             = rs.getString("id");
+                    String fetchedUsername= rs.getString("username");
+                    String passwordHash   = rs.getString("password_hash");
+                    String email          = rs.getString("email");
+                    double rating         = rs.getDouble("rating");
+                    long   balance        = rs.getLong("balance");
+                    long   lockedBalance  = rs.getLong("locked_balance");
+                    String statusStr      = rs.getString("status");
+                    boolean penalized     = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
+                    boolean restored      = getBooleanOrDefault(rs, "has_ever_been_restored", false);
+
+                    java.sql.Timestamp createdTs  = rs.getTimestamp("created_at");
+                    java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
+                    java.time.LocalDateTime createdAt   = createdTs  != null ? createdTs.toLocalDateTime()   : java.time.LocalDateTime.now();
+                    java.time.LocalDateTime suspendedAt = suspendedTs != null ? suspendedTs.toLocalDateTime() : null;
+
+                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+                    // Không gọi findJoinedAuctionIdsByUserId() hay findWatchListByUserId()
+                    // — chỉ cần data cơ bản để verify password + status
+                    return NormalUser.reconstitute(id, createdAt, createdAt, fetchedUsername,
+                            passwordHash, email, parseAccountStatus(statusStr), rating,
+                            balance, lockedBalance, roles, penalized, restored, suspendedAt);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi findUserCoreByUsername: ", e);
+        }
+        return null;
+    }
+
+    /**
      * Tìm kiếm NormalUser theo Username để phục vụ việc Đăng nhập.
      */
     /**

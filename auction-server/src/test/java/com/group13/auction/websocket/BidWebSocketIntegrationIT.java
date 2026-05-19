@@ -49,6 +49,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -306,10 +307,11 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
             bidHandler.handle(sessA, PacketType.PLACE_BID,
                     GSON.toJsonTree(new BidDTOs.BidRequestDTO(auction.getId(), 3_000_000L)), "bid-a");
 
-            // SessionManager.broadcast* gọi ClientSession.sendRaw → org.java_websocket.WebSocket#send(String)
-            // (interface không có sendRaw — chỉ có send).
+            // FIX ASYNC BROADCAST: broadcastToAuctionAsync() gửi qua thread pool riêng.
+            // Phải dùng timeout() để Mockito chờ đến khi async send hoàn thành.
+            // 2000ms là đủ rộng cho thread pool khởi động và gửi xong.
             ArgumentCaptor<String> broadcastJson = ArgumentCaptor.forClass(String.class);
-            verify(webSocketPeer, atLeastOnce()).send(broadcastJson.capture());
+            verify(webSocketPeer, timeout(2000).atLeastOnce()).send(broadcastJson.capture());
             assertThat(broadcastJson.getAllValues().stream().anyMatch(s -> s.contains("BID_RESERVE_NOT_MET_UPDATE")))
                     .as("Peer đang watch phải nhận broadcast reserve-not-met khi bid < reserve")
                     .isTrue();
