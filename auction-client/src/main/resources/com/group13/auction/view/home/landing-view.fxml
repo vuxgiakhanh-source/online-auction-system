@@ -1,102 +1,127 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.media.MediaView?>
 
-<AnchorPane prefHeight="720.0" prefWidth="1280.0"
-            stylesheets="@../../css/home.css"
-            styleClass="screen-root"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.group13.auction.ui.controller.home.LandingController">
+<StackPane stylesheets="@../../css/home.css"
+           styleClass="screen-root"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.group13.auction.ui.controller.home.LandingController">
 
-    <Pane prefHeight="720.0"
-          prefWidth="1280.0"
-          styleClass="background-layer"/>
+    <ScrollPane fx:id="mainScrollPane" fitToWidth="true" styleClass="background-layer">
+        <content>
+            <AnchorPane prefHeight="1500.0" prefWidth="1280.0">
 
-    <HBox alignment="CENTER_LEFT"
-          spacing="18.0"
-          AnchorPane.leftAnchor="18.0"
-          AnchorPane.rightAnchor="20.0"
-          AnchorPane.topAnchor="16.0">
+                <HBox alignment="CENTER_LEFT"
+                      spacing="18.0"
+                      AnchorPane.leftAnchor="18.0"
+                      AnchorPane.rightAnchor="20.0"
+                      AnchorPane.topAnchor="16.0">
 
-        <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <ImageView fitWidth="210.0" preserveRatio="true">
-                <Image url="@../../assets/images/logo.png"/>
-            </ImageView>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <ImageView fitWidth="210.0" preserveRatio="true">
+                            <Image url="@../../assets/images/logo.png"/>
+                        </ImageView>
 
-            <ImageView fitHeight="44.0" preserveRatio="true">
-                <Image url="@../../assets/images/mascot-version-1.png"/>
-            </ImageView>
-        </HBox>
+                        <ImageView fitHeight="44.0" preserveRatio="true">
+                            <Image url="@../../assets/images/mascot-version-1.png"/>
+                        </ImageView>
+                    </HBox>
 
-        <Region HBox.hgrow="ALWAYS"/>
+                    <Region HBox.hgrow="ALWAYS"/>
 
-        <Button mnemonicParsing="false"
-                onAction="#handleGoToLogin"
-                styleClass="landing-login-button"
-                text="Đăng nhập"/>
+                    <Button mnemonicParsing="false"
+                            onAction="#handleGoToLogin"
+                            styleClass="landing-login-button"
+                            text="Đăng nhập"/>
 
-        <Button mnemonicParsing="false"
-                onAction="#handleGoToRegister"
-                styleClass="landing-register-button"
-                text="Đăng ký"/>
-    </HBox>
+                    <Button mnemonicParsing="false"
+                            onAction="#handleGoToRegister"
+                            styleClass="landing-register-button"
+                            text="Đăng ký"/>
+                </HBox>
 
-    <VBox alignment="CENTER"
-          spacing="8.0"
-          AnchorPane.leftAnchor="0.0"
-          AnchorPane.rightAnchor="0.0"
-          AnchorPane.topAnchor="102.0">
+                <VBox alignment="CENTER"
+                      spacing="8.0"
+                      AnchorPane.leftAnchor="0.0"
+                      AnchorPane.rightAnchor="0.0"
+                      AnchorPane.topAnchor="102.0">
 
-        <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN"
-               styleClass="landing-main-title"/>
+                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN"
+                           styleClass="landing-main-title"/>
 
-        <Label text="duy nhất bạn cần"
-               styleClass="landing-main-title"/>
+                    <Label text="duy nhất bạn cần"
+                           styleClass="landing-main-title"/>
 
-        <VBox alignment="CENTER">
-            <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
-                   styleClass="landing-main-subtitle"/>
+                    <VBox alignment="CENTER">
+                        <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
+                               styleClass="landing-main-subtitle"/>
 
-            <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
-                   styleClass="landing-main-subtitle"/>
+                        <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
+                               styleClass="landing-main-subtitle"/>
+                    </VBox>
+
+                    <Region prefHeight="8.0"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleStart"
+                            styleClass="landing-main-start-button"
+                            text="BẮT ĐẦU  ➜"/>
+                </VBox>
+
+                <StackPane fx:id="revealBlock"
+                           prefHeight="450.0"
+                           AnchorPane.topAnchor="850.0"
+                           AnchorPane.leftAnchor="0.0"
+                           AnchorPane.rightAnchor="0.0">
+
+                    <MediaView fx:id="bgMediaView" opacity="0.7" preserveRatio="true" />
+
+                    <VBox fx:id="revealContent" alignment="CENTER" opacity="0.0" spacing="15.0">
+                        <Label text="TẠI SAO CHỌN OMNIBID?"
+                               styleClass="landing-main-title"
+                               style="-fx-font-size: 36px;"/>
+
+                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời."
+                               styleClass="landing-main-subtitle"/>
+                    </VBox>
+                </StackPane>
+
+            </AnchorPane>
+        </content>
+    </ScrollPane>
+
+    <AnchorPane pickOnBounds="false">
+        <VBox alignment="BOTTOM_RIGHT"
+              maxWidth="170.0"
+              pickOnBounds="false"
+              spacing="4.0"
+              AnchorPane.bottomAnchor="8.0"
+              AnchorPane.rightAnchor="16.0">
+
+            <HBox alignment="CENTER_RIGHT" spacing="4.0">
+                <ImageView fitHeight="38.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-2.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="34.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
+                </ImageView>
+            </HBox>
+
+            <Label styleClass="chatbot-label" text="Chat with OMNI"/>
+            <Label styleClass="signature-label" text="by CKNT team"/>
         </VBox>
+    </AnchorPane>
 
-        <Region prefHeight="8.0"/>
-
-        <Button mnemonicParsing="false"
-                onAction="#handleStart"
-                styleClass="landing-main-start-button"
-                text="BẮT ĐẦU  ➜"/>
-    </VBox>
-
-    <!-- Chatbot floating widget. -->
-    <VBox alignment="BOTTOM_RIGHT"
-          maxWidth="170.0"
-          pickOnBounds="false"
-          spacing="4.0"
-          AnchorPane.bottomAnchor="8.0"
-          AnchorPane.rightAnchor="16.0">
-
-        <HBox alignment="CENTER_RIGHT" spacing="4.0">
-            <ImageView fitHeight="38.0" preserveRatio="true">
-                <Image url="@../../assets/images/mascot-version-2.png"/>
-            </ImageView>
-
-            <ImageView fitHeight="34.0" preserveRatio="true">
-                <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
-            </ImageView>
-        </HBox>
-
-        <Label styleClass="chatbot-label" text="Chat with OMNI"/>
-        <Label styleClass="signature-label" text="by CKNT team"/>
-    </VBox>
-</AnchorPane>
+</StackPane>
