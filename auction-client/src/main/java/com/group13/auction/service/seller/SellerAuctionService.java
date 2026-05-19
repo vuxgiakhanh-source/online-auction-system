@@ -8,13 +8,18 @@ import com.group13.auction.core.session.UserSession;
 import com.group13.auction.mapper.SellerAuctionViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
+import com.group13.auction.network.http.ImageUploadService;
 import com.group13.auction.service.auction.AuctionServiceSupport;
 import com.group13.auction.viewmodel.seller.AuctionFormViewModel;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * Service phía client cho các flow Seller liên quan đến phiên đấu giá.
@@ -84,6 +89,9 @@ public final class SellerAuctionService {
     /**
      * Tạo phiên đấu giá mới.
      *
+     * <p>Nếu form có ảnh local, service sẽ upload ảnh lên ImageUploadServer trước, sau đó gửi danh
+     * sách URL ảnh vào {@code CreateAuctionRequestDTO.imageUrls}.
+     *
      * @param form dữ liệu form đã nhập
      * @return future chứa phiên vừa tạo dưới dạng row view model
      */
@@ -95,13 +103,18 @@ public final class SellerAuctionService {
             return AuctionServiceSupport.failedFuture(exception.getMessage());
         }
 
-        return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.createAuction(form.toCreateRequest()),
-                        PacketType.CREATE_AUCTION_SUCCESS,
-                        AuctionDTOs.AuctionDTO.class,
-                        "Không tạo được phiên đấu giá.")
+        return CompletableFuture
+                .supplyAsync(() -> uploadProductImages(form.imagePaths()))
+                .thenCompose(
+                        imageUrls ->
+                                AuctionServiceSupport
+                                        .sendRequest(
+                                                networkFacade,
+                                                ClientRequestFactory.createAuction(
+                                                        form.toCreateRequest(imageUrls)),
+                                                PacketType.CREATE_AUCTION_SUCCESS,
+                                                AuctionDTOs.AuctionDTO.class,
+                                                "Không tạo được phiên đấu giá."))
                 .thenApply(SellerAuctionViewModelMapper::toRow);
     }
 
@@ -169,6 +182,37 @@ public final class SellerAuctionService {
                 PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
                 String.class,
                 "Không gửi được yêu cầu hủy phiên.");
+    }
+
+    private List<String> uploadProductImages(List<Path> imagePaths) {
+        if (imagePaths == null || imagePaths.isEmpty()) {
+            return List.of();
+        }
+
+        if (imagePaths.size() > AuctionFormViewModel.MAX_IMAGE_COUNT) {
+            throw new CompletionException(
+                    new IllegalArgumentException(
+                            "Chỉ được upload tối đa " + AuctionFormViewModel.MAX_IMAGE_COUNT + " ảnh."));
+        }
+
+        List<String> imageUrls = new ArrayList<>();
+        ImageUploadService uploadService = ImageUploadService.getInstance();
+
+        for (Path imagePath : imagePaths) {
+            try {
+                imageUrls.add(uploadService.upload(imagePath));
+            } catch (IOException exception) {
+                throw new CompletionException(
+                        "Không upload được ảnh sản phẩm: " + imagePath.getFileName()
+                                + ". Kiểm tra ImageUploadServer trước khi tạo phiên.",
+                        exception);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new CompletionException("Quá trình upload ảnh sản phẩm bị gián đoạn.", exception);
+            }
+        }
+
+        return List.copyOf(imageUrls);
     }
 
     private UserSession requireSellerSession() {
