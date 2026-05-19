@@ -3,6 +3,7 @@ package com.group13.auction.service;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.AuthenticationException.Reason;
+import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User.AccountStatus;
@@ -36,17 +37,37 @@ public class UserService implements IUserService {
   @Override
   public User login(String username, String inputPassword) {
 
-    // 1. Tìm user trong Database
-    NormalUser user = userDAO.findUserByUsername(username);
+    // FIX LOGIN SLOWNESS:
+    // Bước 1: Tìm trong AuctionManager (in-memory ConcurrentHashMap) trước.
+    //   Nếu user đã login trước đó hoặc đã load khi server start → O(n) scan nhưng không có DB I/O.
+    //   AuctionManager.findUserByUsername() gọi DB nếu không tìm thấy, nhưng đó là fallback.
+    //
+    // Bước 2: Nếu không có trong memory, dùng findUserCoreByUsername() — 1 query duy nhất,
+    //   KHÔNG load joinedAuctionIds + watchListAuctionIds (giảm từ 3 queries xuống 1).
+    //
+    // Bước 3: Sau khi xác thực xong, nếu user chỉ có core data (từ bước 2),
+    //   trả về nó — caller (AuthHandler) sẽ tự update AuctionManager.
 
-    // 2. Nếu không tìm thấy trong DB -> Ném exception
+    // -- Bước 1: in-memory lookup --
+    NormalUser user = null;
+    User memUser = AuctionManager.getInstance().findUserByUsernameInMemoryOnly(username);
+    if (memUser instanceof NormalUser) {
+      user = (NormalUser) memUser;
+      log.debug("Login: user found in-memory, skip DB query. username={}", username);
+    }
+
+    // -- Bước 2: lightweight DB query nếu không có trong memory --
+    if (user == null) {
+      user = userDAO.findUserCoreByUsername(username);
+    }
+
+    // -- Bước 3: Không tìm thấy --
     if (user == null) {
       log.warn("Login failed: user not found, username={}", username);
-      // Lưu ý: Bạn cần thêm USER_NOT_FOUND vào enum Reason trong class AuthenticationException nhé
       throw new AuthenticationException(Reason.USER_NOT_FOUND);
     }
 
-    // 3. Kiểm tra trạng thái tài khoản
+    // Kiểm tra trạng thái tài khoản
     if (user.getAccountStatus() == AccountStatus.BANNED) {
       log.warn("Login failed: account banned, username={}", username);
       throw new AuthenticationException(Reason.ACCOUNT_BANNED);
@@ -56,13 +77,14 @@ public class UserService implements IUserService {
       throw new AuthenticationException(Reason.ACCOUNT_SUSPENDED);
     }
 
-    // 4. Kiểm tra mật khẩu
+    // Kiểm tra mật khẩu
     if (!user.getHashedPassword().equals(User.hashPassword(inputPassword))) {
       log.warn("Login failed: wrong password, username={}", username);
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
-    // 5. Đăng nhập thành công
+    // Đăng nhập thành công — đảm bảo user được lưu vào AuctionManager
+    AuctionManager.getInstance().addToUserList(user);
     log.info("Login success: username={}", username);
     return user;
   }

@@ -31,6 +31,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.group13.auction.websocket.PacketResponseAssert.assertEchoesRequestId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -170,7 +171,7 @@ class PaymentHandlerDispatchTest {
             JsonElement payload = GSON.toJsonTree(new PaymentDTOs.DepositRequestDTO(500_000L));
             newHandler().handle(session(), PacketType.DEPOSIT, payload, "rid-dep-1");
 
-            assertThat(captureLastSent()).contains(PacketType.DEPOSIT_SUCCESS.name());
+            assertEchoesRequestId(captureLastSent(), "rid-dep-1");
             verify(accountService).deposit(user, 500_000L);
         }
 
@@ -183,9 +184,11 @@ class PaymentHandlerDispatchTest {
 
             newHandler().handle(session(), PacketType.DEPOSIT, payload, "rid-dep-2");
 
-            assertThat(captureLastSent())
+            String sent = captureLastSent();
+            assertThat(sent)
                     .contains(PacketType.DEPOSIT_FAILED.name())
                     .contains(ErrorDTO.INVALID_AMOUNT);
+            assertEchoesRequestId(sent, "rid-dep-2");
         }
 
         @Test

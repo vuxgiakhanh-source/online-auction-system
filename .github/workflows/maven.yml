@@ -67,17 +67,20 @@ jobs:
 
       - name: Build and run unit tests
         run: mvn -B clean verify --no-transfer-progress
+        timeout-minutes: 20
         env:
           DB_URL: jdbc:mysql://localhost:3306/auction_db
           DB_USERNAME: auction_user
           DB_PASSWORD: auction_pass
 
-      - name: Upload Surefire test reports
+      - name: Upload test reports (surefire + failsafe)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: auction-server/target/surefire-reports/
+          path: |
+            auction-server/target/surefire-reports/
+            auction-server/target/failsafe-reports/
           retention-days: 14
 
   # ── Job 2: Docker build & push ─────────────────────────────────────────────

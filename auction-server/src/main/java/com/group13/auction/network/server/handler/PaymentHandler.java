@@ -65,7 +65,7 @@ public class PaymentHandler implements PacketHandler {
         if (!session.isAuthenticated()) {
             log.warn("Reject payment packet from unauthenticated session: type={}, requestId={}", type, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
             return;
         }
 
@@ -102,12 +102,12 @@ public class PaymentHandler implements PacketHandler {
             log.warn("Deposit rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.DEPOSIT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INVALID_AMOUNT, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INVALID_AMOUNT, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Deposit failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.DEPOSIT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -133,12 +133,12 @@ public class PaymentHandler implements PacketHandler {
             log.warn("Withdraw rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.WITHDRAW_FAILED,
-                    ErrorDTO.of(ErrorDTO.INSUFFICIENT_BALANCE, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INSUFFICIENT_BALANCE, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Withdraw failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.WITHDRAW_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -158,7 +158,7 @@ public class PaymentHandler implements PacketHandler {
             log.error("Get wallet balance failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -174,7 +174,7 @@ public class PaymentHandler implements PacketHandler {
                 log.warn("Payment rejected because auction was not found: auctionId={}, username={}, requestId={}",
                         req.getAuctionId(), session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
@@ -184,7 +184,7 @@ public class PaymentHandler implements PacketHandler {
                 log.warn("Payment rejected because auction has no winner: auctionId={}, username={}, requestId={}",
                         req.getAuctionId(), session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên này chưa có winner.", requestId)));
+                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên này chưa có winner.", requestId), requestId));
                 return;
             }
             NormalUser caller = requireNormalUser(session, requestId);
@@ -194,7 +194,7 @@ public class PaymentHandler implements PacketHandler {
                         req.getAuctionId(), caller.getId(), auctionWinner.getWinner().getId(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
                         ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Chỉ winner của phiên mới được thanh toán.", requestId)));
+                                "Chỉ winner của phiên mới được thanh toán.", requestId), requestId));
                 return;
             }
 
@@ -203,7 +203,7 @@ public class PaymentHandler implements PacketHandler {
                 log.warn("Payment lock timeout: auctionId={}, requestId={}", req.getAuctionId(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
                         ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
@@ -238,12 +238,12 @@ public class PaymentHandler implements PacketHandler {
             log.warn("Payment rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getReason());
             session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId)));
+                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Payment failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -257,7 +257,7 @@ public class PaymentHandler implements PacketHandler {
                 log.warn("Second chance accept rejected because auction was not found: auctionId={}, username={}, requestId={}",
                         auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
@@ -272,7 +272,7 @@ public class PaymentHandler implements PacketHandler {
                         auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Không tìm thấy Second Chance Offer PENDING cho phiên này.", requestId)));
+                                "Không tìm thấy Second Chance Offer PENDING cho phiên này.", requestId), requestId));
                 return;
             }
 
@@ -283,7 +283,7 @@ public class PaymentHandler implements PacketHandler {
                         auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
                         ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Bạn không phải runner-up của offer này.", requestId)));
+                                "Bạn không phải runner-up của offer này.", requestId), requestId));
                 return;
             }
 
@@ -291,7 +291,7 @@ public class PaymentHandler implements PacketHandler {
             if (!locked) {
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
                         ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
@@ -312,7 +312,7 @@ public class PaymentHandler implements PacketHandler {
             log.error("Second chance accept failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -326,7 +326,7 @@ public class PaymentHandler implements PacketHandler {
                 log.warn("Second chance decline rejected because auction was not found: auctionId={}, username={}, requestId={}",
                         auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
@@ -341,7 +341,7 @@ public class PaymentHandler implements PacketHandler {
                         auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Không tìm thấy Second Chance Offer PENDING.", requestId)));
+                                "Không tìm thấy Second Chance Offer PENDING.", requestId), requestId));
                 return;
             }
 
@@ -352,7 +352,7 @@ public class PaymentHandler implements PacketHandler {
                         auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
                         ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Bạn không phải runner-up của offer này.", requestId)));
+                                "Bạn không phải runner-up của offer này.", requestId), requestId));
                 return;
             }
 
@@ -360,7 +360,7 @@ public class PaymentHandler implements PacketHandler {
             if (!locked) {
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
                         ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId)));
+                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
@@ -376,7 +376,7 @@ public class PaymentHandler implements PacketHandler {
             log.error("Second chance decline failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -389,7 +389,7 @@ public class PaymentHandler implements PacketHandler {
             log.warn("NormalUser required for payment handler: username={}, requestId={}",
                     session.getUsername(), requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được phép.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được phép.", requestId), requestId));
             return null;
         }
         return (NormalUser) user;

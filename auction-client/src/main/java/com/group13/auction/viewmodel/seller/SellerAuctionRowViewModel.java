@@ -1,10 +1,9 @@
 package com.group13.auction.viewmodel.seller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * Dữ liệu đã format để hiển thị một phiên đấu giá trong màn quản lý của người bán.
- */
+/** Dữ liệu đã format để hiển thị một phiên đấu giá trong màn quản lý của người bán. */
 public final class SellerAuctionRowViewModel {
 
     private final String auctionId;
@@ -19,6 +18,7 @@ public final class SellerAuctionRowViewModel {
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
     private final String viewerCountText;
+    private final List<String> imageUrls;
     private final boolean editable;
     private final boolean cancelRequestAllowed;
 
@@ -37,24 +37,26 @@ public final class SellerAuctionRowViewModel {
      * @param startTime thời gian bắt đầu dạng raw
      * @param endTime thời gian kết thúc dạng raw
      * @param viewerCountText số người xem đã format
+     * @param imageUrls danh sách URL ảnh sản phẩm đã upload
      * @param editable true nếu phiên còn có thể sửa
      * @param cancelRequestAllowed true nếu phiên còn có thể gửi yêu cầu hủy
      */
     public SellerAuctionRowViewModel(
-            String auctionId,
-            String itemName,
-            String categoryText,
-            String statusText,
-            String currentPriceText,
-            String startingPriceText,
-            String reservePriceText,
-            String startTimeText,
-            String endTimeText,
-            LocalDateTime startTime,
-            LocalDateTime endTime,
-            String viewerCountText,
-            boolean editable,
-            boolean cancelRequestAllowed) {
+        String auctionId,
+        String itemName,
+        String categoryText,
+        String statusText,
+        String currentPriceText,
+        String startingPriceText,
+        String reservePriceText,
+        String startTimeText,
+        String endTimeText,
+        LocalDateTime startTime,
+        LocalDateTime endTime,
+        String viewerCountText,
+        List<String> imageUrls,
+        boolean editable,
+        boolean cancelRequestAllowed) {
         this.auctionId = auctionId;
         this.itemName = itemName;
         this.categoryText = categoryText;
@@ -67,6 +69,7 @@ public final class SellerAuctionRowViewModel {
         this.startTime = startTime;
         this.endTime = endTime;
         this.viewerCountText = viewerCountText;
+        this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
         this.editable = editable;
         this.cancelRequestAllowed = cancelRequestAllowed;
     }
@@ -117,6 +120,18 @@ public final class SellerAuctionRowViewModel {
 
     public String viewerCountText() {
         return viewerCountText;
+    }
+
+    public List<String> imageUrls() {
+        return imageUrls;
+    }
+
+    public String primaryImageUrl() {
+        return imageUrls.isEmpty() ? "" : imageUrls.get(0);
+    }
+
+    public boolean hasImages() {
+        return !imageUrls.isEmpty();
     }
 
     public boolean editable() {

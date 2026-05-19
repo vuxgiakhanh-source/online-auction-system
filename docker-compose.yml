@@ -4,14 +4,14 @@ version: "3.9"
 # Online Auction System — Docker Compose
 #
 # Local dev:
-#   cp .env.example .env && docker compose up --build
+#   copy .env.example to .env and run:
+#   docker compose up --build
 #
 # CI/CD deploy (VPS):
 #   AUCTION_SERVER_IMAGE=ghcr.io/owner/auction-server:sha-abc1234 docker compose up -d --no-build
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
-
   # ── MySQL 8 ────────────────────────────────────────────────────────────────
   db:
     image: mysql:8.0
@@ -19,17 +19,27 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
-      MYSQL_DATABASE: auction_db
+      MYSQL_DATABASE: ${DB_NAME:-auction_db}
       MYSQL_USER: ${DB_USERNAME:-auction_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-auction_pass}
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+      # Tự động khởi tạo schema + seed data cho máy mới chạy lần đầu
+      - ./auction-server/src/main/resources/database/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
-             "-u", "${DB_USERNAME:-auction_user}",
-             "-p${DB_PASSWORD:-auction_pass}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "${DB_USERNAME:-auction_user}",
+          "-p${DB_PASSWORD:-auction_pass}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -50,7 +60,7 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
-      DB_URL: jdbc:mysql://db:3306/auction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME:-auction_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: ${DB_USERNAME:-auction_user}
       DB_PASSWORD: ${DB_PASSWORD:-auction_pass}
     ports:

@@ -48,16 +48,14 @@ public class AutoBidRegistry {
     public void register(String userId, String auctionId, long maxBid) {
         String key = buildKey(userId, auctionId);
         LocalDateTime now = LocalDateTime.now();
-        // Giữ nguyên registeredAt nếu đã có entry (chỉ update maxBid)
-        AutoBidEntry existing = registry.get(key);
-        LocalDateTime registeredAt = (existing != null) ? existing.getRegisteredAt() : now;
-
-        AutoBidEntry entry = new AutoBidEntry(userId, auctionId, maxBid, registeredAt);
-        registry.put(key, entry);
+        AutoBidEntry entry = registry.compute(key, (k, existing) -> {
+            LocalDateTime registeredAt = (existing != null) ? existing.getRegisteredAt() : now;
+            return new AutoBidEntry(userId, auctionId, maxBid, registeredAt);
+        });
 
         // Persist xuống DB (graceful: nếu DB chưa sẵn sàng — test env — bỏ qua)
         if (autoBidDAO != null) {
-            try { autoBidDAO.upsert(userId, auctionId, maxBid, registeredAt); }
+            try { autoBidDAO.upsert(userId, auctionId, maxBid, entry.getRegisteredAt()); }
             catch (Exception e) { log.warn("auto-bid DB upsert failed (non-critical): {}", e.getMessage()); }
         }
 

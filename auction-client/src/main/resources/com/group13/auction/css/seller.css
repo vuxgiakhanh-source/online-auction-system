@@ -267,6 +267,50 @@
 }
 
 
+/* SELLER AUCTION PRODUCT IMAGES */
+
+.seller-thumbnail-box {
+    -fx-min-height: 88;
+    -fx-pref-height: 88;
+
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 18;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+}
+
+.seller-thumbnail-image {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 10, 0.12, 0, 4);
+}
+
+.seller-thumbnail-placeholder {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.58);
+}
+
+.seller-detail-image-section {
+    -fx-padding: 14 0 2 0;
+}
+
+.seller-image-gallery {
+    -fx-padding: 12;
+
+    -fx-background-color: rgba(255, 255, 255, 0.055);
+    -fx-background-radius: 20;
+
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+}
+
+.product-gallery-image {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 12, 0.12, 0, 4);
+}
+
+
 /* SELLER CREATE FORM */
 
 .seller-form-card {
@@ -396,6 +440,21 @@
 
 .seller-image-list .list-cell:filled:selected {
     -fx-background-color: rgba(103, 184, 234, 0.22);
+}
+
+.seller-image-preview-row {
+    -fx-padding: 6 8 6 8;
+}
+
+.seller-image-preview {
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 8, 0.10, 0, 3);
+}
+
+.seller-image-preview-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.88);
 }
 
 

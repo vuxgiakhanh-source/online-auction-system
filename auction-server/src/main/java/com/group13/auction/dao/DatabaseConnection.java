@@ -79,7 +79,22 @@ public class DatabaseConnection {
                 this.username = props.getProperty("db.username");
                 this.password = props.getProperty("db.password");
                 log.warn("Database config loaded from data.properties (local dev mode).");
-                buildPool();
+
+                // FIX: Khi chạy Testcontainers, data.properties tồn tại nhưng trỏ đến
+                // MySQL local chưa chạy. DatabaseConnection singleton được tạo TỰ ĐỘNG
+                // khi class được load (trước @BeforeAll configureDataSource()).
+                //
+                // Cũ: buildPool() throw RuntimeException → test crash ngay lập tức.
+                // Mới: Nếu buildPool() fail → log warn + dataSource = null.
+                //      Test's @BeforeAll sẽ gọi reconfigure(testcontainerUrl) sau đó.
+                //      getConnection() sẽ throw rõ ràng nếu ai gọi trước reconfigure().
+                try {
+                    buildPool();
+                } catch (Exception poolEx) {
+                    log.warn("data.properties pool init failed (DB chưa chạy hoặc Testcontainers mode). " +
+                            "Gọi reconfigure() trước khi dùng DAO. Lỗi: {}", poolEx.getMessage());
+                    // dataSource = null — getConnection() sẽ throw SQLException rõ ràng
+                }
             }
         } catch (Exception e) {
             log.error("Error initializing DatabaseConnection", e);
@@ -101,11 +116,18 @@ public class DatabaseConnection {
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
 
         // ── Pool sizing ───────────────────────────────────────────────────
-        // AuctionSystemLoadIT dùng tối đa 32 thread đồng thời → cần pool >= 32.
-        // minimumIdle = 5: pre-warm vừa phải; tránh tạo nhiều connection khi
-        //   Testcontainers container chưa kịp sẵn sàng.
-        config.setMaximumPoolSize(40);
-        config.setMinimumIdle(5);
+        // Công thức: maximumPoolSize = N_cores * 2 + effective_spindle_count
+        // Với server 8-core, MySQL SSD: 8 * 2 + 1 = 17 → dùng 20 cho test.
+        // Production (5000 users): bid operations serialized per-auction qua lock,
+        // nên pool 100 là đủ cho ~50 auction hot đồng thời × 2 threads/auction.
+        //
+        // Đọc từ env để dễ cấu hình runtime (Docker/K8s):
+        //   DB_POOL_MAX=100 → production
+        //   DB_POOL_MAX=20  → test (default)
+        int poolMax = parseEnvInt("DB_POOL_MAX", 40);
+        int poolMin = parseEnvInt("DB_POOL_MIN", 5);
+        config.setMaximumPoolSize(poolMax);
+        config.setMinimumIdle(poolMin);
 
         // ── Timeouts ──────────────────────────────────────────────────────
         // connectionTimeout=30s: đủ cho Testcontainers warm-up và cho 32+ thread
@@ -154,10 +176,57 @@ public class DatabaseConnection {
         log.warn("DatabaseConnection reconfigured. URL: {}", newUrl);
     }
 
+    /**
+     * Đảm bảo pool đã sẵn sàng trước khi server chạy (ServerMain / IDE).
+     * Thử lại khi MySQL Docker vừa khởi động (healthcheck chưa xong).
+     */
+    public void ensureReady(int maxAttempts, long delayMs) throws SQLException {
+        SQLException last = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (dataSource == null || dataSource.isClosed()) {
+                    if (url == null || url.isBlank()) {
+                        throw new SQLException(
+                                "Chưa có cấu hình DB. Đặt DB_URL hoặc sửa data.properties, "
+                                        + "rồi chạy: docker compose up db -d");
+                    }
+                    buildPool();
+                }
+                try (Connection c = dataSource.getConnection()) {
+                    c.createStatement().execute("SELECT 1");
+                }
+                log.info("Database ready (attempt {}/{}).", attempt, maxAttempts);
+                return;
+            } catch (SQLException e) {
+                last = e;
+                if (dataSource != null && !dataSource.isClosed()) {
+                    dataSource.close();
+                }
+                dataSource = null;
+                if (attempt < maxAttempts) {
+                    log.warn("DB chưa sẵn sàng (attempt {}/{}): {} — thử lại sau {}ms",
+                            attempt, maxAttempts, e.getMessage(), delayMs);
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new SQLException("Interrupted while waiting for database", ie);
+                    }
+                }
+            }
+        }
+        throw new SQLException(
+                "Không kết nối được database sau " + maxAttempts + " lần thử. "
+                        + "Chạy: docker compose up db -d (MySQL cổng 3307). Chi tiết: "
+                        + (last != null ? last.getMessage() : "unknown"),
+                last);
+    }
+
     public Connection getConnection() throws SQLException {
         if (dataSource == null || dataSource.isClosed()) {
             throw new SQLException(
-                    "DataSource not initialized. Call reconfigure() first (Testcontainers mode).");
+                    "DataSource not initialized. Gọi ensureReady() hoặc reconfigure() trước. "
+                            + "Local dev: docker compose up db -d");
         }
         return dataSource.getConnection();
     }
@@ -175,5 +244,15 @@ public class DatabaseConnection {
             instance.close();
             instance = null;
         }
+    }
+
+    /** Parse int từ env với default. */
+    private static int parseEnvInt(String key, int defaultVal) {
+        String val = System.getenv(key);
+        if (val != null && !val.isBlank()) {
+            try { return Integer.parseInt(val.trim()); }
+            catch (NumberFormatException ignored) {}
+        }
+        return defaultVal;
     }
 }

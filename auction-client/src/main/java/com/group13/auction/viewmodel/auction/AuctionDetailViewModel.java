@@ -1,5 +1,7 @@
 package com.group13.auction.viewmodel.auction;
 
+import java.util.List;
+
 /** Dữ liệu chi tiết phiên đấu giá đã format cho màn auction detail. */
 public final class AuctionDetailViewModel {
 
@@ -20,32 +22,34 @@ public final class AuctionDetailViewModel {
     private final String startTimeText;
     private final String endTimeText;
     private final String remainingTimeText;
+    private final List<String> imageUrls;
     private final boolean joinable;
     private final boolean liveBiddingAllowed;
     private final double currentPrice;
 
     /** Tạo view model chi tiết phiên đấu giá. */
     public AuctionDetailViewModel(
-            String auctionId,
-            String itemName,
-            String description,
-            String categoryText,
-            String sellerText,
-            String rawStatus,
-            String statusText,
-            String currentLeaderId,
-            String currentLeaderUsername,
-            String currentPriceText,
-            String startingPriceText,
-            String reservePriceText,
-            String leaderText,
-            String viewerCountText,
-            String startTimeText,
-            String endTimeText,
-            String remainingTimeText,
-            boolean joinable,
-            boolean liveBiddingAllowed,
-            double currentPrice) {
+        String auctionId,
+        String itemName,
+        String description,
+        String categoryText,
+        String sellerText,
+        String rawStatus,
+        String statusText,
+        String currentLeaderId,
+        String currentLeaderUsername,
+        String currentPriceText,
+        String startingPriceText,
+        String reservePriceText,
+        String leaderText,
+        String viewerCountText,
+        String startTimeText,
+        String endTimeText,
+        String remainingTimeText,
+        List<String> imageUrls,
+        boolean joinable,
+        boolean liveBiddingAllowed,
+        double currentPrice) {
         this.auctionId = auctionId;
         this.itemName = itemName;
         this.description = description;
@@ -63,6 +67,7 @@ public final class AuctionDetailViewModel {
         this.startTimeText = startTimeText;
         this.endTimeText = endTimeText;
         this.remainingTimeText = remainingTimeText;
+        this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
         this.joinable = joinable;
         this.liveBiddingAllowed = liveBiddingAllowed;
         this.currentPrice = currentPrice;
@@ -136,6 +141,18 @@ public final class AuctionDetailViewModel {
         return remainingTimeText;
     }
 
+    public List<String> imageUrls() {
+        return imageUrls;
+    }
+
+    public String primaryImageUrl() {
+        return imageUrls.isEmpty() ? "" : imageUrls.get(0);
+    }
+
+    public boolean hasImages() {
+        return !imageUrls.isEmpty();
+    }
+
     public boolean joinable() {
         return joinable;
     }
@@ -166,10 +183,10 @@ public final class AuctionDetailViewModel {
      */
     public boolean canRequestPayment(String currentUserId) {
         return finished()
-                && !paid()
-                && currentUserId != null
-                && !currentUserId.isBlank()
-                && !currentLeaderId.isBlank()
-                && currentLeaderId.equals(currentUserId);
+            && !paid()
+            && currentUserId != null
+            && !currentUserId.isBlank()
+            && !currentLeaderId.isBlank()
+            && currentLeaderId.equals(currentUserId);
     }
 }

@@ -26,6 +26,7 @@ import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.AutoBidRegistry.AutoBidEntry;
 import com.group13.auction.strategy.AutoBidStrategy;
+import com.group13.auction.strategy.BidRateLimiter;
 import com.group13.auction.strategy.StandardBidStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import java.util.EnumSet;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -71,6 +73,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BidHandler implements PacketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(BidHandler.class);
+    private static final long BID_LOCK_TIMEOUT_SECONDS = 5L;
 
     private static final Set<PacketType> SUPPORTED = EnumSet.of(
             PacketType.JOIN_AUCTION,
@@ -90,6 +93,7 @@ public class BidHandler implements PacketHandler {
     // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
+    private final BidRateLimiter rateLimiter = BidRateLimiter.getInstance();
     private final AutoBidProcessor autoBidProcessor;
     private final BidTransactionDAO bidTransactionDAO;
 
@@ -117,7 +121,7 @@ public class BidHandler implements PacketHandler {
         if (!session.isAuthenticated()) {
             log.warn("Reject bid packet from unauthenticated session: type={}, requestId={}", type, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
             return;
         }
 
@@ -166,12 +170,12 @@ public class BidHandler implements PacketHandler {
             log.warn("Join auction rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getReason());
             session.send(Packet.of(PacketType.JOIN_AUCTION_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId)));
+                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Join auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.JOIN_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -199,7 +203,7 @@ public class BidHandler implements PacketHandler {
             log.error("Watch auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.WATCH_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -234,7 +238,16 @@ public class BidHandler implements PacketHandler {
         } catch (Exception e) {
             log.warn("Invalid place bid payload: username={}, requestId={}", session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId), requestId));
+            return;
+        }
+
+        // Rate limit theo userId (sau auth) — trước lock để không giữ lock khi flood.
+        String rateLimitUserId = session.getUserId();
+        if (rateLimitUserId != null && !rateLimiter.tryConsume(rateLimitUserId)) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                    ErrorDTO.of("RATE_LIMIT_EXCEEDED",
+                            "Bạn đang đặt giá quá nhanh. Vui lòng thử lại sau 1 giây.", requestId), requestId));
             return;
         }
 
@@ -242,10 +255,31 @@ public class BidHandler implements PacketHandler {
         Auction placeBidAuction = null;
         String  placeBidBidderId = null;
 
+        // FIX BROADCAST STALENESS: thu thập dữ liệu broadcast TRONG lock,
+        // gửi NGOÀI lock → không block bid tiếp theo trong khi loop gửi N clients.
+        Packet<?> broadcastBidUpdate   = null;
+        Packet<?> broadcastChartPoint  = null;
+        Packet<?> broadcastExtended    = null;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
-        lock.lock();
+        boolean acquired;
         try {
-            // Auth check trước — user phải là NormalUser trước khi lookup auction
+            acquired = lock.tryLock(BID_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Bid bị gián đoạn.", requestId), requestId));
+            return;
+        }
+        if (!acquired) {
+            log.warn("Place bid lock timeout: auctionId={}, username={}, requestId={}",
+                    req.getAuctionId(), session.getUsername(), requestId);
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                    ErrorDTO.of("SERVER_BUSY",
+                            "Hệ thống đang xử lý nhiều lượt đặt giá. Vui lòng thử lại.", requestId), requestId));
+            return;
+        }
+        try {
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
 
@@ -255,11 +289,15 @@ public class BidHandler implements PacketHandler {
             placeBidAuction  = auction;
             placeBidBidderId = bidder.getId();
 
+            // FIX BID DIRECTION: capture giá TRƯỚC khi bid để tính delta
+            long previousPrice  = auction.getCurrentPrice();
             LocalDateTime endTimeBefore = auction.getEndTime();
+
             bidService.placeBid(bidder, auction, req.getAmount(), new StandardBidStrategy());
             log.info("Place bid handled: auctionId={}, bidderId={}, username={}, amount={}, requestId={}",
                     req.getAuctionId(), bidder.getId(), bidder.getUsername(), req.getAmount(), requestId);
 
+            // Gửi kết quả cho người bid (1 send, OK trong lock)
             BidDTOs.BidResultDTO result = new BidDTOs.BidResultDTO();
             result.setAuctionId(req.getAuctionId());
             result.setAmount(req.getAmount());
@@ -268,58 +306,66 @@ public class BidHandler implements PacketHandler {
             result.setTimestamp(LocalDateTime.now());
             session.send(Packet.of(PacketType.PLACE_BID_SUCCESS, result, requestId));
 
-            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, req.getAmount());
+            // Chuẩn bị broadcast payload (KHÔNG gửi ngay — gửi ngoài lock)
+            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, req.getAmount(), previousPrice);
             LocalDateTime endTimeAfter = auction.getEndTime();
             if (!endTimeAfter.equals(endTimeBefore)) {
                 update.setNewEndTime(endTimeAfter);
-
-                // FIX BUG #3: Broadcast AUCTION_EXTENDED_NOTIFY riêng để client
-                // cập nhật countdown timer ngay lập tức (không chờ BID_UPDATE)
                 AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
                 extDto.setAuctionId(req.getAuctionId());
                 extDto.setNewEndTime(endTimeAfter);
-                extDto.setExtendedBySeconds(60); // = BidService.ANTI_SNIPING_EXTENSION_SECONDS
-                sessionManager.broadcastToAuction(req.getAuctionId(),
-                        Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto));
-                log.info("Auction extension broadcast: auctionId={}, newEndTime={}, requestId={}",
-                        req.getAuctionId(), endTimeAfter, requestId);
+                extDto.setExtendedBySeconds(60);
+                broadcastExtended = Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto);
             }
 
             PacketType broadcastType = auction.isReserveMet()
-                    ? PacketType.BID_UPDATE
-                    : PacketType.BID_RESERVE_NOT_MET_UPDATE;
-            sessionManager.broadcastToAuction(req.getAuctionId(), Packet.of(broadcastType, update));
+                    ? PacketType.BID_UPDATE : PacketType.BID_RESERVE_NOT_MET_UPDATE;
+            broadcastBidUpdate = Packet.of(broadcastType, update);
 
             BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
                     req.getAuctionId(), req.getAmount(), bidder.getUsername(), false);
-            sessionManager.broadcastToAuction(req.getAuctionId(),
-                    Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+            broadcastChartPoint = Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint);
 
         } catch (AuctionClosedException e) {
             log.warn("Place bid rejected because auction is closed: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.AUCTION_CLOSED, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.AUCTION_CLOSED, e.getMessage(), requestId), requestId));
         } catch (InvalidBidException e) {
             log.warn("Place bid rejected because bid is invalid: auctionId={}, username={}, amount={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), req.getAmount(), requestId);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.BID_TOO_LOW, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.BID_TOO_LOW, e.getMessage(), requestId), requestId));
         } catch (AuctionBusinessException e) {
             log.warn("Place bid rejected by business rule: auctionId={}, username={}, amount={}, requestId={}, reason={}",
                     req.getAuctionId(), session.getUsername(), req.getAmount(), requestId, e.getReason());
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId)));
+                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Place bid failed: auctionId={}, username={}, amount={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), req.getAmount(), requestId, e);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         } finally {
-            lock.unlock();
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
-        // FIX DEADLOCK: autoBidProcessor.process() gọi bidService.placeBid() bên trong,
-        // phải chạy NGOÀI ReentrantLock để tránh deadlock với BidService's internal lock.
+        // FIX BROADCAST STALENESS: gửi broadcast NGOÀI lock qua async executor
+        // → bid tiếp theo có thể bắt đầu ngay, không chờ N WebSocket sends.
+        // Thứ tự broadcast vẫn đảm bảo (FIFO queue trong broadcastExecutor).
+        if (broadcastExtended != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastExtended);
+            log.info("Auction extension broadcast queued: auctionId={}, requestId={}", req.getAuctionId(), requestId);
+        }
+        if (broadcastBidUpdate != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastBidUpdate);
+        }
+        if (broadcastChartPoint != null) {
+            sessionManager.broadcastToAuctionAsync(req.getAuctionId(), broadcastChartPoint);
+        }
+
+        // AutoBid ngoài lock — khớp production (tránh deadlock với placeBid lock lồng nhau)
         if (placeBidAuction != null && placeBidBidderId != null) {
             autoBidProcessor.process(placeBidAuction, placeBidBidderId);
         }
@@ -336,7 +382,7 @@ public class BidHandler implements PacketHandler {
             log.warn("Invalid register auto-bid payload: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId), requestId));
             return;
         }
 
@@ -365,7 +411,7 @@ public class BidHandler implements PacketHandler {
                         ErrorDTO.of(ErrorDTO.MAX_BID_TOO_LOW,
                                 String.format("maxBid %d quá thấp, phải > giá hiện tại %d + bước giá.",
                                         req.getMaxBid(), auction.getCurrentPrice()),
-                                requestId)));
+                                requestId), requestId));
                 return;
             }
 
@@ -400,12 +446,12 @@ public class BidHandler implements PacketHandler {
             log.warn("Register auto-bid rejected by business rule: auctionId={}, username={}, requestId={}, reason={}",
                     req.getAuctionId(), session.getUsername(), requestId, e.getReason());
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId)));
+                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Register auto-bid failed: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         } finally {
             lock.unlock();
         }
@@ -425,7 +471,7 @@ public class BidHandler implements PacketHandler {
             log.warn("Invalid update auto-bid payload: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId), requestId));
             return;
         }
 
@@ -445,7 +491,7 @@ public class BidHandler implements PacketHandler {
                 session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
                         ErrorDTO.of("NO_AUTO_BID",
                                 "Chưa có auto-bid trong phiên này. Hãy dùng REGISTER_AUTO_BID trước.",
-                                requestId)));
+                                requestId), requestId));
                 return;
             }
 
@@ -462,7 +508,7 @@ public class BidHandler implements PacketHandler {
                         ErrorDTO.of("INVALID_MAX_BID",
                                 String.format("maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d).",
                                         req.getMaxBid(), existing.getMaxBid()),
-                                requestId)));
+                                requestId), requestId));
                 return;
             }
 
@@ -484,7 +530,7 @@ public class BidHandler implements PacketHandler {
             log.error("Update auto-bid failed: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.UPDATE_AUTO_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         } finally {
             lock.unlock();
         }
@@ -521,7 +567,7 @@ public class BidHandler implements PacketHandler {
             log.error("Cancel auto-bid failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.CANCEL_AUTO_BID_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -554,7 +600,7 @@ public class BidHandler implements PacketHandler {
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -595,7 +641,7 @@ public class BidHandler implements PacketHandler {
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.GET_BID_HISTORY_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -609,7 +655,7 @@ public class BidHandler implements PacketHandler {
                     auctionId, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND,
-                            "Phiên đấu giá không tồn tại: " + auctionId, requestId)));
+                            "Phiên đấu giá không tồn tại: " + auctionId, requestId), requestId));
         }
         return auction;
     }
@@ -622,7 +668,7 @@ public class BidHandler implements PacketHandler {
                     session.getUsername(), requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                            "Chỉ NormalUser mới có thể thực hiện hành động này.", requestId)));
+                            "Chỉ NormalUser mới có thể thực hiện hành động này.", requestId), requestId));
             return null;
         }
         return (NormalUser) user;
