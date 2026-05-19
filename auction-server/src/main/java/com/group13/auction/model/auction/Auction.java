@@ -20,18 +20,24 @@ import java.util.concurrent.atomic.AtomicReference;
  * Phiên đấu giá - chỉ lưu data và trạng thái.
  *
  * ═══════════════════════════════════════════════════════════
- * PERFORMANCE FIX #3 — Thread safety cho shared state:
+ * Thread safety cho shared mutable state:
  *
- * volatile currentPrice / currentLeader / endTime / state:
- *   BidService dùng per-auction synchronized block khi WRITE.
- *   volatile đảm bảo sau khi release lock, các thread khác
- *   đọc được giá trị mới nhất ngay (Java Memory Model visibility).
- *   Không cần synchronized khi READ vì volatile đủ cho primitive long.
+ * currentPrice, currentLeader — volatile:
+ *   BidService giữ ReentrantLock khi WRITE. volatile đảm bảo
+ *   visibility sau khi release lock (Java Memory Model).
+ *   READ không cần lock vì volatile đủ cho primitive long / reference.
  *
- * bidTransactionIds = Collections.synchronizedList:
- *   addBidTransactionId() gọi từ trong synchronized(lock) của BidService,
- *   nhưng getBidTransactionIds() có thể gọi từ thread khác bất kỳ lúc nào.
- *   synchronizedList bảo vệ cả hai phía mà không cần lock thêm.
+ * endTime — AtomicReference<LocalDateTime>:
+ *   extendEndTime() là read-modify-write. volatile không đủ
+ *   (non-atomic: read → compute → write). AtomicReference.updateAndGet()
+ *   là truly atomic, loại bỏ Qodana "Non-atomic operation on volatile".
+ *
+ * state, winner — AtomicReference:
+ *   Compound write (set + side-effect). AtomicReference đảm bảo
+ *   visibility ngay cả khi không có lock phía caller.
+ *
+ * bidTransactionIds — Collections.synchronizedList:
+ *   addBidTransactionId() gọi trong lock, getBidTransactionIds() gọi ngoài.
  * ═══════════════════════════════════════════════════════════
  */
 public class Auction extends Entity {
@@ -51,7 +57,7 @@ public class Auction extends Entity {
   private final LocalDateTime originalEndTime;
 
   /** volatile — publish sau synchronized block trong BidService (anti-sniping). */
-  private volatile LocalDateTime endTime;
+  private final AtomicReference<LocalDateTime> endTime = new AtomicReference<>();
 
   /** Giá sàn bí mật — immutable sau khi tạo. */
   private final long reservePrice;
@@ -127,7 +133,7 @@ public class Auction extends Entity {
     this.currentPrice = item.getStartingPrice();
     this.startTime = startTime;
     this.originalEndTime = endTime;
-    this.endTime = endTime;
+    this.endTime.set(endTime);
     this.reservePrice = reservePrice;
     this.state.set(OpenState.INSTANCE);
     // winner khởi tạo null qua AtomicReference(null) ở khai báo field
@@ -148,7 +154,7 @@ public class Auction extends Entity {
     this.currentPrice = currentPrice;
     this.startTime = startTime;
     this.originalEndTime = endTime;
-    this.endTime = endTime;
+    this.endTime.set(endTime);
     this.reservePrice = reservePrice;
     this.state.set(resolveState(status));
     // winner khởi tạo null qua AtomicReference(null) ở khai báo field
@@ -172,7 +178,7 @@ public class Auction extends Entity {
 
   public Item getItem()                    { return item; }
   public LocalDateTime getStartTime()      { return startTime; }
-  public LocalDateTime getEndTime()        { return endTime; }
+  public LocalDateTime getEndTime()        { return endTime.get(); }
   public LocalDateTime getOriginalEndTime(){ return originalEndTime; }
   public long getCurrentPrice()            { return currentPrice; }
   public NormalUser getCurrentLeader()     { return currentLeader; }
@@ -235,14 +241,14 @@ public class Auction extends Entity {
 
   /**
    * Gia hạn phiên (anti-sniping).
-   * Luôn được gọi bên trong ReentrantLock của AuctionLockRegistry —
-   * không cần synchronized riêng trên Auction instance.
+   * Dùng AtomicReference.updateAndGet() — truly atomic read-modify-write,
+   * loại bỏ "Non-atomic operation on volatile" (Qodana/SpotBugs).
    */
   public void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
       throw new IllegalArgumentException("extension phải > 0.");
     }
-    this.endTime = this.endTime.plus(extension);
+    endTime.updateAndGet(current -> current.plus(extension));
     markUpdated();
   }
 
