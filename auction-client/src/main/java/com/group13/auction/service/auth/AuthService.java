@@ -201,14 +201,50 @@ public final class AuthService {
 
         try {
             ErrorDTO error = PacketCodec.fromElement(payload, ErrorDTO.class);
-            if (error != null && error.getMessage() != null && !error.getMessage().isBlank()) {
-                return error.getMessage();
-            }
+            return toUserFriendlyAuthMessage(error, fallbackMessage);
         } catch (RuntimeException ignored) {
             // Dùng fallback nếu payload lỗi không parse được.
         }
 
         return fallbackMessage;
+    }
+
+    private String toUserFriendlyAuthMessage(ErrorDTO error, String fallbackMessage) {
+        if (error == null) {
+            return fallbackMessage;
+        }
+
+        String code = normalize(error.getCode());
+        String serverMessage = clean(error.getMessage());
+
+        return switch (code) {
+            case ErrorDTO.USER_NOT_FOUND ->
+                    "Không tìm thấy tài khoản với tên đăng nhập này. Vui lòng kiểm tra lại hoặc đăng ký tài khoản mới.";
+            case ErrorDTO.WRONG_PASSWORD ->
+                    "Mật khẩu chưa đúng. Vui lòng nhập lại mật khẩu.";
+            case ErrorDTO.ACCOUNT_BANNED ->
+                    "Tài khoản này đã bị khóa. Vui lòng liên hệ Admin để được hỗ trợ.";
+            case ErrorDTO.ACCOUNT_SUSPENDED ->
+                    "Tài khoản này đang bị tạm ngưng. Vui lòng thử lại sau hoặc liên hệ Admin.";
+            case ErrorDTO.DUPLICATE_USERNAME ->
+                    "Tên đăng nhập này đã tồn tại. Vui lòng chọn tên đăng nhập khác.";
+            case ErrorDTO.DUPLICATE_EMAIL ->
+                    "Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.";
+            case ErrorDTO.VALIDATION_ERROR ->
+                    serverMessage.isBlank() ? fallbackMessage : serverMessage;
+            case ErrorDTO.INTERNAL_ERROR ->
+                    fallbackMessage + " Vui lòng thử lại sau.";
+            default ->
+                    serverMessage.isBlank() ? fallbackMessage : serverMessage;
+        };
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim().toUpperCase();
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private CompletableFuture<UserSession> failedFuture(String message) {
