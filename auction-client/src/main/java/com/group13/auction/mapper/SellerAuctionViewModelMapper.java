@@ -67,6 +67,7 @@ public final class SellerAuctionViewModelMapper {
                 startTime,
                 endTime,
                 Math.max(0, auction == null ? 0 : auction.getViewerCount()) + " người xem",
+                imageUrls(item),
                 isOpen,
                 isOpen);
     }
@@ -97,6 +98,17 @@ public final class SellerAuctionViewModelMapper {
             return "Phiên đấu giá chưa có tên";
         }
         return item.getName();
+    }
+
+    private static List<String> imageUrls(AuctionDTOs.ItemDTO item) {
+        if (item == null || item.getImageUrls() == null || item.getImageUrls().isEmpty()) {
+            return List.of();
+        }
+
+        return item.getImageUrls().stream()
+            .filter(url -> url != null && !url.isBlank())
+            .map(String::trim)
+            .toList();
     }
 
     private static String categoryText(AuctionDTOs.ItemDTO item) {

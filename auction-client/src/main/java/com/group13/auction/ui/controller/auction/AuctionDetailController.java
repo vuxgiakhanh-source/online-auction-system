@@ -9,6 +9,7 @@ import com.group13.auction.service.auction.WatchAuctionService;
 import com.group13.auction.service.payment.PaymentService;
 import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
 import java.util.concurrent.CompletionException;
@@ -16,6 +17,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.FlowPane;
 
 /** Controller cho màn chi tiết phiên đấu giá. */
 public final class AuctionDetailController {
@@ -84,6 +86,9 @@ public final class AuctionDetailController {
     private Button paymentButton;
 
     @FXML
+    private FlowPane imageGalleryPane;
+
+    @FXML
     private ProgressIndicator loadingIndicator;
 
     /** Đọc auction id từ screen state và tải chi tiết phiên. */
@@ -96,6 +101,7 @@ public final class AuctionDetailController {
 
         if (auctionId.isBlank()) {
             setMessage("Thiếu mã phiên đấu giá. Hãy quay lại danh sách và chọn lại phiên.");
+            clearImageGallery();
             joinLiveButton.setDisable(true);
             watchLiveButton.setDisable(true);
             paymentButton.setDisable(true);
@@ -237,6 +243,7 @@ public final class AuctionDetailController {
         setLoading(false, "Chi tiết phiên đã được cập nhật.");
 
         titleLabel.setText(detail.itemName());
+        ImageLoader.fillGallery(imageGalleryPane, detail.imageUrls());
         categoryLabel.setText(detail.categoryText());
         statusLabel.setText(detail.statusText());
         descriptionLabel.setText(detail.description());
@@ -255,6 +262,12 @@ public final class AuctionDetailController {
         watchLiveButton.setDisable(!currentAuctionJoinable);
 
         updatePaymentControls(detail);
+    }
+
+    private void clearImageGallery() {
+        if (imageGalleryPane != null) {
+            imageGalleryPane.getChildren().clear();
+        }
     }
 
     private void updatePaymentControls(AuctionDetailViewModel detail) {

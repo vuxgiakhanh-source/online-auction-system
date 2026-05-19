@@ -46,6 +46,7 @@ public final class AuctionViewModelMapper {
                 DateTimeUtil.formatDateTime(effectiveEndTime),
                 sellerText(item),
                 viewerCountText(auction == null ? 0 : auction.getViewerCount()),
+                primaryImageUrl(item),
                 canJoinOrWatch(auction));
     }
 
@@ -82,6 +83,7 @@ public final class AuctionViewModelMapper {
                 DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
                 DateTimeUtil.formatDateTime(effectiveEndTime),
                 remainingTimeText(effectiveEndTime),
+                imageUrls(item),
                 canJoinOrWatch(auction),
                 canBidLive(auction),
                 currentPrice);
@@ -209,6 +211,22 @@ public final class AuctionViewModelMapper {
         }
 
         return "Người bán: " + item.getSellerUsername();
+    }
+
+    private static List<String> imageUrls(AuctionDTOs.ItemDTO item) {
+        if (item == null || item.getImageUrls() == null || item.getImageUrls().isEmpty()) {
+            return List.of();
+        }
+
+        return item.getImageUrls().stream()
+            .filter(url -> url != null && !url.isBlank())
+            .map(String::trim)
+            .toList();
+    }
+
+    private static String primaryImageUrl(AuctionDTOs.ItemDTO item) {
+        List<String> urls = imageUrls(item);
+        return urls.isEmpty() ? "" : urls.get(0);
     }
 
     private static String statusText(String status) {
