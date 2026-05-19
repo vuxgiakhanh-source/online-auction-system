@@ -547,18 +547,23 @@ class AuctionManagerTest {
         }
 
         @Test
-        @DisplayName("findUserByUsername — found in memory, DAO not queried")
-        void findUserByUsername_inMemory_noDAOCall() {
-            // Arrange
-            NormalUser user = buildBidder();
-            manager.addToUserList(user);
+        @DisplayName("findUserByUsername — luôn đọc DB và ghi đè bản in-memory cũ")
+        void findUserByUsername_refreshesFromDb_overwritesStaleMemory() {
+            // Arrange — in-memory thiếu role SELLER
+            NormalUser stale = buildBidder();
+            manager.addToUserList(stale);
+
+            NormalUser fresh = buildBidder();
+            fresh.addRole(User.UserRole.SELLER);
+            when(userDAO.findUserByUsername(stale.getUsername())).thenReturn(fresh);
 
             // Act
-            User found = manager.findUserByUsername(user.getUsername());
+            User found = manager.findUserByUsername(stale.getUsername());
 
             // Assert
-            assertThat(found).isSameAs(user);
-            verifyNoInteractions(userDAO);
+            assertThat(found).isSameAs(fresh);
+            assertThat(found.hasRole(User.UserRole.SELLER)).isTrue();
+            verify(userDAO).findUserByUsername(stale.getUsername());
         }
 
         @Test
