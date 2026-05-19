@@ -146,22 +146,31 @@ public final class WalletController {
         lockedDepositLabel.setText(wallet.lockedDepositText());
     }
 
-    private long parseAmount(String rawText) {
-        if (rawText == null || rawText.isBlank()) {
-            return -1L;
-        }
-
-        String digitsOnly = rawText.replaceAll("[^0-9]", "");
-        if (digitsOnly.isBlank()) {
-            return -1L;
-        }
-
-        try {
-            return Long.parseLong(digitsOnly);
-        } catch (NumberFormatException exception) {
-            return -1L;
-        }
+  private long parseAmount(String rawText) {
+    if (rawText == null) {
+      return -1L;
     }
+
+    String trimmed = rawText.trim();
+    if (trimmed.isEmpty()) {
+      return -1L;
+    }
+
+    boolean plainNumber = trimmed.matches("\\d+");
+    boolean groupedNumber = trimmed.matches("\\d{1,3}([,.\\s]\\d{3})+");
+
+    if (!plainNumber && !groupedNumber) {
+      return -1L;
+    }
+
+    String normalized = trimmed.replaceAll("[,.\\s]", "");
+
+    try {
+      return Long.parseLong(normalized);
+    } catch (NumberFormatException exception) {
+      return -1L;
+    }
+  }
 
     private void setLoading(boolean loading, String message) {
         loadingIndicator.setVisible(loading);
