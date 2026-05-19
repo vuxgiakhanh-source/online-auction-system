@@ -41,13 +41,15 @@
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
     -fx-line-spacing: -8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
 }
 
 .landing-main-subtitle {
     -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
     -fx-font-size: 18px;
     -fx-font-weight: 800;
-    -fx-text-fill: rgba(255, 255, 255, 0.56);
+    -fx-text-fill: rgba(255, 255, 255, 0.85); /* Tăng độ đậm của chữ phụ */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.7), 6, 0, 0, 0);
 }
 
 .landing-main-start-button {
