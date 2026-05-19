@@ -53,8 +53,8 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         SessionManager    mockSessionManager    = mock(SessionManager.class);
 
         when(mockRatingService.isEligible(any())).thenReturn(true);
-        when(mockBidTransactionDAO.saveTransaction(any())).thenReturn(true);
-        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any())).thenReturn(true);
+        when(mockBidTransactionDAO.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
         when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
         doNothing().when(mockWalletService).lockDeposit(any(), anyLong(), any());

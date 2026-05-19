@@ -90,6 +90,7 @@ public class AuctionHandler implements PacketHandler {
     // ── CREATE ────────────────────────────────────────────────────────────────
 
     private void handleCreate(ClientSession session, JsonElement payload, String requestId) {
+        String savedItemId = null;
         try {
             AuctionDTOs.CreateAuctionRequestDTO req = PacketCodec.fromElement(
                     payload, AuctionDTOs.CreateAuctionRequestDTO.class);
@@ -140,6 +141,8 @@ public class AuctionHandler implements PacketHandler {
                     req.getItemExtraFields(),
                     imageUrls);
 
+            savedItemId = item.getId();
+
             // 2. Lưu Item vào DB (truyền imageUrls để lưu cột image_urls)
             boolean itemSaved = itemDAO.addItem(
                     item.getId(),
@@ -170,15 +173,29 @@ public class AuctionHandler implements PacketHandler {
                     auction.getId(), seller.getId(), imageUrls.size(), requestId);
 
         } catch (IllegalArgumentException | IllegalStateException e) {
+            rollbackOrphanItem(savedItemId);
             log.warn("Create auction rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
                     ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
+            rollbackOrphanItem(savedItemId);
             log.error("Create auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+        }
+    }
+
+    /** Xóa item đã insert nếu tạo phiên thất bại sau bước lưu sản phẩm. */
+    private void rollbackOrphanItem(String itemId) {
+        if (itemId == null) return;
+        try {
+            if (itemDAO.deleteItem(itemId)) {
+                log.info("Rolled back orphan item after failed create auction: itemId={}", itemId);
+            }
+        } catch (Exception ex) {
+            log.warn("Could not rollback orphan item: itemId={}, error={}", itemId, ex.getMessage());
         }
     }
 

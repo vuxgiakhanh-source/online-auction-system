@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.*;
 
 /**
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.*;
  * GAP 3: User.adjustRating() non-atomic plain double field.
  *   → this.rating = Math.max(MIN, Math.min(MAX, this.rating + delta))
  *   → read-modify-write không atomic → lost update có thể xảy ra.
- *   → KNOWN BUG documented: bounds [0.0, 5.0] phải được giữ tuyệt đối.
+ *   → adjustRating() synchronized — bounds [0.0, 5.0] và net delta phải nhất quán.
  *
  * GAP 9: Concurrent reward + penalize — net delta và SUSPEND threshold.
  *   → Verify: rating PHẢI trong bounds; SUSPENDED không bị bỏ sót.
@@ -42,7 +43,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
 
     @Test
     @Order(1)
-    @DisplayName("G3-1: [KNOWN BUG] 50 threads adjustRating() concurrent — bounds [0,5] phải được giữ dù lost update")
+    @DisplayName("G3-1: 50 threads adjustRating() concurrent — bounds [0,5] và net delta nhất quán")
     @Timeout(value = 5)
     void adjustRating_concurrent_boundsAlwaysRespected() throws InterruptedException {
         NormalUser user = buildUser("user-G3-1", 0L);
@@ -77,11 +78,11 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
                 .as("Rating phải >= 0.0 (RATING_MIN) dù có lost update")
                 .isGreaterThanOrEqualTo(0.0);
         assertThat(finalRating)
-                .as("Rating phải <= 5.0 (RATING_MAX) dù có lost update")
+                .as("Rating phải <= 5.0 (RATING_MAX)")
                 .isLessThanOrEqualTo(5.0);
-
-        log.warn("[G3-1 KNOWN BUG] finalRating={} (expected near 3.0 nếu atomic). "
-                + "Fix: AtomicLong lưu rating*100 với compareAndSet().", finalRating);
+        assertThat(finalRating)
+                .as("25 reward (+0.3) và 25 penalize (-0.3) → net 0, rating vẫn 3.0")
+                .isCloseTo(3.0, within(0.01));
     }
 
     // ── G3-2 ─────────────────────────────────────────────────────────────────
@@ -157,14 +158,10 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
         double finalRating = user.getRating();
         assertThat(finalRating).isBetween(0.0, 5.0);
 
-        // Expected nếu atomic: 3.0 + 30*0.3 - 20*0.5 = 2.0 (clamped)
-        double expected = Math.max(0.0, Math.min(5.0, 3.0 + rewardCount * 0.3 - penalizeCount * 0.5));
-        log.info("[G9-1] finalRating={}, expectedIfAtomic={}", finalRating, expected);
-
-        if (Math.abs(finalRating - expected) > 0.5) {
-            log.warn("[G9-1 KNOWN BUG] Lost update: finalRating={} differs from expected={}. "
-                    + "Fix: AtomicLong với rating*100 và compareAndSet().", finalRating, expected);
-        }
+        double expected = Math.max(0.0, Math.min(5.0, 3.0 + rewardCount * 0.2 - penalizeCount * 1.0));
+        assertThat(finalRating)
+                .as("Concurrent reward/penalize qua RatingService phải cộng dồn đúng")
+                .isCloseTo(expected, within(0.01));
     }
 
     // ── G9-2 ─────────────────────────────────────────────────────────────────

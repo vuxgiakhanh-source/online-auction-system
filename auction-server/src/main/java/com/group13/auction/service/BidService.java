@@ -124,11 +124,18 @@ public class BidService implements IBidService {
 
   @Override
   public void watchAuction(User bidder, Auction auction, AuctionObserver observer) {
-    bidder.addToWatchList(auction.getId());
-    auction.incrementViewerCount();
-    auctionService.addObserver(auction.getId(), observer);
-    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
-    userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+    java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
+    lock.lock();
+    try {
+      bidder.addToWatchList(auction.getId());
+      auction.incrementViewerCount();
+      int viewerCount = auction.getViewerCount();
+      auctionService.addObserver(auction.getId(), observer);
+      auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+    } finally {
+      lock.unlock();
+    }
   }
 
   /**
@@ -215,8 +222,11 @@ public class BidService implements IBidService {
     // FIX RACE CONDITION: updateHighestPrice dùng conditional SQL (WHERE current_price < ?)
     // → ngay cả khi thread khác đã ghi giá cao hơn trước, query này sẽ là no-op.
     // FIX PERF: saveTransaction() cũng chạy ngoài lock → giảm lock contention.
-    bidTransactionDAO.saveTransaction(tx);
-    auctionDAO.updateHighestPrice(auction.getId(), amount, bidder.getId());
+    if (!bidTransactionDAO.saveTransactionAndUpdatePrice(
+            tx, auction.getId(), amount, bidder.getId())) {
+      log.error("Bid persist failed after RAM update: auctionId={}, bidderId={}, amount={}",
+              auction.getId(), bidder.getId(), amount);
+    }
 
     if (reserveMet) {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
@@ -259,12 +269,19 @@ public class BidService implements IBidService {
   }
 
   private void registerJoin(User user, Auction auction, AuctionObserver observer) {
-    user.addJoinedAuction(auction.getId());
-    user.addToWatchList(auction.getId());
-    auction.incrementViewerCount();
-    auctionService.addObserver(auction.getId(), observer);
-    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
-    userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+    java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
+    lock.lock();
+    try {
+      user.addJoinedAuction(auction.getId());
+      user.addToWatchList(auction.getId());
+      auction.incrementViewerCount();
+      int viewerCount = auction.getViewerCount();
+      auctionService.addObserver(auction.getId(), observer);
+      auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+    } finally {
+      lock.unlock();
+    }
   }
 
   // recordTransaction() đã bị xóa:
