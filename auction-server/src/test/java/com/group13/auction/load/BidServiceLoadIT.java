@@ -47,10 +47,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("BidServiceLoadIT — tải đồng thời placeBid (DB thật)")
 class BidServiceLoadIT extends IntegrationTestBase {
 
-    // CI-safe: 10 bidder × 3 vòng = 30 ops tổng — đủ để kiểm tra concurrency
-    // mà không treo CI (24×6 cũ có thể mất 48 phút do chờ futures tuần tự).
-    private static final int BIDDER_COUNT    = 10;
-    private static final int BIDS_PER_BIDDER = 3;
+    // CI-safe: 15 bidder × 4 vòng = 60 ops tổng.
+    // Đủ để expose race condition nhưng hoàn thành nhanh với pool kết nối đủ lớn.
+    private static final int BIDDER_COUNT    = 15;
+    private static final int BIDS_PER_BIDDER = 4;
 
     @Container
     static final MySQLContainer mysql = new MySQLContainer("mysql:8.0")
@@ -170,9 +170,26 @@ class BidServiceLoadIT extends IntegrationTestBase {
 
         Auction fromDb = auctionDAO.findAuctionById(auction.getId());
         assertThat(fromDb).isNotNull();
-        assertThat(fromDb.getCurrentPrice())
-                .as("Giá trong DB phải khớp trạng thái RAM sau tải")
-                .isEqualTo(auction.getCurrentPrice());
-        assertThat(fromDb.getCurrentPrice()).isGreaterThanOrEqualTo(1_000_000L);
+
+        long ramPrice = auction.getCurrentPrice();
+        long dbPrice  = fromDb.getCurrentPrice();
+
+        // FIX RACE CONDITION CHECK:
+        // Với conditional UPDATE (WHERE current_price < ?), DB luôn giữ giá CAO NHẤT.
+        // RAM cũng luôn = giá cao nhất (cập nhật atomic trong lock).
+        // → DB price phải == RAM price sau khi tất cả threads hoàn tất.
+        assertThat(dbPrice)
+                .as("Giá trong DB (%d) phải khớp trạng thái RAM (%d) sau tải — nếu fail là stale-write bug",
+                        dbPrice, ramPrice)
+                .isEqualTo(ramPrice);
+
+        // Giá phải > starting price (ít nhất 1 bid thành công)
+        assertThat(dbPrice).isGreaterThan(auction.getItem().getStartingPrice());
+
+        // DB price phải >= RAM price không bao giờ sai (DB = MAX trong mọi tình huống)
+        // Thêm assertion: số bid thành công hợp lý
+        assertThat(successes.get())
+                .as("Số bid thành công trong load test phải >= BIDDER_COUNT (mỗi bidder ít nhất 1 bid)")
+                .isGreaterThanOrEqualTo(BIDDER_COUNT);
     }
 }

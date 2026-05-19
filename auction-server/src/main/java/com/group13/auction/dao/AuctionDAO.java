@@ -113,8 +113,25 @@ public class AuctionDAO {
     /**
      * Cập nhật giá cao nhất khi có người đặt giá hợp lệ (Bid).
      */
+    /**
+     * Cập nhật giá cao nhất với điều kiện atomicity: chỉ update khi newPrice > current_price trong DB.
+     *
+     * FIX RACE CONDITION: updateHighestPrice() được gọi NGOÀI per-auction lock (FIX #5 cũ).
+     * Không dùng conditional có thể xảy ra stale-write:
+     *   Thread A: RAM→7.457k → unlock → [context switch]
+     *   Thread B: RAM→7.863k → unlock → DB→7.863k ✓
+     *   Thread A: resumes → DB→7.457k → OVERWRITE 7.863k! ✗
+     *
+     * Với WHERE current_price < ?, Thread A sẽ không ghi đè 7.863k.
+     * Đây là optimistic-locking nhẹ ở tầng DB, không cần SELECT FOR UPDATE.
+     *
+     * @return true nếu update thực sự xảy ra (newPrice > current DB price)
+     */
     public boolean updateHighestPrice(String auctionId, long newPrice, String bidderId) {
-        String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
+        // WHERE current_price < ? => chỉ ghi nếu giá mới CAO HƠN giá hiện tại trong DB
+        String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, "
+                + "current_highest_price = ?, winning_bidder_id = ? "
+                + "WHERE id = ? AND current_price < ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -125,8 +142,13 @@ public class AuctionDAO {
             pstmt.setLong(3, newPrice);
             pstmt.setString(4, bidderId);
             pstmt.setString(5, auctionId);
+            pstmt.setLong(6, newPrice);   // WHERE current_price < newPrice
 
-            return pstmt.executeUpdate() > 0;
+            int rows = pstmt.executeUpdate();
+            if (rows == 0) {
+                log.warn("updateHighestPrice no-op (stale write skipped): auctionId={}, newPrice={}", auctionId, newPrice);
+            }
+            return rows > 0;
         } catch (SQLException e) {
             log.error("Lỗi cập nhật giá đấu: auctionId={}, newPrice={}, bidderId={}", auctionId, newPrice, bidderId, e);
             return false;
