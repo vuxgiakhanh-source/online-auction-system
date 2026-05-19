@@ -2,6 +2,7 @@ package com.group13.auction.core.navigation;
 
 import com.group13.auction.config.ResourcePath;
 import com.group13.auction.config.UiConstants;
+import com.group13.auction.ui.util.UiSoundInstaller;
 import com.group13.auction.util.ResourceUtil;
 import java.io.IOException;
 import java.net.URL;
@@ -52,6 +53,7 @@ public final class SceneManager {
         }
 
         addStylesheet(scene, ResourcePath.APP_CSS);
+        UiSoundInstaller.installButtonClickSound(scene);
     }
 
     private Parent loadView(String fxmlPath) {

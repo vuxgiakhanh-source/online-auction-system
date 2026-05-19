@@ -3,6 +3,7 @@ package com.group13.auction.ui.controller.seller;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.seller.SellerAuctionService;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.DialogSoundUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
 import com.group13.auction.core.context.AppContext;
@@ -206,6 +207,7 @@ public final class SellerAuctionListController {
         dialog.setTitle("Yêu cầu hủy phiên đấu giá");
         dialog.setHeaderText(null);
         dialog.setContentText("Nhập lý do hủy phiên:");
+        DialogSoundUtil.installButtonClickSound(dialog);
 
         dialog
                 .showAndWait()
