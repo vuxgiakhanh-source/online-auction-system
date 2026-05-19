@@ -19,6 +19,7 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.AccountService;
 import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.AuctionTimerService;
+import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.service.BidService;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.service.QualityReportService;
@@ -113,8 +114,8 @@ public class ServerMain {
         AutoBidRegistry.getInstance().loadFromDatabase();
 
         // ── 7. Khởi động AuctionTimerService ─────────────────────────────────
-        AuctionTimerService.getInstance().start(
-                auctionService, paymentService, SessionManager.getInstance());
+        IAuctionTimerService auctionTimer = AuctionTimerService.getInstance();
+        auctionTimer.start(auctionService, paymentService, SessionManager.getInstance());
 
         // ── 8. Khởi động ImageUploadServer (HTTP, cổng 8081) ─────────────────
         ImageUploadServer imageServer = new ImageUploadServer(imagePort, uploadDir);
@@ -131,7 +132,7 @@ public class ServerMain {
         // ── 10. Graceful shutdown ─────────────────────────────────────────────
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutdown signal received — stopping servers...");
-            AuctionTimerService.getInstance().stop();
+            auctionTimer.stop();
             imageServer.stop();
             try { server.stop(3000); } catch (Exception e) {
                 log.warn("Error during WebSocket server shutdown", e);
