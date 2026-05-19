@@ -38,10 +38,19 @@ public final class RegisterController {
     private Button signUpButton;
 
     @FXML
+    private Button backToLandingButton;
+
+    @FXML
     private Button goToLoginTabButton;
 
     @FXML
     private Button goToLoginLinkButton;
+
+    /** Chuyển về trang landing. */
+    @FXML
+    public void handleBackToLanding() {
+        Navigator.getInstance().goToLanding();
+    }
 
     /** Chuyển về màn hình đăng nhập. */
     @FXML
@@ -107,6 +116,7 @@ public final class RegisterController {
         passwordField.setDisable(disabled);
         confirmPasswordField.setDisable(disabled);
         signUpButton.setDisable(disabled);
+        backToLandingButton.setDisable(disabled);
         goToLoginTabButton.setDisable(disabled);
         goToLoginLinkButton.setDisable(disabled);
         signUpButton.setText(disabled ? "Signing up..." : "Sign up");
