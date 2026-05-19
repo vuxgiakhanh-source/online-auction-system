@@ -27,6 +27,52 @@ import java.util.stream.Collectors;
  */
 public class SessionManager {
 
+    /**
+     * FIX BROADCAST STALENESS v2 — Parallel within event, FIFO between events.
+     *
+     * ┌─────────────────────────────────────────────────────────────────────┐
+     * │ Vấn đề với sequential broadcast (forEach):                          │
+     * │                                                                     │
+     * │ Bid A → loop gửi user 1, 2, ..., 1000 tuần tự                      │
+     * │         user #1000 nhận trễ ~100ms so với user #1                   │
+     * │         Trong 100ms đó, Bid B đã xảy ra → user #1000 thấy stale    │
+     * │                                                                     │
+     * │ Fix:                                                                │
+     * │ • broadcastOrderingExecutor (single-thread): đảm bảo thứ tự EVENT  │
+     * │   → Bid A LUÔN được xử lý trước Bid B (FIFO queue)                │
+     * │ • Trong mỗi event: snapshot danh sách target → parallelStream()     │
+     * │   → 1000 users nhận gần như ĐỒNG THỜI (~cùng ms)                  │
+     * │ • sendPool (I/O thread pool): thực hiện actual send song song       │
+     * │                                                                     │
+     * │ Kết quả:                                                            │
+     * │   User #1 và User #1000 nhận BID_UPDATE(A) gần như cùng lúc        │
+     * │   → không còn stale window trong cùng 1 event                      │
+     * └─────────────────────────────────────────────────────────────────────┘
+     */
+
+    /** Single-thread: đảm bảo thứ tự giữa các bid event (FIFO). */
+    private final java.util.concurrent.ExecutorService broadcastOrderingExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "broadcast-ordering-thread");
+                t.setDaemon(true);
+                return t;
+            });
+
+    /**
+     * Thread pool I/O để gửi song song trong cùng 1 event.
+     * Số thread = 2 × CPU cores, phù hợp với I/O-bound WebSocket sends.
+     * Daemon thread để JVM không bị block khi shutdown.
+     */
+    private final java.util.concurrent.ExecutorService sendPool =
+            java.util.concurrent.Executors.newFixedThreadPool(
+                    Math.max(4, Runtime.getRuntime().availableProcessors() * 2),
+                    r -> {
+                        Thread t = new Thread(r, "broadcast-send-thread");
+                        t.setDaemon(true);
+                        return t;
+                    }
+            );
+
     private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
 
     private static final SessionManager INSTANCE = new SessionManager();
@@ -158,6 +204,111 @@ public class SessionManager {
         byConnection.values().forEach(session -> {
             if (session.isWatchingAuction(auctionId)) {
                 session.sendRaw(json);
+            }
+        });
+    }
+
+    /**
+     * FIX BROADCAST STALENESS: gửi bất đồng bộ qua thread pool riêng.
+     *
+     * Dùng sau khi đã release bid lock (trong BidHandler) để:
+     * 1. Không block luồng xử lý bid tiếp theo.
+     * 2. Đảm bảo thứ tự: các bid xảy ra trước → broadcast trước (FIFO queue).
+     * 3. Encode JSON 1 lần, gửi N clients song song.
+     *
+     * Kết quả: người cuối hàng nhận được thông báo delay tối đa = 1 network RTT,
+     * KHÔNG phải (N-1) × RTT như cách sync cũ.
+     */
+    /**
+     * Broadcast bất đồng bộ tới tất cả watcher của auction.
+     *
+     * Cơ chế 2 tầng:
+     * 1. broadcastOrderingExecutor (single-thread FIFO): đảm bảo event A xử lý trước event B.
+     * 2. sendPool (parallel): trong event, snapshot danh sách target → gửi song song.
+     *
+     * User #1 và user #1000 nhận packet trong cùng một "lần gửi" song song,
+     * không còn bị user cuối nhận trễ hơn user đầu cả trăm millisecond.
+     */
+    public void broadcastToAuctionAsync(String auctionId, Packet<?> packet) {
+        // Encode 1 lần trên calling thread (không phải trong executor)
+        final String json = PacketCodec.encode(packet);
+
+        // Bước 1: submit vào ordering executor để giữ thứ tự event
+        broadcastOrderingExecutor.submit(() -> {
+            // Bước 2: snapshot danh sách target tại thời điểm event được xử lý
+            java.util.List<ClientSession> targets = new java.util.ArrayList<>();
+            for (ClientSession session : byConnection.values()) {
+                if (session.isWatchingAuction(auctionId)) {
+                    targets.add(session);
+                }
+            }
+
+            if (targets.isEmpty()) return;
+
+            if (targets.size() == 1) {
+                // Tối ưu: 1 watcher thì không cần pool overhead
+                targets.get(0).sendRaw(json);
+                return;
+            }
+
+            // Bước 3: gửi song song tới tất cả target
+            // CountDownLatch đảm bảo ordering executor chờ đến khi TẤT CẢ gửi xong
+            // trước khi xử lý event tiếp theo → không có event sau chen vào giữa
+            java.util.concurrent.CountDownLatch latch =
+                    new java.util.concurrent.CountDownLatch(targets.size());
+            for (ClientSession target : targets) {
+                sendPool.submit(() -> {
+                    try {
+                        target.sendRaw(json);
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+            try {
+                // Timeout 5s: tránh treo nếu sendPool bị quá tải
+                boolean completed = latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (!completed) {
+                    log.warn("broadcastToAuction timed out waiting for {} sends on auction {}", targets.size(), auctionId);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+    }
+
+    /**
+     * Async variant cho broadcastToAuctionExcept — cùng cơ chế 2 tầng.
+     */
+    public void broadcastToAuctionExceptAsync(String auctionId, Packet<?> packet, String excludeUserId) {
+        final String json = PacketCodec.encode(packet);
+        broadcastOrderingExecutor.submit(() -> {
+            java.util.List<ClientSession> targets = new java.util.ArrayList<>();
+            for (ClientSession session : byConnection.values()) {
+                if (session.isWatchingAuction(auctionId)
+                        && (session.getUserId() == null
+                        || !session.getUserId().equals(excludeUserId))) {
+                    targets.add(session);
+                }
+            }
+
+            if (targets.isEmpty()) return;
+
+            java.util.concurrent.CountDownLatch latch =
+                    new java.util.concurrent.CountDownLatch(targets.size());
+            for (ClientSession target : targets) {
+                sendPool.submit(() -> {
+                    try { target.sendRaw(json); }
+                    finally { latch.countDown(); }
+                });
+            }
+            try {
+                boolean completed = latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (!completed) {
+                    log.warn("broadcastToAuctionExceptAsync timed out waiting for {} sends on auction {}", targets.size(), auctionId);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         });
     }

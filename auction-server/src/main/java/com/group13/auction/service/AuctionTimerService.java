@@ -17,7 +17,9 @@ import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IScheduler;
 import com.group13.auction.service.scheduler.TaskScheduler;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
+import com.group13.auction.strategy.BidRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -49,6 +51,9 @@ public class AuctionTimerService implements IAuctionTimerService {
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
     private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
     private volatile boolean running = false;
+    /** Đếm số lần scan để throttle cleanupIdle — chỉ chạy mỗi 5 phút (300 scan × 1s). */
+    private int scanCount = 0;
+    private static final int CLEANUP_INTERVAL_SCANS = 300;
 
     private AuctionTimerService() {}
 
@@ -112,6 +117,11 @@ public class AuctionTimerService implements IAuctionTimerService {
             closeExpiredAuctions(now);
             expirePendingWinnerPayments();
             expirePendingSecondChanceOffers(now);
+            // Chỉ dọn dẹp idle buckets mỗi 5 phút — tránh iterate toàn bộ users mỗi giây.
+            if (++scanCount >= CLEANUP_INTERVAL_SCANS) {
+                BidRateLimiter.getInstance().cleanupIdle();
+                scanCount = 0;
+            }
         } catch (Exception e) {
             log.error("Lỗi không mong muốn trong scan:", e);
         }
@@ -182,6 +192,9 @@ public class AuctionTimerService implements IAuctionTimerService {
                 boolean reserveMetBeforeClose = auction.isReserveMet();
 
                 auctionService.closeAuction(auction);
+                // Lock entry được giải phóng ngay khi auction đã đóng thành công —
+                // không phụ thuộc vào broadcast hay cleanup sau đó.
+                releaseLock = true;
 
                 PacketType packetType;
                 if (auction.getStatus() == Auction.AuctionStatus.FINISHED) {
@@ -204,7 +217,7 @@ public class AuctionTimerService implements IAuctionTimerService {
 
                 broadcastUpdate(auction, packetType);
                 autoBidRegistry.clearAuction(auction.getId());
-                releaseLock = true;
+                AutoBidProcessor.clearAuctionActivity(auction.getId());
 
                 log.info("Auction closed: auctionId={} status={}", auction.getId(), auction.getStatus());
             } catch (Exception e) {

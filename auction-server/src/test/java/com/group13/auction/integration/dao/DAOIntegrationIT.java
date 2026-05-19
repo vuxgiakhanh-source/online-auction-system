@@ -727,6 +727,60 @@ class DAOIntegrationIT {
         }
 
         @Test
+        @Order(3)
+        @DisplayName("updateHighestPrice() với giá THẤP HƠN current_price → no-op (stale-write protection)")
+        void updateHighestPrice_stalePriceLower_isNoOp() {
+            // Tình huống: auction đang ở giá 11_000_000 (sau 1 bid thành công),
+            // một stale-write cố gắng set về 9_000_000 → phải bị bỏ qua.
+            Auction auction = prepareFullAuction(
+                    "seller_stale", "Stale Write Item", 8_000_000L, 10_000_000L);
+
+            String bidderId = userDAO.registerUser(
+                    "bidder_stale", hashPassword("pass"), "stale@omnibid.vn");
+            createdUserIds.add(bidderId);
+
+            // Bid hợp lệ: nâng giá lên 11_000_000
+            boolean firstUpdate = auctionDAO.updateHighestPrice(
+                    auction.getId(), 11_000_000L, bidderId);
+            assertThat(firstUpdate).isTrue();
+
+            // Stale-write: giá cũ 9_000_000 (thấp hơn 11_000_000 hiện tại) → phải là no-op
+            boolean staleUpdate = auctionDAO.updateHighestPrice(
+                    auction.getId(), 9_000_000L, bidderId);
+            assertThat(staleUpdate)
+                    .as("Stale-write với giá thấp hơn phải bị bỏ qua (return false)")
+                    .isFalse();
+
+            // DB phải vẫn giữ 11_000_000
+            Auction found = auctionDAO.findAuctionById(auction.getId());
+            assertThat(found.getCurrentPrice())
+                    .as("DB phải giữ giá CAO NHẤT sau stale-write")
+                    .isEqualTo(11_000_000L);
+        }
+
+        @Test
+        @Order(3)
+        @DisplayName("updateHighestPrice() với giá BẰNG current_price → no-op (không overwrite bằng cùng giá)")
+        void updateHighestPrice_samePriceEqualCurrent_isNoOp() {
+            Auction auction = prepareFullAuction(
+                    "seller_equal", "Equal Price Item", 5_000_000L, 6_000_000L);
+
+            String bidderId = userDAO.registerUser(
+                    "bidder_equal", hashPassword("pass"), "equal@omnibid.vn");
+            createdUserIds.add(bidderId);
+
+            // Set giá lên 7_000_000
+            auctionDAO.updateHighestPrice(auction.getId(), 7_000_000L, bidderId);
+
+            // Thử update với cùng giá 7_000_000 → WHERE current_price < 7_000_000 → false
+            boolean sameUpdate = auctionDAO.updateHighestPrice(
+                    auction.getId(), 7_000_000L, bidderId);
+            assertThat(sameUpdate)
+                    .as("Update với cùng giá không thay đổi DB (WHERE current_price < newPrice)")
+                    .isFalse();
+        }
+
+        @Test
         @Order(4)
         @DisplayName("updateAuctionResult() lưu trạng thái FINISHED khi reserve đạt")
         void updateAuctionResult_finishedState_persistsCorrectly() {

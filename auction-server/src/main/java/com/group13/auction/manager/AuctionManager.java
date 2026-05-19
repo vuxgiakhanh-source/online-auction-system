@@ -82,6 +82,17 @@ public class AuctionManager {
     log.info("User registered: username={}", user.getUsername());
   }
 
+  /**
+   * Tìm user theo username CHỈ trong bộ nhớ (không truy vấn DB).
+   * Dùng bởi UserService.login() để kiểm tra in-memory trước khi hit DB.
+   */
+  public User findUserByUsernameInMemoryOnly(String username) {
+    for (User u : allUsers.values()) {
+      if (u.getUsername().equals(username)) return u;
+    }
+    return null;
+  }
+
   public User findUserByUsername(String username) {
     for (User u : allUsers.values()) {
       if (u.getUsername().equals(username)) return u;

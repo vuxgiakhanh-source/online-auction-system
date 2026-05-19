@@ -12,9 +12,10 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IQualityReportService;
 import com.group13.auction.service.iservice.IRatingService;
-import com.group13.auction.service.iservice.IWalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * QualityReport: submit, approve, reject và hoàn tiền cho winner.
@@ -30,6 +31,13 @@ public class
 QualityReportService implements IQualityReportService {
 
     private static final Logger log = LoggerFactory.getLogger(QualityReportService.class);
+
+    /**
+     * Per-report locks để tránh synchronized trên method parameter.
+     * Key = report.getId(). Lock được tạo lazily và dùng chung cho mọi
+     * thread cùng thao tác trên cùng 1 report.
+     */
+    private final ConcurrentHashMap<String, Object> reportLocks = new ConcurrentHashMap<>();
 
     private final IRatingService ratingService;
     private final IPaymentService paymentService;
@@ -99,7 +107,8 @@ QualityReportService implements IQualityReportService {
      */
     @Override
     public void approveReport(Admin admin, QualityReport report, Auction auction) {
-        synchronized (report) {
+        Object lock = reportLocks.computeIfAbsent(report.getId(), id -> new Object());
+        synchronized (lock) {
             if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
                 log.warn("Approve quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
                         report.getId(), report.getAuctionId(), report.getStatus());
@@ -162,7 +171,8 @@ QualityReportService implements IQualityReportService {
      */
     @Override
     public void rejectReport(Admin admin, QualityReport report) {
-        synchronized (report) {
+        Object lock = reportLocks.computeIfAbsent(report.getId(), id -> new Object());
+        synchronized (lock) {
             if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
                 log.warn("Reject quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
                         report.getId(), report.getAuctionId(), report.getStatus());

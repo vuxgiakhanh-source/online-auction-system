@@ -14,6 +14,7 @@ import com.group13.auction.model.item.Item;
 import com.group13.auction.model.item.ItemFactory;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
@@ -96,7 +97,15 @@ public class AuctionHandler implements PacketHandler {
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
-            // Lấy imageUrls từ request (null-safe — client cũ không gửi field này)
+            // Kiểm tra user đã được phê duyệt làm Seller chưa.
+            // items.seller_id là FK tới sellers(user_id) — nếu chưa có record
+            // trong bảng sellers sẽ gây SQLIntegrityConstraintViolationException.
+            if (!seller.hasRole(User.UserRole.SELLER)) {
+                session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Tài khoản chưa được phê duyệt làm người bán.", requestId)));
+                return;
+            }
             List<String> imageUrls = req.getImageUrls() != null
                     ? req.getImageUrls() : List.of();
 
