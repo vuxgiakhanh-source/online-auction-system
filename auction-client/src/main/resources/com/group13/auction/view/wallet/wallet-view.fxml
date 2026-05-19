@@ -44,7 +44,8 @@
 
             <Region HBox.hgrow="ALWAYS"/>
 
-            <Button mnemonicParsing="false"
+            <Button fx:id="refreshButton"
+                    mnemonicParsing="false"
                     onAction="#handleRefresh"
                     text="Làm mới"/>
 
