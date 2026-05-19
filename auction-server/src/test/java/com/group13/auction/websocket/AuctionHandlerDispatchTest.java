@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.group13.auction.websocket.PacketResponseAssert.assertEchoesRequestId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -289,7 +290,7 @@ class AuctionHandlerDispatchTest {
             newHandler().handle(session(), PacketType.GET_AUCTION_LIST,
                     GSON.toJsonTree(req), "custom-rid-99");
 
-            assertThat(captureLastSent()).contains("custom-rid-99");
+            assertEchoesRequestId(captureLastSent(), "custom-rid-99");
         }
 
         @Test
@@ -350,7 +351,7 @@ class AuctionHandlerDispatchTest {
             newHandler().handle(session(), PacketType.GET_AUCTION_DETAIL,
                     GSON.toJsonTree(auction.getId()), "echo-detail-rid");
 
-            assertThat(captureLastSent()).contains("echo-detail-rid");
+            assertEchoesRequestId(captureLastSent(), "echo-detail-rid");
         }
     }
 
@@ -831,7 +832,7 @@ class AuctionHandlerDispatchTest {
             newHandler().handle(session(), PacketType.ADMIN_GET_ALL_AUCTIONS,
                     JsonNull.INSTANCE, "echo-rid-777");
 
-            assertThat(captureLastSent()).contains("echo-rid-777");
+            assertEchoesRequestId(captureLastSent(), "echo-rid-777");
         }
 
         @Test

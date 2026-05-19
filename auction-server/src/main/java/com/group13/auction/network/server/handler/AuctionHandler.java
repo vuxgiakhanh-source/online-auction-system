@@ -14,6 +14,7 @@ import com.group13.auction.model.item.Item;
 import com.group13.auction.model.item.ItemFactory;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
@@ -70,7 +71,7 @@ public class AuctionHandler implements PacketHandler {
             log.warn("Reject auction packet from unauthenticated session: type={}, requestId={}",
                     type, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
             return;
         }
 
@@ -96,7 +97,15 @@ public class AuctionHandler implements PacketHandler {
             NormalUser seller = requireNormalUser(session, requestId);
             if (seller == null) return;
 
-            // Lấy imageUrls từ request (null-safe — client cũ không gửi field này)
+            // Kiểm tra user đã được phê duyệt làm Seller chưa.
+            // items.seller_id là FK tới sellers(user_id) — nếu chưa có record
+            // trong bảng sellers sẽ gây SQLIntegrityConstraintViolationException.
+            if (!seller.hasRole(User.UserRole.SELLER)) {
+                session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                                "Tài khoản chưa được phê duyệt làm người bán.", requestId), requestId));
+                return;
+            }
             List<String> imageUrls = req.getImageUrls() != null
                     ? req.getImageUrls() : List.of();
 
@@ -105,7 +114,7 @@ public class AuctionHandler implements PacketHandler {
                 session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
                                 "Tối đa " + Item.MAX_IMAGES + " ảnh mỗi sản phẩm.",
-                                requestId)));
+                                requestId), requestId));
                 return;
             }
 
@@ -116,7 +125,7 @@ public class AuctionHandler implements PacketHandler {
                         || url.length() > 200) {
                     session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
                             ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                    "URL ảnh không hợp lệ: " + url, requestId)));
+                                    "URL ảnh không hợp lệ: " + url, requestId), requestId));
                     return;
                 }
             }
@@ -143,7 +152,7 @@ public class AuctionHandler implements PacketHandler {
 
             if (!itemSaved) {
                 session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
-                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi lưu sản phẩm.", requestId)));
+                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi lưu sản phẩm.", requestId), requestId));
                 return;
             }
 
@@ -164,12 +173,12 @@ public class AuctionHandler implements PacketHandler {
             log.warn("Create auction rejected: username={}, requestId={}, reason={}",
                     session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Create auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.CREATE_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -201,7 +210,7 @@ public class AuctionHandler implements PacketHandler {
             log.error("Get auction list failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -213,7 +222,7 @@ public class AuctionHandler implements PacketHandler {
             Auction auction  = AuctionManager.getInstance().findAuctionById(auctionId);
             if (auction == null) {
                 session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId)));
+                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId), requestId));
                 return;
             }
             session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS,
@@ -222,7 +231,7 @@ public class AuctionHandler implements PacketHandler {
             log.error("Get auction detail failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -239,7 +248,7 @@ public class AuctionHandler implements PacketHandler {
             if (auction == null || auction.getStatus() != Auction.AuctionStatus.OPEN) {
                 session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Phiên không tồn tại hoặc đã bắt đầu.", requestId)));
+                                "Phiên không tồn tại hoặc đã bắt đầu.", requestId), requestId));
                 return;
             }
 
@@ -258,7 +267,7 @@ public class AuctionHandler implements PacketHandler {
             log.error("Update auction failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.UPDATE_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -282,7 +291,7 @@ public class AuctionHandler implements PacketHandler {
             log.error("Cancel auction request failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -310,7 +319,7 @@ public class AuctionHandler implements PacketHandler {
             log.error("Admin cancel failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.ADMIN_CANCEL_AUCTION_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -335,7 +344,7 @@ public class AuctionHandler implements PacketHandler {
                 AuctionManager.getInstance().findUserByUsername(session.getUsername());
         if (!(user instanceof NormalUser)) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Quyền hạn không hợp lệ.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Quyền hạn không hợp lệ.", requestId), requestId));
             return null;
         }
         return (NormalUser) user;

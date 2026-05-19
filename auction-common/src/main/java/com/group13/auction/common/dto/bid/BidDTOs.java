@@ -62,6 +62,18 @@ public final class BidDTOs {
     public static class BidUpdateDTO {
         private String auctionId;
         private long newCurrentPrice;
+        /**
+         * FIX: Giá trước khi bid này được chấp nhận.
+         * Client dùng để hiển thị hướng tăng/giảm (trong đấu giá luôn tăng)
+         * và delta: "+50.000đ".
+         */
+        private long previousPrice;
+        /**
+         * FIX: Delta = newCurrentPrice - previousPrice.
+         * Luôn dương trong đấu giá hợp lệ.
+         * Client hiển thị trực tiếp: "+200.000đ" mà không cần tính thêm.
+         */
+        private long priceChange;
         private String leaderId;
         private String leaderUsername;
         private boolean reserveMet;
@@ -75,6 +87,10 @@ public final class BidDTOs {
         public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
         public long getNewCurrentPrice() { return newCurrentPrice; }
         public void setNewCurrentPrice(long newCurrentPrice) { this.newCurrentPrice = newCurrentPrice; }
+        public long getPreviousPrice() { return previousPrice; }
+        public void setPreviousPrice(long previousPrice) { this.previousPrice = previousPrice; }
+        public long getPriceChange() { return priceChange; }
+        public void setPriceChange(long priceChange) { this.priceChange = priceChange; }
         public String getLeaderId() { return leaderId; }
         public void setLeaderId(String leaderId) { this.leaderId = leaderId; }
         public String getLeaderUsername() { return leaderUsername; }

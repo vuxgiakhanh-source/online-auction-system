@@ -3,46 +3,57 @@ package com.group13.auction.service;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
+import com.group13.auction.service.iservice.IAuctionService;
+import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.service.iservice.IPaymentService;
+import com.group13.auction.service.iservice.IScheduler;
+import com.group13.auction.service.scheduler.TaskScheduler;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
+import com.group13.auction.strategy.BidRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import com.group13.auction.service.iservice.IScheduler;
-import com.group13.auction.service.scheduler.TaskScheduler;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Scheduler tự động quản lý vòng đời phiên đấu giá.
+ * Scheduler nền tự động quản lý vòng đời phiên đấu giá.
+ *
+ * <p>Phụ thuộc vào abstraction ({@link IScheduler}, {@link IAuctionService},
+ * {@link IPaymentService}) — không gắn cứng implementation (DIP).
  */
-public class AuctionTimerService {
+public class AuctionTimerService implements IAuctionTimerService {
 
     private static final Logger log = LoggerFactory.getLogger(AuctionTimerService.class);
     private static final int SCAN_INTERVAL_SECONDS = 1;
     private static final long CLOSE_LOCK_TIMEOUT_SECONDS = 5L;
+    private static final String TIMER_THREAD_NAME = "auction-timer";
 
     private static final AuctionTimerService INSTANCE = new AuctionTimerService();
 
     private IScheduler scheduler;
-    private AuctionService auctionService;
+    private IAuctionService auctionService;
     private IPaymentService paymentService;
     private SessionManager sessionManager;
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
     private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
     private volatile boolean running = false;
+    /** Đếm số lần scan để throttle cleanupIdle — chỉ chạy mỗi 5 phút (300 scan × 1s). */
+    private int scanCount = 0;
+    private static final int CLEANUP_INTERVAL_SCANS = 300;
 
     private AuctionTimerService() {}
 
@@ -50,21 +61,32 @@ public class AuctionTimerService {
         return INSTANCE;
     }
 
-    /**
-     * Khởi động scheduler. Gọi một lần khi server start.
-     */
-    public synchronized void start(AuctionService auctionService,
+    @Override
+    public synchronized void start(IAuctionService auctionService,
                                    IPaymentService paymentService,
                                    SessionManager sessionManager) {
+        start(auctionService, paymentService, sessionManager,
+                new TaskScheduler(1, TIMER_THREAD_NAME));
+    }
+
+    /**
+     * Khởi động với scheduler tùy chỉnh (dùng trong test hoặc thay implementation).
+     */
+    public synchronized void start(IAuctionService auctionService,
+                                   IPaymentService paymentService,
+                                   SessionManager sessionManager,
+                                   IScheduler scheduler) {
         if (running) {
             log.warn("AuctionTimerService đã chạy, bỏ qua lệnh start.");
             return;
         }
+        if (scheduler == null) {
+            throw new IllegalArgumentException("scheduler must not be null");
+        }
         this.auctionService = auctionService;
         this.paymentService = paymentService;
         this.sessionManager = sessionManager;
-
-        this.scheduler = new TaskScheduler(1, "auction-timer");
+        this.scheduler = scheduler;
 
         scheduler.scheduleAtFixedRate(
                 this::scanAndProcess,
@@ -77,11 +99,13 @@ public class AuctionTimerService {
         log.info("AuctionTimerService khởi động - quét mỗi {}s.", SCAN_INTERVAL_SECONDS);
     }
 
+    @Override
     public synchronized void stop() {
         if (!running || scheduler == null) {
             return;
         }
         scheduler.shutdownNow();
+        scheduler = null;
         running = false;
         log.info("AuctionTimerService đã dừng.");
     }
@@ -93,6 +117,11 @@ public class AuctionTimerService {
             closeExpiredAuctions(now);
             expirePendingWinnerPayments();
             expirePendingSecondChanceOffers(now);
+            // Chỉ dọn dẹp idle buckets mỗi 5 phút — tránh iterate toàn bộ users mỗi giây.
+            if (++scanCount >= CLEANUP_INTERVAL_SCANS) {
+                BidRateLimiter.getInstance().cleanupIdle();
+                scanCount = 0;
+            }
         } catch (Exception e) {
             log.error("Lỗi không mong muốn trong scan:", e);
         }
@@ -163,6 +192,9 @@ public class AuctionTimerService {
                 boolean reserveMetBeforeClose = auction.isReserveMet();
 
                 auctionService.closeAuction(auction);
+                // Lock entry được giải phóng ngay khi auction đã đóng thành công —
+                // không phụ thuộc vào broadcast hay cleanup sau đó.
+                releaseLock = true;
 
                 PacketType packetType;
                 if (auction.getStatus() == Auction.AuctionStatus.FINISHED) {
@@ -185,7 +217,7 @@ public class AuctionTimerService {
 
                 broadcastUpdate(auction, packetType);
                 autoBidRegistry.clearAuction(auction.getId());
-                releaseLock = true;
+                AutoBidProcessor.clearAuctionActivity(auction.getId());
 
                 log.info("Auction closed: auctionId={} status={}", auction.getId(), auction.getStatus());
             } catch (Exception e) {
