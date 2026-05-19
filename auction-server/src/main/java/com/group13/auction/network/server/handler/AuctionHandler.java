@@ -298,7 +298,12 @@ public class AuctionHandler implements PacketHandler {
             if (seller == null) return;
 
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
+            // Validate ownership + status (throws nếu sai)
             accountService.requestCancelAuction(seller, auction, req.getReason());
+
+            // FIX Bug 2: requestCancelAuction chỉ fire event, không tự cancel.
+            // Phiên OPEN không có bidder → auto-approve ngay, không cần staff xét duyệt.
+            auctionService.autoHandleCancelRequest(auction);
 
             session.send(Packet.of(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS,
                     req.getAuctionId(), requestId));
