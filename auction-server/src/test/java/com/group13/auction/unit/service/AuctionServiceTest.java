@@ -621,7 +621,7 @@ class AuctionServiceTest {
         }
 
         @Test
-        @DisplayName("cancelAuction — persist CANCELED status tới DB")
+        @DisplayName("cancelAuction — persist CANCELED status tới DB (đúng 1 lần)")
         void happyPath_persistsCanceledStatus() {
             // Arrange
             Auction auction = runningAuction(seller, 1_000_000L);
@@ -629,8 +629,8 @@ class AuctionServiceTest {
             // Act
             sut.cancelAuction(auction, Admin.CancelReason.NO_WINNER);
 
-            // Assert
-            verify(auctionDAO, atLeastOnce())
+            // Assert — FIX: chỉ 1 lần (bỏ lần gọi thừa thứ 2)
+            verify(auctionDAO, times(1))
                     .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
 
@@ -780,6 +780,38 @@ class AuctionServiceTest {
                     sut.cancelAuction(sysAdmin, auction, Admin.CancelReason.SYSTEM_ERROR))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("SystemAdmin");
+        }
+
+        @Test
+        @DisplayName("cancelAuction (staff) — phát AUCTION_CANCELED tới observers của phiên")
+        void happyPath_notifiesAuctionObservers() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            AuctionObserver observer = mock(AuctionObserver.class);
+            sut.addObserver(auction.getId(), observer);
+
+            // Act
+            sut.cancelAuction(staff, auction, Admin.CancelReason.FRAUDULENT_ITEM);
+
+            // Assert — FIX Bug 1: staff cancel phải notify giống system cancel
+            ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
+            verify(observer).onAuctionEnded(captor.capture());
+            assertThat(captor.getValue().getEventType())
+                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
+        }
+
+        @Test
+        @DisplayName("cancelAuction (staff) — persist status CANCELED đúng 1 lần qua DAO")
+        void happyPath_persistsCanceledStatusExactlyOnce() {
+            // Arrange
+            Auction auction = openAuction(seller, 1_000_000L);
+
+            // Act
+            sut.cancelAuction(staff, auction, Admin.CancelReason.FRAUDULENT_ITEM);
+
+            // Assert
+            verify(auctionDAO, times(1))
+                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
     }
 

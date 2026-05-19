@@ -251,8 +251,7 @@ public class AuctionService implements IAuctionService {
     AuctionManager.getInstance().notifyStaffObservers(
             new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
 
-    // Đã thực hiện TODO: auctionDAO.update(auction)
-    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+    // FIX: bỏ lệnh updateAuctionStatus thừa phía dưới (đã persist ở trên)
     cleanupObservers(auction.getId());
   }
 
@@ -287,8 +286,14 @@ public class AuctionService implements IAuctionService {
     log.info("AUDIT: staff={} auctionId={} reason={}",
             staff.getUsername(), auction.getId(), reason);
 
-    // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+
+    // FIX Bug 1: staff cancel phải notify observers — trước đây thiếu dòng này nên
+    // bidder đang xem phiên không nhận được AUCTION_CANCELED khi staff hủy thủ công.
+    notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0L);
+    AuctionManager.getInstance().notifyStaffObservers(
+            new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
+
     cleanupObservers(auction.getId());
   }
 

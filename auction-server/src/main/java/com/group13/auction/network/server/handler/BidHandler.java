@@ -253,6 +253,12 @@ public class BidHandler implements PacketHandler {
             return;
         }
 
+        // FIX Bug 2: resolve user TRƯỚC khi acquire lock — findUserByUsername() hit DB,
+        // không được giữ per-auction lock trong khi đợi DB round-trip (~5ms).
+        // Dưới lock chỉ cần critical section ngắn (validate price + updateBid).
+        NormalUser bidder = requireNormalUser(session, requestId);
+        if (bidder == null) return;
+
         // Capture cho autoBidProcessor.process() ngoài lock (tránh deadlock)
         Auction placeBidAuction = null;
         String  placeBidBidderId = null;
@@ -282,9 +288,7 @@ public class BidHandler implements PacketHandler {
             return;
         }
         try {
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
-
+            // bidder đã được resolve trước lock — không load DB lại ở đây
             Auction auction = requireAuction(session, req.getAuctionId(), requestId);
             if (auction == null) return;
 
@@ -391,12 +395,14 @@ public class BidHandler implements PacketHandler {
         Auction registerAutoBidAuction  = null;
         String  registerAutoBidBidderId = null;
 
+        // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+        NormalUser bidder = requireNormalUser(session, requestId);
+        if (bidder == null) return;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
-
+            // bidder đã resolve trước lock
             Auction auction = requireAuction(session, req.getAuctionId(), requestId);
             if (auction == null) return;
 
@@ -480,12 +486,14 @@ public class BidHandler implements PacketHandler {
         Auction updateAutoBidAuction  = null;
         String  updateAutoBidBidderId = null;
 
+        // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+        NormalUser bidder = requireNormalUser(session, requestId);
+        if (bidder == null) return;
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
-            NormalUser bidder = requireNormalUser(session, requestId);
-            if (bidder == null) return;
-
+            // bidder đã resolve trước lock
             AutoBidEntry existing = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
             if (existing == null) {
                 log.warn("Update auto-bid rejected because entry does not exist: auctionId={}, bidderId={}",
@@ -547,12 +555,15 @@ public class BidHandler implements PacketHandler {
     private void handleCancelAutoBid(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
+
+            // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+            NormalUser bidder = requireNormalUser(session, requestId);
+            if (bidder == null) return;
+
             ReentrantLock lock = lockRegistry.getLock(auctionId);
             lock.lock();
             try {
-                NormalUser bidder = requireNormalUser(session, requestId);
-                if (bidder == null) return;
-
+                // bidder đã resolve trước lock
                 boolean cancelled = autoBidRegistry.cancel(bidder.getId(), auctionId);
                 if (!cancelled) {
                     log.warn("Cancel auto-bid requested but entry does not exist: auctionId={}, bidderId={}, username={}",
