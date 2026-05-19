@@ -280,6 +280,37 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
 }
 
+.seller-form-section,
+.seller-form-action-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 28;
+
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 28;
+    -fx-border-width: 1;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.seller-form-action-bar {
+    -fx-padding: 18 22 18 22;
+}
+
+.seller-section-badge {
+    -fx-padding: 6 12 6 12;
+
+    -fx-background-color: rgba(103, 184, 234, 0.18);
+    -fx-background-radius: 999;
+
+    -fx-border-color: rgba(103, 184, 234, 0.35);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+
+    -fx-font-size: 12px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #dff4ff;
+}
+
 .seller-form-label {
     -fx-font-size: 14px;
     -fx-font-weight: 800;
