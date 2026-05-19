@@ -19,3 +19,6 @@ buildNumber.properties
 # Logs
 logs/
 *.log
+
+# Secrets (copy from env.example)
+.env

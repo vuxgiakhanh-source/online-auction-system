@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/home/LandingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/home/LandingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/home.css" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/home.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/data.properties" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/data.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/env.example" beforeDir="false" afterPath="$PROJECT_DIR$/env.example" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -191,6 +199,9 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\UET.II\LapTrinhNangCao\frontend\backup-client\auction-client\src\main\resources\com\group13\auction\assets\videos" />
+    </key>
   </component>
   <component name="RunManager" selected="Application.Launcher">
     <configuration name="Launcher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
@@ -206,17 +217,15 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionWinnerDAOIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.dao.*" />
+          <option name="PATTERN" value="com.group13.auction.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration.dao" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.dao.AuctionWinnerDAOIT" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -279,8 +288,8 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Application.ServerMain" />
       <item itemvalue="Application.Launcher" />
-      <item itemvalue="JUnit.AuctionWinnerDAOIT" />
       <item itemvalue="JUnit.AuthHandlerDispatchTest" />
       <item itemvalue="JUnit.DTOMapperTest" />
       <item itemvalue="JUnit.PacketCodecTest" />
@@ -288,10 +297,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.AuthHandlerDispatchTest" />
         <item itemvalue="JUnit.DTOMapperTest" />
         <item itemvalue="JUnit.PacketCodecTest" />
-        <item itemvalue="JUnit.AuctionWinnerDAOIT" />
       </list>
     </recent_temporary>
   </component>
