@@ -237,7 +237,8 @@ class PacketRouterDispatchTest {
 
             router.route(session, json);
 
-            verify(session).send(argThat(p -> p.getType() == PacketType.SYSTEM_ERROR));
+            verify(session).send(argThat(p -> p.getType() == PacketType.SYSTEM_ERROR
+                    && "r-ping".equals(p.getRequestId())));
             // supports() bị gọi khi router loop qua handlers — chỉ verify handle() không được gọi
             verify(authHandler, never()).handle(any(), any(), any(), any());
             verify(bidHandler, never()).handle(any(), any(), any(), any());
@@ -266,6 +267,7 @@ class PacketRouterDispatchTest {
             verify(bidHandler, times(1)).handle(
                     eq(session), eq(PacketType.PLACE_BID), any(JsonElement.class), eq("rid-x"));
             verify(session).send(argThat(p -> p.getType() == PacketType.SYSTEM_ERROR
+                    && "rid-x".equals(p.getRequestId())
                     && p.getPayload() instanceof ErrorDTO err
                     && ErrorDTO.INTERNAL_ERROR.equals(err.getCode())
                     && err.getMessage() != null

@@ -117,21 +117,16 @@ public final class BidRateLimiter {
          * Thread-safe: dùng CAS loop — không synchronized.
          */
         boolean tryConsume() {
-            long now = System.currentTimeMillis();
-            lastAccessMs = now;
-
-            // Reset window nếu đã hết thời gian
-            long ws = windowStart.get();
-            if (now - ws >= WINDOW_MS) {
-                // CAS: chỉ 1 thread reset, các thread khác thấy window mới
-                if (windowStart.compareAndSet(ws, now)) {
+            synchronized (this) {
+                long now = System.currentTimeMillis();
+                lastAccessMs = now;
+                if (now - windowStart.get() >= WINDOW_MS) {
+                    windowStart.set(now);
                     count.set(0);
                 }
+                long current = count.incrementAndGet();
+                return current <= MAX_BIDS_PER_WINDOW;
             }
-
-            // Increment và kiểm tra
-            long current = count.incrementAndGet();
-            return current <= MAX_BIDS_PER_WINDOW;
         }
 
         long getLastAccessMs() { return lastAccessMs; }

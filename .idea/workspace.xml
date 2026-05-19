@@ -6,7 +6,25 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/Packet.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/Packet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/protocol/PacketTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/test/java/com/group13/auction/common/protocol/PacketTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuthHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/PaymentHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/router/PacketRouter.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/router/PacketRouter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AuctionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidRegistry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/BidRateLimiter.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/BidRateLimiter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/autobid/AutoBidChainConcurrencyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/autobid/AutoBidChainConcurrencyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/bid/BidRaceConditionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/bid/BidRaceConditionTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/join/JoinAuctionConcurrencyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/concurrency/join/JoinAuctionConcurrencyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketRouterDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketRouterDispatchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -475,7 +493,7 @@
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
           <line>51</line>
-          <properties class="com.group13.auction.ServerMain" method="main">
+          <properties class="com.group13.auction.ServerMain">
             <option name="EMULATED" value="true" />
             <option name="WATCH_EXIT" value="false" />
           </properties>

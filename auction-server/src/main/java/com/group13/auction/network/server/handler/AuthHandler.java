@@ -110,7 +110,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Register rejected - blank fields: requestId={}", requestId);
                 session.send(Packet.of(PacketType.REGISTER_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Username, password và email không được để trống.", requestId)));
+                                "Username, password và email không được để trống.", requestId), requestId));
                 return;
             }
 
@@ -119,7 +119,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Register rejected - duplicate username: username={}, requestId={}", req.getUsername(), requestId);
                 session.send(Packet.of(PacketType.REGISTER_FAILED,
                         ErrorDTO.of(ErrorDTO.DUPLICATE_USERNAME,
-                                "Username '" + req.getUsername() + "' đã tồn tại.", requestId)));
+                                "Username '" + req.getUsername() + "' đã tồn tại.", requestId), requestId));
                 return;
             }
 
@@ -128,7 +128,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Register rejected - duplicate email: email={}, requestId={}", req.getEmail(), requestId);
                 session.send(Packet.of(PacketType.REGISTER_FAILED,
                         ErrorDTO.of(ErrorDTO.DUPLICATE_EMAIL,
-                                "Email '" + req.getEmail() + "' đã được sử dụng.", requestId)));
+                                "Email '" + req.getEmail() + "' đã được sử dụng.", requestId), requestId));
                 return;
             }
 
@@ -144,7 +144,7 @@ public class AuthHandler implements PacketHandler {
                 log.error("Register failed - DB save returned false: username={}, requestId={}", req.getUsername(), requestId);
                 session.send(Packet.of(PacketType.REGISTER_FAILED,
                         ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Không thể lưu tài khoản vào cơ sở dữ liệu.", requestId)));
+                                "Không thể lưu tài khoản vào cơ sở dữ liệu.", requestId), requestId));
                 return;
             }
             AuctionManager.getInstance().addToUserList(newUser);
@@ -169,11 +169,11 @@ public class AuthHandler implements PacketHandler {
                       ? ErrorDTO.DUPLICATE_EMAIL
                       : ErrorDTO.VALIDATION_ERROR;
             session.send(Packet.of(PacketType.REGISTER_FAILED,
-                    ErrorDTO.of(code, e.getMessage(), requestId)));
+                    ErrorDTO.of(code, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Register failed - unexpected error: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.REGISTER_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi hệ thống khi đăng ký.", requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi hệ thống khi đăng ký.", requestId), requestId));
         }
     }
 
@@ -187,7 +187,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Login rejected - blank fields: requestId={}", requestId);
                 session.send(Packet.of(PacketType.LOGIN_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Username và password không được để trống.", requestId)));
+                                "Username và password không được để trống.", requestId), requestId));
                 return;
             }
 
@@ -198,7 +198,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Login rejected - wrong credentials: username={}, requestId={}", req.getUsername(), requestId);
                 session.send(Packet.of(PacketType.LOGIN_FAILED,
                         ErrorDTO.of(ErrorDTO.WRONG_PASSWORD,
-                                "Sai username hoặc password.", requestId)));
+                                "Sai username hoặc password.", requestId), requestId));
                 return;
             }
 
@@ -207,7 +207,7 @@ public class AuthHandler implements PacketHandler {
                 log.warn("Login rejected - account banned: userId={}, username={}, requestId={}", user.getId(), req.getUsername(), requestId);
                 session.send(Packet.of(PacketType.LOGIN_FAILED,
                         ErrorDTO.of(ErrorDTO.ACCOUNT_BANNED,
-                                "Tài khoản đã bị khóa vĩnh viễn.", requestId)));
+                                "Tài khoản đã bị khóa vĩnh viễn.", requestId), requestId));
                 return;
             }
 
@@ -224,11 +224,11 @@ public class AuthHandler implements PacketHandler {
         } catch (com.group13.auction.exception.AuthenticationException e) {
             log.warn("Login rejected - auth exception: requestId={}, reason={}", requestId, e.getReason());
             session.send(Packet.of(PacketType.LOGIN_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId)));
+                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Login failed - unexpected error: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.LOGIN_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi hệ thống khi đăng nhập.", requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Lỗi hệ thống khi đăng nhập.", requestId), requestId));
         }
     }
 

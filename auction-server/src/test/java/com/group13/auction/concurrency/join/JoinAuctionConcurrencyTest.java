@@ -184,15 +184,12 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     }
 
     // ── G6-1 ─────────────────────────────────────────────────────────────────
-    // BUG ROOT: Auction.incrementViewerCount() dùng plain int++ — không atomic.
-    // FIX CẦN: đổi viewerCount sang AtomicInteger + getAndIncrement().
-    // NOTE: test giữ known-bug assertion vì fix nằm ở source Auction.java.
 
     @Test
     @Order(4)
-    @DisplayName("G6-1: [KNOWN BUG] 100 threads incrementViewerCount() — plain int++ có thể bị lost update")
+    @DisplayName("G6-1: 100 threads incrementViewerCount() — AtomicInteger, count == N")
     @Timeout(value = 5)
-    void incrementViewerCount_concurrent_lostUpdateDocumented() throws InterruptedException {
+    void incrementViewerCount_concurrent_atomic() throws InterruptedException {
         int N = 100;
         CountDownLatch gate = new CountDownLatch(1);
         CountDownLatch done = new CountDownLatch(N);
@@ -213,16 +210,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
         gate.countDown();
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
-        int count = auction.getViewerCount();
-        assertThat(count).isGreaterThan(0);
-        assertThat(count).isLessThanOrEqualTo(N);
-
-        if (count < N) {
-            log.warn("[G6-1 KNOWN BUG] viewerCount={} < {} — lost update do plain int++. "
-                    + "Fix: đổi sang AtomicInteger.", count, N);
-        }
-        // TODO: Sau khi fix Auction.viewerCount → AtomicInteger, thêm assert:
-        //   assertThat(count).isEqualTo(N);
+        assertThat(auction.getViewerCount()).isEqualTo(N);
     }
 
     // ── G6-2 ─────────────────────────────────────────────────────────────────

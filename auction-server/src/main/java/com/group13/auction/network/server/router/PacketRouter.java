@@ -89,7 +89,7 @@ public class PacketRouter {
                             type, session.getUsername(), requestId, e);
                     session.send(Packet.of(PacketType.SYSTEM_ERROR,
                             ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                    "Lỗi hệ thống khi xử lý " + type, requestId)));
+                                    "Lỗi hệ thống khi xử lý " + type, requestId), requestId));
                 } finally {
                     MDC.remove("requestId");
                     MDC.remove("username");
@@ -104,6 +104,6 @@ public class PacketRouter {
                 type, session.getUsername(), requestId);
         session.send(Packet.of(PacketType.SYSTEM_ERROR,
                 ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                        "PacketType không được hỗ trợ: " + type, requestId)));
+                        "PacketType không được hỗ trợ: " + type, requestId), requestId));
     }
 }
