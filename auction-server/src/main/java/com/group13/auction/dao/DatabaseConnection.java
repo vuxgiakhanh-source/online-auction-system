@@ -13,34 +13,20 @@ import java.util.Properties;
 /**
  * DatabaseConnection — Singleton wrapping a HikariCP connection pool.
  *
- * FIX #5 — HikariCP tuning cho load test:
+ * FIX BUG PERFORMANCE — connectionTimeout giảm từ 30s → 6s:
  *
- * maximumPoolSize: 50 → 20
- *   Cũ dùng 50 nhưng load test chỉ có 12 thread bidding.
- *   Pool quá lớn làm MySQL tốn tài nguyên duy trì idle connections.
- *   20 là đủ cho 12 bid thread + overhead (join, watch, anti-sniping).
+ * Vấn đề cũ: Client WebSocket timeout là 10 giây (AuctionWebSocketClient.sendAndExpect).
+ * Khi pool đầy hoặc DB chậm, HikariCP block thread chờ connection tới 30 giây.
+ * Client cancel sau 10 giây → báo "server không phản hồi" dù server vẫn đang chạy.
+ * Handler sau đó nhận được response từ DB, cố gửi về client đã disconnect → silent fail.
  *
- * minimumIdle: 5 → 12
- *   Pre-warm đủ connection sẵn cho 12 thread → không phải chờ tạo mới.
+ * Fix: connectionTimeout = 6000ms (6s) < client timeout (10s).
+ * Khi pool đầy, HikariCP throw SQLTransientConnectionException sau 6s,
+ * handler catch lại và gửi ErrorDTO về client TRƯỚC KHI client timeout.
+ * Client nhận được "lỗi server" thay vì "server không phản hồi" — UX tốt hơn nhiều.
  *
- * connectionTimeout: 30s → 5s
- *   Load test expect bid nhanh — nếu pool hết connection sau 5s thì
- *   nên fail nhanh thay vì block thread 30s.
- *
- * prepStmtCacheSize + prepStmtCacheSqlLimit:
- *   Cache prepared statement → tránh parse lại SQL mỗi lần INSERT bid_transactions.
- *   MySQL driver hỗ trợ server-side prepared statement cache.
- *
- * useServerPrepStmts + cachePrepStmts:
- *   Bật server-side prepared statement → giảm round-trip parse SQL trên MySQL.
- *
- * rewriteBatchedStatements:
- *   Dù hiện tại không dùng batch, bật sẵn để MySQL driver tự gộp INSERT
- *   nếu sau này chuyển sang executeBatch().
- *
- * autoCommit: true (default, giữ nguyên)
- *   Mỗi saveTransaction() là 1 INSERT đơn → autoCommit phù hợp.
- *   Nếu sau này dùng batch thì cần tắt và commit thủ công.
+ * Thêm socketTimeout = 8000ms: nếu query DB hang (deadlock / slow query),
+ * MySQL driver sẽ throw exception sau 8s, tránh thread block vô hạn.
  */
 public class DatabaseConnection {
 
@@ -80,20 +66,11 @@ public class DatabaseConnection {
                 this.password = props.getProperty("db.password");
                 log.warn("Database config loaded from data.properties (local dev mode).");
 
-                // FIX: Khi chạy Testcontainers, data.properties tồn tại nhưng trỏ đến
-                // MySQL local chưa chạy. DatabaseConnection singleton được tạo TỰ ĐỘNG
-                // khi class được load (trước @BeforeAll configureDataSource()).
-                //
-                // Cũ: buildPool() throw RuntimeException → test crash ngay lập tức.
-                // Mới: Nếu buildPool() fail → log warn + dataSource = null.
-                //      Test's @BeforeAll sẽ gọi reconfigure(testcontainerUrl) sau đó.
-                //      getConnection() sẽ throw rõ ràng nếu ai gọi trước reconfigure().
                 try {
                     buildPool();
                 } catch (Exception poolEx) {
                     log.warn("data.properties pool init failed (DB chưa chạy hoặc Testcontainers mode). " +
                             "Gọi reconfigure() trước khi dùng DAO. Lỗi: {}", poolEx.getMessage());
-                    // dataSource = null — getConnection() sẽ throw SQLException rõ ràng
                 }
             }
         } catch (Exception e) {
@@ -112,45 +89,48 @@ public class DatabaseConnection {
         config.setUsername(username);
         config.setPassword(password);
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        // Giảm anomaly đọc/ghi đồng thời giữa các connection (scheduler vs handler).
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
 
         // ── Pool sizing ───────────────────────────────────────────────────
-        // Công thức: maximumPoolSize = N_cores * 2 + effective_spindle_count
-        // Với server 8-core, MySQL SSD: 8 * 2 + 1 = 17 → dùng 20 cho test.
-        // Production (5000 users): bid operations serialized per-auction qua lock,
-        // nên pool 100 là đủ cho ~50 auction hot đồng thời × 2 threads/auction.
-        //
-        // Đọc từ env để dễ cấu hình runtime (Docker/K8s):
-        //   DB_POOL_MAX=100 → production
-        //   DB_POOL_MAX=20  → test (default)
         int poolMax = parseEnvInt("DB_POOL_MAX", 40);
         int poolMin = parseEnvInt("DB_POOL_MIN", 5);
         config.setMaximumPoolSize(poolMax);
         config.setMinimumIdle(poolMin);
 
         // ── Timeouts ──────────────────────────────────────────────────────
-        // connectionTimeout=30s: đủ cho Testcontainers warm-up và cho 32+ thread
-        //   đợi connection khi pool tạm hết (5s cũ quá ngắn → SQLTransientConnectionException).
-        config.setConnectionTimeout(30_000);
-        config.setIdleTimeout(300_000);   // 5 phút
-        config.setMaxLifetime(900_000);   // 15 phút
+        // FIX PERFORMANCE: connectionTimeout = 6000ms (6s).
+        //
+        // Client WebSocket timeout (AuctionWebSocketClient.sendAndExpect) = 10s.
+        // Pool connectionTimeout phải NHỎ HƠN client timeout để server kịp gửi
+        // ErrorDTO về trước khi client drop connection.
+        //
+        // Logic: pool đầy → HikariCP throw SQLTransientConnectionException sau 6s
+        //        → handler catch → gửi SYSTEM_ERROR về client (còn ~4s buffer)
+        //        → client nhận "lỗi server" thay vì "server không phản hồi"
+        config.setConnectionTimeout(6_000);   // FIX: 30_000 → 6_000
+        config.setIdleTimeout(300_000);        // 5 phút
+        config.setMaxLifetime(900_000);        // 15 phút
+
+        // ── MySQL socket & query timeouts ─────────────────────────────────
+        // socketTimeout: nếu DB hang (deadlock, slow query), MySQL driver
+        // throw exception sau 8s → tránh thread block vô hạn.
+        // connectTimeout: TCP handshake timeout khi tạo connection mới.
+        config.addDataSourceProperty("socketTimeout",  "8000");  // FIX: thêm mới
+        config.addDataSourceProperty("connectTimeout", "5000");  // FIX: thêm mới
 
         // ── MySQL prepared statement cache ────────────────────────────────
-        // Tránh parse lại SQL mỗi lần INSERT bid_transactions
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "50");
+        config.addDataSourceProperty("cachePrepStmts",        "true");
+        config.addDataSourceProperty("prepStmtCacheSize",     "50");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");
-        config.addDataSourceProperty("useServerPrepStmts", "true");
-
-        // Batch insert sẵn sàng khi cần (không xung đột với cachePrepStmts)
+        config.addDataSourceProperty("useServerPrepStmts",    "true");
         config.addDataSourceProperty("rewriteBatchedStatements", "true");
 
         config.setConnectionTestQuery("SELECT 1");
         config.setPoolName("AuctionPool");
 
         dataSource = new HikariDataSource(config);
-        log.warn("HikariCP pool created. URL: {} | maxPoolSize=40, minIdle=5", url);
+        log.warn("HikariCP pool created. URL: {} | maxPoolSize={} minIdle={} connTimeout=6s socketTimeout=8s",
+                url, poolMax, poolMin);
     }
 
     public static DatabaseConnection getInstance() {
@@ -166,7 +146,6 @@ public class DatabaseConnection {
 
     /**
      * Tái cấu hình pool sang URL mới — dùng trong Testcontainers @BeforeAll.
-     * Đóng pool cũ và tạo pool mới hoàn toàn. Thread-safe.
      */
     public synchronized void reconfigure(String newUrl, String newUsername, String newPassword) {
         this.url      = newUrl;
@@ -178,7 +157,6 @@ public class DatabaseConnection {
 
     /**
      * Đảm bảo pool đã sẵn sàng trước khi server chạy (ServerMain / IDE).
-     * Thử lại khi MySQL Docker vừa khởi động (healthcheck chưa xong).
      */
     public void ensureReady(int maxAttempts, long delayMs) throws SQLException {
         SQLException last = null;
@@ -246,7 +224,6 @@ public class DatabaseConnection {
         }
     }
 
-    /** Parse int từ env với default. */
     private static int parseEnvInt(String key, int defaultVal) {
         String val = System.getenv(key);
         if (val != null && !val.isBlank()) {
