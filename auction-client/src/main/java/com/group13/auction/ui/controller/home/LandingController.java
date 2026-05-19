@@ -43,18 +43,24 @@ public class LandingController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // 1. Chuẩn bị trạng thái ban đầu: Kéo khối giao diện xuống 50px
-        if (revealBlock != null) {
-            // Đồng bộ chiều rộng của video luôn khít với chiều rộng thực tế của khối (Đảm bảo Responsive)
-            if (bgMediaView != null) {
-                bgMediaView.fitWidthProperty().bind(revealBlock.widthProperty());
-                bgMediaView.fitHeightProperty().bind(revealBlock.heightProperty());
-            }
-        }
         if (revealContent != null) {
             revealContent.setTranslateY(50);
         }
 
-        // 2. Khởi tạo cấu hình và phát Video nền tắt tiếng chạy vòng lặp
+        // 2. Cấu hình MediaView và Video nền
+        if (bgMediaView != null) {
+            bgMediaView.setPreserveRatio(true);
+            // Clipping để video không tràn ra ngoài revealBlock khi scale
+            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+            clip.widthProperty().bind(revealBlock.widthProperty());
+            clip.heightProperty().bind(revealBlock.heightProperty());
+            revealBlock.setClip(clip);
+
+            // Cập nhật kích thước MediaView để "Cover" toàn bộ vùng chứa mà không bị méo
+            revealBlock.widthProperty().addListener((obs, oldVal, newVal) -> updateVideoSize());
+            revealBlock.heightProperty().addListener((obs, oldVal, newVal) -> updateVideoSize());
+        }
+
         initBackgroundVideo();
 
         // 3. Lắng nghe sự kiện người dùng cuộn thanh cuộn dọc (vvalue)
@@ -66,39 +72,71 @@ public class LandingController implements Initializable {
         }
     }
 
+    private void updateVideoSize() {
+        if (bgMediaView == null || revealBlock == null || mediaPlayer == null) return;
+        Media media = mediaPlayer.getMedia();
+        if (media == null) return;
+
+        double containerW = revealBlock.getWidth();
+        double containerH = revealBlock.getHeight();
+        double videoW = media.getWidth();
+        double videoH = media.getHeight();
+
+        if (containerW <= 0 || containerH <= 0 || videoW <= 0 || videoH <= 0) return;
+
+        double scaleW = containerW / videoW;
+        double scaleH = containerH / videoH;
+        double maxScale = Math.max(scaleW, scaleH);
+
+        bgMediaView.setFitWidth(videoW * maxScale);
+        bgMediaView.setFitHeight(videoH * maxScale);
+    }
+
     /**
      * Khởi tạo và thiết lập video nền lặp vô hạn, tắt âm thanh.
      */
     private void initBackgroundVideo() {
+        loadVideo("/com/group13/auction/assets/videos/bg-landing.mp4");
+    }
+
+    private void loadVideo(String path) {
         try {
-            // ĐƯỜNG DẪN: Đảm bảo đường dẫn này khớp chính xác với thư mục file video trong thư mục resources của bạn
-            URL videoUrl = getClass().getResource("/com/group13/auction/assets/videos/bg-landing.mp4");
-
-            if (videoUrl != null) {
-                Media media = new Media(videoUrl.toExternalForm());
-                mediaPlayer = new MediaPlayer(media);
-
-                mediaPlayer.setMute(true); // Tắt tiếng hoàn toàn
-                mediaPlayer.setAutoPlay(true);
-                mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE); // Thiết lập vòng lặp vô tận (Loop)
-                media.setOnError(() -> System.err.println("Lỗi media video nền: " + media.getError()));
-                mediaPlayer.setOnError(() ->
-                        System.err.println("Lỗi player video nền: " + mediaPlayer.getError()));
-                mediaPlayer.statusProperty().addListener((observable, oldStatus, newStatus) ->
-                        System.out.println("Trạng thái video nền: " + newStatus));
-                mediaPlayer.setOnReady(() -> {
-                    mediaPlayer.seek(Duration.ZERO);
-                    mediaPlayer.play();
-                });
-
-                bgMediaView.setMediaPlayer(mediaPlayer);
-                Platform.runLater(mediaPlayer::play);
-            } else {
-                System.err.println("Lỗi: Không tìm thấy file video. Vui lòng kiểm tra lại đường dẫn getResource!");
+            URL videoUrl = getClass().getResource(path);
+            if (videoUrl == null) {
+                System.err.println("Không tìm thấy file video: " + path);
+                return;
             }
+
+            Media media = new Media(videoUrl.toExternalForm());
+            if (mediaPlayer != null) {
+                mediaPlayer.dispose();
+            }
+            mediaPlayer = new MediaPlayer(media);
+
+            // Cấu hình player
+            mediaPlayer.setMute(true);
+            mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+
+            // Xử lý lỗi
+            mediaPlayer.setOnError(() -> {
+                System.err.println("Lỗi player video nền (" + path + "): " + mediaPlayer.getError());
+                // Nếu video chính lỗi, thử video backup
+                if (path.equals("/com/group13/auction/assets/videos/bg-landing.mp4")) {
+                    Platform.runLater(() -> loadVideo("/com/group13/auction/assets/videos/bg-landing-av1-backup.mp4"));
+                }
+            });
+
+            // Theo dõi trạng thái
+            mediaPlayer.statusProperty().addListener((obs, oldStatus, newStatus) -> {
+                if (newStatus == MediaPlayer.Status.READY) {
+                    bgMediaView.setMediaPlayer(mediaPlayer);
+                    updateVideoSize();
+                    mediaPlayer.play();
+                }
+            });
+
         } catch (Exception e) {
-            System.err.println("Không thể phát video nền: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Không thể khởi tạo video " + path + ": " + e.getMessage());
         }
     }
 
