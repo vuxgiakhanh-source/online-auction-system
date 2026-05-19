@@ -213,12 +213,14 @@ public class BidHandler implements PacketHandler {
         String auctionId = PacketCodec.fromElement(payload, String.class);
         sessionManager.removeAuctionWatcher(session.getConnection(), auctionId);
 
-        // FIX TC-WS-04d: xóa join state khỏi User object để PLACE_BID sau khi LEAVE bị từ chối.
-        // Trước đây chỉ xóa khỏi broadcast list (SessionManager) nhưng không xóa hasJoined(),
-        // khiến BidService.placeBid() vẫn cho phép bid sau khi user đã rời phiên.
+        // FIX TC-WS-04d root cause: dùng bidService.leaveAuction() thay vì gọi
+        // removeJoinedAuction() trực tiếp. Lý do: AuctionManager.findUserByUsername()
+        // luôn load user mới từ DB mỗi lần gọi — nếu chỉ xóa in-memory thì
+        // PLACE_BID (dùng user object khác load từ DB) vẫn thấy JOINED và cho bid tiếp.
+        // leaveAuction() xóa cả in-memory lẫn DB (DELETE user_auction_activity).
         NormalUser bidder = requireNormalUser(session, requestId);
         if (bidder != null) {
-            bidder.removeJoinedAuction(auctionId);
+            bidService.leaveAuction(bidder, auctionId);
             log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, requestId={}",
                     auctionId, session.getUsername(), bidder.getId(), requestId);
         } else {
