@@ -5,12 +5,16 @@ import com.group13.auction.service.seller.SellerAuctionService;
 import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.viewmodel.seller.AuctionFormViewModel;
+import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
@@ -18,9 +22,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
 
 /** Controller cho form tạo phiên đấu giá của người bán. */
 public final class CreateAuctionController {
@@ -28,6 +34,7 @@ public final class CreateAuctionController {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private final SellerAuctionService sellerAuctionService = new SellerAuctionService();
+    private final List<Path> selectedImagePaths = new ArrayList<>();
 
     @FXML private TextField itemNameField;
 
@@ -59,6 +66,14 @@ public final class CreateAuctionController {
 
     @FXML private TextField extraField3;
 
+    @FXML private ListView<String> selectedImagesListView;
+
+    @FXML private Button chooseImagesButton;
+
+    @FXML private Button removeImageButton;
+
+    @FXML private Button clearImagesButton;
+
     @FXML private Button createButton;
 
     @FXML private Button resetButton;
@@ -72,6 +87,7 @@ public final class CreateAuctionController {
     public void initialize() {
         setupCategoryComboBox();
         setupDefaultDateTime();
+        refreshSelectedImagesView();
         setLoading(false, "Nhập thông tin phiên đấu giá.");
     }
 
@@ -79,6 +95,65 @@ public final class CreateAuctionController {
     @FXML
     public void handleBackToSellerList() {
         Navigator.getInstance().goToSellerAuctionList();
+    }
+
+    /** Chọn ảnh sản phẩm để upload trước khi tạo phiên đấu giá. */
+    @FXML
+    public void handleChooseImages() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Chọn ảnh sản phẩm");
+        fileChooser
+                .getExtensionFilters()
+                .add(
+                        new FileChooser.ExtensionFilter(
+                                "Image files", "*.png", "*.jpg", "*.jpeg", "*.webp"));
+
+        List<File> files = fileChooser.showOpenMultipleDialog(null);
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        for (File file : files) {
+            if (selectedImagePaths.size() >= AuctionFormViewModel.MAX_IMAGE_COUNT) {
+                AlertUtil.showWarning(
+                        "Chỉ được chọn tối đa " + AuctionFormViewModel.MAX_IMAGE_COUNT + " ảnh.");
+                break;
+            }
+
+            Path path = file.toPath();
+            if (!selectedImagePaths.contains(path)) {
+                selectedImagePaths.add(path);
+            }
+        }
+
+        refreshSelectedImagesView();
+        statusLabel.setText("Đã chọn " + selectedImagePaths.size() + " ảnh sản phẩm.");
+    }
+
+    /** Xóa ảnh đang được chọn trong danh sách. */
+    @FXML
+    public void handleRemoveSelectedImage() {
+        int selectedIndex =
+                selectedImagesListView == null
+                        ? -1
+                        : selectedImagesListView.getSelectionModel().getSelectedIndex();
+
+        if (selectedIndex < 0 || selectedIndex >= selectedImagePaths.size()) {
+            AlertUtil.showWarning("Vui lòng chọn ảnh cần xóa.");
+            return;
+        }
+
+        selectedImagePaths.remove(selectedIndex);
+        refreshSelectedImagesView();
+        statusLabel.setText("Đã xóa ảnh đã chọn.");
+    }
+
+    /** Xóa toàn bộ ảnh đã chọn. */
+    @FXML
+    public void handleClearImages() {
+        selectedImagePaths.clear();
+        refreshSelectedImagesView();
+        statusLabel.setText("Đã xóa toàn bộ ảnh sản phẩm.");
     }
 
     /** Xóa dữ liệu đang nhập và đưa form về trạng thái mặc định. */
@@ -91,6 +166,8 @@ public final class CreateAuctionController {
 
         categoryComboBox.getSelectionModel().selectFirst();
         clearExtraFields();
+        selectedImagePaths.clear();
+        refreshSelectedImagesView();
         setupDefaultDateTime();
 
         setLoading(false, "Form đã được đặt lại.");
@@ -108,7 +185,11 @@ public final class CreateAuctionController {
             return;
         }
 
-        setLoading(true, "Đang tạo phiên đấu giá...");
+        setLoading(
+                true,
+                selectedImagePaths.isEmpty()
+                        ? "Đang tạo phiên đấu giá..."
+                        : "Đang upload ảnh và tạo phiên đấu giá...");
 
         sellerAuctionService
                 .createAuction(form)
@@ -212,7 +293,8 @@ public final class CreateAuctionController {
                 reservePrice,
                 startTime,
                 endTime,
-                extraFields);
+                extraFields,
+                List.copyOf(selectedImagePaths));
     }
 
     private Map<String, Object> buildExtraFields(String categoryCode) {
@@ -338,12 +420,40 @@ public final class CreateAuctionController {
         extraField3.clear();
     }
 
+    private void refreshSelectedImagesView() {
+        if (selectedImagesListView == null) {
+            return;
+        }
+
+        selectedImagesListView
+                .getItems()
+                .setAll(selectedImagePaths.stream().map(path -> path.getFileName().toString()).toList());
+
+        boolean hasImages = !selectedImagePaths.isEmpty();
+        if (removeImageButton != null) {
+            removeImageButton.setDisable(!hasImages);
+        }
+        if (clearImagesButton != null) {
+            clearImagesButton.setDisable(!hasImages);
+        }
+    }
+
     private void setLoading(boolean loading, String message) {
         loadingIndicator.setVisible(loading);
         loadingIndicator.setManaged(loading);
 
         createButton.setDisable(loading);
         resetButton.setDisable(loading);
+
+        if (chooseImagesButton != null) {
+            chooseImagesButton.setDisable(loading);
+        }
+        if (removeImageButton != null) {
+            removeImageButton.setDisable(loading || selectedImagePaths.isEmpty());
+        }
+        if (clearImagesButton != null) {
+            clearImagesButton.setDisable(loading || selectedImagePaths.isEmpty());
+        }
 
         statusLabel.setText(message);
     }

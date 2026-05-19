@@ -341,6 +341,33 @@
 }
 
 
+/* SELLER PRODUCT IMAGES */
+
+.seller-image-list {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 18;
+
+    -fx-border-color: rgba(255, 255, 255, 0.14);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+}
+
+.seller-image-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+}
+
+.seller-image-list .list-cell:filled:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.seller-image-list .list-cell:filled:selected {
+    -fx-background-color: rgba(103, 184, 234, 0.22);
+}
+
+
 /* SELLER AUCTION DETAIL */
 
 .seller-detail-card {

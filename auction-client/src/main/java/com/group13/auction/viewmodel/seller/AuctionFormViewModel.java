@@ -1,8 +1,11 @@
 package com.group13.auction.viewmodel.seller;
 
 import com.group13.auction.common.dto.auction.AuctionDTOs;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,6 +17,8 @@ import java.util.Map;
  */
 public final class AuctionFormViewModel {
 
+    public static final int MAX_IMAGE_COUNT = 3;
+
     private final String itemName;
     private final String itemDescription;
     private final String itemCategory;
@@ -22,6 +27,7 @@ public final class AuctionFormViewModel {
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
     private final Map<String, Object> itemExtraFields;
+    private final List<Path> imagePaths;
 
     /**
      * Tạo view model cho form tạo phiên đấu giá.
@@ -34,6 +40,7 @@ public final class AuctionFormViewModel {
      * @param startTime thời gian bắt đầu
      * @param endTime thời gian kết thúc
      * @param itemExtraFields thông tin mở rộng theo loại sản phẩm
+     * @param imagePaths danh sách ảnh local được chọn ở client
      */
     public AuctionFormViewModel(
             String itemName,
@@ -43,7 +50,8 @@ public final class AuctionFormViewModel {
             double reservePrice,
             LocalDateTime startTime,
             LocalDateTime endTime,
-            Map<String, Object> itemExtraFields) {
+            Map<String, Object> itemExtraFields,
+            List<Path> imagePaths) {
         this.itemName = trimToEmpty(itemName);
         this.itemDescription = trimToEmpty(itemDescription);
         this.itemCategory = trimToEmpty(itemCategory).toUpperCase();
@@ -52,6 +60,7 @@ public final class AuctionFormViewModel {
         this.startTime = startTime;
         this.endTime = endTime;
         this.itemExtraFields = normalizeExtraFields(itemExtraFields);
+        this.imagePaths = normalizeImagePaths(imagePaths);
     }
 
     /**
@@ -86,14 +95,30 @@ public final class AuctionFormViewModel {
         if (!endTime.isAfter(startTime)) {
             throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
         }
+        if (imagePaths.size() > MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("Chỉ được chọn tối đa " + MAX_IMAGE_COUNT + " ảnh.");
+        }
+    }
+
+    /**
+     * Chuyển form sang DTO request của {@code auction-common} khi không có ảnh upload.
+     *
+     * @return request tạo phiên đấu giá
+     */
+    public AuctionDTOs.CreateAuctionRequestDTO toCreateRequest() {
+        return toCreateRequest(List.of());
     }
 
     /**
      * Chuyển form sang DTO request của {@code auction-common}.
      *
+     * <p>{@code imageUrls} phải là URL server trả về sau khi upload ảnh, ví dụ
+     * {@code /uploads/items/{uuid}.jpg}.
+     *
+     * @param imageUrls danh sách URL ảnh đã upload
      * @return request tạo phiên đấu giá
      */
-    public AuctionDTOs.CreateAuctionRequestDTO toCreateRequest() {
+    public AuctionDTOs.CreateAuctionRequestDTO toCreateRequest(List<String> imageUrls) {
         validateForCreate();
 
         AuctionDTOs.CreateAuctionRequestDTO request =
@@ -106,6 +131,7 @@ public final class AuctionFormViewModel {
         request.setStartTime(startTime);
         request.setEndTime(endTime);
         request.setItemExtraFields(itemExtraFields);
+        request.setImageUrls(normalizeImageUrls(imageUrls));
         return request;
     }
 
@@ -141,6 +167,10 @@ public final class AuctionFormViewModel {
         return itemExtraFields;
     }
 
+    public List<Path> imagePaths() {
+        return imagePaths;
+    }
+
     private static boolean isSupportedCategory(String category) {
         return "ELECTRONICS".equals(category) || "ART".equals(category) || "VEHICLE".equals(category);
     }
@@ -166,5 +196,33 @@ public final class AuctionFormViewModel {
                     normalized.put(key.trim(), value);
                 });
         return Map.copyOf(normalized);
+    }
+
+    private static List<Path> normalizeImagePaths(List<Path> paths) {
+        if (paths == null || paths.isEmpty()) {
+            return List.of();
+        }
+
+        List<Path> normalized = new ArrayList<>();
+        for (Path path : paths) {
+            if (path != null && !normalized.contains(path)) {
+                normalized.add(path);
+            }
+        }
+        return List.copyOf(normalized);
+    }
+
+    private static List<String> normalizeImageUrls(List<String> urls) {
+        if (urls == null || urls.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> normalized = new ArrayList<>();
+        for (String url : urls) {
+            if (url != null && !url.isBlank()) {
+                normalized.add(url.trim());
+            }
+        }
+        return List.copyOf(normalized);
     }
 }

@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
@@ -184,6 +185,37 @@
                               promptText="Mô tả đặc điểm, tình trạng, phụ kiện hoặc thông tin cần lưu ý."
                               wrapText="true"
                               styleClass="seller-text-area"/>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label text="Ảnh sản phẩm" styleClass="seller-form-label"/>
+
+                    <ListView fx:id="selectedImagesListView"
+                              prefHeight="112.0"
+                              styleClass="seller-image-list"/>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Button fx:id="chooseImagesButton"
+                                mnemonicParsing="false"
+                                onAction="#handleChooseImages"
+                                styleClass="seller-secondary-button"
+                                text="Chọn ảnh"/>
+
+                        <Button fx:id="removeImageButton"
+                                mnemonicParsing="false"
+                                onAction="#handleRemoveSelectedImage"
+                                styleClass="seller-ghost-button"
+                                text="Xóa ảnh đã chọn"/>
+
+                        <Button fx:id="clearImagesButton"
+                                mnemonicParsing="false"
+                                onAction="#handleClearImages"
+                                styleClass="seller-ghost-button"
+                                text="Xóa toàn bộ ảnh"/>
+
+                        <Label text="Tối đa 3 ảnh, mỗi ảnh không quá 2MB."
+                               styleClass="seller-muted-text"/>
+                    </HBox>
                 </VBox>
 
                 <HBox alignment="CENTER_LEFT" spacing="12.0">
