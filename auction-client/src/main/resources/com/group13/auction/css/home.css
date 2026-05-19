@@ -282,3 +282,36 @@
     -fx-shape: ""; /* Xóa hình mũi tên */
     -fx-padding: 0;
 }
+
+/* Khối hộp chứa nội dung văn bản */
+.content-card {
+    /* Màu nền xám xanh mờ (Sử dụng rgba để có độ trong suốt giống ảnh) */
+    -fx-background-color: rgba(94, 114, 138, 0.7); 
+    
+    /* Bo tròn 4 góc */
+    -fx-background-radius: 24px;
+    
+    /* Khoảng cách đệm bên trong khối */
+    -fx-padding: 20px;
+}
+
+/* Chữ bên trong khối hộp */
+.content-text {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Chữ cái khổng lồ (Drop Cap) */
+.drop-cap-letter {
+    -fx-text-fill: #ffffff;
+    
+    /* Sử dụng font chữ dày và tăng kích thước thật lớn */
+    -fx-font-family: "System", "Segoe UI", sans-serif;
+    -fx-font-weight: 900; /* Đậm nhất có thể */
+    -fx-font-size: 250px; /* Kích thước khổng lồ */
+    
+    /* Khử răng cưa giúp chữ mượt mà hơn */
+    -fx-font-smoothing-type: gray;
+}

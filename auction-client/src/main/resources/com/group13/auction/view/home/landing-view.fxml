@@ -20,84 +20,142 @@
 
     <ScrollPane fx:id="mainScrollPane" fitToWidth="true" styleClass="background-layer">
         <content>
-            <AnchorPane prefHeight="1500.0" prefWidth="1280.0">
+            <VBox alignment="TOP_CENTER" spacing="80.0" style="-fx-padding: 0 0 100 0;">
 
-                <HBox alignment="CENTER_LEFT"
-                      spacing="18.0"
-                      AnchorPane.leftAnchor="18.0"
-                      AnchorPane.rightAnchor="20.0"
-                      AnchorPane.topAnchor="16.0">
+                <AnchorPane prefHeight="70.0">
+                    <HBox alignment="CENTER_LEFT"
+                          spacing="18.0"
+                          AnchorPane.leftAnchor="18.0"
+                          AnchorPane.rightAnchor="20.0"
+                          AnchorPane.topAnchor="16.0">
 
-                    <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <ImageView fitWidth="210.0" preserveRatio="true">
-                            <Image url="@../../assets/images/logo.png"/>
-                        </ImageView>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <ImageView fitWidth="210.0" preserveRatio="true">
+                                <Image url="@../../assets/images/logo.png"/>
+                            </ImageView>
+                            <ImageView fitHeight="44.0" preserveRatio="true">
+                                <Image url="@../../assets/images/mascot-version-1.png"/>
+                            </ImageView>
+                        </HBox>
 
-                        <ImageView fitHeight="44.0" preserveRatio="true">
-                            <Image url="@../../assets/images/mascot-version-1.png"/>
-                        </ImageView>
+                        <Region HBox.hgrow="ALWAYS"/>
+
+                        <Button mnemonicParsing="false"
+                                onAction="#handleGoToLogin"
+                                styleClass="landing-login-button"
+                                text="Đăng nhập"/>
+
+                        <Button mnemonicParsing="false"
+                                onAction="#handleGoToRegister"
+                                styleClass="landing-register-button"
+                                text="Đăng ký"/>
                     </HBox>
+                </AnchorPane>
 
-                    <Region HBox.hgrow="ALWAYS"/>
-
-                    <Button mnemonicParsing="false"
-                            onAction="#handleGoToLogin"
-                            styleClass="landing-login-button"
-                            text="Đăng nhập"/>
-
-                    <Button mnemonicParsing="false"
-                            onAction="#handleGoToRegister"
-                            styleClass="landing-register-button"
-                            text="Đăng ký"/>
-                </HBox>
-
-                <VBox alignment="CENTER"
-                      spacing="8.0"
-                      AnchorPane.leftAnchor="0.0"
-                      AnchorPane.rightAnchor="0.0"
-                      AnchorPane.topAnchor="102.0">
-
-                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN"
-                           styleClass="landing-main-title"/>
-
-                    <Label text="duy nhất bạn cần"
-                           styleClass="landing-main-title"/>
+                <VBox alignment="CENTER" spacing="8.0">
+                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN" styleClass="landing-main-title"/>
+                    <Label text="duy nhất bạn cần" styleClass="landing-main-title"/>
 
                     <VBox alignment="CENTER">
-                        <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
-                               styleClass="landing-main-subtitle"/>
-
-                        <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
-                               styleClass="landing-main-subtitle"/>
+                        <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo." styleClass="landing-main-subtitle"/>
+                        <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định." styleClass="landing-main-subtitle"/>
                     </VBox>
 
                     <Region prefHeight="8.0"/>
 
-                    <Button mnemonicParsing="false"
-                            onAction="#handleStart"
-                            styleClass="landing-main-start-button"
-                            text="BẮT ĐẦU  ➜"/>
+                    <Button mnemonicParsing="false" onAction="#handleStart" styleClass="landing-main-start-button" text="BẮT ĐẦU  ➜"/>
                 </VBox>
 
-                <StackPane fx:id="revealBlock"
-                           prefHeight="450.0"
-                           AnchorPane.topAnchor="480.0"
-                           AnchorPane.leftAnchor="0.0"
-                           AnchorPane.rightAnchor="0.0">
-
+                <StackPane fx:id="revealBlock">
                     <MediaView fx:id="bgMediaView" preserveRatio="true" />
 
                     <VBox fx:id="revealContent" alignment="CENTER" opacity="0.0" spacing="15.0">
-                        <Label text="TẠI SAO CHỌN OMNIBID?"
-                               styleClass="landing-main-title"
-                               style="-fx-font-size: 36px;"/>
-
-                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời."
-                               styleClass="landing-main-subtitle"/>
+                        <Label text="TẠI SAO CHỌN OMNIBID?" styleClass="landing-main-title" style="-fx-font-size: 36px;"/>
+                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời." styleClass="landing-main-subtitle"/>
                     </VBox>
                 </StackPane>
 
-            </AnchorPane>
+                <AnchorPane fx:id="slideBlockO" 
+                            opacity="0.0" 
+                            prefHeight="300.0" 
+                            AnchorPane.leftAnchor="0.0" 
+                            AnchorPane.rightAnchor="0.0">
+                    
+                    <VBox styleClass="content-card"
+                        prefWidth="300.0"
+                        prefHeight="200.0"
+                        AnchorPane.topAnchor="115.0"
+                        AnchorPane.leftAnchor="170.0"> 
+                        <Label text="Nội dung văn bản" styleClass="content-text"/>
+                    </VBox>
+
+                    <Label text="O" 
+                        styleClass="drop-cap-letter"
+                        AnchorPane.topAnchor="35.0"
+                        AnchorPane.leftAnchor="10.0"/> 
+                </AnchorPane>
+
+                <AnchorPane fx:id="slideBlockM" 
+                            opacity="0.0" 
+                            prefHeight="300.0" 
+                            AnchorPane.leftAnchor="0.0" 
+                            AnchorPane.rightAnchor="0.0">
+                    
+                    <VBox styleClass="content-card"
+                        prefWidth="300.0"
+                        prefHeight="200.0"
+                        AnchorPane.topAnchor="115.0"
+                        AnchorPane.leftAnchor="170.0"> 
+                        <Label text="Nội dung văn bản" styleClass="content-text"/>
+                    </VBox>
+
+                    <Label text="M" 
+                        styleClass="drop-cap-letter"
+                        AnchorPane.topAnchor="35.0"
+                        AnchorPane.leftAnchor="10.0"/> 
+                </AnchorPane>
+
+                <AnchorPane fx:id="slideBlockN" 
+                            opacity="0.0" 
+                            prefHeight="300.0" 
+                            AnchorPane.leftAnchor="0.0" 
+                            AnchorPane.rightAnchor="0.0">
+                    
+                    <VBox styleClass="content-card"
+                        prefWidth="300.0"
+                        prefHeight="200.0"
+                        AnchorPane.topAnchor="115.0"
+                        AnchorPane.leftAnchor="170.0"> 
+                        <Label text="Nội dung văn bản" styleClass="content-text"/>
+                    </VBox>
+
+                    <Label text="N" 
+                        styleClass="drop-cap-letter"
+                        AnchorPane.topAnchor="35.0"
+                        AnchorPane.leftAnchor="10.0"/> 
+                </AnchorPane>
+
+                <AnchorPane fx:id="slideBlockI" 
+                            opacity="0.0" 
+                            prefHeight="300.0" 
+                            AnchorPane.leftAnchor="0.0" 
+                            AnchorPane.rightAnchor="0.0">
+                    
+                    <VBox styleClass="content-card"
+                        prefWidth="300.0"
+                        prefHeight="200.0"
+                        AnchorPane.topAnchor="115.0"
+                        AnchorPane.leftAnchor="170.0"> 
+                        <Label text="Nội dung văn bản" styleClass="content-text"/>
+                    </VBox>
+
+                    <Label text="I" 
+                        styleClass="drop-cap-letter"
+                        AnchorPane.topAnchor="35.0"
+                        AnchorPane.leftAnchor="10.0"/> 
+                </AnchorPane>
+
+            </VBox>
         </content>
     </ScrollPane>
 
@@ -113,7 +171,6 @@
                 <ImageView fitHeight="38.0" preserveRatio="true">
                     <Image url="@../../assets/images/mascot-version-2.png"/>
                 </ImageView>
-
                 <ImageView fitHeight="34.0" preserveRatio="true">
                     <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
                 </ImageView>

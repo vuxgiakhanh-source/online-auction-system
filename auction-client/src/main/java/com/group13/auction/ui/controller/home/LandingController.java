@@ -9,6 +9,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
 import javafx.application.Platform;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
@@ -17,6 +18,8 @@ import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /** Controller cho màn landing/welcome của OmniBid client. */
@@ -26,10 +29,15 @@ public class LandingController implements Initializable {
     @FXML private StackPane revealBlock;
     @FXML private MediaView bgMediaView;
     @FXML private VBox revealContent;
+    @FXML private AnchorPane slideBlockO;
+    @FXML private AnchorPane slideBlockM;
+    @FXML private AnchorPane slideBlockN;
+    @FXML private AnchorPane slideBlockI;
 
     // Quản lý MediaPlayer
     private static MediaPlayer globalPlayer;
     private boolean isRevealed = false;
+    private final List<AnchorPane> slideBlocks = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -62,6 +70,13 @@ public class LandingController implements Initializable {
             revealBlock.sceneProperty().addListener((obs, oldS, newS) -> {
                 if (newS == null) cleanupVideo();
             });
+        }
+
+        slideBlocks.addAll(List.of(slideBlockO, slideBlockM, slideBlockN, slideBlockI));
+        for (AnchorPane slideBlock : slideBlocks) {
+            if (slideBlock != null) {
+                slideBlock.setTranslateX(-100);
+            }
         }
     }
 
@@ -114,6 +129,42 @@ public class LandingController implements Initializable {
         }
     }
 
+    private void handleSlideBlockReveal() {
+        if (mainScrollPane == null) return;
+
+        Bounds scrollBounds = mainScrollPane.localToScene(mainScrollPane.getBoundsInLocal());
+        if (scrollBounds == null) return;
+
+        for (AnchorPane slideBlock : slideBlocks) {
+            if (slideBlock == null) continue;
+
+            Bounds blockBounds = slideBlock.localToScene(slideBlock.getBoundsInLocal());
+            if (blockBounds == null) continue;
+
+            boolean shouldShow = blockBounds.getMinY() < scrollBounds.getMaxY() - 100;
+            boolean shouldHide = blockBounds.getMinY() > scrollBounds.getMaxY();
+            boolean isShown = slideBlock.getOpacity() > 0.5;
+
+            if (shouldShow && !isShown) {
+                FadeTransition fade = new FadeTransition(Duration.millis(800), slideBlock);
+                fade.setToValue(1.0);
+
+                TranslateTransition slide = new TranslateTransition(Duration.millis(800), slideBlock);
+                slide.setToX(0);
+
+                new ParallelTransition(fade, slide).play();
+            } else if (shouldHide && isShown) {
+                FadeTransition fade = new FadeTransition(Duration.millis(500), slideBlock);
+                fade.setToValue(0.0);
+
+                TranslateTransition slide = new TranslateTransition(Duration.millis(500), slideBlock);
+                slide.setToX(-100);
+
+                new ParallelTransition(fade, slide).play();
+            }
+        }
+    }
+
     private void checkAndRevealBlock() {
         if (revealBlock == null || mainScrollPane == null) return;
         Bounds scrollBounds = mainScrollPane.localToScene(mainScrollPane.getBoundsInLocal());
@@ -138,7 +189,11 @@ public class LandingController implements Initializable {
             slide.setToY(50);
             new ParallelTransition(fade, slide).play();
         }
+
+        handleSlideBlockReveal();
     }
+
+    
 
     @FXML private void handleStart() { Navigator.getInstance().goToLogin(); }
     @FXML private void handleGoToLogin() { Navigator.getInstance().goToLogin(); }
