@@ -22,184 +22,125 @@ import java.util.ResourceBundle;
 /** Controller cho màn landing/welcome của OmniBid client. */
 public class LandingController implements Initializable {
 
-    // --- CÁC THÀNH PHẦN FXML XỬ LÝ ANIMATION & VIDEO NỀN ---
-    @FXML
-    private ScrollPane mainScrollPane;
+    @FXML private ScrollPane mainScrollPane;
+    @FXML private StackPane revealBlock;
+    @FXML private MediaView bgMediaView;
+    @FXML private VBox revealContent;
 
-    @FXML
-    private StackPane revealBlock; // Đã đổi từ VBox sang StackPane để làm khay chứa video nền
-
-    @FXML
-    private MediaView bgMediaView; // Khai báo MediaView điều khiển video nền từ FXML
-
-    @FXML
-    private VBox revealContent; // Khối chữ được animate, tách riêng khỏi video nền
-
-    private MediaPlayer mediaPlayer; // Khai báo biến global để tránh bị Garbage Collector tự động xóa khi đang phát
-
-    // Biến cờ kiểm tra xem khối giao diện đã được hiện ra chưa
+    // Quản lý MediaPlayer
+    private static MediaPlayer globalPlayer;
     private boolean isRevealed = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // 1. Chuẩn bị trạng thái ban đầu: Kéo khối giao diện xuống 50px
+        // 1. Reset nội dung chữ
         if (revealContent != null) {
             revealContent.setTranslateY(50);
+            revealContent.setOpacity(0.0);
         }
 
-        // 2. Cấu hình MediaView và Video nền
-        if (bgMediaView != null) {
-            bgMediaView.setPreserveRatio(true);
-            // Clipping để video không tràn ra ngoài revealBlock khi scale
-            javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
-            clip.widthProperty().bind(revealBlock.widthProperty());
-            clip.heightProperty().bind(revealBlock.heightProperty());
-            revealBlock.setClip(clip);
+        // 2. Cleanup player cũ nếu có
+        cleanupVideo();
 
-            // Cập nhật kích thước MediaView để "Cover" toàn bộ vùng chứa mà không bị méo
-            revealBlock.widthProperty().addListener((obs, oldVal, newVal) -> updateVideoSize());
-            revealBlock.heightProperty().addListener((obs, oldVal, newVal) -> updateVideoSize());
-        }
+        // 3. Khởi tạo video với độ trễ ngắn để ổn định giao diện
+        Platform.runLater(() -> {
+            try {
+                initBackgroundVideo();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
 
-        initBackgroundVideo();
-
-        // 3. Lắng nghe sự kiện người dùng cuộn thanh cuộn dọc (vvalue)
+        // 4. Lắng nghe cuộn trang
         if (mainScrollPane != null) {
-            mainScrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
-                checkAndRevealBlock();
-            });
+            mainScrollPane.vvalueProperty().addListener((obs, oldV, newV) -> checkAndRevealBlock());
             Platform.runLater(this::checkAndRevealBlock);
         }
+
+        // 5. Giải phóng video khi chuyển scene
+        if (revealBlock != null) {
+            revealBlock.sceneProperty().addListener((obs, oldS, newS) -> {
+                if (newS == null) cleanupVideo();
+            });
+        }
     }
 
-    private void updateVideoSize() {
-        if (bgMediaView == null || revealBlock == null || mediaPlayer == null) return;
-        Media media = mediaPlayer.getMedia();
-        if (media == null) return;
-
-        double containerW = revealBlock.getWidth();
-        double containerH = revealBlock.getHeight();
-        double videoW = media.getWidth();
-        double videoH = media.getHeight();
-
-        if (containerW <= 0 || containerH <= 0 || videoW <= 0 || videoH <= 0) return;
-
-        double scaleW = containerW / videoW;
-        double scaleH = containerH / videoH;
-        double maxScale = Math.max(scaleW, scaleH);
-
-        bgMediaView.setFitWidth(videoW * maxScale);
-        bgMediaView.setFitHeight(videoH * maxScale);
-    }
-
-    /**
-     * Khởi tạo và thiết lập video nền lặp vô hạn, tắt âm thanh.
-     */
-    private void initBackgroundVideo() {
-        loadVideo("/com/group13/auction/assets/videos/bg-landing.mp4");
-    }
-
-    private void loadVideo(String path) {
-        try {
-            URL videoUrl = getClass().getResource(path);
-            if (videoUrl == null) {
-                System.err.println("Không tìm thấy file video: " + path);
-                return;
+    private synchronized void cleanupVideo() {
+        if (globalPlayer != null) {
+            try {
+                globalPlayer.stop();
+                globalPlayer.dispose();
+            } catch (Exception e) {
+                // Ignore
+            } finally {
+                globalPlayer = null;
             }
+        }
+    }
+
+    private void initBackgroundVideo() {
+        if (bgMediaView == null || revealBlock == null) return;
+
+        // Cấu hình MediaView: Chỉ bind Width, Height tự tính theo tỉ lệ
+        bgMediaView.setPreserveRatio(true);
+        bgMediaView.fitWidthProperty().bind(revealBlock.widthProperty());
+
+        try {
+            URL videoUrl = getClass().getResource("/com/group13/auction/assets/videos/bg-landing.mp4");
+            if (videoUrl == null) return;
 
             Media media = new Media(videoUrl.toExternalForm());
-            if (mediaPlayer != null) {
-                mediaPlayer.dispose();
-            }
-            mediaPlayer = new MediaPlayer(media);
+            globalPlayer = new MediaPlayer(media);
+            globalPlayer.setMute(true);
+            globalPlayer.setCycleCount(MediaPlayer.INDEFINITE);
 
-            // Cấu hình player
-            mediaPlayer.setMute(true);
-            mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-
-            // Xử lý lỗi
-            mediaPlayer.setOnError(() -> {
-                System.err.println("Lỗi player video nền (" + path + "): " + mediaPlayer.getError());
-                // Nếu video chính lỗi, thử video backup
-                if (path.equals("/com/group13/auction/assets/videos/bg-landing.mp4")) {
-                    Platform.runLater(() -> loadVideo("/com/group13/auction/assets/videos/bg-landing-av1-backup.mp4"));
-                }
+            // Gán player và phát
+            bgMediaView.setMediaPlayer(globalPlayer);
+            
+            globalPlayer.setOnReady(() -> {
+                if (globalPlayer != null) globalPlayer.play();
             });
 
-            // Theo dõi trạng thái
-            mediaPlayer.statusProperty().addListener((obs, oldStatus, newStatus) -> {
-                if (newStatus == MediaPlayer.Status.READY) {
-                    bgMediaView.setMediaPlayer(mediaPlayer);
-                    updateVideoSize();
-                    mediaPlayer.play();
+            // Vòng lặp thủ công để đảm bảo 100% không dừng
+            globalPlayer.setOnEndOfMedia(() -> {
+                if (globalPlayer != null) {
+                    globalPlayer.seek(Duration.ZERO);
+                    globalPlayer.play();
                 }
             });
 
         } catch (Exception e) {
-            System.err.println("Không thể khởi tạo video " + path + ": " + e.getMessage());
+            System.err.println("Lỗi khởi tạo video: " + e.getMessage());
         }
     }
 
-    /** * Kiểm tra tọa độ hiện tại khi cuộn và chạy Animation hiện/ẩn linh hoạt.
-     */
     private void checkAndRevealBlock() {
-        if (revealBlock == null) return;
-
-        // Lấy tọa độ không gian thực của thanh cuộn và khối giao diện
+        if (revealBlock == null || mainScrollPane == null) return;
         Bounds scrollBounds = mainScrollPane.localToScene(mainScrollPane.getBoundsInLocal());
         Bounds blockBounds = revealBlock.localToScene(revealBlock.getBoundsInLocal());
+        if (scrollBounds == null || blockBounds == null) return;
 
-        // Điều kiện HIỆN: Cạnh trên của khối lọt vào cách đáy màn hình 100px
         boolean shouldShow = blockBounds.getMinY() < scrollBounds.getMaxY() - 100;
-
-        // Điều kiện ẨN: Cạnh trên của khối bị cuộn tụt hoàn toàn xuống dưới đáy màn hình
         boolean shouldHide = blockBounds.getMinY() > scrollBounds.getMaxY();
 
-        // 1. Chạy hiệu ứng HIỆN (Fade In + Slide Up)
         if (shouldShow && !isRevealed) {
             isRevealed = true;
-
             FadeTransition fade = new FadeTransition(Duration.millis(600), revealContent);
-            fade.setToValue(1.0); // Rõ hoàn toàn
-
+            fade.setToValue(1.0);
             TranslateTransition slide = new TranslateTransition(Duration.millis(600), revealContent);
-            slide.setToY(0); // Trượt về vị trí gốc
-
-            ParallelTransition pt = new ParallelTransition(fade, slide);
-            pt.play();
-        }
-        // 2. Chạy hiệu ứng ẨN (Fade Out + Slide Down)
-        else if (shouldHide && isRevealed) {
-            isRevealed = false; // Reset trạng thái để sẵn sàng hiện lại
-
+            slide.setToY(0);
+            new ParallelTransition(fade, slide).play();
+        } else if (shouldHide && isRevealed) {
+            isRevealed = false;
             FadeTransition fade = new FadeTransition(Duration.millis(400), revealContent);
-            fade.setToValue(0.0); // Mờ đi (tàng hình)
-
+            fade.setToValue(0.0);
             TranslateTransition slide = new TranslateTransition(Duration.millis(400), revealContent);
-            slide.setToY(50); // Trượt tụt xuống lại 50px
-
-            ParallelTransition pt = new ParallelTransition(fade, slide);
-            pt.play();
+            slide.setToY(50);
+            new ParallelTransition(fade, slide).play();
         }
     }
 
-    // --- CÁC PHƯƠNG THỨC ĐIỀU HƯỚNG CỦA BẠN ---
-
-    /** Chuyển sang màn đăng nhập khi người dùng nhấn nút bắt đầu. */
-    @FXML
-    private void handleStart() {
-        Navigator.getInstance().goToLogin();
-    }
-
-    /** Chuyển sang màn đăng nhập từ header. */
-    @FXML
-    private void handleGoToLogin() {
-        Navigator.getInstance().goToLogin();
-    }
-
-    /** Chuyển sang màn đăng ký từ header. */
-    @FXML
-    private void handleGoToRegister() {
-        Navigator.getInstance().goToRegister();
-    }
+    @FXML private void handleStart() { Navigator.getInstance().goToLogin(); }
+    @FXML private void handleGoToLogin() { Navigator.getInstance().goToLogin(); }
+    @FXML private void handleGoToRegister() { Navigator.getInstance().goToRegister(); }
 }
