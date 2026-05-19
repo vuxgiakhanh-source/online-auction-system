@@ -70,7 +70,7 @@
             <Label text="Tạo phiên đấu giá"
                    styleClass="seller-page-title"/>
 
-            <Label text="Nhập thông tin sản phẩm, mức giá và thời gian để gửi yêu cầu tạo phiên đến hệ thống."
+            <Label text="Nhập thông tin sản phẩm và thiết lập phiên đấu giá. Ảnh sản phẩm sẽ được upload trước khi gửi yêu cầu tạo phiên."
                    wrapText="true"
                    styleClass="seller-page-subtitle"/>
         </VBox>
@@ -79,146 +79,183 @@
         <ScrollPane fitToWidth="true"
                     VBox.vgrow="ALWAYS"
                     styleClass="seller-scroll-pane">
-            <VBox spacing="18.0"
-                  styleClass="seller-form-card">
-                <padding>
-                    <Insets top="24.0" right="28.0" bottom="24.0" left="28.0"/>
-                </padding>
+            <VBox spacing="18.0">
 
-                <GridPane hgap="18.0" vgap="16.0">
-                    <columnConstraints>
-                        <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
-                        <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
-                    </columnConstraints>
+                <!-- Product section -->
+                <VBox spacing="18.0" styleClass="seller-form-section">
+                    <padding>
+                        <Insets top="24.0" right="28.0" bottom="24.0" left="28.0"/>
+                    </padding>
 
-                    <!-- Row 0 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                        <Label text="Tên sản phẩm" styleClass="seller-form-label"/>
-                        <TextField fx:id="itemNameField"
-                                   promptText="Nhập tên sản phẩm"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Label text="Thông tin sản phẩm" styleClass="seller-card-title"/>
 
-                    <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                        <Label text="Loại sản phẩm" styleClass="seller-form-label"/>
-                        <ComboBox fx:id="categoryComboBox"
-                                  prefWidth="520.0"
-                                  styleClass="seller-combo-box"/>
-                    </VBox>
+                        <Label text="Item"
+                               styleClass="seller-section-badge"/>
 
-                    <!-- Row 1 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                        <Label text="Giá khởi điểm" styleClass="seller-form-label"/>
-                        <TextField fx:id="startingPriceField"
-                                   promptText="Ví dụ: 1000000"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
 
-                    <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                        <Label text="Giá sàn" styleClass="seller-form-label"/>
-                        <TextField fx:id="reservePriceField"
-                                   promptText="Ví dụ: 1500000"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-
-                    <!-- Row 2 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="2">
-                        <Label text="Ngày bắt đầu" styleClass="seller-form-label"/>
-                        <DatePicker fx:id="startDatePicker"
-                                    prefWidth="520.0"
-                                    styleClass="seller-date-picker"/>
-                    </VBox>
-
-                    <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                        <Label text="Giờ bắt đầu" styleClass="seller-form-label"/>
-                        <TextField fx:id="startTimeField"
-                                   promptText="HH:mm"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-
-                    <!-- Row 3 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="3">
-                        <Label text="Ngày kết thúc" styleClass="seller-form-label"/>
-                        <DatePicker fx:id="endDatePicker"
-                                    prefWidth="520.0"
-                                    styleClass="seller-date-picker"/>
-                    </VBox>
-
-                    <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                        <Label text="Giờ kết thúc" styleClass="seller-form-label"/>
-                        <TextField fx:id="endTimeField"
-                                   promptText="HH:mm"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-
-                    <!-- Row 4 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="4">
-                        <Label fx:id="extraField1Label"
-                               text="Thông tin mở rộng 1"
-                               styleClass="seller-form-label"/>
-                        <TextField fx:id="extraField1"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-
-                    <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
-                        <Label fx:id="extraField2Label"
-                               text="Thông tin mở rộng 2"
-                               styleClass="seller-form-label"/>
-                        <TextField fx:id="extraField2"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-
-                    <!-- Row 5 -->
-                    <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="5">
-                        <Label fx:id="extraField3Label"
-                               text="Thông tin mở rộng 3"
-                               styleClass="seller-form-label"/>
-                        <TextField fx:id="extraField3"
-                                   styleClass="seller-text-field"/>
-                    </VBox>
-                </GridPane>
-
-                <VBox spacing="7.0">
-                    <Label text="Mô tả sản phẩm" styleClass="seller-form-label"/>
-                    <TextArea fx:id="descriptionArea"
-                              prefRowCount="5"
-                              promptText="Mô tả đặc điểm, tình trạng, phụ kiện hoặc thông tin cần lưu ý."
-                              wrapText="true"
-                              styleClass="seller-text-area"/>
-                </VBox>
-
-                <VBox spacing="8.0">
-                    <Label text="Ảnh sản phẩm" styleClass="seller-form-label"/>
-
-                    <ListView fx:id="selectedImagesListView"
-                              prefHeight="112.0"
-                              styleClass="seller-image-list"/>
-
-                    <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <Button fx:id="chooseImagesButton"
-                                mnemonicParsing="false"
-                                onAction="#handleChooseImages"
-                                styleClass="seller-secondary-button"
-                                text="Chọn ảnh"/>
-
-                        <Button fx:id="removeImageButton"
-                                mnemonicParsing="false"
-                                onAction="#handleRemoveSelectedImage"
-                                styleClass="seller-ghost-button"
-                                text="Xóa ảnh đã chọn"/>
-
-                        <Button fx:id="clearImagesButton"
-                                mnemonicParsing="false"
-                                onAction="#handleClearImages"
-                                styleClass="seller-ghost-button"
-                                text="Xóa toàn bộ ảnh"/>
-
-                        <Label text="Tối đa 3 ảnh, mỗi ảnh không quá 2MB."
+                        <Label text="Các thông tin này dùng để tạo sản phẩm đấu giá."
                                styleClass="seller-muted-text"/>
                     </HBox>
+
+                    <GridPane hgap="18.0" vgap="16.0">
+                        <columnConstraints>
+                            <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                            <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                        </columnConstraints>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="Tên sản phẩm" styleClass="seller-form-label"/>
+                            <TextField fx:id="itemNameField"
+                                       promptText="Nhập tên sản phẩm"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="Loại sản phẩm" styleClass="seller-form-label"/>
+                            <ComboBox fx:id="categoryComboBox"
+                                      prefWidth="520.0"
+                                      styleClass="seller-combo-box"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <Label fx:id="extraField1Label"
+                                   text="Thông tin mở rộng 1"
+                                   styleClass="seller-form-label"/>
+                            <TextField fx:id="extraField1"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label fx:id="extraField2Label"
+                                   text="Thông tin mở rộng 2"
+                                   styleClass="seller-form-label"/>
+                            <TextField fx:id="extraField2"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                            <Label fx:id="extraField3Label"
+                                   text="Thông tin mở rộng 3"
+                                   styleClass="seller-form-label"/>
+                            <TextField fx:id="extraField3"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+                    </GridPane>
+
+                    <VBox spacing="7.0">
+                        <Label text="Mô tả sản phẩm" styleClass="seller-form-label"/>
+                        <TextArea fx:id="descriptionArea"
+                                  prefRowCount="5"
+                                  promptText="Mô tả đặc điểm, tình trạng, phụ kiện hoặc thông tin cần lưu ý."
+                                  wrapText="true"
+                                  styleClass="seller-text-area"/>
+                    </VBox>
+
+                    <VBox spacing="8.0">
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <Label text="Ảnh sản phẩm" styleClass="seller-form-label"/>
+                            <Label text="Tối đa 3 ảnh, mỗi ảnh không quá 2MB."
+                                   styleClass="seller-muted-text"/>
+                        </HBox>
+
+                        <ListView fx:id="selectedImagesListView"
+                                  prefHeight="112.0"
+                                  styleClass="seller-image-list"/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <Button fx:id="chooseImagesButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleChooseImages"
+                                    styleClass="seller-secondary-button"
+                                    text="Chọn ảnh"/>
+
+                            <Button fx:id="removeImageButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleRemoveSelectedImage"
+                                    styleClass="seller-ghost-button"
+                                    text="Xóa ảnh đã chọn"/>
+
+                            <Button fx:id="clearImagesButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleClearImages"
+                                    styleClass="seller-ghost-button"
+                                    text="Xóa toàn bộ ảnh"/>
+                        </HBox>
+                    </VBox>
                 </VBox>
 
-                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <!-- Auction section -->
+                <VBox spacing="18.0" styleClass="seller-form-section">
+                    <padding>
+                        <Insets top="24.0" right="28.0" bottom="24.0" left="28.0"/>
+                    </padding>
+
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Label text="Thông tin phiên đấu giá" styleClass="seller-card-title"/>
+
+                        <Label text="Auction"
+                               styleClass="seller-section-badge"/>
+
+                        <Region HBox.hgrow="ALWAYS"/>
+
+                        <Label text="Các thông tin này dùng để tạo phiên đấu giá."
+                               styleClass="seller-muted-text"/>
+                    </HBox>
+
+                    <GridPane hgap="18.0" vgap="16.0">
+                        <columnConstraints>
+                            <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                            <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                        </columnConstraints>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="Giá khởi điểm" styleClass="seller-form-label"/>
+                            <TextField fx:id="startingPriceField"
+                                       promptText="Ví dụ: 1000000"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="Giá sàn" styleClass="seller-form-label"/>
+                            <TextField fx:id="reservePriceField"
+                                       promptText="Ví dụ: 1500000"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <Label text="Ngày bắt đầu" styleClass="seller-form-label"/>
+                            <DatePicker fx:id="startDatePicker"
+                                        prefWidth="520.0"
+                                        styleClass="seller-date-picker"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="Giờ bắt đầu" styleClass="seller-form-label"/>
+                            <TextField fx:id="startTimeField"
+                                       promptText="HH:mm"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                            <Label text="Ngày kết thúc" styleClass="seller-form-label"/>
+                            <DatePicker fx:id="endDatePicker"
+                                        prefWidth="520.0"
+                                        styleClass="seller-date-picker"/>
+                        </VBox>
+
+                        <VBox spacing="7.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <Label text="Giờ kết thúc" styleClass="seller-form-label"/>
+                            <TextField fx:id="endTimeField"
+                                       promptText="HH:mm"
+                                       styleClass="seller-text-field"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- Submit bar -->
+                <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="seller-form-action-bar">
                     <Button fx:id="createButton"
                             mnemonicParsing="false"
                             onAction="#handleCreateAuction"

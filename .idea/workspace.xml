@@ -6,9 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/seller/SellerAuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/seller/SellerAuctionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/CreateAuctionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/seller/CreateAuctionController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/viewmodel/seller/AuctionFormViewModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/viewmodel/seller/AuctionFormViewModel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/seller/create-auction-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/seller/create-auction-view.fxml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
