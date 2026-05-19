@@ -2,6 +2,8 @@ package com.group13.auction.unit.service;
 
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.FinancialTransactionDAO;
+import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Art;
@@ -48,6 +50,7 @@ class AuctionServiceTest {
 
     @Mock private IRatingService ratingService;
     @Mock private AuctionDAO     auctionDAO;
+    @Mock private FinancialTransactionDAO financialTransactionDAO;
 
     // ── SUT ───────────────────────────────────────────────────────────────────
 
@@ -67,7 +70,10 @@ class AuctionServiceTest {
         resetSystemBankBalance();
         resetAuctionManager();
 
-        sut = new AuctionService(ratingService, auctionDAO);
+        sut = new AuctionService(ratingService, auctionDAO, financialTransactionDAO);
+        lenient().when(auctionDAO.createAuction(any())).thenReturn(true);
+        lenient().when(financialTransactionDAO.saveTransaction(any(FinancialTransaction.class))).thenReturn(true);
+        lenient().when(financialTransactionDAO.findLockedDepositAmount(anyString(), anyString())).thenReturn(0L);
 
         seller = normalSeller("seller01");
         bidder = normalBidder("bidder01");
@@ -237,6 +243,22 @@ class AuctionServiceTest {
                     .hasMessageContaining("reservePrice");
 
             verifyNoInteractions(auctionDAO);
+        }
+
+        @Test
+        @DisplayName("createAuction — auctionDAO.createAuction() false → IllegalStateException")
+        void daoPersistFails_throwsAndDoesNotRegisterOnSeller() {
+            when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
+            when(auctionDAO.createAuction(any())).thenReturn(false);
+            LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+            LocalDateTime end   = start.plusHours(1);
+            int sizeBefore = seller.getAllAuctionIds().size();
+
+            assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 1_500_000L))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Không thể lưu phiên");
+
+            assertThat(seller.getAllAuctionIds()).hasSize(sizeBefore);
         }
 
         @Test
@@ -488,6 +510,7 @@ class AuctionServiceTest {
             // Assert — SystemBank nhận được tiền cọc (> 0)
             long bankAfter = SystemBank.getInstance().getTotalBalance();
             assertThat(bankAfter).isGreaterThan(bankBefore);
+            verify(financialTransactionDAO, times(1)).saveTransaction(any(FinancialTransaction.class));
         }
 
         @Test

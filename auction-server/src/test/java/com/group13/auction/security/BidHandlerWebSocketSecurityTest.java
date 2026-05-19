@@ -221,17 +221,16 @@ class BidHandlerWebSocketSecurityTest {
             ClientSession session = registerOpenSession();
             session.authenticate("rl-user-id", "rl_test_user", "NORMAL_USER");
 
-            // Payload hợp lệ (sẽ fail ở requireNormalUser vì user không tồn tại trong manager,
-            // nhưng rate limiter phải được trigger TRƯỚC đó)
+            // Payload hợp lệ — bid thứ 6 phải bị chặn bởi rate limiter (theo userId, không username)
             JsonElement payload = GSON.toJsonTree(new BidDTOs.BidRequestDTO("auc-rate", 1_000_000L));
 
             BidHandler handler = newHandler();
-            // Reset rate limiter để bắt đầu sạch cho user này
-            BidRateLimiter.getInstance().remove("rl_test_user");
+            String rateLimitKey = "rl-user-id";
+            BidRateLimiter.getInstance().remove(rateLimitKey);
 
-            // Consume 5 token (đến limit) — các lần này sẽ fail do requireNormalUser, không phải rate limit
+            // Consume 5 token (đến limit) — BidHandler.tryConsume dùng session.getUserId()
             for (int i = 0; i < 5; i++) {
-                BidRateLimiter.getInstance().tryConsume("rl_test_user");
+                BidRateLimiter.getInstance().tryConsume(rateLimitKey);
             }
 
             // Lần thứ 6 — phải bị chặn bởi rate limiter
@@ -257,7 +256,7 @@ class BidHandlerWebSocketSecurityTest {
             JsonElement payload = GSON.toJsonTree(new BidDTOs.BidRequestDTO("auc-rate2", 1_000_000L));
 
             BidHandler handler = newHandler();
-            BidRateLimiter.getInstance().remove("rl_test_user2");
+            BidRateLimiter.getInstance().remove("rl-user2-id");
 
             for (int i = 0; i < 5; i++) {
                 handler.handle(session, PacketType.PLACE_BID, payload, "rid-ok-" + i);

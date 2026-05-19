@@ -56,8 +56,8 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
         UserDAO           mockUserDAO           = mock(UserDAO.class);
 
         when(mockRatingService.isEligible(any())).thenReturn(true);
-        when(mockBidTransactionDAO.saveTransaction(any())).thenReturn(true);
-        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any())).thenReturn(true);
+        when(mockBidTransactionDAO.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
         when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
         when(mockUserDAO.saveUserAuctionActivity(any(), any(), any())).thenReturn(true);

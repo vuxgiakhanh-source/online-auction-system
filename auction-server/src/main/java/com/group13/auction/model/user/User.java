@@ -237,7 +237,7 @@ public abstract class User extends Entity {
    *
    * @param delta lượng thay đổi (có thể âm)
    */
-  public void adjustRating(double delta) {
+  public synchronized void adjustRating(double delta) {
     this.rating = Math.max(RATING_MIN, Math.min(RATING_MAX, this.rating + delta));
     markUpdated();
   }

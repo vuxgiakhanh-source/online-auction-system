@@ -50,8 +50,8 @@ class BidServiceUnsynchronizedConcurrencyTest extends ConcurrencyTestBase {
         UserDAO mockUserDAO = mock(UserDAO.class);
 
         when(mockRatingService.isEligible(any())).thenReturn(true);
-        when(mockBidTx.saveTransaction(any())).thenReturn(true);
-        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any())).thenReturn(true);
+        when(mockBidTx.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
         doNothing().when(mockWalletService).lockDeposit(any(), anyLong(), any());
 
