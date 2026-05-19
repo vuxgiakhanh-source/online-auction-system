@@ -248,7 +248,7 @@ public class BidService implements IBidService {
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
     registerJoin(bidder, auction, observer);
-    log.warn("Bidder joined: auctionId={}, bidderId={}, deposit={}",
+    log.info("Bidder joined: auctionId={}, bidderId={}, deposit={}",
             auction.getId(), bidder.getId(), depositAmount);
   }
 
