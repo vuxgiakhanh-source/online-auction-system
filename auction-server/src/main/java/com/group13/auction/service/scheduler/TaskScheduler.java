@@ -8,6 +8,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * {@link IScheduler} mặc định dựa trên {@link ScheduledExecutorService}.
+ * Bọc task để lỗi trong một lần chạy không dừng toàn bộ scheduler.
+ */
 public class TaskScheduler implements IScheduler {
     private static final Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
