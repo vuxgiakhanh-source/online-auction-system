@@ -71,11 +71,6 @@
                     text="Thông báo"/>
 
             <Button mnemonicParsing="false"
-                    onAction="#handleGoToLanding"
-                    styleClass="main-header-button"
-                    text="Landing"/>
-
-            <Button mnemonicParsing="false"
                     onAction="#handleLogout"
                     styleClass="main-header-danger-button"
                     text="Đăng xuất"/>

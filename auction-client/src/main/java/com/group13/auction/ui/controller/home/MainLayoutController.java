@@ -76,12 +76,6 @@ public final class MainLayoutController {
                         () -> AlertUtil.showError("Tài khoản hiện tại không có quyền Admin."));
     }
 
-    /** Quay lại landing page. */
-    @FXML
-    public void handleGoToLanding() {
-        Navigator.getInstance().goToLanding();
-    }
-
     /** Đăng xuất ở phía client và đưa người dùng về màn đăng nhập. */
     @FXML
     public void handleLogout() {
