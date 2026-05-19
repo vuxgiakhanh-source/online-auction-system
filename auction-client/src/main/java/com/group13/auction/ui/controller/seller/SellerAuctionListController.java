@@ -3,7 +3,9 @@ package com.group13.auction.ui.controller.seller;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.seller.SellerAuctionService;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.DialogSoundUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.state.ScreenStateKeys;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -20,6 +23,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.ImageView;
 
 /** Controller cho màn danh sách phiên đấu giá của người bán. */
 public final class SellerAuctionListController {
@@ -125,6 +129,8 @@ public final class SellerAuctionListController {
         HBox topRow = new HBox(14.0);
         topRow.setFillHeight(true);
 
+        VBox thumbnailBox = createThumbnailBox(row.primaryImageUrl());
+
         VBox titleBox = new VBox(5.0);
 
         Label titleLabel = new Label(row.itemName());
@@ -141,7 +147,7 @@ public final class SellerAuctionListController {
         Label statusBadge = new Label(row.statusText());
         statusBadge.getStyleClass().add("seller-status-badge");
 
-        topRow.getChildren().addAll(titleBox, spacer, statusBadge);
+        topRow.getChildren().addAll(thumbnailBox, titleBox, spacer, statusBadge);
 
         HBox metricRow = new HBox(14.0);
         metricRow
@@ -181,6 +187,33 @@ public final class SellerAuctionListController {
         return root;
     }
 
+    private VBox createThumbnailBox(String imageUrl) {
+        VBox thumbnailBox = new VBox();
+        thumbnailBox.getStyleClass().add("seller-thumbnail-box");
+        thumbnailBox.setAlignment(Pos.CENTER);
+        thumbnailBox.setMinWidth(122.0);
+        thumbnailBox.setPrefWidth(122.0);
+        thumbnailBox.setMaxWidth(122.0);
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            Label placeholder = new Label("Chưa có ảnh");
+            placeholder.getStyleClass().add("seller-thumbnail-placeholder");
+            thumbnailBox.getChildren().add(placeholder);
+            return thumbnailBox;
+        }
+
+        ImageView thumbnail = new ImageView();
+        thumbnail.getStyleClass().add("seller-thumbnail-image");
+        thumbnail.setFitWidth(112.0);
+        thumbnail.setFitHeight(84.0);
+        thumbnail.setPreserveRatio(true);
+        thumbnail.setSmooth(true);
+
+        ImageLoader.load(thumbnail, imageUrl);
+        thumbnailBox.getChildren().add(thumbnail);
+        return thumbnailBox;
+    }
+
     private VBox createMetric(String title, String value) {
         VBox metric = new VBox(4.0);
         metric.getStyleClass().add("seller-metric-box");
@@ -206,6 +239,7 @@ public final class SellerAuctionListController {
         dialog.setTitle("Yêu cầu hủy phiên đấu giá");
         dialog.setHeaderText(null);
         dialog.setContentText("Nhập lý do hủy phiên:");
+        DialogSoundUtil.installButtonClickSound(dialog);
 
         dialog
                 .showAndWait()

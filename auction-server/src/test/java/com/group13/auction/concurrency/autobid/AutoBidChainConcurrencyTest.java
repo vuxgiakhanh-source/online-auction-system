@@ -262,10 +262,61 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
                 .isLessThanOrEqualTo(maxBid);
     }
 
+    @Test
+    @Order(5)
+    @DisplayName("D4b: placeBid + autoBid ngoài lock (giống BidHandler) — không vượt maxBid")
+    @Timeout(15)
+    void manualBidThenAutoBidOutsideLock_matchesProductionPath() throws InterruptedException {
+        NormalUser autoBidder = buildUser("autoBidder_D4b", USER_BALANCE * 10);
+        autoBidder.addJoinedAuction(auction.getId());
+        com.group13.auction.manager.AuctionManager.getInstance().addToUserList(autoBidder);
+
+        List<NormalUser> manualBidders = buildBidders(THREAD_COUNT);
+        manualBidders.forEach(b -> {
+            b.addJoinedAuction(auction.getId());
+            b.setBalance(USER_BALANCE);
+        });
+
+        long maxBid = 5_000_000L;
+        autoBidRegistry.register(autoBidder.getId(), auction.getId(), maxBid);
+
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(THREAD_COUNT);
+        List<Long> snapshots = new CopyOnWriteArrayList<>();
+
+        for (int i = 0; i < THREAD_COUNT; i++) {
+            NormalUser mb = manualBidders.get(i);
+            final long bid = STARTING_PRICE + 50_000L * (i + 1);
+            new Thread(() -> {
+                try {
+                    gate.await();
+                    try {
+                        bidService.placeBid(mb, auction, bid, new StandardBidStrategy());
+                        autoBidProcessor.process(auction, mb.getId());
+                        snapshots.add(auction.getCurrentPrice());
+                    } catch (Exception ignored) {
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    done.countDown();
+                }
+            }).start();
+        }
+
+        gate.countDown();
+        done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        for (int i = 1; i < snapshots.size(); i++) {
+            assertThat(snapshots.get(i)).isGreaterThanOrEqualTo(snapshots.get(i - 1));
+        }
+        assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(maxBid);
+    }
+
     // ── D5 ────────────────────────────────────────────────────────────────────
 
     @Test
-    @Order(5)
+    @Order(6)
     @DisplayName("D5: Hai auto-bidder cùng maxBid — AutoBidProcessor không bị infinite loop")
     @Timeout(value = 5)
     void autoBidProcessor_sameMaxBid_noInfiniteLoop() throws InterruptedException {

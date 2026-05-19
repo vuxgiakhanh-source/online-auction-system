@@ -1,6 +1,7 @@
 package com.group13.auction.ui.util;
 
 import com.group13.auction.config.UiConstants;
+import com.group13.auction.service.support.SoundManager;
 import java.util.Optional;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -54,6 +55,7 @@ public final class AlertUtil {
     }
 
     private static void show(Alert.AlertType type, String title, String message) {
+        playErrorSoundForProblemDialog(type);
         createAlert(type, title, message).showAndWait();
     }
 
@@ -62,6 +64,13 @@ public final class AlertUtil {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message == null || message.isBlank() ? title : message);
+        DialogSoundUtil.installButtonClickSound(alert);
         return alert;
+    }
+
+    private static void playErrorSoundForProblemDialog(Alert.AlertType type) {
+        if (type == Alert.AlertType.ERROR || type == Alert.AlertType.WARNING) {
+            SoundManager.playErrorSound();
+        }
     }
 }

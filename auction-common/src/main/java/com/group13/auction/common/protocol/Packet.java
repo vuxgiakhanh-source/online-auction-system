@@ -65,6 +65,13 @@ public class Packet<T> {
         return new Packet<>(type, payload, requestId);
     }
 
+    /**
+     * Response tới client — luôn echo {@code requestId} ở header packet (không chỉ trong payload).
+     */
+    public static <T> Packet<T> reply(PacketType type, T payload, String requestId) {
+        return of(type, payload, requestId);
+    }
+
     // ── Getters / Setters ──────────────────────────────────────────────────────
 
     public PacketType getType() { return type; }

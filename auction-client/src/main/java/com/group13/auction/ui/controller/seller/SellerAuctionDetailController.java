@@ -5,7 +5,9 @@ import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.seller.SellerAuctionService;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.DialogSoundUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
@@ -13,6 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.FlowPane;
 
 /** Controller cho màn chi tiết phiên đấu giá trong khu vực người bán. */
 public final class SellerAuctionDetailController {
@@ -40,6 +43,8 @@ public final class SellerAuctionDetailController {
     @FXML private Label endTimeLabel;
 
     @FXML private Label viewerCountLabel;
+
+    @FXML private FlowPane imageGalleryPane;
 
     @FXML private Label messageLabel;
 
@@ -99,6 +104,7 @@ public final class SellerAuctionDetailController {
         dialog.setTitle("Yêu cầu hủy phiên đấu giá");
         dialog.setHeaderText(null);
         dialog.setContentText("Nhập lý do hủy phiên:");
+        DialogSoundUtil.installButtonClickSound(dialog);
 
         dialog
                 .showAndWait()
@@ -115,6 +121,7 @@ public final class SellerAuctionDetailController {
 
     private void renderAuctionDetail() {
         titleLabel.setText(selectedAuction.itemName());
+        ImageLoader.fillGallery(imageGalleryPane, selectedAuction.imageUrls());
         auctionIdLabel.setText(selectedAuction.auctionId());
         categoryLabel.setText(selectedAuction.categoryText());
         statusLabel.setText(selectedAuction.statusText());
@@ -144,11 +151,18 @@ public final class SellerAuctionDetailController {
         startTimeLabel.setText("-");
         endTimeLabel.setText("-");
         viewerCountLabel.setText("-");
+        clearImageGallery();
 
         editButton.setDisable(true);
         cancelButton.setDisable(true);
 
         setLoading(false, "Không tìm thấy dữ liệu phiên đấu giá.");
+    }
+
+    private void clearImageGallery() {
+        if (imageGalleryPane != null) {
+            imageGalleryPane.getChildren().clear();
+        }
     }
 
     private void sendCancelRequest(String reason) {

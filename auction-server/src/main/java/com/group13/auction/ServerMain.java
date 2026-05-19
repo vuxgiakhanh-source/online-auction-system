@@ -1,6 +1,7 @@
 package com.group13.auction;
 
 import com.group13.auction.dao.AdminDAO;
+import com.group13.auction.dao.DatabaseConnection;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
@@ -19,6 +20,7 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.AccountService;
 import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.AuctionTimerService;
+import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.service.BidService;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.service.QualityReportService;
@@ -51,6 +53,14 @@ public class ServerMain {
 
     public static void main(String[] args) throws Exception {
         log.info("=== Auction WebSocket Server starting... ===");
+
+        // ── 0. Database (Docker MySQL trên localhost:3307 hoặc DB_URL) ─────────
+        try {
+            DatabaseConnection.getInstance().ensureReady(30, 2_000);
+        } catch (Exception e) {
+            log.error("Không kết nối được MySQL. Chạy: docker compose up db -d", e);
+            System.exit(1);
+        }
 
         // ── 1. Cấu hình cổng WebSocket ────────────────────────────────────────
         int port = 8080;
@@ -113,8 +123,8 @@ public class ServerMain {
         AutoBidRegistry.getInstance().loadFromDatabase();
 
         // ── 7. Khởi động AuctionTimerService ─────────────────────────────────
-        AuctionTimerService.getInstance().start(
-                auctionService, paymentService, SessionManager.getInstance());
+        IAuctionTimerService auctionTimer = AuctionTimerService.getInstance();
+        auctionTimer.start(auctionService, paymentService, SessionManager.getInstance());
 
         // ── 8. Khởi động ImageUploadServer (HTTP, cổng 8081) ─────────────────
         ImageUploadServer imageServer = new ImageUploadServer(imagePort, uploadDir);
@@ -131,7 +141,7 @@ public class ServerMain {
         // ── 10. Graceful shutdown ─────────────────────────────────────────────
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("Shutdown signal received — stopping servers...");
-            AuctionTimerService.getInstance().stop();
+            auctionTimer.stop();
             imageServer.stop();
             try { server.stop(3000); } catch (Exception e) {
                 log.warn("Error during WebSocket server shutdown", e);

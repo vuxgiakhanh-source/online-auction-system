@@ -13,21 +13,23 @@ public final class AuctionCardViewModel {
     private final String endTimeText;
     private final String sellerText;
     private final String viewerCountText;
+    private final String primaryImageUrl;
     private final boolean joinable;
 
     /** Tạo view model cho card đấu giá. */
     public AuctionCardViewModel(
-            String auctionId,
-            String itemName,
-            String categoryText,
-            String statusText,
-            String currentPriceText,
-            String startingPriceText,
-            String remainingTimeText,
-            String endTimeText,
-            String sellerText,
-            String viewerCountText,
-            boolean joinable) {
+        String auctionId,
+        String itemName,
+        String categoryText,
+        String statusText,
+        String currentPriceText,
+        String startingPriceText,
+        String remainingTimeText,
+        String endTimeText,
+        String sellerText,
+        String viewerCountText,
+        String primaryImageUrl,
+        boolean joinable) {
         this.auctionId = auctionId;
         this.itemName = itemName;
         this.categoryText = categoryText;
@@ -38,6 +40,7 @@ public final class AuctionCardViewModel {
         this.endTimeText = endTimeText;
         this.sellerText = sellerText;
         this.viewerCountText = viewerCountText;
+        this.primaryImageUrl = primaryImageUrl == null ? "" : primaryImageUrl;
         this.joinable = joinable;
     }
 
@@ -79,6 +82,14 @@ public final class AuctionCardViewModel {
 
     public String viewerCountText() {
         return viewerCountText;
+    }
+
+    public String primaryImageUrl() {
+        return primaryImageUrl;
+    }
+
+    public boolean hasImage() {
+        return !primaryImageUrl.isBlank();
     }
 
     public boolean joinable() {

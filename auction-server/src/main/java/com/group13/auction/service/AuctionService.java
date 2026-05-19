@@ -121,7 +121,7 @@ public class AuctionService implements IAuctionService {
     // Thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
   }
-  
+
 
   /**
    * Đóng phiên khi hết giờ.
@@ -324,10 +324,14 @@ public class AuctionService implements IAuctionService {
   @Override
   public void addObserver(String auctionId, AuctionObserver observer) {
     if (auctionId == null || observer == null) return;
-    observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
-    List<AuctionObserver> observers = observersMap.get(auctionId);
-    if (!observers.contains(observer)) {
-      observers.add(observer);
+    // computeIfAbsent trả về list hiện có hoặc list mới — atomic, tránh TOCTOU giữa
+    // computeIfAbsent và get() tách biệt.
+    List<AuctionObserver> observers =
+            observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
+    synchronized (observers) {
+      if (!observers.contains(observer)) {
+        observers.add(observer);
+      }
     }
   }
 
@@ -370,8 +374,9 @@ public class AuctionService implements IAuctionService {
   private void cleanupObservers(String auctionId) {
     List<AuctionObserver> observers = observersMap.remove(auctionId);
     if (observers != null) {
-      observers.clear();           // optional
-      log.info("Cleaned up {} observers for auction {}", observers.size(), auctionId);
+      int count = observers.size(); // capture before clear()
+      observers.clear();
+      log.info("Cleaned up {} observers for auction {}", count, auctionId);
     }
   }
 }

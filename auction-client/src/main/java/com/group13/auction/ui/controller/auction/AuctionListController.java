@@ -6,11 +6,13 @@ import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.auction.AuctionQueryService;
 import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.auction.AuctionCardViewModel;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -18,6 +20,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.ImageView;
 
 /** Controller cho màn danh sách phiên đấu giá. */
 public final class AuctionListController {
@@ -117,6 +120,8 @@ public final class AuctionListController {
         HBox topRow = new HBox(12.0);
         topRow.setFillHeight(false);
 
+        VBox thumbnailBox = createThumbnailBox(card.primaryImageUrl());
+
         VBox titleBox = new VBox(5.0);
         Label titleLabel = new Label(card.itemName());
         titleLabel.getStyleClass().add("auction-card-title");
@@ -132,7 +137,7 @@ public final class AuctionListController {
         Label statusBadge = new Label(card.statusText());
         statusBadge.getStyleClass().add("auction-status-badge");
 
-        topRow.getChildren().addAll(titleBox, spacer, statusBadge);
+        topRow.getChildren().addAll(thumbnailBox, titleBox, spacer, statusBadge);
 
         HBox priceRow = new HBox(18.0);
         priceRow
@@ -158,6 +163,33 @@ public final class AuctionListController {
         root.getChildren().addAll(topRow, priceRow, actionRow);
 
         return root;
+    }
+
+    private VBox createThumbnailBox(String imageUrl) {
+        VBox thumbnailBox = new VBox();
+        thumbnailBox.getStyleClass().add("auction-thumbnail-box");
+        thumbnailBox.setAlignment(Pos.CENTER);
+        thumbnailBox.setMinWidth(122.0);
+        thumbnailBox.setPrefWidth(122.0);
+        thumbnailBox.setMaxWidth(122.0);
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            Label placeholder = new Label("Chưa có ảnh");
+            placeholder.getStyleClass().add("auction-thumbnail-placeholder");
+            thumbnailBox.getChildren().add(placeholder);
+            return thumbnailBox;
+        }
+
+        ImageView thumbnail = new ImageView();
+        thumbnail.getStyleClass().add("auction-thumbnail-image");
+        thumbnail.setFitWidth(112.0);
+        thumbnail.setFitHeight(84.0);
+        thumbnail.setPreserveRatio(true);
+        thumbnail.setSmooth(true);
+
+        ImageLoader.load(thumbnail, imageUrl);
+        thumbnailBox.getChildren().add(thumbnail);
+        return thumbnailBox;
     }
 
     private VBox createMetric(String title, String value) {

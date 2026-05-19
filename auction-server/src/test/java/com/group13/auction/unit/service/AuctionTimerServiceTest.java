@@ -9,8 +9,8 @@ import com.group13.auction.model.item.Art;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.session.SessionManager;
-import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.AuctionTimerService;
+import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IScheduler;
 import com.group13.auction.service.scheduler.TaskScheduler;
@@ -54,7 +54,7 @@ class AuctionTimerServiceTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 5, 10, 10, 0);
 
     @Mock
-    private AuctionService auctionService;
+    private IAuctionService auctionService;
     @Mock
     private IPaymentService paymentService;
     @Mock
@@ -128,6 +128,18 @@ class AuctionTimerServiceTest {
 
             verify(scheduler).shutdownNow();
             assertThat(readBoolean("running")).isFalse();
+        }
+
+        @Test
+        @DisplayName("start with injected scheduler uses provided instance")
+        void start_withInjectedScheduler_usesProvidedInstance() throws Exception {
+            sut.start(auctionService, paymentService, sessionManager, scheduler);
+
+            assertThat(readFieldObject("scheduler")).isSameAs(scheduler);
+            assertThat(readBoolean("running")).isTrue();
+            verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(0L), eq(1L), eq(TimeUnit.SECONDS));
+
+            sut.stop();
         }
     }
 

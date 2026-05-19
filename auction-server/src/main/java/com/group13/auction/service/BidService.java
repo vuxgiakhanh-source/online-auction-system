@@ -31,26 +31,32 @@ import java.util.concurrent.ConcurrentHashMap;
  * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
  *
  * ═══════════════════════════════════════════════════════════════════
- * PERFORMANCE FIXES (theo thứ tự ưu tiên):
+ * PERFORMANCE & CORRECTNESS FIXES:
  *
  * FIX #1 — Logging: hot path không có log.debug/info
- *   → Kết hợp với logback.xml BidService level=WARN + AsyncAppender
+ *   → logback.xml BidService level=WARN + AsyncAppender
  *
  * FIX #2 — Rejected bid KHÔNG ghi DB
- *   → Cũ: mọi reject đều INSERT vào bid_transactions (bottleneck chính)
+ *   → Cũ: mọi reject đều INSERT vào bid_transactions
  *   → Mới: chỉ throw exception, không INSERT
  *
- * FIX #3 — Per-auction lock (không lock toàn method)
- *   → ConcurrentHashMap<auctionId, Object> — auction khác không block nhau
+ * FIX #3 — Per-auction lock (ReentrantLock từ AuctionLockRegistry)
  *   → Validate nhanh (eligibility, isOpen, hasJoined) chạy NGOÀI lock
- *   → Chỉ lock: isValidBid + updateBid + recordTx (3 bước cần atomicity)
+ *   → Trong lock: isValidBid + updateBid + tạo TX object
  *
- * FIX #4 — joinAsNormalUser() không cần lock auction
- *   → Guard hasJoined() đủ để tránh double-join
+ * FIX #4 — joinAsNormalUser() dùng tryMarkJoined() atomic gate
  *
- * FIX #5 — DB write ngoài lock
- *   → auctionDAO.updateHighestPrice() sau khi release lock
- *   → Thread kế tiếp bid được ngay, không chờ DB round-trip
+ * FIX #5 — DB writes NGOÀI lock để giảm lock hold time
+ *   → bidTransactionDAO.saveTransaction(tx): TX object tạo trong lock,
+ *      lưu DB ngoài lock (TX có UUID rồi, không cần lock để persist)
+ *   → auctionDAO.updateHighestPrice(): dùng conditional SQL
+ *      (WHERE current_price < ?) để tránh stale-write race condition
+ *
+ * FIX #6 — Race condition stale-write (BUG CHÍNH trong load test):
+ *   TRƯỚC:  Thread A unlock → Thread B unlock+writeDB(giá cao) →
+ *           Thread A writeDB(giá cũ) → OVERWRITE giá cao! ✗
+ *   SAU:    WHERE current_price < ? → Thread A's stale write = no-op ✓
+ *   → Giá DB luôn = giá CAO NHẤT đã được chấp nhận trong RAM
  * ═══════════════════════════════════════════════════════════════════
  */
 public class BidService implements IBidService {
@@ -160,6 +166,7 @@ public class BidService implements IBidService {
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     BidTransaction tx;
     boolean reserveMet;
+    boolean extendedForAntiSniping = false;
 
     lock.lock();
     try {
@@ -180,19 +187,35 @@ public class BidService implements IBidService {
                 amount, auction.getCurrentPrice());
       }
 
-      // Cập nhật state auction (atomic)
+      // Cập nhật state auction trong RAM (atomic, trong lock)
       auction.updateBid(amount, bidder);
       reserveMet = auction.isReserveMet();
 
-      // FIX #2: chỉ ghi DB cho bid ACCEPTED (không bao giờ ghi REJECTED nữa)
+      // Anti-sniping: đọc endTime và extend trong cùng critical section (tránh TOCTOU).
+      LocalDateTime currentEnd = auction.getEndTime();
+      if (currentEnd != null) {
+        long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
+        if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
+          auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
+          extendedForAntiSniping = true;
+        }
+      }
+
+      // FIX PERF: Tạo BidTransaction object TRONG lock để capture đúng state tại thời điểm bid.
+      // Nhưng KHÔNG gọi bidTransactionDAO.saveTransaction() trong lock → tránh giữ lock
+      // trong khi đợi DB round-trip (giảm lock hold time từ ~5ms xuống ~0.1ms).
       BidResult result = reserveMet ? BidResult.ACCEPTED : BidResult.ACCEPTED_RESERVE_NOT_MET;
-      tx = recordTransaction(bidder, auction, amount, result);
+      tx = BidTransaction.create(bidder, auction.getId(), amount, result);
+      bidder.addBidToHistory(tx);
       auction.addBidTransactionId(tx.getId());
     } finally { lock.unlock(); }
     // ── Hết critical section ──────────────────────────────────────────────
 
-    // ── NGOÀI LOCK: DB + notify (không block bid tiếp theo) ──────────────
-    // FIX #5: updateHighestPrice sau lock → thread khác không chờ DB round-trip
+    // ── NGOÀI LOCK: DB writes song song (không block bid tiếp theo) ───────
+    // FIX RACE CONDITION: updateHighestPrice dùng conditional SQL (WHERE current_price < ?)
+    // → ngay cả khi thread khác đã ghi giá cao hơn trước, query này sẽ là no-op.
+    // FIX PERF: saveTransaction() cũng chạy ngoài lock → giảm lock contention.
+    bidTransactionDAO.saveTransaction(tx);
     auctionDAO.updateHighestPrice(auction.getId(), amount, bidder.getId());
 
     if (reserveMet) {
@@ -201,19 +224,10 @@ public class BidService implements IBidService {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
     }
 
-    // Anti-sniping
-    LocalDateTime currentEnd = auction.getEndTime();
-    if (currentEnd != null) {
-      long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
-      if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
-        lock.lock();
-        try {
-          auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
-        } finally { lock.unlock(); }
-        auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
-        auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
-                String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
-      }
+    if (extendedForAntiSniping) {
+      auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+      auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
+              String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
     }
   }
 
@@ -236,7 +250,7 @@ public class BidService implements IBidService {
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
     registerJoin(bidder, auction, observer);
-    log.warn("Bidder joined: auctionId={}, bidderId={}, deposit={}",
+    log.info("Bidder joined: auctionId={}, bidderId={}, deposit={}",
             auction.getId(), bidder.getId(), depositAmount);
   }
 
@@ -253,17 +267,9 @@ public class BidService implements IBidService {
     userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
   }
 
-  /**
-   * Tạo và lưu BidTransaction — chỉ gọi cho bid ACCEPTED.
-   * FIX #2: method này không bao giờ được gọi cho BidResult.REJECTED.
-   */
-  private BidTransaction recordTransaction(NormalUser bidder, Auction auction,
-                                           long amount, BidResult result) {
-    BidTransaction tx = BidTransaction.create(bidder, auction.getId(), amount, result);
-    bidder.addBidToHistory(tx);
-    bidTransactionDAO.saveTransaction(tx);
-    return tx;
-  }
+  // recordTransaction() đã bị xóa:
+  // TX object được tạo trực tiếp trong placeBid() bên trong lock.
+  // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
 
   private static AuthenticationException buildIneligibleException(NormalUser bidder) {
     switch (bidder.getAccountStatus()) {
