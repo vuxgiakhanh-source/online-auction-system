@@ -145,6 +145,25 @@ public class UserDAO {
     }
 
     /**
+     * Xóa bản ghi JOINED của user khỏi user_auction_activity khi rời phiên.
+     * Cần thiết vì findUserByUsername() luôn load user mới từ DB — nếu không xóa,
+     * lần load tiếp theo sẽ thấy user vẫn JOINED và cho phép bid dù đã rời phiên.
+     */
+    public boolean removeJoinedActivity(String userId, String auctionId) {
+        String sql = "DELETE FROM user_auction_activity WHERE user_id = ? AND auction_id = ? AND activity_type = 'JOINED'";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.setString(2, auctionId);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            log.error("Lỗi xóa hoạt động JOINED khi rời phiên: userId={}, auctionId={}", userId, auctionId, e);
+            return false;
+        }
+    }
+
+    /**
      * Tìm kiếm NormalUser theo ID.
      * BUG FIX #1: gọi loadRoles() để lấy role thực tế từ DB.
      */

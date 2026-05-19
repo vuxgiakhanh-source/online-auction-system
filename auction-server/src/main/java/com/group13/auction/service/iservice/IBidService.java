@@ -43,4 +43,14 @@ public interface IBidService {
    */
   void placeBid(NormalUser bidder, Auction auction,
                 long amount, BidStrategy strategy);
+
+  /**
+   * Rời phiên đấu giá: xóa join state khỏi cả in-memory lẫn DB.
+   * Phải persist xuống DB vì findUserByUsername() luôn load lại từ DB —
+   * nếu chỉ xóa in-memory thì lần gọi tiếp theo vẫn thấy user đang JOINED.
+   *
+   * @param user   bidder muốn rời phiên
+   * @param auctionId id phiên cần rời
+   */
+  void leaveAuction(User user, String auctionId);
 }
