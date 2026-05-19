@@ -181,7 +181,11 @@ public class AccountService implements IAccountService {
     if (!seller.hasRole(User.UserRole.SELLER)) {
       throw new IllegalArgumentException("Chỉ Seller mới có thể yêu cầu hủy phiên.");
     }
-    if (!seller.getAllAuctionIds().contains(auction.getId())) {
+    // FIX: getAllAuctionIds() luôn rỗng với user reconstitute từ DB (không có DAO inject).
+    // Dùng auction.getItem().getSeller() thay vì allAuctionIds — đáng tin cậy mọi trường hợp.
+    if (auction.getItem() == null
+            || auction.getItem().getSeller() == null
+            || !auction.getItem().getSeller().getId().equals(seller.getId())) {
       throw new IllegalArgumentException("Seller không sở hữu phiên đấu giá này.");
     }
     if (auction.getStatus() != Auction.AuctionStatus.OPEN) {

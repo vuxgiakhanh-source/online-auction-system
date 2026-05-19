@@ -694,6 +694,8 @@ class AuctionHandlerDispatchTest {
             assertThat(captureLastSent())
                     .contains(PacketType.CANCEL_AUCTION_REQUEST_SUCCESS.name());
             verify(accountService).requestCancelAuction(eq(seller), eq(open), anyString());
+            // FIX Bug 2: handler phải gọi autoHandleCancelRequest để thực sự hủy phiên
+            verify(auctionService).autoHandleCancelRequest(eq(open));
         }
 
         @Test
