@@ -1,6 +1,7 @@
 package com.group13.auction;
 
 import com.group13.auction.dao.AdminDAO;
+import com.group13.auction.dao.DatabaseConnection;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
@@ -51,6 +52,14 @@ public class ServerMain {
 
     public static void main(String[] args) throws Exception {
         log.info("=== Auction WebSocket Server starting... ===");
+
+        // ── 0. Database (Docker MySQL trên localhost:3307 hoặc DB_URL) ─────────
+        try {
+            DatabaseConnection.getInstance().ensureReady(30, 2_000);
+        } catch (Exception e) {
+            log.error("Không kết nối được MySQL. Chạy: docker compose up db -d", e);
+            System.exit(1);
+        }
 
         // ── 1. Cấu hình cổng WebSocket ────────────────────────────────────────
         int port = 8080;
