@@ -27,6 +27,7 @@ import com.group13.auction.service.RatingService;
 import com.group13.auction.service.WalletService;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import com.group13.auction.strategy.BidRateLimiter;
 import org.java_websocket.WebSocket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -139,6 +140,7 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
 
     @AfterEach
     void tearDown() throws Exception {
+        BidRateLimiter.getInstance().clearAll();
         sessionManager.unregister(webSocket);
         sessionManager.unregister(webSocketPeer);
         resetInMemorySingletons();
@@ -340,7 +342,7 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
             assertThat(cap.getAllValues().stream().noneMatch(s -> s.contains("PLACE_BID_SUCCESS")))
                     .isTrue();
             assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("PLACE_BID_FAILED")
-                            || s.contains(ErrorDTO.NOT_JOINED_AUCTION)))
+                    || s.contains(ErrorDTO.NOT_JOINED_AUCTION)))
                     .isTrue();
         }
 

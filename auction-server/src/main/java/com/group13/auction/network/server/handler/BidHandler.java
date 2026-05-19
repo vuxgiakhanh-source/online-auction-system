@@ -26,6 +26,7 @@ import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.AutoBidRegistry.AutoBidEntry;
 import com.group13.auction.strategy.AutoBidStrategy;
+import com.group13.auction.strategy.BidRateLimiter;
 import com.group13.auction.strategy.StandardBidStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +91,7 @@ public class BidHandler implements PacketHandler {
     // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
     private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
+    private final BidRateLimiter rateLimiter = BidRateLimiter.getInstance();
     private final AutoBidProcessor autoBidProcessor;
     private final BidTransactionDAO bidTransactionDAO;
 
@@ -235,6 +237,16 @@ public class BidHandler implements PacketHandler {
             log.warn("Invalid place bid payload: username={}, requestId={}", session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
                     ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId)));
+            return;
+        }
+
+        // ── Rate limit check (trước khi acquire lock) ─────────────────────────
+        // Chặn user gửi quá 5 bid/giây — bảo vệ khi 5000 users đồng thời.
+        // Check trên session.getUsername() trước khi lookup User object (tránh tốn CPU).
+        if (!rateLimiter.tryConsume(session.getUsername())) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                    ErrorDTO.of("RATE_LIMIT_EXCEEDED",
+                            "Bạn đang đặt giá quá nhanh. Vui lòng thử lại sau 1 giây.", requestId)));
             return;
         }
 
