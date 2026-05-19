@@ -20,6 +20,8 @@ public final class ResourcePath {
     public static final String MASCOT_IMAGE = IMAGE_DIR + "mascot-version-1.png";
     public static final String MASCOT_SECONDARY_IMAGE = IMAGE_DIR + "mascot-version-2.png";
     public static final String BACKGROUND_MUSIC = MUSIC_DIR + "bg.mp3";
+    public static final String CLICK_SOUND = MUSIC_DIR + "click.mp3";
+    public static final String ERROR_SOUND = MUSIC_DIR + "error.mp3";
 
     public static final String ICON_AUCTION = ICON_ACCENT_DIR + "icon-auction.png";
     public static final String ICON_BID = ICON_ACCENT_DIR + "icon-bid.png";

@@ -7,6 +7,7 @@ import com.group13.auction.core.navigation.SceneManager;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.service.support.AudioManager;
 import com.group13.auction.service.support.ClientNotificationService;
+import com.group13.auction.service.support.SoundManager;
 import com.group13.auction.ui.util.StageUtil;
 import java.io.InputStream;
 import javafx.application.Application;
@@ -36,6 +37,7 @@ public final class App extends Application {
     @Override
     public void stop() {
         AudioManager.stopMusic();
+        SoundManager.shutdown();
         ClientNotificationService.getInstance().stop();
         ClientNetworkFacade.getDefault().shutdown();
     }
