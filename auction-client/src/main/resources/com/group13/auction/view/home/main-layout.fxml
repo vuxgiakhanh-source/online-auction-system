@@ -45,22 +45,6 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button mnemonicParsing="false"
-                    onAction="#handleOpenRating"
-                    styleClass="main-header-button"
-                    text="Rating"/>
-
-            <Button mnemonicParsing="false"
-                    onAction="#handleOpenQualityReport"
-                    styleClass="main-header-button"
-                    text="Quality Report"/>
-
-            <Button fx:id="adminDashboardButton"
-                    mnemonicParsing="false"
-                    onAction="#handleOpenAdminDashboard"
-                    styleClass="main-header-button"
-                    text="Admin"/>
-
-            <Button mnemonicParsing="false"
                     onAction="#handleOpenProfile"
                     styleClass="main-header-button"
                     text="Hồ sơ"/>
@@ -88,7 +72,7 @@
                    styleClass="main-account-info"/>
         </VBox>
 
-        <!-- Main cards -->
+        <!-- Main module cards -->
         <HBox spacing="22.0" styleClass="main-card-row">
             <VBox spacing="14.0"
                   prefWidth="360.0"
@@ -164,40 +148,73 @@
         <HBox spacing="22.0" styleClass="main-card-row">
             <VBox spacing="14.0"
                   prefWidth="360.0"
-                  prefHeight="168.0"
-                  styleClass="main-secondary-card">
-                <Label text="Hồ sơ cá nhân"
-                       styleClass="main-secondary-card-title"/>
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-message.png"/>
+                </ImageView>
 
-                <Label text="Xem thông tin tài khoản, vai trò và trạng thái hồ sơ."
+                <Label text="Rating"
+                       styleClass="main-card-title"/>
+
+                <Label text="Gửi đánh giá hoặc xem lịch sử rating của người dùng sau giao dịch."
                        wrapText="true"
-                       styleClass="main-secondary-card-description"/>
+                       styleClass="main-card-description"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button mnemonicParsing="false"
-                        onAction="#handleOpenProfile"
-                        styleClass="main-secondary-button"
-                        text="Mở hồ sơ"/>
+                        onAction="#handleOpenRating"
+                        styleClass="main-card-button"
+                        text="Mở Rating"/>
             </VBox>
 
             <VBox spacing="14.0"
                   prefWidth="360.0"
-                  prefHeight="168.0"
-                  styleClass="main-secondary-card">
-                <Label text="Trung tâm thông báo"
-                       styleClass="main-secondary-card-title"/>
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-report.png"/>
+                </ImageView>
 
-                <Label text="Theo dõi thông báo hệ thống, thanh toán và Second Chance Offer."
+                <Label text="Quality Report"
+                       styleClass="main-card-title"/>
+
+                <Label text="Gửi báo cáo chất lượng sản phẩm và đính kèm ảnh bằng chứng khi cần."
                        wrapText="true"
-                       styleClass="main-secondary-card-description"/>
+                       styleClass="main-card-description"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button mnemonicParsing="false"
-                        onAction="#handleOpenNotificationCenter"
-                        styleClass="main-secondary-button"
-                        text="Mở thông báo"/>
+                        onAction="#handleOpenQualityReport"
+                        styleClass="main-card-button"
+                        text="Gửi report"/>
+            </VBox>
+
+            <VBox fx:id="adminDashboardCard"
+                  spacing="14.0"
+                  prefWidth="360.0"
+                  prefHeight="220.0"
+                  styleClass="main-dashboard-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-admin.png"/>
+                </ImageView>
+
+                <Label text="Admin Dashboard"
+                       styleClass="main-card-title"/>
+
+                <Label text="Quản lý người dùng, phiên đấu giá, duyệt Seller và xử lý báo cáo."
+                       wrapText="true"
+                       styleClass="main-card-description"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button fx:id="adminDashboardButton"
+                        mnemonicParsing="false"
+                        onAction="#handleOpenAdminDashboard"
+                        styleClass="main-card-button"
+                        text="Mở Admin"/>
             </VBox>
         </HBox>
 

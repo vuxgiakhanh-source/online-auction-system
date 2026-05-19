@@ -8,6 +8,7 @@ import com.group13.auction.ui.util.AlertUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 
 /** Controller cho dashboard chính sau khi người dùng đăng nhập hoặc đăng ký. */
 public final class MainLayoutController {
@@ -17,6 +18,8 @@ public final class MainLayoutController {
     @FXML private Label accountInfoLabel;
 
     @FXML private Button sellerDashboardButton;
+
+    @FXML private VBox adminDashboardCard;
 
     @FXML private Button adminDashboardButton;
 
@@ -76,12 +79,12 @@ public final class MainLayoutController {
                         () -> AlertUtil.showError("Tài khoản hiện tại không có quyền Admin."));
     }
 
-    /** Đăng xuất ở phía client và đưa người dùng về màn đăng nhập. */
+    /** Đăng xuất ở phía client và đưa người dùng về landing page. */
     @FXML
     public void handleLogout() {
         secondChanceRealtimeService.clear();
         AppContext.getInstance().getSessionManager().clearSession();
-        Navigator.getInstance().goToLogin();
+        Navigator.getInstance().goToLanding();
     }
 
     private void renderSession(UserSession session) {
@@ -118,12 +121,14 @@ public final class MainLayoutController {
     }
 
     private void updateAdminAccess(boolean admin) {
-        if (adminDashboardButton == null) {
-            return;
+        if (adminDashboardCard != null) {
+            adminDashboardCard.setVisible(admin);
+            adminDashboardCard.setManaged(admin);
         }
 
-        adminDashboardButton.setVisible(admin);
-        adminDashboardButton.setManaged(admin);
+        if (adminDashboardButton != null) {
+            adminDashboardButton.setDisable(!admin);
+        }
     }
 
     /** Mở màn ví người dùng. */
