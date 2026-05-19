@@ -2,6 +2,7 @@ package com.group13.auction.unit.strategy;
 
 import com.group13.auction.unit.TestFixture;
 import com.group13.auction.dao.UserDAO;
+import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
@@ -122,6 +123,10 @@ class AutoBidProcessorTest {
     @AfterEach
     void tearDown() throws Exception {
         clearInternalRegistry();
+        // Clear static recentBidTimes (ConcurrentHashMap<String, List<LocalDateTime>>)
+        Field recentField = AutoBidProcessor.class.getDeclaredField("recentBidTimes");
+        recentField.setAccessible(true);
+        ((ConcurrentHashMap<?, ?>) recentField.get(null)).clear();
     }
 
     // =========================================================================
@@ -650,7 +655,62 @@ class AutoBidProcessorTest {
     }
 
     // =========================================================================
-    // 8. Auction ở trạng thái không hợp lệ
+    // 8. Race condition — InvalidBidException không được cancel auto-bid entry
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Race condition: InvalidBidException → entry KHÔNG bị cancel")
+    class RaceConditionHandling {
+
+        @Test
+        @DisplayName("placeBid ném InvalidBidException (stale price) → entry vẫn còn trong registry")
+        void process_invalidBidException_entryNotCancelled() {
+            // Arrange: giả lập giá vừa bị đẩy lên (stale price race)
+            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+            doThrow(new InvalidBidException("Giá đặt thấp hơn mức tối thiểu", 0L, 0L))
+                    .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
+
+            // Act
+            sut.process(runningAuction, seller.getId());
+
+            // Assert: entry KHÔNG bị xóa — đây là lỗi tạm thời do race, không phải lỗi nghiêm trọng
+            assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()),
+                    "InvalidBidException là race condition tạm thời — không được cancel entry");
+        }
+
+        @Test
+        @DisplayName("AuctionClosedException → entry bị cancel và loop dừng")
+        void process_auctionClosedException_loopBreaks() {
+            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+            doThrow(new com.group13.auction.exception.AuctionClosedException(
+                    Auction.AuctionStatus.FINISHED))
+                    .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
+
+            // Act — không ném exception
+            assertDoesNotThrow(() -> sut.process(runningAuction, seller.getId()));
+
+            // Assert: bidService chỉ được gọi đúng 1 lần (loop break ngay sau AuctionClosed)
+            verify(bidService, times(1)).placeBid(any(), any(), anyLong(), any());
+        }
+
+        @Test
+        @DisplayName("RuntimeException khác → entry bị cancel (lỗi nghiêm trọng)")
+        void process_unexpectedException_entryCancelled() {
+            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+            doThrow(new RuntimeException("Lỗi không mong muốn"))
+                    .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
+
+            sut.process(runningAuction, seller.getId());
+
+            assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+        }
+    }
+
+    // =========================================================================
+    // 9. Auction ở trạng thái không hợp lệ
     // =========================================================================
 
     @Nested
@@ -705,7 +765,7 @@ class AutoBidProcessorTest {
     }
 
     // =========================================================================
-    // 9. triggeredByUserId edge case
+    // 10. triggeredByUserId edge case
     // =========================================================================
 
     @Nested
@@ -745,7 +805,7 @@ class AutoBidProcessorTest {
     }
 
     // =========================================================================
-    // 10. Notification correctness
+    // 11. Notification correctness
     // =========================================================================
 
     @Nested
@@ -797,7 +857,7 @@ class AutoBidProcessorTest {
     }
 
     // =========================================================================
-    // 11. Repeated processing consistency
+    // 12. Repeated processing consistency
     // =========================================================================
 
     @Nested
@@ -828,7 +888,7 @@ class AutoBidProcessorTest {
     }
 
     // =========================================================================
-    // 12. AutoBidEntry.calculateNextBid — unit test pure logic
+    // 13. AutoBidEntry.calculateNextBid — unit test pure logic
     // =========================================================================
 
     @Nested

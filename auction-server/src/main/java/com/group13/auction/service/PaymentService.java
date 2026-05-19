@@ -23,6 +23,7 @@ import com.group13.auction.service.iservice.IWalletService;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Xử lý thanh toán sau khi phiên đấu giá kết thúc.
@@ -40,6 +41,16 @@ public class PaymentService implements IPaymentService {
   private final SecondChanceOfferDAO secondChanceOfferDAO;
   private final BidTransactionDAO bidTransactionDAO;
   private final UserDAO userDAO;
+
+  /**
+   * Per-winner idempotency lock, keyed by AuctionWinner.getId().
+   * Tránh synchronized trên method parameter (Qodana violation).
+   */
+  private final ConcurrentHashMap<String, Object> winnerLocks = new ConcurrentHashMap<>();
+
+  private Object winnerLockFor(AuctionWinner w) {
+    return winnerLocks.computeIfAbsent(w.getId(), id -> new Object());
+  }
 
   public PaymentService(
           IAuctionService auctionService,
@@ -109,7 +120,7 @@ public class PaymentService implements IPaymentService {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser seller = auction.getItem().getSeller();
 
-    synchronized (auctionWinner) {
+    synchronized (winnerLockFor(auctionWinner)) {
       // Idempotency guard: chỉ giải ngân khi đang FUNDS_HELD.
       // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không sinh tiền ảo.
       if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
@@ -139,7 +150,7 @@ public class PaymentService implements IPaymentService {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser winner = auctionWinner.getWinner();
 
-    synchronized (auctionWinner) {
+    synchronized (winnerLockFor(auctionWinner)) {
       // Idempotency guard: chỉ hoàn tiền khi đang FUNDS_HELD.
       // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không double-refund.
       if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {

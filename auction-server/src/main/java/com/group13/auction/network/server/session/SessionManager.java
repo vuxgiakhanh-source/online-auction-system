@@ -267,7 +267,10 @@ public class SessionManager {
             }
             try {
                 // Timeout 5s: tránh treo nếu sendPool bị quá tải
-                latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                boolean completed = latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (!completed) {
+                    log.warn("broadcastToAuction timed out waiting for {} sends on auction {}", targets.size(), auctionId);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -300,7 +303,10 @@ public class SessionManager {
                 });
             }
             try {
-                latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                boolean completed = latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+                if (!completed) {
+                    log.warn("broadcastToAuctionExceptAsync timed out waiting for {} sends on auction {}", targets.size(), auctionId);
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
