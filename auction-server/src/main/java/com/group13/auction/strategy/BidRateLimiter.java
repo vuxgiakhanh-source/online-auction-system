@@ -108,28 +108,29 @@ public final class BidRateLimiter {
     // ── Inner: BidBucket ──────────────────────────────────────────────────────
 
     private static final class BidBucket {
-        private final AtomicLong count       = new AtomicLong(0);
-        private final AtomicLong windowStart = new AtomicLong(System.currentTimeMillis());
-        private volatile long lastAccessMs   = System.currentTimeMillis();
+        private long count       = 0;
+        private long windowStart = System.currentTimeMillis();
+        /** volatile vì cleanupIdle() đọc ngoài synchronized block. */
+        private volatile long lastAccessMs = System.currentTimeMillis();
 
         /**
          * Cố gắng tiêu thụ 1 token.
-         * Thread-safe: dùng CAS loop — không synchronized.
+         * Thread-safe: synchronized trên instance — đủ vì mỗi BidBucket chỉ phục vụ 1 userId.
+         * (comment cũ "CAS loop" là sai — thực tế dùng synchronized từ đầu)
          */
         boolean tryConsume() {
             synchronized (this) {
                 long now = System.currentTimeMillis();
                 lastAccessMs = now;
-                if (now - windowStart.get() >= WINDOW_MS) {
-                    windowStart.set(now);
-                    count.set(0);
+                if (now - windowStart >= WINDOW_MS) {
+                    windowStart = now;
+                    count = 0;
                 }
-                long current = count.incrementAndGet();
-                return current <= MAX_BIDS_PER_WINDOW;
+                count++;
+                return count <= MAX_BIDS_PER_WINDOW;
             }
         }
 
         long getLastAccessMs() { return lastAccessMs; }
     }
 }
-
