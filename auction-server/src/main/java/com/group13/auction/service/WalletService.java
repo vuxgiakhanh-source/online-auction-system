@@ -215,19 +215,21 @@ public class WalletService implements IWalletService {
 
                 userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
-                systemBank.receive(finalPrice);
                 batchTx.add(FinancialTransaction.create(
                         winner.getId(), "SYSTEM_BANK", finalPrice,
                         TransactionType.PAYMENT_FROM_WINNER, auctionId));
-
-                log.info("Payment to bank success: username={}, finalPrice={}, auctionId={}",
-                        winner.getUsername(), finalPrice, auctionId);
 
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
                     tx.printInfo();
                     financialTransactionDAO.saveTransaction(tx);
                 }
+
+                // Chỉ ghi nhận vào SystemBank sau khi RAM + DB đã persist thành công
+                systemBank.receive(finalPrice);
+
+                log.info("Payment to bank success: username={}, finalPrice={}, auctionId={}",
+                        winner.getUsername(), finalPrice, auctionId);
 
             } catch (Exception e) {
                 winner.restoreBalances(originalBalance, originalLocked);

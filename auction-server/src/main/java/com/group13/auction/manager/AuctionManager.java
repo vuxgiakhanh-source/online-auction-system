@@ -74,6 +74,15 @@ public class AuctionManager {
     allUsers.putIfAbsent(user.getId(), user);
   }
 
+  /**
+   * Ghi đè user trong bộ nhớ bằng bản mới từ DB (login, reload profile).
+   * Khác {@link #addToUserList}: luôn cập nhật roles/balance thay vì giữ object cũ.
+   */
+  public void refreshUser(User user) {
+    if (user == null) return;
+    allUsers.put(user.getId(), user);
+  }
+
   /** Đăng ký user mới (persist DB + in-memory). */
   public void registerUser(User user) {
     if (user == null) throw new IllegalArgumentException("User không được null.");
@@ -94,13 +103,13 @@ public class AuctionManager {
   }
 
   public User findUserByUsername(String username) {
-    for (User u : allUsers.values()) {
-      if (u.getUsername().equals(username)) return u;
-    }
     User dbUser = userDAO.findUserByUsername(username);
     if (dbUser != null) {
-      User existing = allUsers.putIfAbsent(dbUser.getId(), dbUser);
-      return (existing != null) ? existing : dbUser;
+      allUsers.put(dbUser.getId(), dbUser);
+      return dbUser;
+    }
+    for (User u : allUsers.values()) {
+      if (u.getUsername().equals(username)) return u;
     }
     return null;
   }

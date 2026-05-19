@@ -3,6 +3,7 @@ package com.group13.auction.service;
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.FinancialTransactionDAO;
+import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
@@ -41,6 +42,7 @@ public class AuctionService implements IAuctionService {
   private final IRatingService ratingService;
   private final SystemAdmin system = SystemAdmin.getInstance();
   private final AuctionDAO auctionDAO;
+  private final FinancialTransactionDAO financialTransactionDAO;
   private final SystemBank systemBank = SystemBank.getInstance();
 
   /**
@@ -49,13 +51,19 @@ public class AuctionService implements IAuctionService {
   private final Map<String, List<AuctionObserver>> observersMap = new ConcurrentHashMap<>();
 
   public AuctionService(IRatingService ratingService, AuctionDAO auctionDAO) {
+    this(ratingService, auctionDAO, new FinancialTransactionDAO());
+  }
+
+  public AuctionService(IRatingService ratingService, AuctionDAO auctionDAO,
+                        FinancialTransactionDAO financialTransactionDAO) {
     this.ratingService = ratingService;
     this.auctionDAO = auctionDAO;
+    this.financialTransactionDAO = financialTransactionDAO;
   }
 
   /**
    * Tạo phiên đấu giá mới ở trạng thái OPEN.
-   * Seller cần rating >= 3.0 và có role SELLER.
+   * Seller cần rating >= 2.0, ACTIVE và có role SELLER.
    * Reserve price strategy (tức giá Seller muốn) phải được cung cấp.
    * Đã thực hiện TODO: auctionDAO.save(auction).
    *
@@ -92,12 +100,14 @@ public class AuctionService implements IAuctionService {
     }
 
     Auction auction = Auction.create(item, startTime, endTime, reservePrice);
+
+    if (!auctionDAO.createAuction(auction)) {
+      throw new IllegalStateException("Không thể lưu phiên đấu giá xuống DB.");
+    }
+
     seller.addAuctionId(auction.getId());
     AuctionManager.getInstance().registerAuction(auction);
     log.info("Tạo auction: auctionId={} reserve={}", auction.getId(), reservePrice);
-
-    // Đã thực hiện TODO: auctionDAO.save(auction)
-    auctionDAO.createAuction(auction);
 
     return auction;
   }
@@ -164,9 +174,6 @@ public class AuctionService implements IAuctionService {
       // TH2: reserve met, có winner
       NormalUser winner = auction.getCurrentLeader();
 
-      // Lấy đúng tiền cọc đã lock của winner cho phiên này từ DB (audit trail).
-      // Fallback về 30% startingPrice nếu thiếu dữ liệu legacy.
-      FinancialTransactionDAO financialTransactionDAO = new FinancialTransactionDAO();
       long depositPaid = financialTransactionDAO.findLockedDepositAmount(
               winner.getId(), auction.getId());
       if (depositPaid <= 0) {
@@ -178,11 +185,7 @@ public class AuctionService implements IAuctionService {
       auction.setWinner(auctionWinner);
       auction.transitionToClose(true);
 
-      // Tiền cọc của winner chuyển vào SystemBank ngay lập tức (FUNDS_HELD).
-      systemBank.receive(depositPaid);
-      log.info("Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId={} winner={} deposit={}",
-              auction.getId(), winner.getUsername(), depositPaid);
-      // TODO: [DB] financialTransactionDAO.saveDepositToBank(winner.getId(), depositPaid, auction.getId())
+      recordWinnerDepositHeldInBank(winner, depositPaid, auction.getId());
 
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_ENDED,
               winner, auction.getCurrentPrice());
@@ -368,6 +371,23 @@ public class AuctionService implements IAuctionService {
     // Global (SystemAdmin) và Staff observers
     AuctionManager.getInstance().notifyGlobalObservers(event);
     AuctionManager.getInstance().notifyStaffObservers(event);
+  }
+
+  /**
+   * Ghi audit trail cọc winner vào DB trước khi cộng vào SystemBank (escrow FUNDS_HELD).
+   * Nếu persist thất bại → không gọi {@link SystemBank#receive(long)}.
+   */
+  private void recordWinnerDepositHeldInBank(NormalUser winner, long depositPaid, String auctionId) {
+    FinancialTransaction tx = FinancialTransaction.create(
+            winner.getId(), "SYSTEM_BANK", depositPaid,
+            FinancialTransaction.TransactionType.PAYMENT_FROM_WINNER, auctionId);
+    if (!financialTransactionDAO.saveTransaction(tx)) {
+      throw new IllegalStateException(
+              "Không thể ghi nhận cọc winner vào audit trail (auctionId=" + auctionId + ").");
+    }
+    systemBank.receive(depositPaid);
+    log.info("Cọc của winner giữ tại SystemBank (FUNDS_HELD): auctionId={} winner={} deposit={}",
+            auctionId, winner.getUsername(), depositPaid);
   }
 
   // Sau khi notify ended/canceled thành công
