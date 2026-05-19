@@ -328,8 +328,10 @@ public class AuctionService implements IAuctionService {
     // computeIfAbsent và get() tách biệt.
     List<AuctionObserver> observers =
             observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
-    if (!observers.contains(observer)) {
-      observers.add(observer);
+    synchronized (observers) {
+      if (!observers.contains(observer)) {
+        observers.add(observer);
+      }
     }
   }
 

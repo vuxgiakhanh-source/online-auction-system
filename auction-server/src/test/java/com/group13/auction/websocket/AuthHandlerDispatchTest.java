@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import static com.group13.auction.websocket.PacketResponseAssert.assertEchoesRequestId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -120,7 +121,7 @@ class AuthHandlerDispatchTest {
 
             String sent = captureLastSent();
             assertThat(sent).contains(PacketType.REGISTER_SUCCESS.name());
-            assertThat(sent).contains("rid-reg-1");
+            assertEchoesRequestId(sent, "rid-reg-1");
             assertThat(session().isAuthenticated()).isTrue();
         }
 
@@ -131,9 +132,11 @@ class AuthHandlerDispatchTest {
 
             newHandler().handle(session(), PacketType.REGISTER, payload, "rid-reg-2");
 
-            assertThat(captureLastSent())
+            String sent = captureLastSent();
+            assertThat(sent)
                     .contains(PacketType.REGISTER_FAILED.name())
                     .contains(ErrorDTO.VALIDATION_ERROR);
+            assertEchoesRequestId(sent, "rid-reg-2");
         }
 
         @Test
@@ -230,20 +233,23 @@ class AuthHandlerDispatchTest {
 
             String sent = captureLastSent();
             assertThat(sent).contains(PacketType.LOGIN_SUCCESS.name());
+            assertEchoesRequestId(sent, "rid-login-1");
             assertThat(session().isAuthenticated()).isTrue();
         }
 
         @Test
-        @DisplayName("wrong credentials → LOGIN_FAILED WRONG_PASSWORD")
+        @DisplayName("wrong credentials → LOGIN_FAILED WRONG_PASSWORD + echo requestId")
         void login_wrongCredentials_wrongPassword() {
             when(userService.login(anyString(), anyString())).thenReturn(null);
             JsonElement payload = GSON.toJsonTree(new LoginRequestDTO("user1", "wrongpass"));
 
             newHandler().handle(session(), PacketType.LOGIN, payload, "rid-login-2");
 
-            assertThat(captureLastSent())
+            String sent = captureLastSent();
+            assertThat(sent)
                     .contains(PacketType.LOGIN_FAILED.name())
                     .contains(ErrorDTO.WRONG_PASSWORD);
+            assertEchoesRequestId(sent, "rid-login-2");
         }
 
         @Test
@@ -301,15 +307,15 @@ class AuthHandlerDispatchTest {
         }
 
         @Test
-        @DisplayName("requestId được pass qua response")
-        void login_requestId_includedInResponse() {
+        @DisplayName("requestId echo ở packet root (LOGIN_SUCCESS)")
+        void login_success_echoesRequestIdOnPacket() {
             NormalUser user = TestFixture.bidderWithBalance("reqiduser11", 0L);
             when(userService.login(anyString(), anyString())).thenReturn(user);
             JsonElement payload = GSON.toJsonTree(new LoginRequestDTO("reqiduser11", "pass"));
 
             newHandler().handle(session(), PacketType.LOGIN, payload, "my-custom-rid");
 
-            assertThat(captureLastSent()).contains("my-custom-rid");
+            assertEchoesRequestId(captureLastSent(), "my-custom-rid");
         }
     }
 

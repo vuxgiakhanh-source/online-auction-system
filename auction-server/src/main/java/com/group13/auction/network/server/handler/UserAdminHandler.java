@@ -103,7 +103,7 @@ public class UserAdminHandler implements PacketHandler {
 
         if (!session.isAuthenticated()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
             return;
         }
 
@@ -140,7 +140,7 @@ public class UserAdminHandler implements PacketHandler {
         User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
         if (user == null) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId)));
+                    ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId), requestId));
             return;
         }
         session.send(Packet.of(PacketType.GET_MY_PROFILE_SUCCESS,
@@ -155,7 +155,7 @@ public class UserAdminHandler implements PacketHandler {
                     .findFirst().orElse(null);
             if (user == null) {
                 session.send(Packet.of(PacketType.GET_USER_PROFILE_FAILED,
-                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId), requestId));
                 return;
             }
             // Chỉ gửi balance cho chính chủ hoặc Admin
@@ -165,7 +165,7 @@ public class UserAdminHandler implements PacketHandler {
                     DTOMapper.toUserDTO(user, showBalance), requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.GET_USER_PROFILE_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -176,7 +176,7 @@ public class UserAdminHandler implements PacketHandler {
             User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
             if (!(user instanceof NormalUser normalUser)) {
                 session.send(Packet.of(PacketType.REQUEST_SELLER_ROLE_FAILED,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được yêu cầu.", requestId)));
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được yêu cầu.", requestId), requestId));
                 return;
             }
             accountService.autoApproveSellerRole(normalUser);
@@ -188,12 +188,12 @@ public class UserAdminHandler implements PacketHandler {
 
         } catch (IllegalStateException e) {
             session.send(Packet.of(PacketType.REQUEST_SELLER_ROLE_FAILED,
-                    ErrorDTO.of(ErrorDTO.SELLER_ROLE_REQUIRED, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.SELLER_ROLE_REQUIRED, e.getMessage(), requestId), requestId));
             session.send(Packet.of(PacketType.SELLER_ROLE_REJECTED_NOTIFY,
                     ErrorDTO.of(ErrorDTO.SELLER_ROLE_REQUIRED, e.getMessage())));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.REQUEST_SELLER_ROLE_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -202,7 +202,7 @@ public class UserAdminHandler implements PacketHandler {
     private void handleBanUser(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.ADMIN_BAN_USER_FAILED,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -212,7 +212,7 @@ public class UserAdminHandler implements PacketHandler {
                     .findFirst().orElse(null);
             if (target == null) {
                 session.send(Packet.of(PacketType.ADMIN_BAN_USER_FAILED,
-                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId), requestId));
                 return;
             }
             Admin admin = (Admin) AuctionManager.getInstance()
@@ -233,14 +233,14 @@ public class UserAdminHandler implements PacketHandler {
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.ADMIN_BAN_USER_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleUnbanUser(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.ADMIN_UNBAN_USER_FAILED,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -249,7 +249,7 @@ public class UserAdminHandler implements PacketHandler {
                     .filter(u -> u.getId().equals(userId)).findFirst().orElse(null);
             if (target == null) {
                 session.send(Packet.of(PacketType.ADMIN_UNBAN_USER_FAILED,
-                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId)));
+                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId), requestId));
                 return;
             }
             // FIX Vấn đề 4: cập nhật in-memory VÀ persist xuống DB
@@ -260,14 +260,14 @@ public class UserAdminHandler implements PacketHandler {
                     DTOMapper.toUserDTO(target, false), requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.ADMIN_UNBAN_USER_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleGetAllUsers(ClientSession session, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         List<UserDTO> dtos = AuctionManager.getInstance().getAllUsers().stream()
@@ -279,7 +279,7 @@ public class UserAdminHandler implements PacketHandler {
     private void handleCreateStaff(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isMasterAdmin()) {
             session.send(Packet.of(PacketType.ADMIN_CREATE_STAFF_FAILED,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ SystemAdmin (MASTER) mới được tạo Staff.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ SystemAdmin (MASTER) mới được tạo Staff.", requestId), requestId));
             return;
         }
         try {
@@ -291,14 +291,14 @@ public class UserAdminHandler implements PacketHandler {
                     DTOMapper.toUserDTO(newAdmin, false), requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.ADMIN_CREATE_STAFF_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleGetAllStaff(ClientSession session, String requestId) {
         if (!session.isMasterAdmin()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         List<UserDTO> dtos = AuctionManager.getInstance().getAllUsers().stream()
@@ -311,7 +311,7 @@ public class UserAdminHandler implements PacketHandler {
     private void handleAdminApproveSellerRole(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.ADMIN_APPROVE_SELLER_ROLE_FAILED,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -320,7 +320,7 @@ public class UserAdminHandler implements PacketHandler {
                     .filter(u -> u.getId().equals(userId)).findFirst().orElse(null);
             if (!(target instanceof NormalUser normalUser)) {
                 session.send(Packet.of(PacketType.ADMIN_APPROVE_SELLER_ROLE_FAILED,
-                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại hoặc không hợp lệ.", requestId)));
+                        ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại hoặc không hợp lệ.", requestId), requestId));
                 return;
             }
             accountService.autoApproveSellerRole(normalUser);
@@ -331,7 +331,7 @@ public class UserAdminHandler implements PacketHandler {
                             DTOMapper.toUserDTO(normalUser, true)));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.ADMIN_APPROVE_SELLER_ROLE_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -345,7 +345,7 @@ public class UserAdminHandler implements PacketHandler {
             session.send(Packet.of(PacketType.RATE_SELLER_SUCCESS, null, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.RATE_SELLER_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -357,7 +357,7 @@ public class UserAdminHandler implements PacketHandler {
             session.send(Packet.of(PacketType.RATE_BIDDER_SUCCESS, null, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.RATE_BIDDER_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -381,7 +381,7 @@ public class UserAdminHandler implements PacketHandler {
             if (req.getEvidenceUrls() == null || req.getEvidenceUrls().isEmpty()) {
                 session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
                         ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Báo cáo chất lượng phải đính kèm ít nhất 1 ảnh minh chứng.", requestId)));
+                                "Báo cáo chất lượng phải đính kèm ít nhất 1 ảnh minh chứng.", requestId), requestId));
                 return;
             }
 
@@ -426,18 +426,18 @@ public class UserAdminHandler implements PacketHandler {
 
         } catch (IllegalArgumentException e) {
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
-                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Submit quality report failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleAdminGetReports(ClientSession session, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -463,14 +463,14 @@ public class UserAdminHandler implements PacketHandler {
         } catch (Exception e) {
             log.error("Admin get quality reports failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleAdminApproveReport(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -480,7 +480,7 @@ public class UserAdminHandler implements PacketHandler {
             com.group13.auction.model.bid.QualityReport report = qualityReportDAO.findById(reportId);
             if (report == null) {
                 session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                        ErrorDTO.of("REPORT_NOT_FOUND", "Không tìm thấy báo cáo: " + reportId, requestId)));
+                        ErrorDTO.of("REPORT_NOT_FOUND", "Không tìm thấy báo cáo: " + reportId, requestId), requestId));
                 return;
             }
 
@@ -490,7 +490,7 @@ public class UserAdminHandler implements PacketHandler {
                             .findAuctionById(report.getAuctionId());
             if (auction == null) {
                 session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                        ErrorDTO.of("AUCTION_NOT_FOUND", "Không tìm thấy phiên đấu giá.", requestId)));
+                        ErrorDTO.of("AUCTION_NOT_FOUND", "Không tìm thấy phiên đấu giá.", requestId), requestId));
                 return;
             }
 
@@ -500,7 +500,7 @@ public class UserAdminHandler implements PacketHandler {
                             .findUserByUsername(session.getUsername());
             if (!(adminUser instanceof com.group13.auction.model.user.Admin)) {
                 session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ Admin mới được approve.", requestId)));
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ Admin mới được approve.", requestId), requestId));
                 return;
             }
             com.group13.auction.model.user.Admin admin =
@@ -542,18 +542,18 @@ public class UserAdminHandler implements PacketHandler {
         } catch (IllegalStateException e) {
             // Report không ở PENDING
             session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                    ErrorDTO.of("INVALID_STATUS", e.getMessage(), requestId)));
+                    ErrorDTO.of("INVALID_STATUS", e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Admin approve quality report failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.ADMIN_APPROVE_QUALITY_REPORT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
     private void handleAdminRejectReport(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId)));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
@@ -563,7 +563,7 @@ public class UserAdminHandler implements PacketHandler {
             com.group13.auction.model.bid.QualityReport report = qualityReportDAO.findById(reportId);
             if (report == null) {
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of("REPORT_NOT_FOUND", "Không tìm thấy báo cáo: " + reportId, requestId)));
+                        ErrorDTO.of("REPORT_NOT_FOUND", "Không tìm thấy báo cáo: " + reportId, requestId), requestId));
                 return;
             }
 
@@ -573,7 +573,7 @@ public class UserAdminHandler implements PacketHandler {
                             .findUserByUsername(session.getUsername());
             if (!(adminUser instanceof com.group13.auction.model.user.Admin)) {
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ Admin mới được reject.", requestId)));
+                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ Admin mới được reject.", requestId), requestId));
                 return;
             }
 
@@ -602,11 +602,11 @@ public class UserAdminHandler implements PacketHandler {
 
         } catch (IllegalStateException e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of("INVALID_STATUS", e.getMessage(), requestId)));
+                    ErrorDTO.of("INVALID_STATUS", e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Admin reject quality report failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -623,7 +623,7 @@ public class UserAdminHandler implements PacketHandler {
             session.send(Packet.of(PacketType.MARK_NOTIFICATION_READ_SUCCESS, null, requestId));
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId)));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -643,7 +643,7 @@ public class UserAdminHandler implements PacketHandler {
                     session.getUsername(), requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                            "Chỉ NormalUser mới có thể thực hiện hành động này.", requestId)));
+                            "Chỉ NormalUser mới có thể thực hiện hành động này.", requestId), requestId));
             return null;
         }
         return (com.group13.auction.model.user.NormalUser) user;

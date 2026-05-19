@@ -166,6 +166,7 @@ public class BidService implements IBidService {
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     BidTransaction tx;
     boolean reserveMet;
+    boolean extendedForAntiSniping = false;
 
     lock.lock();
     try {
@@ -190,6 +191,16 @@ public class BidService implements IBidService {
       auction.updateBid(amount, bidder);
       reserveMet = auction.isReserveMet();
 
+      // Anti-sniping: đọc endTime và extend trong cùng critical section (tránh TOCTOU).
+      LocalDateTime currentEnd = auction.getEndTime();
+      if (currentEnd != null) {
+        long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
+        if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
+          auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
+          extendedForAntiSniping = true;
+        }
+      }
+
       // FIX PERF: Tạo BidTransaction object TRONG lock để capture đúng state tại thời điểm bid.
       // Nhưng KHÔNG gọi bidTransactionDAO.saveTransaction() trong lock → tránh giữ lock
       // trong khi đợi DB round-trip (giảm lock hold time từ ~5ms xuống ~0.1ms).
@@ -213,19 +224,10 @@ public class BidService implements IBidService {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
     }
 
-    // Anti-sniping
-    LocalDateTime currentEnd = auction.getEndTime();
-    if (currentEnd != null) {
-      long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
-      if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
-        lock.lock();
-        try {
-          auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
-        } finally { lock.unlock(); }
-        auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
-        auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
-                String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
-      }
+    if (extendedForAntiSniping) {
+      auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+      auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
+              String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
     }
   }
 
