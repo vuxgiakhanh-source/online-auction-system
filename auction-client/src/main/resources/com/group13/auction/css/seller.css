@@ -442,6 +442,21 @@
     -fx-background-color: rgba(103, 184, 234, 0.22);
 }
 
+.seller-image-preview-row {
+    -fx-padding: 6 8 6 8;
+}
+
+.seller-image-preview {
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 8, 0.10, 0, 3);
+}
+
+.seller-image-preview-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.88);
+}
+
 
 /* SELLER AUCTION DETAIL */
 

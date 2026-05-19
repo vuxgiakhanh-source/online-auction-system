@@ -18,6 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -66,7 +71,7 @@ public final class CreateAuctionController {
 
     @FXML private TextField extraField3;
 
-    @FXML private ListView<String> selectedImagesListView;
+    @FXML private ListView<Path> selectedImagesListView;
 
     @FXML private Button chooseImagesButton;
 
@@ -87,6 +92,7 @@ public final class CreateAuctionController {
     public void initialize() {
         setupCategoryComboBox();
         setupDefaultDateTime();
+        setupImagePreviewList();
         refreshSelectedImagesView();
         setLoading(false, "Nhập thông tin phiên đấu giá.");
     }
@@ -420,14 +426,59 @@ public final class CreateAuctionController {
         extraField3.clear();
     }
 
+    private void setupImagePreviewList() {
+        if (selectedImagesListView == null) {
+            return;
+        }
+
+        selectedImagesListView.setFixedCellSize(72.0);
+        selectedImagesListView.setCellFactory(listView -> createImagePreviewCell());
+    }
+
+    private ListCell<Path> createImagePreviewCell() {
+        return new ListCell<>() {
+            private final ImageView previewImage = new ImageView();
+            private final Label fileNameLabel = new Label();
+            private final HBox row = new HBox(12.0, previewImage, fileNameLabel);
+
+            {
+                previewImage.setFitWidth(72.0);
+                previewImage.setFitHeight(54.0);
+                previewImage.setPreserveRatio(true);
+                previewImage.setSmooth(true);
+                previewImage.getStyleClass().add("seller-image-preview");
+
+                fileNameLabel.getStyleClass().add("seller-image-preview-name");
+
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.getStyleClass().add("seller-image-preview-row");
+            }
+
+            @Override
+            protected void updateItem(Path path, boolean empty) {
+                super.updateItem(path, empty);
+
+                if (empty || path == null) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+
+                previewImage.setImage(new Image(path.toUri().toString(), 72.0, 54.0, true, true, true));
+                fileNameLabel.setText(path.getFileName().toString());
+
+                setText(null);
+                setGraphic(row);
+            }
+        };
+    }
+
     private void refreshSelectedImagesView() {
         if (selectedImagesListView == null) {
             return;
         }
 
-        selectedImagesListView
-                .getItems()
-                .setAll(selectedImagePaths.stream().map(path -> path.getFileName().toString()).toList());
+        selectedImagesListView.getItems().setAll(selectedImagePaths);
 
         boolean hasImages = !selectedImagePaths.isEmpty();
         if (removeImageButton != null) {
