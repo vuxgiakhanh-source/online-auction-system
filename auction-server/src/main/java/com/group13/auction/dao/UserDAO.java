@@ -7,10 +7,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.ResultSetMetaData;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,42 +22,64 @@ public class UserDAO {
 
     public UserDAO() {}
 
-    /**
-     * Parse trạng thái tài khoản từ DB một cách an toàn.
-     *
-     * <p>DB có thể có trạng thái soft-delete (DELETED). Trong code domain hiện tại
-     * {@link com.group13.auction.model.user.User.AccountStatus} không có DELETED,
-     * nên map DELETED -> BANNED để chặn mọi thao tác xác thực/đấu giá với tài khoản đã xoá.
-     */
-    private static com.group13.auction.model.user.User.AccountStatus parseAccountStatus(String statusStr) {
-        if (statusStr == null) return com.group13.auction.model.user.User.AccountStatus.ACTIVE;
+    private static User.AccountStatus parseAccountStatus(String statusStr) {
+        if (statusStr == null) return User.AccountStatus.ACTIVE;
         if ("DELETED".equalsIgnoreCase(statusStr)) {
-            return com.group13.auction.model.user.User.AccountStatus.BANNED;
+            return User.AccountStatus.BANNED;
         }
         try {
-            return com.group13.auction.model.user.User.AccountStatus.valueOf(statusStr);
+            return User.AccountStatus.valueOf(statusStr);
         } catch (IllegalArgumentException ex) {
-            // Fallback an toàn nếu DB chứa giá trị không mong đợi
-            return com.group13.auction.model.user.User.AccountStatus.BANNED;
+            return User.AccountStatus.BANNED;
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // BUG FIX #1 — UserDAO không load SELLER role từ bảng sellers
+    //
+    // Tất cả 3 methods (findUserByUsername, findNormalUserById,
+    // findUserCoreByUsername) đều hardcode:
+    //     roles = EnumSet.of(UserRole.BIDDER)
+    // và không bao giờ đọc bảng sellers.
+    //
+    // Hậu quả: user được duyệt Seller vẫn thấy mình là BIDDER sau mỗi lần
+    // login, trừ khi vào trang Profile (lúc đó AuctionManager in-memory đã
+    // có role SELLER do autoApproveSellerRole() đã thêm vào object).
+    //
+    // Fix: thêm loadRoles() gọi query sellers trên cùng Connection để tránh
+    // tốn thêm connection-pool slot, rồi gọi nó trong mọi findUser* method.
+    // ═══════════════════════════════════════════════════════════════════════
+
     /**
-     * Đăng ký User mới (Mặc định là Bidder)
-     * Trả về UUID của user vừa tạo nếu thành công, null nếu thất bại.
+     * Tải roles cho user từ DB.
+     * Luôn bao gồm BIDDER; thêm SELLER nếu approval_status = 'APPROVED'.
+     * Dùng Connection đang mở để không tốn thêm connection-pool slot.
      */
+    private Set<User.UserRole> loadRoles(Connection conn, String userId) throws SQLException {
+        Set<User.UserRole> roles = EnumSet.of(User.UserRole.BIDDER);
+        String sql = "SELECT 1 FROM sellers WHERE user_id = ? AND approval_status = 'APPROVED' LIMIT 1";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    roles.add(User.UserRole.SELLER);
+                }
+            }
+        }
+        return roles;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+
     public String registerUser(String username, String passwordHash, String email) {
         String userId = UUID.randomUUID().toString();
         String sql = "INSERT INTO users (id, username, password_hash, email) VALUES (?, ?, ?, ?)";
-
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setString(1, userId);
             pstmt.setString(2, username);
             pstmt.setString(3, passwordHash);
             pstmt.setString(4, email);
-
             if (pstmt.executeUpdate() > 0) return userId;
         } catch (SQLException e) {
             log.error("Lỗi đăng ký người dùng: ", e);
@@ -63,18 +87,12 @@ public class UserDAO {
         return null;
     }
 
-    /**
-     * Xác thực và lấy ID người dùng (Trả về String UUID, null nếu thất bại)
-     */
     public String authenticateAndGetId(String username, String passwordHash) {
         String sql = "SELECT id FROM users WHERE username = ? AND password_hash = ? AND status != 'DELETED'";
-
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setString(1, username);
             pstmt.setString(2, passwordHash);
-
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) return rs.getString("id");
             }
@@ -110,21 +128,15 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Lưu trạng thái tham gia hoặc theo dõi phiên đấu giá của người dùng
-     */
     public boolean saveUserAuctionActivity(String userId, String auctionId, String activityType) {
         String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
                 "VALUES (?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE activity_type = VALUES(activity_type)";
-
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setString(1, userId);
             pstmt.setString(2, auctionId);
             pstmt.setString(3, activityType);
-
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             log.error("Lỗi lưu hoạt động tham gia/theo dõi của người dùng: ", e);
@@ -133,21 +145,16 @@ public class UserDAO {
     }
 
     /**
-     * Tìm kiếm NormalUser theo ID
-     */
-    /**
-     * Tìm kiếm NormalUser theo ID và hồi sinh đối tượng từ Database.
+     * Tìm kiếm NormalUser theo ID.
+     * BUG FIX #1: gọi loadRoles() để lấy role thực tế từ DB.
      */
     public NormalUser findNormalUserById(String userId) {
         String sql = "SELECT * FROM users WHERE id = ?";
-
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);
-            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // 1. Lấy dữ liệu cơ bản
                     String id = rs.getString("id");
                     String username = rs.getString("username");
                     String passwordHash = rs.getString("password_hash");
@@ -157,60 +164,32 @@ public class UserDAO {
                     long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
+                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
 
-                    // 2. Xử lý thời gian an toàn
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
-
                     java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
                     java.time.LocalDateTime suspendedAt = (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
 
-                    // 3. Xử lý các trường không có sẵn trong bảng users hiện tại
-                    // Đã thực hiện TODO: đọc has_ever_been_restored từ DB
-                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
+                    // BUG FIX #1: load roles thực tế từ DB
+                    Set<User.UserRole> roles = loadRoles(conn, id);
 
-                    // Mặc định khởi tạo role là BIDDER
-                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
-
-
-                    // 4. Hồi sinh Object
                     NormalUser user = NormalUser.reconstitute(
-                            id,
-                            createdAt,
-                            createdAt, // Dùng tạm createdAt cho updatedAt
-                            username,
-                            passwordHash,
-                            email,
-                            parseAccountStatus(statusStr),
-                            rating,
-                            balance,
-                            lockedBalance,
-                            roles,
-                            hasEverBeenPenalized,
-                            hasEverBeenRestored,
-                            suspendedAt
-                    );
+                            id, createdAt, createdAt, username, passwordHash, email,
+                            parseAccountStatus(statusStr), rating, balance, lockedBalance,
+                            roles, hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
 
-                    // 5. Đã thực hiện TODO: inject dữ liệu lịch sử sau reconstitute
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
-                    // setBidHistory được bỏ qua ở đây để tránh vòng lặp đệ quy
-                    // (findBidHistoryByUserId gọi lại findNormalUserById).
-                    // Caller có thể tự inject nếu cần: user.setBidHistory(userDAO.findBidHistoryByUserId(id))
-
                     return user;
                 }
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi tìm User theo ID: ", e);
         }
         return null;
     }
 
-    /**
-     * Cập nhật điểm rating của User.
-     */
     public boolean updateRating(String userId, double rating) {
         String sql = "UPDATE users SET rating = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -224,9 +203,6 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Cập nhật điểm rating và đánh dấu vi phạm.
-     */
     public boolean updateRatingAndPenalty(String userId, double rating, boolean isPenalized) {
         String sql = "UPDATE users SET rating = ?, has_ever_been_penalized = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -241,9 +217,6 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Đồng bộ số dư (balance) và tiền cọc đang khóa (locked_balance) của User.
-     */
     public boolean updateBalances(String userId, long balance, long lockedBalance) {
         String sql = "UPDATE users SET balance = ?, locked_balance = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -259,23 +232,20 @@ public class UserDAO {
     }
 
     /**
-     * Tìm user theo username CHỈ để xác thực — 1 query duy nhất, KHÔNG load
-     * joinedAuctionIds + watchListAuctionIds (2 subquery không cần thiết cho auth).
-     *
-     * FIX LOGIN SLOWNESS: findUserByUsername() cũ làm 3 queries cho mỗi lần login.
-     * Method này chỉ cần 1 query → giảm latency login ~60-70%.
-     * Sau khi xác thực xong, UserService trả về user đầy đủ từ AuctionManager (in-memory).
+     * Tìm user nhanh để xác thực login — 1 query users + 1 query sellers,
+     * KHÔNG load joinedAuctionIds / watchListAuctionIds.
+     * BUG FIX #1: gọi loadRoles() để lấy role thực tế.
      */
     public NormalUser findUserCoreByUsername(String username) {
         String sql = "SELECT id, username, password_hash, email, rating, balance, " +
                 "locked_balance, status, has_ever_been_penalized, has_ever_been_restored, " +
                 "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
 
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
-            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String id             = rs.getString("id");
                     String fetchedUsername= rs.getString("username");
@@ -293,41 +263,34 @@ public class UserDAO {
                     java.time.LocalDateTime createdAt   = createdTs  != null ? createdTs.toLocalDateTime()   : java.time.LocalDateTime.now();
                     java.time.LocalDateTime suspendedAt = suspendedTs != null ? suspendedTs.toLocalDateTime() : null;
 
-                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+                    // BUG FIX #1: load roles thực tế từ DB
+                    Set<User.UserRole> roles = loadRoles(conn, id);
 
-                    // Không gọi findJoinedAuctionIdsByUserId() hay findWatchListByUserId()
-                    // — chỉ cần data cơ bản để verify password + status
                     return NormalUser.reconstitute(id, createdAt, createdAt, fetchedUsername,
                             passwordHash, email, parseAccountStatus(statusStr), rating,
                             balance, lockedBalance, roles, penalized, restored, suspendedAt);
                 }
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi findUserCoreByUsername: ", e);
         }
         return null;
     }
 
     /**
-     * Tìm kiếm NormalUser theo Username để phục vụ việc Đăng nhập.
-     */
-    /**
-     * Tìm kiếm NormalUser theo Username để phục vụ việc Đăng nhập.
+     * Tìm kiếm NormalUser theo Username.
+     * BUG FIX #1: gọi loadRoles() để lấy role thực tế.
      */
     public NormalUser findUserByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
-
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
-
-            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // 1. Lấy dữ liệu cơ bản
                     String id = rs.getString("id");
-                    String fetchedUsername = rs.getString("username"); // Lấy chính xác từ DB
+                    String fetchedUsername = rs.getString("username");
                     String passwordHash = rs.getString("password_hash");
                     String email = rs.getString("email");
                     double rating = rs.getDouble("rating");
@@ -335,117 +298,73 @@ public class UserDAO {
                     long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
+                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
 
-                    // 2. Xử lý thời gian an toàn
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
-
                     java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
                     java.time.LocalDateTime suspendedAt = (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
 
-                    // 3. Các trường phụ thuộc
-                    // Đã thực hiện TODO: đọc has_ever_been_restored từ DB
-                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
-                    java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+                    // BUG FIX #1: load roles thực tế từ DB
+                    Set<User.UserRole> roles = loadRoles(conn, id);
 
-                    // 4. Hồi sinh Object
                     NormalUser user = NormalUser.reconstitute(
-                            id,
-                            createdAt,
-                            createdAt,
-                            fetchedUsername,
-                            passwordHash,
-                            email,
-                            parseAccountStatus(statusStr),
-                            rating,
-                            balance,
-                            lockedBalance,
-                            roles,
-                            hasEverBeenPenalized,
-                            hasEverBeenRestored,
-                            suspendedAt
-                    );
+                            id, createdAt, createdAt, fetchedUsername, passwordHash, email,
+                            parseAccountStatus(statusStr), rating, balance, lockedBalance,
+                            roles, hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
 
-                    // 5. Đã thực hiện TODO: inject dữ liệu lịch sử sau reconstitute
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
-
                     return user;
                 }
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi tìm User theo username: ", e);
         }
-
-        // Nếu không có dòng nào trong DB khớp với username, trả về null
         return null;
     }
 
-    /**
-     * Lấy toàn bộ danh sách User từ Database (phục vụ khởi động hệ thống).
-     */
-    public java.util.List<com.group13.auction.model.user.User> findAll() {
-        java.util.List<com.group13.auction.model.user.User> users = new java.util.ArrayList<>();
+    public List<User> findAll() {
+        List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM users";
-
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql);
-             java.sql.ResultSet rs = pstmt.executeQuery()) {
-
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
-                // Tận dụng lại logic của hàm findNormalUserById để nạp dữ liệu
                 String id = rs.getString("id");
-                // Tạm thời gọi lại hàm tìm kiếm chi tiết để tái tạo object (Hoặc bạn có thể copy nguyên khối hồi sinh Object vào đây cho tối ưu)
-                com.group13.auction.model.user.NormalUser user = findNormalUserById(id);
-                if (user != null) {
-                    users.add(user);
-                }
+                NormalUser user = findNormalUserById(id);
+                if (user != null) users.add(user);
             }
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi lấy danh sách User: ", e);
         }
         return users;
     }
 
-    /**
-     * Lưu một User mới xuống Database.
-     */
-    public boolean save(com.group13.auction.model.user.User user) {
+    public boolean save(User user) {
         String sql = "INSERT INTO users (id, username, password_hash, email, status, created_at) VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, user.getId());
             pstmt.setString(2, user.getUsername());
             pstmt.setString(3, user.getHashedPassword());
             pstmt.setString(4, user.getEmail());
             pstmt.setString(5, user.getAccountStatus().name());
-
-            java.sql.Timestamp createdTs = java.sql.Timestamp.valueOf(user.getCreatedAt());
-            pstmt.setTimestamp(6, createdTs);
-
+            pstmt.setTimestamp(6, java.sql.Timestamp.valueOf(user.getCreatedAt()));
             return pstmt.executeUpdate() > 0;
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi lưu User mới: ", e);
             return false;
         }
     }
 
-    /**
-     * Xóa User (Soft-delete: Đổi trạng thái thành DELETED).
-     */
-    public boolean delete(com.group13.auction.model.user.User user) {
+    public boolean delete(User user) {
         String sql = "UPDATE users SET status = 'DELETED' WHERE id = ?";
-
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, user.getId());
             return pstmt.executeUpdate() > 0;
-
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi xóa User: ", e);
             return false;
         }
@@ -456,9 +375,7 @@ public class UserDAO {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
+            try (ResultSet rs = pstmt.executeQuery()) { return rs.next(); }
         } catch (SQLException e) {
             log.error("Lỗi kiểm tra username tồn tại: ", e);
             return false;
@@ -470,9 +387,7 @@ public class UserDAO {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, email);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
+            try (ResultSet rs = pstmt.executeQuery()) { return rs.next(); }
         } catch (SQLException e) {
             log.error("Lỗi kiểm tra email tồn tại: ", e);
             return false;
@@ -495,9 +410,7 @@ public class UserDAO {
             pstmt.setString(1, userId);
             pstmt.setString(2, activityType);
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    ids.add(rs.getString("auction_id"));
-                }
+                while (rs.next()) ids.add(rs.getString("auction_id"));
             }
         } catch (SQLException e) {
             log.error("Lỗi lấy lịch sử activity ( {}", activityType + "): " + e.getMessage());
@@ -518,26 +431,17 @@ public class UserDAO {
         if (!hasColumn(rs, columnName)) return defaultValue;
         return rs.getBoolean(columnName);
     }
-    /**
-     * Cập nhật cờ hasEverBeenRestored của User xuống DB.
-     * Đã thực hiện TODO trong RatingService.checkAndRestoreSuspended():
-     * persist để flag không bị mất khi restart server.
-     *
-     * @param userId ID của user
-     * @param hasEverBeenRestored giá trị cần cập nhật
-     * @return true nếu cập nhật thành công
-     */
+
     public boolean updateHasEverBeenRestored(String userId, boolean hasEverBeenRestored) {
         String sql = "UPDATE users SET has_ever_been_restored = ? WHERE id = ?";
-        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
-             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setBoolean(1, hasEverBeenRestored);
             pstmt.setString(2, userId);
             return pstmt.executeUpdate() > 0;
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             log.error("Lỗi cập nhật cờ hasEverBeenRestored: ", e);
             return false;
         }
     }
-
 }
