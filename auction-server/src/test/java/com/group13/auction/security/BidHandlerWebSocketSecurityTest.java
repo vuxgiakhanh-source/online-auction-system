@@ -30,6 +30,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import com.group13.auction.strategy.BidRateLimiter;
 import static org.mockito.Mockito.when;
 
 /**
@@ -67,6 +68,8 @@ class BidHandlerWebSocketSecurityTest {
         reset(webSocket, bidService, ratingService);
         lenient().when(webSocket.isOpen()).thenReturn(true);
         sessionManager.unregister(webSocket);
+        // Reset rate limiter singleton giữa các test để tránh leak state
+        BidRateLimiter.getInstance().clearAll();
     }
 
     @AfterEach
@@ -202,6 +205,73 @@ class BidHandlerWebSocketSecurityTest {
             assertThat(sent.getValue()).contains(PacketType.SYSTEM_ERROR.name());
             assertThat(sent.getValue()).contains(ErrorDTO.UNAUTHORIZED);
             verifyNoInteractions(bidService);
+        }
+    }
+
+    // ── Rate Limit Tests ───────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("PLACE_BID — rate limiting (max 5 bid/giây/user)")
+    class RateLimiting {
+
+        @Test
+        @DisplayName("6 PLACE_BID liên tiếp cùng user trong 1 giây → bid thứ 6 bị RATE_LIMIT_EXCEEDED")
+        void placeBid_exceedsRateLimit_returnsRateLimitError() {
+            // Arrange — tạo session đã authenticate
+            ClientSession session = registerOpenSession();
+            session.authenticate("rl-user-id", "rl_test_user", "NORMAL_USER");
+
+            // Payload hợp lệ (sẽ fail ở requireNormalUser vì user không tồn tại trong manager,
+            // nhưng rate limiter phải được trigger TRƯỚC đó)
+            JsonElement payload = GSON.toJsonTree(new BidDTOs.BidRequestDTO("auc-rate", 1_000_000L));
+
+            BidHandler handler = newHandler();
+            // Reset rate limiter để bắt đầu sạch cho user này
+            BidRateLimiter.getInstance().remove("rl_test_user");
+
+            // Consume 5 token (đến limit) — các lần này sẽ fail do requireNormalUser, không phải rate limit
+            for (int i = 0; i < 5; i++) {
+                BidRateLimiter.getInstance().tryConsume("rl_test_user");
+            }
+
+            // Lần thứ 6 — phải bị chặn bởi rate limiter
+            ArgumentCaptor<String> sent = ArgumentCaptor.forClass(String.class);
+            handler.handle(session, PacketType.PLACE_BID, payload, "rid-rate-" + 6);
+
+            verify(webSocket, org.mockito.Mockito.atLeastOnce()).send(sent.capture());
+            String lastSent = sent.getAllValues().get(sent.getAllValues().size() - 1);
+            assertThat(lastSent)
+                    .as("Bid thứ 6 phải bị PLACE_BID_FAILED với RATE_LIMIT_EXCEEDED")
+                    .contains(PacketType.PLACE_BID_FAILED.name())
+                    .contains("RATE_LIMIT_EXCEEDED");
+            verifyNoInteractions(bidService);
+        }
+
+        @Test
+        @DisplayName("5 PLACE_BID liên tiếp cùng user → đều đi qua rate limiter (không bị chặn)")
+        void placeBid_withinRateLimit_notBlocked() {
+            // Rate limiter cho phép 5/giây — các lần bid trong limit chỉ bị chặn bởi logic khác
+            // (requireNormalUser fail), KHÔNG phải rate limiter
+            ClientSession session = registerOpenSession();
+            session.authenticate("rl-user2-id", "rl_test_user2", "NORMAL_USER");
+            JsonElement payload = GSON.toJsonTree(new BidDTOs.BidRequestDTO("auc-rate2", 1_000_000L));
+
+            BidHandler handler = newHandler();
+            BidRateLimiter.getInstance().remove("rl_test_user2");
+
+            for (int i = 0; i < 5; i++) {
+                handler.handle(session, PacketType.PLACE_BID, payload, "rid-ok-" + i);
+            }
+
+            // Mỗi lần đều fail ở requireNormalUser (SYSTEM_ERROR UNAUTHORIZED),
+            // KHÔNG phải RATE_LIMIT_EXCEEDED
+            ArgumentCaptor<String> sent = ArgumentCaptor.forClass(String.class);
+            verify(webSocket, org.mockito.Mockito.times(5)).send(sent.capture());
+            for (String msg : sent.getAllValues()) {
+                assertThat(msg)
+                        .as("Trong giới hạn rate limit, lỗi là UNAUTHORIZED chứ không phải RATE_LIMIT_EXCEEDED")
+                        .doesNotContain("RATE_LIMIT_EXCEEDED");
+            }
         }
     }
 }

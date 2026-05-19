@@ -330,7 +330,7 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("auction FINISHED → không lưu transaction bình thường (không reach recordTransaction)")
+        @DisplayName("auction FINISHED → không lưu transaction bình thường (exception thrown trước khi tạo TX)")
         void placeBid_finishedAuction_doesNotSaveNormalTransaction() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
@@ -343,7 +343,7 @@ class BidServiceTest {
             assertThrows(AuctionClosedException.class,
                     () -> bidService.placeBid(bidder, finished, 5_000_000L, strategy));
 
-            // Assert — closed auction không cần recordTransaction (exception được ném trực tiếp)
+            // Assert — closed auction: exception ném trước khi TX được tạo (FIX #2 + refactor)
             verify(bidTransactionDAO, never()).saveTransaction(argThat(tx ->
                     tx.getResult() == BidResult.ACCEPTED || tx.getResult() == BidResult.ACCEPTED_RESERVE_NOT_MET));
         }
