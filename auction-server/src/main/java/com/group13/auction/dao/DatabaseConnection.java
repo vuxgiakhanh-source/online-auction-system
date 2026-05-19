@@ -176,10 +176,57 @@ public class DatabaseConnection {
         log.warn("DatabaseConnection reconfigured. URL: {}", newUrl);
     }
 
+    /**
+     * Đảm bảo pool đã sẵn sàng trước khi server chạy (ServerMain / IDE).
+     * Thử lại khi MySQL Docker vừa khởi động (healthcheck chưa xong).
+     */
+    public void ensureReady(int maxAttempts, long delayMs) throws SQLException {
+        SQLException last = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                if (dataSource == null || dataSource.isClosed()) {
+                    if (url == null || url.isBlank()) {
+                        throw new SQLException(
+                                "Chưa có cấu hình DB. Đặt DB_URL hoặc sửa data.properties, "
+                                        + "rồi chạy: docker compose up db -d");
+                    }
+                    buildPool();
+                }
+                try (Connection c = dataSource.getConnection()) {
+                    c.createStatement().execute("SELECT 1");
+                }
+                log.info("Database ready (attempt {}/{}).", attempt, maxAttempts);
+                return;
+            } catch (SQLException e) {
+                last = e;
+                if (dataSource != null && !dataSource.isClosed()) {
+                    dataSource.close();
+                }
+                dataSource = null;
+                if (attempt < maxAttempts) {
+                    log.warn("DB chưa sẵn sàng (attempt {}/{}): {} — thử lại sau {}ms",
+                            attempt, maxAttempts, e.getMessage(), delayMs);
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new SQLException("Interrupted while waiting for database", ie);
+                    }
+                }
+            }
+        }
+        throw new SQLException(
+                "Không kết nối được database sau " + maxAttempts + " lần thử. "
+                        + "Chạy: docker compose up db -d (MySQL cổng 3307). Chi tiết: "
+                        + (last != null ? last.getMessage() : "unknown"),
+                last);
+    }
+
     public Connection getConnection() throws SQLException {
         if (dataSource == null || dataSource.isClosed()) {
             throw new SQLException(
-                    "DataSource not initialized. Call reconfigure() first (Testcontainers mode).");
+                    "DataSource not initialized. Gọi ensureReady() hoặc reconfigure() trước. "
+                            + "Local dev: docker compose up db -d");
         }
         return dataSource.getConnection();
     }
