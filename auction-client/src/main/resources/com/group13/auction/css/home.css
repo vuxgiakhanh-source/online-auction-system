@@ -316,7 +316,7 @@
     /* Gradient từ đen (90% đậm) bên trái sang trong suốt hoàn toàn bên phải */
     -fx-background-color: linear-gradient(to right, 
         rgba(0, 0, 0, 0.9) 10%, 
-        rgba(0, 0, 0, 0.722) 50%, 
+        rgba(0, 0, 0, 0.722) 40%, 
         rgba(0, 0, 0, 0) 100%
     );
 }
