@@ -7,7 +7,10 @@ public final class PaymentDTOs {
 
     private PaymentDTOs() {}
 
+
     // ══════════════════════════════════════════════════════════════════════════
+    // Confirm Item Received
+    // ══════════════════════════════════════════════════════════════════════════// ══════════════════════════════════════════════════════════════════════════
     // Wallet / Deposit
     // ══════════════════════════════════════════════════════════════════════════
 
@@ -179,4 +182,31 @@ public final class PaymentDTOs {
         public LocalDateTime getDeadline() { return deadline; }
         public void setDeadline(LocalDateTime deadline) { this.deadline = deadline; }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Confirm Item Received
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Payload cua CONFIRM_ITEM_RECEIVED_SUCCESS.
+     * canSubmitReport = true — client dung de enable nut bao cao chat luong.
+     */
+    public static class ConfirmItemReceivedResultDTO {
+        private String auctionId;
+        private boolean canSubmitReport;
+        private java.time.LocalDateTime confirmedAt;
+        private java.time.LocalDateTime reportDeadline;
+
+        public ConfirmItemReceivedResultDTO() {}
+
+        public String getAuctionId() { return auctionId; }
+        public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
+        public boolean isCanSubmitReport() { return canSubmitReport; }
+        public void setCanSubmitReport(boolean v) { this.canSubmitReport = v; }
+        public java.time.LocalDateTime getConfirmedAt() { return confirmedAt; }
+        public void setConfirmedAt(java.time.LocalDateTime v) { this.confirmedAt = v; }
+        public java.time.LocalDateTime getReportDeadline() { return reportDeadline; }
+        public void setReportDeadline(java.time.LocalDateTime v) { this.reportDeadline = v; }
+    }
+
 }
