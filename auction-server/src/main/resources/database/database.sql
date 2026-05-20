@@ -143,7 +143,7 @@ CREATE TABLE auction_winners (
                                  winner_id VARCHAR(36) NOT NULL,
                                  final_price BIGINT NOT NULL,
                                  deposit_paid BIGINT NOT NULL,
-                                 payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED', 'FUNDS_HELD') DEFAULT 'PENDING',
+                                 payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED', 'FUNDS_HELD', 'ITEM_RECEIVED') DEFAULT 'PENDING',
                                  confirm_receipt_deadline DATETIME NULL,
                                  report_deadline DATETIME NULL,
                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -215,16 +215,16 @@ CREATE TABLE auto_bids (
 
 -- 14. Bảng Notifications
 CREATE TABLE notifications (
-                              id VARCHAR(36) PRIMARY KEY,
-                              user_id VARCHAR(36) NOT NULL,
-                              auction_id VARCHAR(36) NULL,
-                              title VARCHAR(255) NOT NULL,
-                              body TEXT NOT NULL,
-                              is_read BOOLEAN NOT NULL DEFAULT FALSE,
-                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                              FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
+                               id VARCHAR(36) PRIMARY KEY,
+                               user_id VARCHAR(36) NOT NULL,
+                               auction_id VARCHAR(36) NULL,
+                               title VARCHAR(255) NOT NULL,
+                               body TEXT NOT NULL,
+                               is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                               FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                               FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
 );
 
 -- Index hỗ trợ query theo auction_id (dùng trong clearAuction và loadFromDatabase)

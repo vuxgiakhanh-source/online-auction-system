@@ -20,7 +20,13 @@ public class AuctionWinner extends Entity {
      * Winner đã thanh toán đủ; tiền đang giữ ở SystemBank,
      * chờ chuyển cho seller (có trừ thuế).
      */
-    FUNDS_HELD
+    FUNDS_HELD,
+    /**
+     * Winner đã xác nhận nhận hàng — mở khóa quyền submit Quality Report.
+     * Tiền sẽ được chuyển cho Seller sau khi hết report_deadline (hoặc ngay lập tức
+     * nếu không có report nào được submit).
+     */
+    ITEM_RECEIVED
   }
 
   private final NormalUser winner;
@@ -65,11 +71,11 @@ public class AuctionWinner extends Entity {
    * @return AuctionWinner mới
    */
   public static AuctionWinner create(
-          NormalUser winner,
-          String auctionId,
-          long finalPrice,
-          long depositPaid,
-          boolean isSecondOffer) {
+      NormalUser winner,
+      String auctionId,
+      long finalPrice,
+      long depositPaid,
+      boolean isSecondOffer) {
     return new AuctionWinner(winner, auctionId, finalPrice, depositPaid, isSecondOffer);
   }
 
@@ -77,31 +83,31 @@ public class AuctionWinner extends Entity {
    * Hồi sinh AuctionWinner từ DB — chỉ DAO được gọi method này.
    */
   public static AuctionWinner reconstitute(
-          String id,
-          LocalDateTime createdAt,
-          LocalDateTime updatedAt,
-          NormalUser winner,
-          String auctionId,
-          long finalPrice,
-          long depositPaid,
-          LocalDateTime paymentDeadline,
-          LocalDateTime confirmReceiptDeadline,
-          LocalDateTime reportDeadline,
-          PaymentStatus paymentStatus,
-          boolean isSecondOffer) {
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      NormalUser winner,
+      String auctionId,
+      long finalPrice,
+      long depositPaid,
+      LocalDateTime paymentDeadline,
+      LocalDateTime confirmReceiptDeadline,
+      LocalDateTime reportDeadline,
+      PaymentStatus paymentStatus,
+      boolean isSecondOffer) {
     return new AuctionWinner(id, createdAt, updatedAt, winner, auctionId,
-            finalPrice, depositPaid, paymentDeadline, confirmReceiptDeadline,
-            reportDeadline, paymentStatus, isSecondOffer);
+        finalPrice, depositPaid, paymentDeadline, confirmReceiptDeadline,
+        reportDeadline, paymentStatus, isSecondOffer);
   }
 
   // Private constructors
 
   private AuctionWinner(
-          NormalUser winner,
-          String auctionId,
-          long finalPrice,
-          long depositPaid,
-          boolean isSecondOffer) {
+      NormalUser winner,
+      String auctionId,
+      long finalPrice,
+      long depositPaid,
+      boolean isSecondOffer) {
     super();
     this.winner = winner;
     this.auctionId = auctionId;
@@ -115,18 +121,18 @@ public class AuctionWinner extends Entity {
   }
 
   private AuctionWinner(
-          String id,
-          LocalDateTime createdAt,
-          LocalDateTime updatedAt,
-          NormalUser winner,
-          String auctionId,
-          long finalPrice,
-          long depositPaid,
-          LocalDateTime paymentDeadline,
-          LocalDateTime confirmReceiptDeadline,
-          LocalDateTime reportDeadline,
-          PaymentStatus paymentStatus,
-          boolean isSecondOffer) {
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      NormalUser winner,
+      String auctionId,
+      long finalPrice,
+      long depositPaid,
+      LocalDateTime paymentDeadline,
+      LocalDateTime confirmReceiptDeadline,
+      LocalDateTime reportDeadline,
+      PaymentStatus paymentStatus,
+      boolean isSecondOffer) {
     super(id, createdAt, updatedAt);
     this.winner = winner;
     this.auctionId = auctionId;
@@ -174,7 +180,7 @@ public class AuctionWinner extends Entity {
    */
   public boolean isExpired() {
     return LocalDateTime.now().isAfter(paymentDeadline)
-            && paymentStatus == PaymentStatus.PENDING;
+        && paymentStatus == PaymentStatus.PENDING;
   }
 
   /**
@@ -185,8 +191,8 @@ public class AuctionWinner extends Entity {
    */
   public boolean isConfirmReceiptOverdue() {
     return paymentStatus == PaymentStatus.FUNDS_HELD
-            && confirmReceiptDeadline != null
-            && LocalDateTime.now().isAfter(confirmReceiptDeadline);
+        && confirmReceiptDeadline != null
+        && LocalDateTime.now().isAfter(confirmReceiptDeadline);
   }
 
   /**
@@ -197,8 +203,8 @@ public class AuctionWinner extends Entity {
    */
   public boolean isReportDeadlineOverdue() {
     return paymentStatus == PaymentStatus.FUNDS_HELD
-            && reportDeadline != null
-            && LocalDateTime.now().isAfter(reportDeadline);
+        && reportDeadline != null
+        && LocalDateTime.now().isAfter(reportDeadline);
   }
 
   // Setter - chỉ PaymentService gọi
@@ -223,6 +229,7 @@ public class AuctionWinner extends Entity {
    * Chỉ {@link com.group13.auction.service.PaymentService} gọi.
    */
   public void confirmReceipt() {
+    this.paymentStatus = PaymentStatus.ITEM_RECEIVED;
     this.reportDeadline = LocalDateTime.now().plusDays(3);
     markUpdated();
   }

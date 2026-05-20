@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
@@ -35,12 +36,13 @@ public class PaymentHandler implements PacketHandler {
     private static final long AUCTION_LOCK_TIMEOUT_SECONDS = 5L;
 
     private static final Set<PacketType> SUPPORTED = EnumSet.of(
-            PacketType.DEPOSIT,
-            PacketType.WITHDRAW,
-            PacketType.GET_WALLET_BALANCE,
-            PacketType.PAYMENT_REQUEST,
-            PacketType.SECOND_CHANCE_ACCEPT,
-            PacketType.SECOND_CHANCE_DECLINE
+        PacketType.DEPOSIT,
+        PacketType.WITHDRAW,
+        PacketType.GET_WALLET_BALANCE,
+        PacketType.PAYMENT_REQUEST,
+        PacketType.CONFIRM_ITEM_RECEIVED,
+        PacketType.SECOND_CHANCE_ACCEPT,
+        PacketType.SECOND_CHANCE_DECLINE
     );
 
     private final PaymentService paymentService;
@@ -65,7 +67,7 @@ public class PaymentHandler implements PacketHandler {
         if (!session.isAuthenticated()) {
             log.warn("Reject payment packet from unauthenticated session: type={}, requestId={}", type, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
+                ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chưa đăng nhập.", requestId), requestId));
             return;
         }
 
@@ -74,6 +76,7 @@ public class PaymentHandler implements PacketHandler {
             case WITHDRAW              -> handleWithdraw(session, payload, requestId);
             case GET_WALLET_BALANCE    -> handleGetBalance(session, requestId);
             case PAYMENT_REQUEST       -> handlePayment(session, payload, requestId);
+            case CONFIRM_ITEM_RECEIVED -> handleConfirmItemReceived(session, payload, requestId);
             case SECOND_CHANCE_ACCEPT  -> handleSecondChanceAccept(session, payload, requestId);
             case SECOND_CHANCE_DECLINE -> handleSecondChanceDecline(session, payload, requestId);
             default -> {}
@@ -85,14 +88,14 @@ public class PaymentHandler implements PacketHandler {
     private void handleDeposit(ClientSession session, JsonElement payload, String requestId) {
         try {
             PaymentDTOs.DepositRequestDTO req = PacketCodec.fromElement(
-                    payload, PaymentDTOs.DepositRequestDTO.class);
+                payload, PaymentDTOs.DepositRequestDTO.class);
 
             NormalUser user = requireNormalUser(session, requestId);
             if (user == null) return;
 
             accountService.deposit(user, req.getAmount());
             log.info("Deposit handled: userId={}, username={}, amount={}, requestId={}",
-                    user.getId(), user.getUsername(), req.getAmount(), requestId);
+                user.getId(), user.getUsername(), req.getAmount(), requestId);
 
             // FIX stale cache: xóa cachedUser cũ trong session để BidHandler
             // reload user mới nhất từ DB (có balance đã cập nhật) ở request tiếp theo.
@@ -101,19 +104,19 @@ public class PaymentHandler implements PacketHandler {
             session.invalidateCachedUser();
 
             PaymentDTOs.WalletBalanceResponseDTO resp = new PaymentDTOs.WalletBalanceResponseDTO(
-                    user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
+                user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
             session.send(Packet.of(PacketType.DEPOSIT_SUCCESS, resp, requestId));
 
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.warn("Deposit rejected: username={}, requestId={}, reason={}",
-                    session.getUsername(), requestId, e.getMessage());
+                session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.DEPOSIT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INVALID_AMOUNT, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INVALID_AMOUNT, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Deposit failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.DEPOSIT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -122,32 +125,32 @@ public class PaymentHandler implements PacketHandler {
     private void handleWithdraw(ClientSession session, JsonElement payload, String requestId) {
         try {
             PaymentDTOs.WithdrawRequestDTO req = PacketCodec.fromElement(
-                    payload, PaymentDTOs.WithdrawRequestDTO.class);
+                payload, PaymentDTOs.WithdrawRequestDTO.class);
 
             NormalUser user = requireNormalUser(session, requestId);
             if (user == null) return;
 
             accountService.withdraw(user, req.getAmount());
             log.info("Withdraw handled: userId={}, username={}, amount={}, requestId={}",
-                    user.getId(), user.getUsername(), req.getAmount(), requestId);
+                user.getId(), user.getUsername(), req.getAmount(), requestId);
 
             // FIX stale cache: tương tự deposit — xóa cache để BidHandler reload balance mới.
             session.invalidateCachedUser();
 
             PaymentDTOs.WalletBalanceResponseDTO resp = new PaymentDTOs.WalletBalanceResponseDTO(
-                    user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
+                user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
             session.send(Packet.of(PacketType.WITHDRAW_SUCCESS, resp, requestId));
 
         } catch (IllegalArgumentException e) {
             log.warn("Withdraw rejected: username={}, requestId={}, reason={}",
-                    session.getUsername(), requestId, e.getMessage());
+                session.getUsername(), requestId, e.getMessage());
             session.send(Packet.of(PacketType.WITHDRAW_FAILED,
-                    ErrorDTO.of(ErrorDTO.INSUFFICIENT_BALANCE, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INSUFFICIENT_BALANCE, e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Withdraw failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.WITHDRAW_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -159,15 +162,83 @@ public class PaymentHandler implements PacketHandler {
             if (user == null) return;
 
             PaymentDTOs.WalletBalanceResponseDTO resp = new PaymentDTOs.WalletBalanceResponseDTO(
-                    user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
+                user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
             session.send(Packet.of(PacketType.GET_WALLET_BALANCE_SUCCESS, resp, requestId));
             log.debug("Wallet balance returned: userId={}, username={}, requestId={}",
-                    user.getId(), user.getUsername(), requestId);
+                user.getId(), user.getUsername(), requestId);
         } catch (Exception e) {
             log.error("Get wallet balance failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+        }
+    }
+
+    // ── CONFIRM ITEM RECEIVED ─────────────────────────────────────────────────
+
+    private void handleConfirmItemReceived(ClientSession session, JsonElement payload, String requestId) {
+        try {
+            String auctionId = PacketCodec.fromElement(payload, String.class);
+
+            com.group13.auction.model.user.NormalUser winner =
+                requireNormalUser(session, requestId);
+            if (winner == null) return;
+
+            com.group13.auction.model.auction.Auction auction =
+                AuctionManager.getInstance().findAuctionById(auctionId);
+            if (auction == null || auction.getWinner() == null) {
+                session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
+                    com.group13.auction.common.dto.core.ErrorDTO.of(
+                        "AUCTION_NOT_FOUND", "Không tìm thấy phiên đấu giá hoặc chưa có kết quả.", requestId),
+                    requestId));
+                return;
+            }
+
+            com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
+
+            // Guard: chỉ winner thật mới được xác nhận
+            if (!auctionWinner.getWinner().getId().equals(winner.getId())) {
+                session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
+                    com.group13.auction.common.dto.core.ErrorDTO.of(
+                        "UNAUTHORIZED", "Chỉ winner mới có thể xác nhận nhận hàng.", requestId),
+                    requestId));
+                return;
+            }
+
+            // Guard: phải đã thanh toán (FUNDS_HELD) mới được xác nhận
+            if (auctionWinner.getPaymentStatus() != com.group13.auction.model.auction.AuctionWinner.PaymentStatus.FUNDS_HELD) {
+                session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
+                    com.group13.auction.common.dto.core.ErrorDTO.of(
+                        "INVALID_STATE",
+                        "Chỉ được xác nhận nhận hàng sau khi đã thanh toán đầy đủ. Trạng thái hiện tại: "
+                            + auctionWinner.getPaymentStatus(),
+                        requestId),
+                    requestId));
+                return;
+            }
+
+            // Cập nhật status → ITEM_RECEIVED
+            paymentService.confirmItemReceived(auction);
+
+            // Tạo response
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            ConfirmItemReceivedResultDTO result = new ConfirmItemReceivedResultDTO();
+            result.setAuctionId(auctionId);
+            result.setCanSubmitReport(true);
+            result.setConfirmedAt(now);
+            result.setReportDeadline(auctionWinner.getReportDeadline());
+
+            session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_SUCCESS, result, requestId));
+            log.info("Item received confirmed: auctionId={}, winnerId={}, requestId={}",
+                auctionId, winner.getId(), requestId);
+
+        } catch (Exception e) {
+            log.error("Confirm item received failed: username={}, requestId={}",
+                session.getUsername(), requestId, e);
+            session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
+                com.group13.auction.common.dto.core.ErrorDTO.of(
+                    "INTERNAL_ERROR", e.getMessage(), requestId),
+                requestId));
         }
     }
 
@@ -176,14 +247,14 @@ public class PaymentHandler implements PacketHandler {
     private void handlePayment(ClientSession session, JsonElement payload, String requestId) {
         try {
             PaymentDTOs.PaymentRequestDTO req = PacketCodec.fromElement(
-                    payload, PaymentDTOs.PaymentRequestDTO.class);
+                payload, PaymentDTOs.PaymentRequestDTO.class);
 
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
             if (auction == null) {
                 log.warn("Payment rejected because auction was not found: auctionId={}, username={}, requestId={}",
-                        req.getAuctionId(), session.getUsername(), requestId);
+                    req.getAuctionId(), session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
@@ -191,19 +262,19 @@ public class PaymentHandler implements PacketHandler {
             com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
             if (auctionWinner == null) {
                 log.warn("Payment rejected because auction has no winner: auctionId={}, username={}, requestId={}",
-                        req.getAuctionId(), session.getUsername(), requestId);
+                    req.getAuctionId(), session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên này chưa có winner.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, "Phiên này chưa có winner.", requestId), requestId));
                 return;
             }
             NormalUser caller = requireNormalUser(session, requestId);
             if (caller == null) return;
             if (!caller.getId().equals(auctionWinner.getWinner().getId())) {
                 log.warn("Payment rejected because caller is not winner: auctionId={}, callerId={}, winnerId={}, requestId={}",
-                        req.getAuctionId(), caller.getId(), auctionWinner.getWinner().getId(), requestId);
+                    req.getAuctionId(), caller.getId(), auctionWinner.getWinner().getId(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Chỉ winner của phiên mới được thanh toán.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                        "Chỉ winner của phiên mới được thanh toán.", requestId), requestId));
                 return;
             }
 
@@ -211,14 +282,14 @@ public class PaymentHandler implements PacketHandler {
             if (!locked) {
                 log.warn("Payment lock timeout: auctionId={}, requestId={}", req.getAuctionId(), requestId);
                 session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                        "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
                 paymentService.completePayment(auction);
                 log.info("Payment request handled: auctionId={}, winnerId={}, username={}, finalPrice={}, requestId={}",
-                        req.getAuctionId(), caller.getId(), caller.getUsername(), auction.getCurrentPrice(), requestId);
+                    req.getAuctionId(), caller.getId(), caller.getUsername(), auction.getCurrentPrice(), requestId);
 
                 PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
                 result.setAuctionId(req.getAuctionId());
@@ -232,27 +303,27 @@ public class PaymentHandler implements PacketHandler {
                 if (auction.getItem().getSeller() != null) {
                     String sellerId = auction.getItem().getSeller().getId();
                     sessionManager.sendToUser(sellerId,
-                            Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
+                        Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
                 }
 
                 // Push AuctionUpdateDTO cho tất cả watcher
                 AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
                 sessionManager.broadcastToAuction(req.getAuctionId(),
-                        Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+                    Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
             } finally {
                 lockRegistry.unlock(auction.getId());
             }
 
         } catch (PaymentException e) {
             log.warn("Payment rejected: username={}, requestId={}, reason={}",
-                    session.getUsername(), requestId, e.getReason());
+                session.getUsername(), requestId, e.getReason());
             session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                    ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
+                ErrorDTO.of(e.getReason().name(), e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Payment failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.PAYMENT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -264,24 +335,24 @@ public class PaymentHandler implements PacketHandler {
             Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
             if (auction == null) {
                 log.warn("Second chance accept rejected because auction was not found: auctionId={}, username={}, requestId={}",
-                        auctionId, session.getUsername(), requestId);
+                    auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
             // FIX Bug #5: lấy offer thật từ SecondChanceOfferDAO, gọi service thật.
             com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
-                    new com.group13.auction.dao.SecondChanceOfferDAO();
+                new com.group13.auction.dao.SecondChanceOfferDAO();
             com.group13.auction.model.auction.SecondChanceOffer offer =
-                    offerDAO.findPendingOfferByAuctionId(auctionId);
+                offerDAO.findPendingOfferByAuctionId(auctionId);
 
             if (offer == null) {
                 log.warn("Second chance accept rejected because offer was not found: auctionId={}, username={}, requestId={}",
-                        auctionId, session.getUsername(), requestId);
+                    auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Không tìm thấy Second Chance Offer PENDING cho phiên này.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                        "Không tìm thấy Second Chance Offer PENDING cho phiên này.", requestId), requestId));
                 return;
             }
 
@@ -289,24 +360,24 @@ public class PaymentHandler implements PacketHandler {
             if (caller == null) return;
             if (!caller.getId().equals(offer.getRunnerUp().getId())) {
                 log.warn("Second chance accept rejected because caller is not runner-up: auctionId={}, callerId={}, runnerUpId={}, requestId={}",
-                        auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
+                    auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Bạn không phải runner-up của offer này.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                        "Bạn không phải runner-up của offer này.", requestId), requestId));
                 return;
             }
 
             boolean locked = lockRegistry.tryLock(auctionId, AUCTION_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
                 session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                        "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
                 paymentService.acceptSecondChanceOffer(offer, auction);
                 log.info("Second chance accept handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
-                        auctionId, offer.getId(), caller.getId(), requestId);
+                    auctionId, offer.getId(), caller.getId(), requestId);
 
                 PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
                 result.setAuctionId(auctionId);
@@ -319,9 +390,9 @@ public class PaymentHandler implements PacketHandler {
 
         } catch (Exception e) {
             log.error("Second chance accept failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SECOND_CHANCE_ACCEPT_FAILED,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -333,24 +404,24 @@ public class PaymentHandler implements PacketHandler {
             Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
             if (auction == null) {
                 log.warn("Second chance decline rejected because auction was not found: auctionId={}, username={}, requestId={}",
-                        auctionId, session.getUsername(), requestId);
+                    auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Phiên không tồn tại.", requestId), requestId));
                 return;
             }
 
             // FIX Bug #5: lấy offer thật, gọi declineSecondChanceOffer thật.
             com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
-                    new com.group13.auction.dao.SecondChanceOfferDAO();
+                new com.group13.auction.dao.SecondChanceOfferDAO();
             com.group13.auction.model.auction.SecondChanceOffer offer =
-                    offerDAO.findPendingOfferByAuctionId(auctionId);
+                offerDAO.findPendingOfferByAuctionId(auctionId);
 
             if (offer == null) {
                 log.warn("Second chance decline rejected because offer was not found: auctionId={}, username={}, requestId={}",
-                        auctionId, session.getUsername(), requestId);
+                    auctionId, session.getUsername(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
-                                "Không tìm thấy Second Chance Offer PENDING.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                        "Không tìm thấy Second Chance Offer PENDING.", requestId), requestId));
                 return;
             }
 
@@ -358,34 +429,34 @@ public class PaymentHandler implements PacketHandler {
             if (caller == null) return;
             if (!caller.getId().equals(offer.getRunnerUp().getId())) {
                 log.warn("Second chance decline rejected because caller is not runner-up: auctionId={}, callerId={}, runnerUpId={}, requestId={}",
-                        auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
+                    auctionId, caller.getId(), offer.getRunnerUp().getId(), requestId);
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
-                                "Bạn không phải runner-up của offer này.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                        "Bạn không phải runner-up của offer này.", requestId), requestId));
                 return;
             }
 
             boolean locked = lockRegistry.tryLock(auctionId, AUCTION_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!locked) {
                 session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                        ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
-                                "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR,
+                        "Hệ thống đang xử lý phiên này, vui lòng thử lại.", requestId), requestId));
                 return;
             }
             try {
                 paymentService.declineSecondChanceOffer(offer, auction);
                 session.send(Packet.of(PacketType.SECOND_CHANCE_DECLINE_SUCCESS, null, requestId));
                 log.info("Second chance decline handled: auctionId={}, offerId={}, runnerUpId={}, requestId={}",
-                        auctionId, offer.getId(), caller.getId(), requestId);
+                    auctionId, offer.getId(), caller.getId(), requestId);
             } finally {
                 lockRegistry.unlock(auctionId);
             }
 
         } catch (Exception e) {
             log.error("Second chance decline failed: username={}, requestId={}",
-                    session.getUsername(), requestId, e);
+                session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
     }
 
@@ -393,12 +464,12 @@ public class PaymentHandler implements PacketHandler {
 
     private NormalUser requireNormalUser(ClientSession session, String requestId) {
         com.group13.auction.model.user.User user =
-                AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            AuctionManager.getInstance().findUserByUsername(session.getUsername());
         if (!(user instanceof NormalUser)) {
             log.warn("NormalUser required for payment handler: username={}, requestId={}",
-                    session.getUsername(), requestId);
+                session.getUsername(), requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
-                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được phép.", requestId), requestId));
+                ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Chỉ NormalUser mới được phép.", requestId), requestId));
             return null;
         }
         return (NormalUser) user;
