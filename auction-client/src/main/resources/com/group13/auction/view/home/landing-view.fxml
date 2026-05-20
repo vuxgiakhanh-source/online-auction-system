@@ -86,7 +86,7 @@
                             
                             <Label text="OMNI"
                                 styleClass="landing-omni"
-                                style="-fx-font-size: 42px; -fx-text-fill:rgb(73, 76, 238)"/>
+                                style="-fx-font-size: 42px; -fx-text-fill:rgb(179, 144, 18)"/>
 
                             <Label text=" ?" styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
                         </HBox>
@@ -99,7 +99,7 @@
                                 styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
 
                             <Label text="          An toàn - Thông minh - Tiện dụng" 
-                                styleClass="landing-main-subtitle" style="-fx-text-fill:rgb(0, 66, 220); -fx-font-size: 25"/>
+                                styleClass="landing-main-subtitle" style="-fx-text-fill:rgb(194, 170, 13); -fx-font-size: 25"/>
                         </VBox>
                     </VBox>
                 </StackPane>
@@ -115,9 +115,10 @@
                             AnchorPane.topAnchor="80.0"
                             AnchorPane.leftAnchor="150.0"
                             AnchorPane.rightAnchor="20.0"> 
-                            <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
+                            <Label text="mniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
                                 wrapText="true" 
-                                styleClass="content-text"/>
+                                styleClass="content-text"
+                                style="-fx-font-size: 20;"/>
                         </VBox>
                         
                         <Label text="O" 
@@ -140,7 +141,8 @@
                             AnchorPane.rightAnchor="20.0"> 
                             <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
                                 wrapText="true" 
-                                styleClass="content-text"/>
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
                         </VBox>
                         
                         <Label text="M" 
@@ -163,7 +165,8 @@
                             AnchorPane.rightAnchor="20.0"> 
                             <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
                                 wrapText="true" 
-                                styleClass="content-text"/>
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
                         </VBox>
                         
                         <Label text="N" 
@@ -186,7 +189,8 @@
                             AnchorPane.rightAnchor="20.0"> 
                             <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
                                 wrapText="true" 
-                                styleClass="content-text"/>
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
                         </VBox>
                         
                         <Label text="I" 
