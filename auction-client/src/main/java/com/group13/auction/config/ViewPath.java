@@ -49,6 +49,9 @@ public final class ViewPath {
     public static final String QUALITY_REPORT_VIEW =
             "/com/group13/auction/view/report/quality-report-view.fxml";
 
+    public static final String CHATBOT_VIEW =
+        "/com/group13/auction/view/chatbot/chatbot-view.fxml";
+
     public static final String ADMIN_DASHBOARD_VIEW =
             "/com/group13/auction/view/admin/admin-dashboard-view.fxml";
     public static final String ADMIN_USERS_VIEW =

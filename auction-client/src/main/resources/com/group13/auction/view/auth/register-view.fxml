@@ -106,25 +106,16 @@
     </VBox>
 
     <VBox alignment="BOTTOM_RIGHT"
-          maxWidth="170.0"
+          maxWidth="190.0"
           pickOnBounds="false"
-          spacing="4.0"
+          spacing="2.0"
           StackPane.alignment="BOTTOM_RIGHT">
         <padding>
             <Insets bottom="8.0" right="16.0"/>
         </padding>
 
-        <HBox alignment="CENTER_RIGHT" spacing="4.0">
-            <ImageView fitHeight="38.0" preserveRatio="true">
-                <Image url="@../../assets/images/mascot-version-2.png"/>
-            </ImageView>
+        <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-            <ImageView fitHeight="34.0" preserveRatio="true">
-                <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
-            </ImageView>
-        </HBox>
-
-        <Label styleClass="chatbot-label" text="Chat with OMNI"/>
         <Label styleClass="signature-label" text="by CKNT team"/>
     </VBox>
 </StackPane>
