@@ -21,10 +21,11 @@
 
     <Pane styleClass="background-layer"/>
 
-    <HBox alignment="CENTER_LEFT"
-          pickOnBounds="false"
-          styleClass="auth-back-container"
-          StackPane.alignment="TOP_LEFT">
+    <HBox maxHeight="-Infinity"
+           maxWidth="-Infinity"
+           pickOnBounds="false"
+           styleClass="auth-back-container"
+           StackPane.alignment="TOP_LEFT">
         <Button fx:id="backToLandingButton"
                 graphicTextGap="8.0"
                 mnemonicParsing="false"
