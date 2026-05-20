@@ -94,6 +94,12 @@ public class PaymentHandler implements PacketHandler {
             log.info("Deposit handled: userId={}, username={}, amount={}, requestId={}",
                     user.getId(), user.getUsername(), req.getAmount(), requestId);
 
+            // FIX stale cache: xóa cachedUser cũ trong session để BidHandler
+            // reload user mới nhất từ DB (có balance đã cập nhật) ở request tiếp theo.
+            // Nếu không xóa, BidHandler.requireNormalUser() trả về object cũ có balance=0
+            // → lockDeposit() sẽ báo INSUFFICIENT_DEPOSIT dù DB đã cập nhật đúng.
+            session.invalidateCachedUser();
+
             PaymentDTOs.WalletBalanceResponseDTO resp = new PaymentDTOs.WalletBalanceResponseDTO(
                     user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
             session.send(Packet.of(PacketType.DEPOSIT_SUCCESS, resp, requestId));
@@ -124,6 +130,9 @@ public class PaymentHandler implements PacketHandler {
             accountService.withdraw(user, req.getAmount());
             log.info("Withdraw handled: userId={}, username={}, amount={}, requestId={}",
                     user.getId(), user.getUsername(), req.getAmount(), requestId);
+
+            // FIX stale cache: tương tự deposit — xóa cache để BidHandler reload balance mới.
+            session.invalidateCachedUser();
 
             PaymentDTOs.WalletBalanceResponseDTO resp = new PaymentDTOs.WalletBalanceResponseDTO(
                     user.getBalance(), user.getLockedDeposit(), user.getAvailableBalance());
