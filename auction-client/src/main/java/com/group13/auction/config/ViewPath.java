@@ -44,10 +44,13 @@ public final class ViewPath {
             "/com/group13/auction/view/notification/notification-center-view.fxml";
 
     public static final String RATING_VIEW =
-            "/com/group13/auction/view/rating/rating-view.fxml";
+        "/com/group13/auction/view/rating/rating-view.fxml";
+
+    public static final String MY_ORDERS_VIEW =
+        "/com/group13/auction/view/order/my-orders-view.fxml";
 
     public static final String QUALITY_REPORT_VIEW =
-            "/com/group13/auction/view/report/quality-report-view.fxml";
+        "/com/group13/auction/view/report/quality-report-view.fxml";
 
     public static final String CHATBOT_VIEW =
         "/com/group13/auction/view/chatbot/chatbot-view.fxml";

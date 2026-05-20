@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/order.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.order.MyOrdersController">
+
+    <VBox spacing="20.0" styleClass="order-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Đơn hàng của tôi" styleClass="page-title"/>
+                <Label
+                        text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
+                        styleClass="page-subtitle"
+                        wrapText="true"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="refreshButton"
+                    text="Tải lại"
+                    styleClass="secondary-button"
+                    onAction="#handleRefresh"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang chính"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToMain"/>
+        </HBox>
+
+        <ScrollPane
+                fitToWidth="true"
+                hbarPolicy="NEVER"
+                VBox.vgrow="ALWAYS"
+                styleClass="order-scroll-pane">
+            <VBox fx:id="orderContainer" spacing="14.0" styleClass="order-list">
+                <padding>
+                    <Insets top="2.0" right="4.0" bottom="4.0" left="4.0"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
+
+        <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <ProgressIndicator
+                        fx:id="loadingIndicator"
+                        prefWidth="24.0"
+                        prefHeight="24.0"
+                        visible="false"
+                        managed="false"/>
+                <Label
+                        fx:id="statusLabel"
+                        text="Sẵn sàng."
+                        wrapText="true"
+                        styleClass="status-label"/>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</StackPane>

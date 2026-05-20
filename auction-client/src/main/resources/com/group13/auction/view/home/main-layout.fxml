@@ -189,19 +189,19 @@
                     <Image url="@../../assets/icons/accent/icon-report.png"/>
                 </ImageView>
 
-                <Label text="Quality Report"
+                <Label text="Đơn hàng của tôi"
                        styleClass="main-card-title"/>
 
-                <Label text="Gửi báo cáo chất lượng sản phẩm và đính kèm ảnh bằng chứng khi cần."
+                <Label text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
                        wrapText="true"
                        styleClass="main-card-description"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <Button mnemonicParsing="false"
-                        onAction="#handleOpenQualityReport"
+                        onAction="#handleOpenMyOrders"
                         styleClass="main-card-button"
-                        text="Gửi report"/>
+                        text="Mở đơn hàng"/>
             </VBox>
 
             <VBox fx:id="adminDashboardCard"

@@ -22,9 +22,8 @@ import java.util.concurrent.CompletionException;
 /**
  * Service xử lý báo cáo chất lượng sản phẩm ở phía client.
  *
- * <p>Client chỉ validate input cơ bản, gửi request đúng PacketType/DTO và map response sang view
- * model. Việc xác minh báo cáo, hoàn tiền, phạt Seller hoặc cập nhật trạng thái là trách nhiệm
- * server.
+ * <p>Service chỉ kiểm tra dữ liệu nhập, upload ảnh bằng chứng, gửi request đúng DTO/protocol và
+ * map response sang view model để controller hiển thị.
  */
 public final class QualityReportService {
 
@@ -48,33 +47,63 @@ public final class QualityReportService {
     }
 
     /**
-     * Gửi báo cáo chất lượng sản phẩm.
+     * Gửi báo cáo chất lượng sản phẩm bằng danh sách URL ảnh đã có.
      *
      * @param auctionId mã phiên đấu giá liên quan
      * @param description mô tả vấn đề
-     * @param evidenceUrls danh sách URL bằng chứng, có thể rỗng
+     * @param evidenceUrls danh sách URL ảnh bằng chứng
      * @return future chứa report view model server trả về
      */
     public CompletableFuture<QualityReportViewModel> submitQualityReport(
-            String auctionId, String description, List<String> evidenceUrls) {
+        String auctionId, String description, List<String> evidenceUrls) {
         String validationError = validateReportRequest(auctionId, description);
         if (validationError != null) {
             return AuctionServiceSupport.failedFuture(validationError);
         }
 
+        List<String> safeEvidenceUrls = normalizeEvidenceUrls(evidenceUrls);
+        if (safeEvidenceUrls.isEmpty()) {
+            return AuctionServiceSupport.failedFuture("Vui lòng chọn ít nhất một ảnh bằng chứng.");
+        }
+
         ReportDTOs.QualityReportRequestDTO request = new ReportDTOs.QualityReportRequestDTO();
         request.setAuctionId(auctionId.trim());
         request.setDescription(description.trim());
-        request.setEvidenceUrls(evidenceUrls == null ? List.of() : evidenceUrls);
+        request.setEvidenceUrls(safeEvidenceUrls);
 
         return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.submitQualityReport(request),
-                        PacketType.SUBMIT_QUALITY_REPORT_SUCCESS,
-                        ReportDTOs.QualityReportDTO.class,
-                        "Không gửi được báo cáo chất lượng.")
-                .thenApply(ReportViewModelMapper::toViewModel);
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.submitQualityReport(request),
+                PacketType.SUBMIT_QUALITY_REPORT_SUCCESS,
+                ReportDTOs.QualityReportDTO.class,
+                "Không gửi được báo cáo chất lượng.")
+            .thenApply(ReportViewModelMapper::toViewModel);
+    }
+
+    /**
+     * Upload ảnh bằng chứng rồi gửi báo cáo chất lượng.
+     *
+     * @param auctionId mã phiên đấu giá liên quan
+     * @param description mô tả vấn đề
+     * @param imagePaths danh sách ảnh local cần upload
+     * @return future chứa report view model server trả về
+     */
+    public CompletableFuture<QualityReportViewModel> submitQualityReportWithImages(
+        String auctionId, String description, List<Path> imagePaths) {
+        String validationError = validateReportRequest(auctionId, description);
+        if (validationError != null) {
+            return AuctionServiceSupport.failedFuture(validationError);
+        }
+
+        List<Path> safeImagePaths = normalizeImagePaths(imagePaths);
+        if (safeImagePaths.isEmpty()) {
+            return AuctionServiceSupport.failedFuture("Vui lòng chọn ít nhất một ảnh bằng chứng.");
+        }
+
+        return CompletableFuture
+            .supplyAsync(() -> uploadEvidenceImages(safeImagePaths))
+            .thenCompose(evidenceUrls -> submitQualityReport(auctionId, description, evidenceUrls));
     }
 
     /**
@@ -88,13 +117,13 @@ public final class QualityReportService {
         }
 
         return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.adminGetQualityReports(),
-                        PacketType.ADMIN_GET_QUALITY_REPORTS_SUCCESS,
-                        ReportDTOs.QualityReportDTO[].class,
-                        "Không tải được danh sách báo cáo chất lượng.")
-                .thenApply(reports -> ReportViewModelMapper.toReviewViewModels(Arrays.asList(reports)));
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.adminGetQualityReports(),
+                PacketType.ADMIN_GET_QUALITY_REPORTS_SUCCESS,
+                ReportDTOs.QualityReportDTO[].class,
+                "Không tải được danh sách báo cáo chất lượng.")
+            .thenApply(reports -> ReportViewModelMapper.toReviewViewModels(Arrays.asList(reports)));
     }
 
     /**
@@ -112,13 +141,13 @@ public final class QualityReportService {
         }
 
         return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.adminApproveQualityReport(reportId.trim()),
-                        PacketType.ADMIN_APPROVE_QUALITY_REPORT_SUCCESS,
-                        ReportDTOs.QualityReportResultDTO.class,
-                        "Không duyệt được báo cáo chất lượng.")
-                .thenApply(this::formatReportResult);
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.adminApproveQualityReport(reportId.trim()),
+                PacketType.ADMIN_APPROVE_QUALITY_REPORT_SUCCESS,
+                ReportDTOs.QualityReportResultDTO.class,
+                "Không duyệt được báo cáo chất lượng.")
+            .thenApply(this::formatReportResult);
     }
 
     /**
@@ -136,35 +165,33 @@ public final class QualityReportService {
         }
 
         return AuctionServiceSupport.sendVoidRequest(
-                networkFacade,
-                ClientRequestFactory.adminRejectQualityReport(reportId.trim()),
-                PacketType.ADMIN_REJECT_QUALITY_REPORT_SUCCESS,
-                "Không từ chối được báo cáo chất lượng.");
+            networkFacade,
+            ClientRequestFactory.adminRejectQualityReport(reportId.trim()),
+            PacketType.ADMIN_REJECT_QUALITY_REPORT_SUCCESS,
+            "Không từ chối được báo cáo chất lượng.");
     }
 
-    /**
-     * Upload ảnh bằng chứng rồi gửi báo cáo chất lượng.
-     *
-     * <p>Flow đúng của backend/common là upload ảnh trước để lấy URL, sau đó gửi các URL đó trong
-     * {@code QualityReportRequestDTO.evidenceUrls}.
-     *
-     * @param auctionId mã phiên đấu giá liên quan
-     * @param description mô tả vấn đề
-     * @param imagePaths danh sách ảnh local cần upload
-     * @return future chứa report view model server trả về
-     */
-    public CompletableFuture<QualityReportViewModel> submitQualityReportWithImages(
-            String auctionId, String description, List<Path> imagePaths) {
-        String validationError = validateReportRequest(auctionId, description);
-        if (validationError != null) {
-            return AuctionServiceSupport.failedFuture(validationError);
+    private List<Path> normalizeImagePaths(List<Path> imagePaths) {
+        if (imagePaths == null || imagePaths.isEmpty()) {
+            return List.of();
         }
 
-        List<Path> safeImagePaths = imagePaths == null ? List.of() : imagePaths;
+        return imagePaths.stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+    }
 
-        return CompletableFuture
-                .supplyAsync(() -> uploadEvidenceImages(safeImagePaths))
-                .thenCompose(evidenceUrls -> submitQualityReport(auctionId, description, evidenceUrls));
+    private List<String> normalizeEvidenceUrls(List<String> evidenceUrls) {
+        if (evidenceUrls == null || evidenceUrls.isEmpty()) {
+            return List.of();
+        }
+
+        return evidenceUrls.stream()
+            .filter(url -> url != null && !url.isBlank())
+            .map(String::trim)
+            .distinct()
+            .toList();
     }
 
     private List<String> uploadEvidenceImages(List<Path> imagePaths) {
@@ -184,7 +211,7 @@ public final class QualityReportService {
                 uploadedUrls.add(uploadService.upload(imagePath));
             } catch (IOException exception) {
                 throw new CompletionException(
-                        "Không upload được ảnh bằng chứng: " + imagePath.getFileName(), exception);
+                    "Không upload được ảnh bằng chứng: " + imagePath.getFileName(), exception);
             } catch (InterruptedException exception) {
                 Thread.currentThread().interrupt();
                 throw new CompletionException("Quá trình upload ảnh bị gián đoạn.", exception);
@@ -215,19 +242,19 @@ public final class QualityReportService {
 
     private String formatReportResult(ReportDTOs.QualityReportResultDTO result) {
         if (result == null) {
-            return "Quality report has been resolved.";
+            return "Đã xử lý báo cáo chất lượng.";
         }
 
         String reportId = result.getReportId() == null ? "--" : result.getReportId();
-        return "Quality report has been resolved. Report ID: " + reportId;
+        return "Đã xử lý báo cáo chất lượng. Mã báo cáo: " + reportId;
     }
 
     private boolean currentUserIsAdmin() {
         return AppContext.getInstance()
-                .getSessionManager()
-                .getCurrentSession()
-                .map(session -> session.isAdmin())
-                .orElse(false);
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> session.isAdmin())
+            .orElse(false);
     }
 
     private boolean isBlank(String value) {
