@@ -6,18 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/bid/BidDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/bid/BidDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/PacketType.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/protocol/PacketType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/BidTransactionDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/UserDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/UserDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/AuctionWebSocketServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/BidHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/SessionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/SessionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/dao/DAOIntegrationIT.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/ClientSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/session/ClientSession.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AuctionLockRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AuctionLockRegistry.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/payment/PaymentStateTransitionIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/payment/PaymentStateTransitionIT.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/BidWebSocketIntegrationIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/BidWebSocketIntegrationIT.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/SessionManagerBroadcastTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/SessionManagerBroadcastTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,22 +244,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.PaymentExpireAndSecondChanceIT">
-    <configuration name="AccountServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.load.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.AccountServiceLoadIT" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="JUnit.AuctionHandlerDispatchTest">
     <configuration name="AuctionHandlerDispatchTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
@@ -282,46 +260,61 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="DepositRefundIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="AuctionTimerServiceConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.service.payment.*" />
+          <option name="PATTERN" value="com.group13.auction.concurrency.timer.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.payment" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.payment.DepositRefundIT" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.timer" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.timer.AuctionTimerServiceConcurrencyTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PacketTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-common" />
+    <configuration name="RatingConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.common.protocol.*" />
+          <option name="PATTERN" value="com.group13.auction.concurrency.rating.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.common.protocol" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.common.protocol.PacketTest" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.rating" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.rating.RatingConcurrencyTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PaymentExpireAndSecondChanceIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="SessionManagerConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="auction-server" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.integration.service.payment.*" />
+          <option name="PATTERN" value="com.group13.auction.concurrency.session.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.payment" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.payment.PaymentExpireAndSecondChanceIT" />
+      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.session" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.session.SessionManagerConcurrencyTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WalletConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.concurrency.wallet.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.wallet" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.wallet.WalletConcurrencyTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -340,19 +333,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="JUnit.DepositRefundIT" />
-      <item itemvalue="JUnit.PacketTest" />
-      <item itemvalue="JUnit.PaymentExpireAndSecondChanceIT" />
-      <item itemvalue="JUnit.AccountServiceLoadIT" />
+      <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
+      <item itemvalue="JUnit.RatingConcurrencyTest" />
+      <item itemvalue="JUnit.SessionManagerConcurrencyTest" />
+      <item itemvalue="JUnit.WalletConcurrencyTest" />
       <item itemvalue="JUnit.AuctionHandlerDispatchTest" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.PaymentExpireAndSecondChanceIT" />
-        <item itemvalue="JUnit.DepositRefundIT" />
-        <item itemvalue="JUnit.PacketTest" />
         <item itemvalue="JUnit.AuctionHandlerDispatchTest" />
-        <item itemvalue="JUnit.AccountServiceLoadIT" />
+        <item itemvalue="JUnit.RatingConcurrencyTest" />
+        <item itemvalue="JUnit.SessionManagerConcurrencyTest" />
+        <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
+        <item itemvalue="JUnit.WalletConcurrencyTest" />
       </list>
     </recent_temporary>
   </component>
@@ -395,7 +388,7 @@
       <workItem from="1779172710448" duration="12723000" />
       <workItem from="1779210261481" duration="635000" />
       <workItem from="1779215922091" duration="3426000" />
-      <workItem from="1779239068703" duration="2132000" />
+      <workItem from="1779239068703" duration="3673000" />
     </task>
     <servers />
   </component>
