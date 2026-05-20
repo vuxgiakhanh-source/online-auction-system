@@ -120,7 +120,14 @@ public abstract class User extends Entity {
   public String getEmail() { return email; }
   public UserRole getPrimaryRole() { return primaryRole; }
   public AccountStatus getAccountStatus() { return accountStatus; }
-  public double getRating() { return rating; }
+  /**
+   * Trả về rating trong miền [RATING_MIN, RATING_MAX].
+   * Clamping được thực hiện tại đây thay vì trong adjustRating(),
+   * để tích lũy concurrent delta không bị mất do per-step clamping.
+   */
+  public synchronized double getRating() {
+    return Math.max(RATING_MIN, Math.min(RATING_MAX, rating));
+  }
   public String getHashedPassword() { return hashedPassword; }
   public LocalDateTime getSuspendedAt() { return suspendedAt; }
 
@@ -237,8 +244,19 @@ public abstract class User extends Entity {
    *
    * @param delta lượng thay đổi (có thể âm)
    */
+  /**
+   * Điều chỉnh rating theo delta (> 0 = tăng, < 0 = giảm).
+   *
+   * <p>Raw accumulation — không clamp tại đây.
+   * Clamping chỉ thực hiện khi đọc qua {@link #getRating()}.
+   * Cách này đảm bảo rằng trong môi trường concurrent, tổng net delta
+   * từ tất cả các thread được phản ánh chính xác, thay vì bị mất
+   * do per-step boundary clamping (lost-update tại biên).
+   *
+   * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
+   */
   public synchronized void adjustRating(double delta) {
-    this.rating = Math.max(RATING_MIN, Math.min(RATING_MAX, this.rating + delta));
+    this.rating += delta;
     markUpdated();
   }
 

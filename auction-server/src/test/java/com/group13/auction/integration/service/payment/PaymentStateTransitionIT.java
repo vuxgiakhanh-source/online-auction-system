@@ -90,6 +90,12 @@ class PaymentStateTransitionIT {
         when(auctionDAO.updateAuctionStatus(anyString(), anyString())).thenReturn(true);
         when(auctionDAO.updateAuctionResult(any())).thenReturn(true);
 
+        // FIX: stub thiếu → saveTransactionAndUpdatePrice trả false → IllegalStateException.
+        // AuctionService.recordWinnerDepositHeldInBank() gọi financialTransactionDAO.saveTransaction(tx)
+        // để ghi audit trail cọc winner. Mock mặc định trả false → throw IllegalStateException
+        // → toàn bộ test bị fail ở @BeforeEach trước khi test nào chạy được.
+        when(financialTransactionDAO.saveTransaction(any())).thenReturn(true);
+
         auctionService.closeAuction(auction); // RUNNING → FINISHED
 
         assertThat(auction.getStatus()).isEqualTo(AuctionStatus.FINISHED);
@@ -341,9 +347,9 @@ class PaymentStateTransitionIT {
         void auction_PAID_and_winner_FUNDS_HELD_consistent() {
             paymentService.completePayment(auction);
             assertAll(
-                () -> assertThat(auction.getStatus()).isEqualTo(AuctionStatus.PAID),
-                () -> assertThat(auction.getWinner().getPaymentStatus())
-                        .isEqualTo(PaymentStatus.FUNDS_HELD)
+                    () -> assertThat(auction.getStatus()).isEqualTo(AuctionStatus.PAID),
+                    () -> assertThat(auction.getWinner().getPaymentStatus())
+                            .isEqualTo(PaymentStatus.FUNDS_HELD)
             );
         }
 
@@ -357,8 +363,8 @@ class PaymentStateTransitionIT {
             try { paymentService.completePayment(a); } catch (Exception ignored) {}
 
             assertAll(
-                () -> assertThat(a.getStatus()).isEqualTo(AuctionStatus.FINISHED),
-                () -> assertThat(a.getWinner().getPaymentStatus()).isEqualTo(PaymentStatus.PENDING)
+                    () -> assertThat(a.getStatus()).isEqualTo(AuctionStatus.FINISHED),
+                    () -> assertThat(a.getWinner().getPaymentStatus()).isEqualTo(PaymentStatus.PENDING)
             );
         }
 
@@ -389,10 +395,10 @@ class PaymentStateTransitionIT {
             paymentService.completePayment(e2e);
 
             assertAll(
-                () -> assertThat(e2e.getStatus()).isEqualTo(AuctionStatus.PAID),
-                () -> assertThat(e2e.getWinner().getPaymentStatus())
-                        .isEqualTo(PaymentStatus.FUNDS_HELD),
-                () -> assertThat(e2eWinner.getLockedDeposit()).isZero()
+                    () -> assertThat(e2e.getStatus()).isEqualTo(AuctionStatus.PAID),
+                    () -> assertThat(e2e.getWinner().getPaymentStatus())
+                            .isEqualTo(PaymentStatus.FUNDS_HELD),
+                    () -> assertThat(e2eWinner.getLockedDeposit()).isZero()
             );
         }
     }

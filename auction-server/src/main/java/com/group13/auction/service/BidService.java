@@ -138,7 +138,14 @@ public class BidService implements IBidService {
         auction.incrementViewerCount();
         auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
       }
-      userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+      // FIX: không ghi WATCHING nếu user đã JOINED.
+      // Bảng user_auction_activity có PK (user_id, auction_id) — chỉ 1 dòng mỗi cặp.
+      // Nếu ghi WATCHING đè lên JOINED, findJoinedAuctionIdsByUserId() sẽ miss auction này
+      // → placeBid() báo NOT_JOINED_AUCTION dù user đã join thành công.
+      // Lớp bảo vệ thứ 2 (lớp 1 là SQL IF trong saveUserAuctionActivity).
+      if (!bidder.hasJoined(auction.getId())) {
+        userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+      }
     } finally {
       lock.unlock();
     }

@@ -55,6 +55,34 @@ public class ClientSession {
      */
     private final Set<String> watchingAuctionIds = ConcurrentHashMap.newKeySet();
 
+    /**
+     * FIX PERFORMANCE: Cache NormalUser object để tránh DB round-trip mỗi bid.
+     *
+     * Vấn đề cũ: requireNormalUser() gọi AuctionManager.findUserByUsername()
+     * → userDAO.findUserByUsername() → SELECT * FROM users mỗi lần có bid.
+     * 500 bid/s = 500+ DB queries/s chỉ để look up user.
+     *
+     * Fix: cache user object trong session sau lần load đầu tiên.
+     * Cache an toàn vì:
+     * - join/leave gọi addJoinedAuction/removeJoinedAuction trực tiếp trên object này → in-place update ✓
+     * - balance chỉ được kiểm tra lúc join (lockDeposit), không phải lúc bid ✓
+     * - accountStatus ít thay đổi; nếu bị ban, RatingService.isEligible() vẫn reject ✓
+     *
+     * Invalidate: gọi invalidateCachedUser() khi deauthenticate hoặc khi
+     * cần load state mới nhất từ DB (ví dụ: sau khi admin thay đổi trạng thái).
+     *
+     * volatile đảm bảo visibility giữa các thread (dù 1 session chỉ serve từ 1 thread,
+     * invalidateCachedUser() có thể được gọi từ thread khác).
+     */
+    private volatile com.group13.auction.model.user.NormalUser cachedUser;
+
+    public com.group13.auction.model.user.NormalUser getCachedUser() { return cachedUser; }
+
+    public void setCachedUser(com.group13.auction.model.user.NormalUser user) { this.cachedUser = user; }
+
+    /** Xóa cache để lần dùng tiếp sẽ reload từ DB. */
+    public void invalidateCachedUser() { this.cachedUser = null; }
+
     public ClientSession(WebSocket connection) {
         this.connection = connection;
     }
@@ -108,6 +136,7 @@ public class ClientSession {
     public void deauthenticate() {
         AuthState prev = authState.getAndSet(AuthState.ANONYMOUS);
         this.watchingAuctionIds.clear();
+        this.cachedUser = null;  // FIX: xóa cache khi logout
         log.info("Session deauthenticated: username={}", prev.username);
     }
 

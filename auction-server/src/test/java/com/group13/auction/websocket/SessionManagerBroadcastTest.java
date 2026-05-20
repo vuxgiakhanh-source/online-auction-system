@@ -297,6 +297,94 @@ class SessionManagerBroadcastTest {
         }
     }
 
+    // ── Active Viewer Count ───────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("getActiveViewerCount — đếm live connections đang xem phiên")
+    class ActiveViewerCount {
+
+        @Test
+        @DisplayName("0 watcher → count = 0")
+        void noWatcher_returnsZero() {
+            assertThat(sm.getActiveViewerCount("auc-count-0")).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("1 watcher → count = 1")
+        void oneWatcher_returnsOne() {
+            sm.register(wsWatcherA);
+            sm.addAuctionWatcher(wsWatcherA, "auc-count-1");
+
+            assertThat(sm.getActiveViewerCount("auc-count-1")).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("2 watchers → count = 2")
+        void twoWatchers_returnsTwo() {
+            sm.register(wsWatcherA);
+            sm.register(wsWatcherB);
+            sm.addAuctionWatcher(wsWatcherA, "auc-count-2");
+            sm.addAuctionWatcher(wsWatcherB, "auc-count-2");
+
+            assertThat(sm.getActiveViewerCount("auc-count-2")).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("watcher rời → count giảm ngay (live, không cộng dồn)")
+        void afterRemoveWatcher_countDecremented() {
+            sm.register(wsWatcherA);
+            sm.register(wsWatcherB);
+            sm.addAuctionWatcher(wsWatcherA, "auc-count-dec");
+            sm.addAuctionWatcher(wsWatcherB, "auc-count-dec");
+
+            sm.removeAuctionWatcher(wsWatcherA, "auc-count-dec");
+
+            // count phải giảm ngay, không phải giữ giá trị cũ (bug cũ với historical counter)
+            assertThat(sm.getActiveViewerCount("auc-count-dec")).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("unregister (disconnect) → count giảm ngay")
+        void afterUnregister_countDecremented() {
+            sm.register(wsWatcherA);
+            sm.register(wsWatcherB);
+            sm.addAuctionWatcher(wsWatcherA, "auc-count-dc");
+            sm.addAuctionWatcher(wsWatcherB, "auc-count-dc");
+
+            sm.unregister(wsWatcherA);
+
+            // disconnect phải làm giảm count — đây là fix cốt lõi của bug realtime viewer
+            assertThat(sm.getActiveViewerCount("auc-count-dc")).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("watcher khác phiên không bị tính nhầm")
+        void watcherOfDifferentAuction_notCounted() {
+            sm.register(wsWatcherA);
+            sm.register(wsOtherAuction);
+            sm.addAuctionWatcher(wsWatcherA, "auc-target");
+            sm.addAuctionWatcher(wsOtherAuction, "auc-other");  // khác phiên
+
+            assertThat(sm.getActiveViewerCount("auc-target")).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("join lại sau disconnect → count đúng (không cộng dồn cả 2 lần)")
+        void rejoinAfterDisconnect_countAccurate() {
+            sm.register(wsWatcherA);
+            sm.addAuctionWatcher(wsWatcherA, "auc-count-rj");
+            sm.unregister(wsWatcherA);
+            // User kết nối lại với connection object mới
+            sm.register(wsWatcherB);
+            sm.addAuctionWatcher(wsWatcherB, "auc-count-rj");
+
+            // Chỉ 1 live connection, không phải 2
+            assertThat(sm.getActiveViewerCount("auc-count-rj")).isEqualTo(1);
+        }
+    }
+
+    // ── Active Viewer Count ───────────────────────────────────────────────────
+
     // ── Lifecycle: authenticate, deauthenticate, replace session ─────────────
 
     @Nested
