@@ -242,8 +242,13 @@ public class AuctionHandler implements PacketHandler {
                         ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId), requestId));
                 return;
             }
-            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS,
-                    DTOMapper.toAuctionDTO(auction), requestId));
+            // FIX viewer count: dùng live connection count thay vì auction.getViewerCount()
+            // auction.getViewerCount() là counter lịch sử (chỉ tăng, không giảm) → sai.
+            // getActiveViewerCount() đếm số session đang thực sự watching tại thời điểm này.
+            com.group13.auction.common.dto.auction.AuctionDTOs.AuctionDTO dto =
+                    com.group13.auction.network.server.util.DTOMapper.toAuctionDTO(auction);
+            dto.setViewerCount(sessionManager.getActiveViewerCount(auctionId));
+            session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS, dto, requestId));
         } catch (Exception e) {
             log.error("Get auction detail failed: username={}, requestId={}",
                     session.getUsername(), requestId, e);
