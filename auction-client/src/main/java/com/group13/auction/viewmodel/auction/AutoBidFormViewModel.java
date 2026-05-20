@@ -2,7 +2,7 @@ package com.group13.auction.viewmodel.auction;
 
 import java.util.Optional;
 
-/** Dữ liệu form đăng ký auto-bid ở phía client. */
+/** Dữ liệu form đăng ký Auto-Bid ở phía client. */
 public final class AutoBidFormViewModel {
 
     private final String maxBidText;
@@ -15,14 +15,14 @@ public final class AutoBidFormViewModel {
         return maxBidText;
     }
 
-    /** Validate giá tối đa trước khi gửi request auto-bid. */
+    /** Validate giá tối đa trước khi gửi request Auto-Bid. */
     public Optional<String> validate() {
         if (maxBidText.trim().isEmpty()) {
             return Optional.of("Bạn chưa nhập giá tối đa cho auto-bid.");
         }
 
         try {
-            if (Long.parseLong(maxBidText.trim()) <= 0) {
+            if (maxBidAmount() <= 0) {
                 return Optional.of("Giá tối đa phải lớn hơn 0.");
             }
         } catch (NumberFormatException exception) {
@@ -33,6 +33,10 @@ public final class AutoBidFormViewModel {
     }
 
     public long maxBidAmount() {
-        return Long.parseLong(maxBidText.trim());
+        return Long.parseLong(normalizedAmountText());
+    }
+
+    private String normalizedAmountText() {
+        return maxBidText.trim().replaceAll("[\\s,.]", "");
     }
 }
