@@ -31,7 +31,7 @@ CREATE TABLE users (
     -- Thêm DELETED để soft-delete theo UserDAO.delete()
                        status ENUM('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETED') DEFAULT 'ACTIVE',
                        has_ever_been_penalized BOOLEAN DEFAULT FALSE,
-                       has_ever_been_restored BOOLEAN DEFAULT FALSE,
+                       times_restored          INT          DEFAULT 0,
                        suspended_at DATETIME NULL
 );
 
@@ -144,6 +144,8 @@ CREATE TABLE auction_winners (
                                  final_price BIGINT NOT NULL,
                                  deposit_paid BIGINT NOT NULL,
                                  payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED', 'FUNDS_HELD') DEFAULT 'PENDING',
+                                 confirm_receipt_deadline DATETIME NULL,
+                                 report_deadline DATETIME NULL,
                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                  FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                  FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE
@@ -211,8 +213,24 @@ CREATE TABLE auto_bids (
                            FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
 );
 
+-- 14. Bảng Notifications
+CREATE TABLE notifications (
+                              id VARCHAR(36) PRIMARY KEY,
+                              user_id VARCHAR(36) NOT NULL,
+                              auction_id VARCHAR(36) NULL,
+                              title VARCHAR(255) NOT NULL,
+                              body TEXT NOT NULL,
+                              is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                              FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                              FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
+);
+
 -- Index hỗ trợ query theo auction_id (dùng trong clearAuction và loadFromDatabase)
 CREATE INDEX idx_auto_bids_auction_id ON auto_bids(auction_id);
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
 
 -- =================================================================
 -- 4. SEED DATA (DỮ LIỆU MẪU)

@@ -104,6 +104,13 @@ public class AutoBidProcessor {
             AutoBidRegistry.AutoBidEntry winner = candidates.get(0);
             long nextBid = calcSmartBid(auction.getCurrentPrice(), winner.getMaxBid(), phase);
 
+            // ANTI-SNIPE FIX: không auto-bid khi user offline
+            if (!sessionManager.isOnline(winner.getUserId())) {
+                log.debug("auto-bid skipped — user offline: userId={} auctionId={}",
+                        winner.getUserId(), auctionId);
+                break; // dừng chain; sẽ resume khi có bid thật tiếp theo
+            }
+
             NormalUser autoBidder = findNormalUserById(winner.getUserId());
             if (autoBidder == null) {
                 log.warn("auto-bid user not found, cancelling: userId={} auctionId={}",

@@ -29,6 +29,9 @@ public class UserDTO {
     /** true nếu user này đã từng bị penalize (ảnh hưởng auto-approve Seller). */
     private boolean hasEverBeenPenalized;
 
+    /** Số lần tài khoản được auto-restore sau khi bị SUSPENDED. */
+    private int timesRestored;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -70,6 +73,9 @@ public class UserDTO {
     public void setHasEverBeenPenalized(boolean hasEverBeenPenalized) {
         this.hasEverBeenPenalized = hasEverBeenPenalized;
     }
+
+    public int getTimesRestored() { return timesRestored; }
+    public void setTimesRestored(int timesRestored) { this.timesRestored = timesRestored; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
