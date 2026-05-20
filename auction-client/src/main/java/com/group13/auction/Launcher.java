@@ -15,6 +15,8 @@ public final class Launcher {
     /**
      * Chuyển quyền chạy app sang {@link App}.
      *
+     *
+     * 
      * @param args command line arguments
      */
     public static void main(String[] args) {
