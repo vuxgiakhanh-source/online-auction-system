@@ -39,7 +39,8 @@ public class LandingController implements Initializable {
     @FXML private Pane gradientOverlay; 
 
     // Quản lý MediaPlayer
-    private static MediaPlayer globalPlayer;
+    private MediaPlayer backgroundPlayer;
+    private boolean videoInitialized = false;
     private boolean isRevealed = false;
     private final List<AnchorPane> slideBlocks = new ArrayList<>();
 
@@ -54,29 +55,21 @@ public class LandingController implements Initializable {
             gradientOverlay.setOpacity(0.0);
         }
 
-        // 2. Cleanup player cũ nếu có
-        cleanupVideo();
+        // 2. Chỉ khởi tạo video khi node đã gắn vào scene
+        if (revealBlock != null) {
+            revealBlock.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    initBackgroundVideo();
+                } else {
+                    cleanupVideo();
+                }
+            });
+        }
 
-        // 3. Khởi tạo video với độ trễ ngắn để ổn định giao diện
-        Platform.runLater(() -> {
-            try {
-                initBackgroundVideo();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-
-        // 4. Lắng nghe cuộn trang
+        // 3. Lắng nghe cuộn trang
         if (mainScrollPane != null) {
             mainScrollPane.vvalueProperty().addListener((obs, oldV, newV) -> checkAndRevealBlock());
             Platform.runLater(this::checkAndRevealBlock);
-        }
-
-        // 5. Giải phóng video khi chuyển scene
-        if (revealBlock != null) {
-            revealBlock.sceneProperty().addListener((obs, oldS, newS) -> {
-                if (newS == null) cleanupVideo();
-            });
         }
 
         slideBlocks.addAll(List.of(slideBlockO, slideBlockM, slideBlockN, slideBlockI));
@@ -88,48 +81,74 @@ public class LandingController implements Initializable {
     }
 
     private synchronized void cleanupVideo() {
-        if (globalPlayer != null) {
+        if (backgroundPlayer != null) {
             try {
-                globalPlayer.stop();
-                globalPlayer.dispose();
+                backgroundPlayer.stop();
+                backgroundPlayer.dispose();
             } catch (Exception e) {
                 // Ignore
             } finally {
-                globalPlayer = null;
+                backgroundPlayer = null;
+                videoInitialized = false;
             }
         }
     }
 
-    private void initBackgroundVideo() {
-        if (bgMediaView == null || revealBlock == null) return;
+    private synchronized void initBackgroundVideo() {
+        if (videoInitialized || bgMediaView == null || revealBlock == null) return;
 
-        bgMediaView.setPreserveRatio(true);
-        bgMediaView.fitWidthProperty().bind(revealBlock.widthProperty());
+        URL videoUrl = getClass().getResource("/com/group13/auction/assets/videos/bg-landing.mp4");
+        if (videoUrl == null) {
+            System.err.println("Không tìm thấy video nền: /com/group13/auction/assets/videos/bg-landing.mp4");
+            return;
+        }
 
         try {
-            URL videoUrl = getClass().getResource("/com/group13/auction/assets/videos/bg-landing.mp4");
-            if (videoUrl == null) return;
+            bgMediaView.setPreserveRatio(true);
+            bgMediaView.setManaged(true);
+            bgMediaView.fitWidthProperty().unbind();
+            bgMediaView.fitWidthProperty().bind(revealBlock.widthProperty());
 
             Media media = new Media(videoUrl.toExternalForm());
-            globalPlayer = new MediaPlayer(media);
-            globalPlayer.setMute(true);
-            globalPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            backgroundPlayer = new MediaPlayer(media);
+            backgroundPlayer.setMute(true);
+            backgroundPlayer.setCycleCount(MediaPlayer.INDEFINITE);
 
-            bgMediaView.setMediaPlayer(globalPlayer);
-            
-            globalPlayer.setOnReady(() -> {
-                if (globalPlayer != null) globalPlayer.play();
-            });
-
-            globalPlayer.setOnEndOfMedia(() -> {
-                if (globalPlayer != null) {
-                    globalPlayer.seek(Duration.ZERO);
-                    globalPlayer.play();
+            backgroundPlayer.setOnReady(() -> {
+                MediaPlayer player = backgroundPlayer;
+                if (player != null) {
+                    player.play();
                 }
             });
 
+            backgroundPlayer.setOnError(() -> {
+                MediaPlayer player = backgroundPlayer;
+                if (player != null && player.getError() != null) {
+                    System.err.println("Lỗi MediaPlayer: " + player.getError().getMessage());
+                }
+            });
+
+            media.setOnError(() -> {
+                if (media.getError() != null) {
+                    System.err.println("Lỗi Media: " + media.getError().getMessage());
+                }
+            });
+
+            bgMediaView.setMediaPlayer(backgroundPlayer);
+            bgMediaView.setVisible(true);
+
+            Platform.runLater(() -> {
+                MediaPlayer player = backgroundPlayer;
+                if (player != null) {
+                    player.play();
+                }
+            });
+
+            videoInitialized = true;
+
         } catch (Exception e) {
             System.err.println("Lỗi khởi tạo video: " + e.getMessage());
+            cleanupVideo();
         }
     }
 
@@ -176,6 +195,7 @@ public class LandingController implements Initializable {
         if (scrollBounds == null || blockBounds == null) return;
 
         // Tính toán chiều cao thực tế của khối video
+        if (blockBounds.getHeight() <= 0) return;
         double blockHeight = blockBounds.getHeight();
 
         // ĐIỀU KIỆN HIỆN: Mép dưới màn hình phải vượt qua đúng 50% chiều cao của khối video
