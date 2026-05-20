@@ -120,11 +120,23 @@ public class AutoBidRegistry {
     /**
      * Load lại auto-bid từ DB khi server restart.
      * Gọi từ server bootstrap sau khi loadDataFromDatabase().
+     * Bug 4 fix: chỉ load auto-bid của phiên còn OPEN hoặc RUNNING.
      */
     public void loadFromDatabase() {
         List<AutoBidDAO.AutoBidRow> rows = autoBidDAO.findAll();
         int count = 0;
         for (AutoBidDAO.AutoBidRow row : rows) {
+            // Bỏ qua nếu auction không còn tồn tại hoặc đã kết thúc
+            com.group13.auction.model.auction.Auction auction =
+                com.group13.auction.manager.AuctionManager.getInstance().findAuctionById(row.auctionId);
+            if (auction == null) continue;
+            com.group13.auction.model.auction.Auction.AuctionStatus status = auction.getStatus();
+            if (status != com.group13.auction.model.auction.Auction.AuctionStatus.OPEN
+                && status != com.group13.auction.model.auction.Auction.AuctionStatus.RUNNING) {
+                // Xóa luôn entry rác khỏi DB
+                try { autoBidDAO.delete(row.userId, row.auctionId); } catch (Exception ignored) {}
+                continue;
+            }
             String key = buildKey(row.userId, row.auctionId);
             AutoBidEntry entry = new AutoBidEntry(row.userId, row.auctionId, row.maxBid, row.registeredAt);
             registry.putIfAbsent(key, entry);
@@ -178,7 +190,7 @@ public class AutoBidRegistry {
         @Override
         public String toString() {
             return String.format("AutoBidEntry{user=%s, auction=%s, maxBid=%d, at=%s}",
-                    userId, auctionId, maxBid, registeredAt);
+                userId, auctionId, maxBid, registeredAt);
         }
     }
 }
