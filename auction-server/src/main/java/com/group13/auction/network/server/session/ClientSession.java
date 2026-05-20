@@ -129,6 +129,7 @@ public class ClientSession {
      */
     public void authenticate(String userId, String username, String userRole) {
         authState.set(new AuthState(userId, username, userRole, true));
+        this.cachedUser = null;  // FIX: xóa cache của user cũ khi có user mới đăng nhập trên cùng connection
         log.info("Session authenticated: userId={}, username={}, role={}", userId, username, userRole);
     }
 
