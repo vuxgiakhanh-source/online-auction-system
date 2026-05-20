@@ -62,7 +62,7 @@
                         
                         <Label text="ĐẤU GIÁ TRỰC TUYẾN" 
                             styleClass="landing-main-title" 
-                            style="-fx-text-fill:rgb(90, 217, 224);"/> </HBox>
+                            style="-fx-text-fill:rgb(58, 46, 222);"/> </HBox>
 
                     <Label text="duy nhất bạn cần" styleClass="landing-main-title"/>
 
