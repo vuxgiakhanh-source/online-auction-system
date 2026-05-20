@@ -1,6 +1,6 @@
 package com.group13.auction.ui.util;
 
-import com.group13.auction.service.support.SoundManager;
+import com.group13.auction.service.support.AudioManager;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -49,7 +49,7 @@ public final class DialogSoundUtil {
             return;
         }
 
-        button.addEventFilter(ActionEvent.ACTION, event -> SoundManager.playClickSound());
+        button.addEventFilter(ActionEvent.ACTION, event -> AudioManager.playClickSound());
         button.getProperties().put(INSTALLED_KEY, Boolean.TRUE);
     }
 }

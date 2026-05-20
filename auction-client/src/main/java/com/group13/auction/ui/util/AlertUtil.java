@@ -1,7 +1,7 @@
 package com.group13.auction.ui.util;
 
 import com.group13.auction.config.UiConstants;
-import com.group13.auction.service.support.SoundManager;
+import com.group13.auction.service.support.AudioManager;
 import java.util.Optional;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -70,7 +70,7 @@ public final class AlertUtil {
 
     private static void playErrorSoundForProblemDialog(Alert.AlertType type) {
         if (type == Alert.AlertType.ERROR || type == Alert.AlertType.WARNING) {
-            SoundManager.playErrorSound();
+            AudioManager.playErrorSound();
         }
     }
 }
