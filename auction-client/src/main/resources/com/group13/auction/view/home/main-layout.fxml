@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -20,227 +21,230 @@
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
-    <VBox spacing="26.0"
-          styleClass="main-shell"
-          AnchorPane.topAnchor="0.0"
-          AnchorPane.bottomAnchor="0.0"
-          AnchorPane.leftAnchor="0.0"
-          AnchorPane.rightAnchor="0.0">
-        <padding>
-            <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
-        </padding>
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                pannable="true"
+                AnchorPane.topAnchor="0.0"
+                AnchorPane.bottomAnchor="0.0"
+                AnchorPane.leftAnchor="0.0"
+                AnchorPane.rightAnchor="0.0">
+        <VBox spacing="26.0" styleClass="main-shell">
+            <padding>
+                <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
+            </padding>
 
-        <!-- Header -->
-        <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="main-header">
-            <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="main-brand">
-                <ImageView fitWidth="210.0" preserveRatio="true">
-                    <Image url="@../../assets/images/logo.png"/>
-                </ImageView>
+            <!-- Header -->
+            <HBox alignment="CENTER_LEFT" spacing="18.0" styleClass="main-header">
+                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="main-brand">
+                    <ImageView fitWidth="210.0" preserveRatio="true">
+                        <Image url="@../../assets/images/logo.png"/>
+                    </ImageView>
 
-                <ImageView fitHeight="44.0" preserveRatio="true">
-                    <Image url="@../../assets/images/mascot-version-1.png"/>
-                </ImageView>
+                    <ImageView fitHeight="44.0" preserveRatio="true">
+                        <Image url="@../../assets/images/mascot-version-1.png"/>
+                    </ImageView>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Button fx:id="backgroundAudioButton"
+                        mnemonicParsing="false"
+                        onAction="#handleToggleBackgroundAudio"
+                        styleClass="main-header-button"
+                        text="Music ON"/>
+
+                <Button fx:id="effectsAudioButton"
+                        mnemonicParsing="false"
+                        onAction="#handleToggleEffectsAudio"
+                        styleClass="main-header-button"
+                        text="SFX ON"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenProfile"
+                        styleClass="main-header-button"
+                        text="Hồ sơ"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenNotificationCenter"
+                        styleClass="main-header-button"
+                        text="Thông báo"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleLogout"
+                        styleClass="main-header-danger-button"
+                        text="Đăng xuất"/>
             </HBox>
 
-            <Region HBox.hgrow="ALWAYS"/>
+            <!-- Welcome section -->
+            <VBox spacing="8.0" styleClass="main-welcome-section">
+                <Label fx:id="welcomeLabel"
+                       text="Xin chào!"
+                       styleClass="main-welcome-title"/>
 
-            <Button fx:id="backgroundAudioButton"
-                    mnemonicParsing="false"
-                    onAction="#handleToggleBackgroundAudio"
-                    styleClass="main-header-button"
-                    text="Music ON"/>
+                <Label fx:id="accountInfoLabel"
+                       text="Đang tải thông tin tài khoản..."
+                       wrapText="true"
+                       styleClass="main-account-info"/>
+            </VBox>
 
-            <Button fx:id="effectsAudioButton"
-                    mnemonicParsing="false"
-                    onAction="#handleToggleEffectsAudio"
-                    styleClass="main-header-button"
-                    text="SFX ON"/>
+            <!-- Main module cards -->
+            <HBox spacing="22.0" styleClass="main-card-row">
+                <VBox spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-auction.png"/>
+                    </ImageView>
 
-            <Button mnemonicParsing="false"
-                    onAction="#handleOpenProfile"
-                    styleClass="main-header-button"
-                    text="Hồ sơ"/>
+                    <Label text="Phiên đấu giá"
+                           styleClass="main-card-title"/>
 
-            <Button mnemonicParsing="false"
-                    onAction="#handleOpenNotificationCenter"
-                    styleClass="main-header-button"
-                    text="Thông báo"/>
+                    <Label text="Xem danh sách phiên đấu giá, mở chi tiết sản phẩm và vào phòng đấu giá realtime."
+                           wrapText="true"
+                           styleClass="main-card-description"/>
 
-            <Button mnemonicParsing="false"
-                    onAction="#handleLogout"
-                    styleClass="main-header-danger-button"
-                    text="Đăng xuất"/>
-        </HBox>
+                    <Region VBox.vgrow="ALWAYS"/>
 
-        <!-- Welcome section -->
-        <VBox spacing="8.0" styleClass="main-welcome-section">
-            <Label fx:id="welcomeLabel"
-                   text="Xin chào!"
-                   styleClass="main-welcome-title"/>
+                    <Button mnemonicParsing="false"
+                            onAction="#handleOpenAuctionList"
+                            styleClass="main-card-button"
+                            text="Mở danh sách phiên đấu giá"/>
+                </VBox>
 
-            <Label fx:id="accountInfoLabel"
-                   text="Đang tải thông tin tài khoản..."
-                   wrapText="true"
-                   styleClass="main-account-info"/>
+                <VBox spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-wallet.png"/>
+                    </ImageView>
+
+                    <Label text="Ví &amp; thanh toán"
+                           styleClass="main-card-title"/>
+
+                    <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
+                           wrapText="true"
+                           styleClass="main-card-description"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleOpenWallet"
+                            styleClass="main-card-button"
+                            text="Mở ví"/>
+                </VBox>
+
+                <VBox spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card-muted">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-gavel.png"/>
+                    </ImageView>
+
+                    <Label text="Kênh Seller"
+                           styleClass="main-card-title"/>
+
+                    <Label text="Tạo phiên đấu giá, theo dõi các phiên của bạn và gửi yêu cầu hủy."
+                           wrapText="true"
+                           styleClass="main-card-description-muted"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button fx:id="sellerDashboardButton"
+                            mnemonicParsing="false"
+                            onAction="#handleOpenSellerDashboard"
+                            styleClass="main-card-button"
+                            text="Mở kênh Seller"/>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="22.0" styleClass="main-card-row">
+                <VBox spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-message.png"/>
+                    </ImageView>
+
+                    <Label text="Rating"
+                           styleClass="main-card-title"/>
+
+                    <Label text="Gửi đánh giá hoặc xem lịch sử rating của người dùng sau giao dịch."
+                           wrapText="true"
+                           styleClass="main-card-description"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleOpenRating"
+                            styleClass="main-card-button"
+                            text="Mở Rating"/>
+                </VBox>
+
+                <VBox spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-report.png"/>
+                    </ImageView>
+
+                    <Label text="Đơn hàng của tôi"
+                           styleClass="main-card-title"/>
+
+                    <Label text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
+                           wrapText="true"
+                           styleClass="main-card-description"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleOpenMyOrders"
+                            styleClass="main-card-button"
+                            text="Mở đơn hàng"/>
+                </VBox>
+
+                <VBox fx:id="adminDashboardCard"
+                      spacing="14.0"
+                      prefWidth="360.0"
+                      prefHeight="220.0"
+                      styleClass="main-dashboard-card">
+                    <ImageView fitHeight="46.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-admin.png"/>
+                    </ImageView>
+
+                    <Label text="Admin Dashboard"
+                           styleClass="main-card-title"/>
+
+                    <Label text="Quản lý người dùng, phiên đấu giá, duyệt Seller và xử lý báo cáo."
+                           wrapText="true"
+                           styleClass="main-card-description"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <Button fx:id="adminDashboardButton"
+                            mnemonicParsing="false"
+                            onAction="#handleOpenAdminDashboard"
+                            styleClass="main-card-button"
+                            text="Mở Admin"/>
+                </VBox>
+            </HBox>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Chatbot launcher + signature -->
+            <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                    <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                    <Label styleClass="signature-label" text="by CKNT team"/>
+                </VBox>
+            </HBox>
         </VBox>
-
-        <!-- Main module cards -->
-        <HBox spacing="22.0" styleClass="main-card-row">
-            <VBox spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-auction.png"/>
-                </ImageView>
-
-                <Label text="Phiên đấu giá"
-                       styleClass="main-card-title"/>
-
-                <Label text="Xem danh sách phiên đấu giá, mở chi tiết sản phẩm và vào phòng đấu giá realtime."
-                       wrapText="true"
-                       styleClass="main-card-description"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button mnemonicParsing="false"
-                        onAction="#handleOpenAuctionList"
-                        styleClass="main-card-button"
-                        text="Mở danh sách phiên đấu giá"/>
-            </VBox>
-
-            <VBox spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-wallet.png"/>
-                </ImageView>
-
-                <Label text="Ví &amp; thanh toán"
-                       styleClass="main-card-title"/>
-
-                <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
-                       wrapText="true"
-                       styleClass="main-card-description"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button mnemonicParsing="false"
-                        onAction="#handleOpenWallet"
-                        styleClass="main-card-button"
-                        text="Mở ví"/>
-            </VBox>
-
-            <VBox spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card-muted">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-gavel.png"/>
-                </ImageView>
-
-                <Label text="Kênh Seller"
-                       styleClass="main-card-title"/>
-
-                <Label text="Tạo phiên đấu giá, theo dõi các phiên của bạn và gửi yêu cầu hủy."
-                       wrapText="true"
-                       styleClass="main-card-description-muted"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button fx:id="sellerDashboardButton"
-                        mnemonicParsing="false"
-                        onAction="#handleOpenSellerDashboard"
-                        styleClass="main-card-button"
-                        text="Mở kênh Seller"/>
-            </VBox>
-        </HBox>
-
-        <HBox spacing="22.0" styleClass="main-card-row">
-            <VBox spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-message.png"/>
-                </ImageView>
-
-                <Label text="Rating"
-                       styleClass="main-card-title"/>
-
-                <Label text="Gửi đánh giá hoặc xem lịch sử rating của người dùng sau giao dịch."
-                       wrapText="true"
-                       styleClass="main-card-description"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button mnemonicParsing="false"
-                        onAction="#handleOpenRating"
-                        styleClass="main-card-button"
-                        text="Mở Rating"/>
-            </VBox>
-
-            <VBox spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-report.png"/>
-                </ImageView>
-
-                <Label text="Đơn hàng của tôi"
-                       styleClass="main-card-title"/>
-
-                <Label text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
-                       wrapText="true"
-                       styleClass="main-card-description"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button mnemonicParsing="false"
-                        onAction="#handleOpenMyOrders"
-                        styleClass="main-card-button"
-                        text="Mở đơn hàng"/>
-            </VBox>
-
-            <VBox fx:id="adminDashboardCard"
-                  spacing="14.0"
-                  prefWidth="360.0"
-                  prefHeight="220.0"
-                  styleClass="main-dashboard-card">
-                <ImageView fitHeight="46.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-admin.png"/>
-                </ImageView>
-
-                <Label text="Admin Dashboard"
-                       styleClass="main-card-title"/>
-
-                <Label text="Quản lý người dùng, phiên đấu giá, duyệt Seller và xử lý báo cáo."
-                       wrapText="true"
-                       styleClass="main-card-description"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <Button fx:id="adminDashboardButton"
-                        mnemonicParsing="false"
-                        onAction="#handleOpenAdminDashboard"
-                        styleClass="main-card-button"
-                        text="Mở Admin"/>
-            </VBox>
-        </HBox>
-
-        <Region VBox.vgrow="ALWAYS"/>
-
-        <!-- Chatbot launcher + signature -->
-        <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="2.0">
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
-
-                <Label styleClass="signature-label" text="by CKNT team"/>
-            </VBox>
-        </HBox>
-    </VBox>
+    </ScrollPane>
 </AnchorPane>
