@@ -2,7 +2,9 @@ package com.group13.auction.network.client.session;
 
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import com.group13.auction.common.dto.chatbot.ChatbotDTOs;
 import com.group13.auction.common.dto.admin.AdminDTOs;
+import com.google.gson.JsonObject;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
@@ -496,7 +498,40 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             case MARK_NOTIFICATION_READ_SUCCESS ->
                     listeners.forEach(l -> l.onMarkNotificationReadSuccess());
 
+            case CHATBOT_ANSWER, CHATBOT_NOT_FOUND -> {
+                var response = PacketCodec.fromElement(payload, ChatbotDTOs.ChatbotResponseDTO.class);
+                if (type == PacketType.CHATBOT_ANSWER) {
+                    listeners.forEach(l -> l.onChatbotAnswer(response));
+                } else {
+                    listeners.forEach(l -> l.onChatbotNotFound(response));
+                }
+            }
+            case CHATBOT_FAQ_LIST_SUCCESS -> {
+                var list = parseChatbotFaqList(payload);
+                listeners.forEach(l -> l.onChatbotFaqListReceived(list));
+            }
+
             default -> log.fine("[DISPATCHER] Unhandled packet type: " + type);
         }
+    }
+
+    private static ChatbotDTOs.ChatbotFaqListResponseDTO parseChatbotFaqList(JsonElement payload) {
+        if (payload == null || !payload.isJsonObject()) {
+            return new ChatbotDTOs.ChatbotFaqListResponseDTO();
+        }
+        JsonObject root = payload.getAsJsonObject();
+        ChatbotDTOs.ChatbotFaqListResponseDTO dto = new ChatbotDTOs.ChatbotFaqListResponseDTO();
+        if (root.has("header")) {
+            dto.setHeader(PacketCodec.fromElement(root.get("header"), ChatbotDTOs.ChatbotResponseDTO.class));
+        }
+        if (root.has("faqs")) {
+            dto.setFaqs(PacketCodec.gson().fromJson(
+                    root.get("faqs"),
+                    new TypeToken<java.util.List<ChatbotDTOs.FaqSummaryDTO>>() {}.getType()));
+        }
+        if (root.has("totalCount")) {
+            dto.setTotalCount(root.get("totalCount").getAsInt());
+        }
+        return dto;
     }
 }

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/admin.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.admin.SellerApprovalController">
+
+    <VBox spacing="20.0" styleClass="admin-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Duyệt quyền Seller" styleClass="page-title"/>
+                <Label
+                        text="Admin có thể duyệt quyền Seller bằng API hiện có của backend."
+                        wrapText="true"
+                        styleClass="page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang Admin"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToDashboard"/>
+        </HBox>
+
+        <VBox spacing="10.0" styleClass="admin-info-panel">
+            <Label text="Ghi chú backend" styleClass="section-title"/>
+            <Label
+                    fx:id="backendNoteLabel"
+                    text="Backend hiện hỗ trợ duyệt quyền Seller, nhưng chưa có API riêng để lấy danh sách yêu cầu đang chờ hoặc từ chối yêu cầu."
+                    wrapText="true"
+                    styleClass="muted-label"/>
+        </VBox>
+
+        <VBox spacing="12.0" styleClass="table-panel" VBox.vgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <VBox spacing="4.0">
+                    <Label text="Candidate có thể duyệt Seller" styleClass="section-title"/>
+                    <Label
+                            text="Danh sách này được lọc an toàn từ API danh sách người dùng."
+                            styleClass="muted-label"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Button
+                        fx:id="refreshButton"
+                        text="Tải lại"
+                        styleClass="secondary-button"
+                        onAction="#handleRefresh"/>
+                <Button
+                        fx:id="approveButton"
+                        text="Duyệt Seller"
+                        styleClass="primary-button"
+                        onAction="#handleApproveSeller"/>
+                <Button
+                        fx:id="rejectButton"
+                        text="Từ chối"
+                        styleClass="secondary-button"
+                        onAction="#handleRejectSeller"/>
+            </HBox>
+
+            <StackPane VBox.vgrow="ALWAYS">
+                <TableView fx:id="sellerTable" styleClass="data-table">
+                    <columns>
+                        <TableColumn fx:id="userIdColumn" text="Mã người dùng" prefWidth="190.0"/>
+                        <TableColumn fx:id="usernameColumn" text="Tên đăng nhập" prefWidth="170.0"/>
+                        <TableColumn fx:id="emailColumn" text="Email" prefWidth="250.0"/>
+                        <TableColumn fx:id="roleColumn" text="Vai trò" prefWidth="170.0"/>
+                        <TableColumn fx:id="noteColumn" text="Ghi chú" prefWidth="330.0"/>
+                    </columns>
+                </TableView>
+
+                <Label
+                        fx:id="emptyStateLabel"
+                        text="Chưa có candidate duyệt Seller."
+                        styleClass="empty-state-label"/>
+            </StackPane>
+        </VBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+
+        <!-- Signature -->
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Label styleClass="signature-label" text="by CKNT team"/>
+        </HBox>
+    </VBox>
+</StackPane>

@@ -244,7 +244,7 @@ public class Auction extends Entity {
    * Dùng AtomicReference.updateAndGet() — truly atomic read-modify-write,
    * loại bỏ "Non-atomic operation on volatile" (Qodana/SpotBugs).
    */
-  public void extendEndTime(Duration extension) {
+  public synchronized void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
       throw new IllegalArgumentException("extension phải > 0.");
     }
