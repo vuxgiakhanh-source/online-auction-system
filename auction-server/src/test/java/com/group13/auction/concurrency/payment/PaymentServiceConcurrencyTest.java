@@ -313,6 +313,85 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
                 .as("Winner balance không vượt finalPrice").isLessThanOrEqualTo(finalPrice);
     }
 
+    // ── P5 ────────────────────────────────────────────────────────────────────
+
+    @Test
+    @Order(5)
+    @DisplayName("P5: completePayment() vs expirePayment() concurrent — chỉ một luồng thắng")
+    @Timeout(value = 5)
+    void completePayment_vsExpirePayment_onlyOneOutcome() throws InterruptedException {
+        long finalPrice  = 600_000L;
+        long depositPaid = finalPrice * 3 / 10;
+
+        NormalUser winner = buildUser("winner-P5", finalPrice);
+        winner.lockDeposit(depositPaid);
+
+        Auction auction = buildRunningAuction(finalPrice, finalPrice,
+                java.time.LocalDateTime.now().minusHours(2));
+        auction.updateBid(finalPrice, winner);
+        AuctionWinner aw = AuctionWinner.reconstitute(
+                java.util.UUID.randomUUID().toString(),
+                java.time.LocalDateTime.now(),
+                java.time.LocalDateTime.now(),
+                winner,
+                auction.getId(),
+                finalPrice,
+                depositPaid,
+                java.time.LocalDateTime.now().minusMinutes(5),
+                null,
+                null,
+                AuctionWinner.PaymentStatus.PENDING,
+                false);
+        auction.setWinner(aw);
+        auction.transitionToClose(true);
+
+        CountDownLatch gate = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(2);
+        AtomicInteger completeOk = new AtomicInteger(0);
+        AtomicInteger expireRan  = new AtomicInteger(0);
+
+        new Thread(() -> {
+            try {
+                gate.await();
+                paymentService.completePayment(auction);
+                completeOk.incrementAndGet();
+            } catch (Exception ignored) {
+            } finally {
+                done.countDown();
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                gate.await();
+                paymentService.expirePayment(auction);
+                if (aw.getPaymentStatus() == AuctionWinner.PaymentStatus.EXPIRED) {
+                    expireRan.incrementAndGet();
+                }
+            } catch (Exception ignored) {
+            } finally {
+                done.countDown();
+            }
+        }).start();
+
+        gate.countDown();
+        done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        boolean paid = auction.getStatus() == com.group13.auction.model.auction.Auction.AuctionStatus.PAID;
+        boolean expired = aw.getPaymentStatus() == AuctionWinner.PaymentStatus.EXPIRED;
+
+        assertThat(paid && expired)
+                .as("Không được vừa PAID (auction) vừa EXPIRED (winner) sau race")
+                .isFalse();
+        if (paid) {
+            assertThat(expired).isFalse();
+            assertThat(completeOk.get()).isEqualTo(1);
+        } else if (expired) {
+            assertThat(paid).isFalse();
+            assertThat(expireRan.get()).isEqualTo(1);
+        }
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private void injectSeller(Auction auction, NormalUser seller) {

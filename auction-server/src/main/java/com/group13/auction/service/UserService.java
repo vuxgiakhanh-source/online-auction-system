@@ -37,31 +37,11 @@ public class UserService implements IUserService {
   @Override
   public User login(String username, String inputPassword) {
 
-    // FIX LOGIN SLOWNESS:
-    // Bước 1: Tìm trong AuctionManager (in-memory ConcurrentHashMap) trước.
-    //   Nếu user đã login trước đó hoặc đã load khi server start → O(n) scan nhưng không có DB I/O.
-    //   AuctionManager.findUserByUsername() gọi DB nếu không tìm thấy, nhưng đó là fallback.
-    //
-    // Bước 2: Nếu không có trong memory, dùng findUserCoreByUsername() — 1 query duy nhất,
-    //   KHÔNG load joinedAuctionIds + watchListAuctionIds (giảm từ 3 queries xuống 1).
-    //
-    // Bước 3: Sau khi xác thực xong, nếu user chỉ có core data (từ bước 2),
-    //   trả về nó — caller (AuthHandler) sẽ tự update AuctionManager.
+    // Luôn đọc từ DB khi login để có roles/balance/status mới nhất (kể cả SELLER đã duyệt).
+    // Không dùng bản in-memory cũ — tránh "chưa là seller" / số dư ví lệch sau khi duyệt role.
+    NormalUser user = userDAO.findUserCoreByUsername(username);
 
-    // -- Bước 1: in-memory lookup --
-    NormalUser user = null;
-    User memUser = AuctionManager.getInstance().findUserByUsernameInMemoryOnly(username);
-    if (memUser instanceof NormalUser) {
-      user = (NormalUser) memUser;
-      log.debug("Login: user found in-memory, skip DB query. username={}", username);
-    }
-
-    // -- Bước 2: lightweight DB query nếu không có trong memory --
-    if (user == null) {
-      user = userDAO.findUserCoreByUsername(username);
-    }
-
-    // -- Bước 3: Không tìm thấy --
+    // -- Không tìm thấy --
     if (user == null) {
       log.warn("Login failed: user not found, username={}", username);
       throw new AuthenticationException(Reason.USER_NOT_FOUND);
@@ -83,8 +63,8 @@ public class UserService implements IUserService {
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
-    // Đăng nhập thành công — đảm bảo user được lưu vào AuctionManager
-    AuctionManager.getInstance().addToUserList(user);
+    // Đăng nhập thành công — ghi đè bản in-memory bằng dữ liệu vừa load từ DB
+    AuctionManager.getInstance().refreshUser(user);
     log.info("Login success: username={}", username);
     return user;
   }

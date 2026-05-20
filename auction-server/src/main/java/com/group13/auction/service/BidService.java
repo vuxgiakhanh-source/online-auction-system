@@ -124,11 +124,31 @@ public class BidService implements IBidService {
 
   @Override
   public void watchAuction(User bidder, Auction auction, AuctionObserver observer) {
-    bidder.addToWatchList(auction.getId());
-    auction.incrementViewerCount();
-    auctionService.addObserver(auction.getId(), observer);
-    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
-    userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+    java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
+    lock.lock();
+    try {
+      // FIX viewCount +2: addToWatchList() đã idempotent (check contains trước khi add),
+      // nhưng incrementViewerCount() không có guard — gọi 2 lần (vd: join rồi watch,
+      // hoặc click 2 lần) sẽ cộng +2. Check watchList TRƯỚC khi increment để đảm bảo
+      // mỗi user chỉ đóng góp đúng 1 vào viewerCount.
+      boolean alreadyWatching = bidder.getWatchListAuctionIds().contains(auction.getId());
+      bidder.addToWatchList(auction.getId());
+      auctionService.addObserver(auction.getId(), observer);
+      if (!alreadyWatching) {
+        auction.incrementViewerCount();
+        auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
+      }
+      // FIX: không ghi WATCHING nếu user đã JOINED.
+      // Bảng user_auction_activity có PK (user_id, auction_id) — chỉ 1 dòng mỗi cặp.
+      // Nếu ghi WATCHING đè lên JOINED, findJoinedAuctionIdsByUserId() sẽ miss auction này
+      // → placeBid() báo NOT_JOINED_AUCTION dù user đã join thành công.
+      // Lớp bảo vệ thứ 2 (lớp 1 là SQL IF trong saveUserAuctionActivity).
+      if (!bidder.hasJoined(auction.getId())) {
+        userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
+      }
+    } finally {
+      lock.unlock();
+    }
   }
 
   /**
@@ -215,8 +235,11 @@ public class BidService implements IBidService {
     // FIX RACE CONDITION: updateHighestPrice dùng conditional SQL (WHERE current_price < ?)
     // → ngay cả khi thread khác đã ghi giá cao hơn trước, query này sẽ là no-op.
     // FIX PERF: saveTransaction() cũng chạy ngoài lock → giảm lock contention.
-    bidTransactionDAO.saveTransaction(tx);
-    auctionDAO.updateHighestPrice(auction.getId(), amount, bidder.getId());
+    if (!bidTransactionDAO.saveTransactionAndUpdatePrice(
+            tx, auction.getId(), amount, bidder.getId())) {
+      log.error("Bid persist failed after RAM update: auctionId={}, bidderId={}, amount={}",
+              auction.getId(), bidder.getId(), amount);
+    }
 
     if (reserveMet) {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
@@ -242,7 +265,8 @@ public class BidService implements IBidService {
       throw buildIneligibleException(bidder);
     }
     if (bidder.hasRole(User.UserRole.SELLER)
-            && bidder.getAllAuctionIds().contains(auction.getId())) {
+            && auction.getItem().getSeller() != null
+            && auction.getItem().getSeller().getId().equals(bidder.getId())) {
       log.warn("Join rejected — seller bid own auction: auctionId={}, bidderId={}",
               auction.getId(), bidder.getId());
       throw new AuctionBusinessException(AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
@@ -259,17 +283,39 @@ public class BidService implements IBidService {
   }
 
   private void registerJoin(User user, Auction auction, AuctionObserver observer) {
-    user.addJoinedAuction(auction.getId());
-    user.addToWatchList(auction.getId());
-    auction.incrementViewerCount();
-    auctionService.addObserver(auction.getId(), observer);
-    auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
-    userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+    java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
+    lock.lock();
+    try {
+      user.addJoinedAuction(auction.getId());
+      user.addToWatchList(auction.getId());
+      auction.incrementViewerCount();
+      int viewerCount = auction.getViewerCount();
+      auctionService.addObserver(auction.getId(), observer);
+      auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
+    } finally {
+      lock.unlock();
+    }
   }
 
   // recordTransaction() đã bị xóa:
   // TX object được tạo trực tiếp trong placeBid() bên trong lock.
   // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
+
+  /**
+   * Rời phiên: xóa join state khỏi in-memory VÀ DB.
+   *
+   * <p>Root cause bug TC-WS-04d: AuctionManager.findUserByUsername() luôn load user
+   * mới từ DB — nên removeJoinedAuction() chỉ xóa in-memory trên object hiện tại,
+   * nhưng lần load tiếp theo (PLACE_BID) sẽ tạo object mới từ DB và thấy vẫn JOINED.
+   * Fix: persist xóa xuống DB ngay khi rời phiên.
+   */
+  @Override
+  public void leaveAuction(User user, String auctionId) {
+    user.removeJoinedAuction(auctionId);
+    userDAO.removeJoinedActivity(user.getId(), auctionId);
+    log.info("User left auction: userId={}, auctionId={}", user.getId(), auctionId);
+  }
 
   private static AuthenticationException buildIneligibleException(NormalUser bidder) {
     switch (bidder.getAccountStatus()) {

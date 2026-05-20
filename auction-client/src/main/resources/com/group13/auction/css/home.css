@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('../assets/fonts/PlayfairDisplay-Bold.ttf'); 
+}
+
 /* LANDING HEADER */
 
 .landing-login-button,
@@ -42,6 +47,16 @@
     -fx-text-fill: #ffffff;
     -fx-line-spacing: -8;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+}
+
+.landing-omni {
+    -fx-font-family: "Playfair Display", serif;
+    -fx-font-size: 52px;
+    -fx-font-weight: 800; /* In đậm lên rất đẹp và chắc chắn */
+    -fx-text-fill: #ffffff;
+    -fx-line-spacing: 0; /* Khuyên dùng trả về 0 hoặc -2 để thoáng dấu */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+    
 }
 
 .landing-main-subtitle {
@@ -281,4 +296,42 @@
 .scroll-pane .scroll-bar .decrement-arrow {
     -fx-shape: ""; /* Xóa hình mũi tên */
     -fx-padding: 0;
+}
+
+/* Khối hộp chứa nội dung văn bản */
+/* Hộp văn bản: Hiệu ứng kính (Glassmorphism) viền sáng nhẹ */
+.content-card {
+    -fx-background-color: rgba(30, 41, 59, 0.7); /* Xám slate hơi mờ */
+    -fx-border-color: rgba(255, 255, 255, 0); /* Viền trắng rất mờ */
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
+    -fx-padding: 24px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 15, 0, 0, 10);
+}
+
+/* Chữ O: Gradient Xanh Electric -> Tím Neon */
+.drop-cap-letter {
+    -fx-text-fill: linear-gradient(to bottom right, #129096, #1282e4);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-weight: 900;
+    -fx-font-size: 160px;
+    -fx-effect: dropshadow(two-pass-box, rgba(79, 172, 254, 0.3), 10, 0, 0, 0); /* Bóng sáng glow nhẹ */
+}
+
+/* Chữ bên trong khối hộp */
+.content-text {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.video-gradient-overlay {
+    /* Gradient từ đen (90% đậm) bên trái sang trong suốt hoàn toàn bên phải */
+    -fx-background-color: linear-gradient(to right, 
+        rgba(0, 0, 0, 0.9) 10%, 
+        rgba(0, 0, 0, 0.722) 40%, 
+        rgba(0, 0, 0, 0) 100%
+    );
 }

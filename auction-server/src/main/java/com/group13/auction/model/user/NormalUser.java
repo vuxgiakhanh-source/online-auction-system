@@ -306,6 +306,17 @@ public class NormalUser extends User {
         markUpdated();
     }
 
+    /**
+     * Inject danh sách auctionId của seller từ DB — chỉ DAO gọi sau reconstitute().
+     * Thiếu setter này khiến allAuctionIds luôn rỗng sau server restart.
+     */
+    public void setAllAuctionIds(java.util.List<String> auctionIds) {
+        this.allAuctionIds = auctionIds != null
+                ? new CopyOnWriteArrayList<>(auctionIds)
+                : new CopyOnWriteArrayList<>();
+        markUpdated();
+    }
+
     /** Chỉ được gọi trong WalletService hỗ trợ quá trình Rollback */
     public void restoreBalances(long balance, long lockedDeposit) {
         this.balance.set(balance);

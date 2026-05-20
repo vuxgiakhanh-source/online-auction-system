@@ -52,6 +52,87 @@ public class BidTransactionDAO {
     }
 
     /**
+     * Lưu bid và cập nhật giá cao nhất trong một transaction DB.
+     * Tránh trạng thái bid đã ghi nhưng current_price chưa cập nhật (hoặc ngược lại).
+     *
+     * FIX DEADLOCK: thứ tự cũ INSERT bid_tx → UPDATE auctions gây FK deadlock dưới tải cao.
+     * InnoDB: INSERT vào bid_transactions (có FK → auctions.id) → acquire SHARED lock trên
+     * auctions row để kiểm tra FK. Nếu 2 thread cùng INSERT xong rồi cùng UPDATE auctions,
+     * cả hai đều đang giữ SHARED lock và đợi EXCLUSIVE lock của nhau → DEADLOCK.
+     *
+     * Fix: đảo thứ tự → UPDATE auctions TRƯỚC, INSERT bid_tx SAU.
+     * UPDATE auctions cạnh tranh EXCLUSIVE lock ngay từ đầu → InnoDB serialize tự nhiên,
+     * không có SHARED/EXCLUSIVE conflict. Sau khi commit, INSERT chạy bình thường.
+     */
+    public boolean saveTransactionAndUpdatePrice(BidTransaction tx, String auctionId,
+                                                 long newPrice, String bidderId) {
+        String updateSql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, "
+                + "current_highest_price = ?, winning_bidder_id = ? "
+                + "WHERE id = ? AND current_price < ?";
+        String insertSql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result) "
+                + "VALUES (?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getInstance().getConnection();
+            conn.setAutoCommit(false);
+
+            // FIX: UPDATE trước → EXCLUSIVE lock trên auctions row ngay lập tức
+            // → không conflict với SHARED lock từ FK check của INSERT bên dưới.
+            try (PreparedStatement update = conn.prepareStatement(updateSql)) {
+                update.setLong(1, newPrice);
+                update.setString(2, bidderId);
+                update.setLong(3, newPrice);
+                update.setString(4, bidderId);
+                update.setString(5, auctionId);
+                update.setLong(6, newPrice);
+                update.executeUpdate();
+                // Không check rows affected: nếu current_price >= newPrice (stale write),
+                // 0 rows updated là đúng — bid đã bị bid khác vượt qua trong RAM nhưng
+                // giá DB đã cao hơn → không cần update. TX vẫn commit để INSERT được lưu.
+            }
+
+            // INSERT sau UPDATE: lúc này không còn SHARED lock conflict nữa
+            try (PreparedStatement insert = conn.prepareStatement(insertSql)) {
+                insert.setString(1, tx.getId());
+                insert.setString(2, tx.getAuctionId());
+                insert.setString(3, tx.getBidder().getId());
+                insert.setLong(4, tx.getAmount());
+                insert.setString(5, tx.getResult().name());
+                if (insert.executeUpdate() <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            conn.commit();
+            log.debug("Bid persisted atomically: txId={}, auctionId={}, amount={}",
+                    tx.getId(), auctionId, newPrice);
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    log.error("Rollback failed after bid persist error: auctionId={}", auctionId, rollbackEx);
+                }
+            }
+            log.error("Atomic bid persist failed: txId={}, auctionId={}",
+                    tx != null ? tx.getId() : null, auctionId, e);
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException closeEx) {
+                    log.warn("Failed to close connection after bid persist: {}", closeEx.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
      * 2. Tìm danh sách tất cả những người (bidders) đã tham gia đặt giá hợp lệ trong một phiên.
      */
     public List<NormalUser> findBiddersByAuction(String auctionId) {

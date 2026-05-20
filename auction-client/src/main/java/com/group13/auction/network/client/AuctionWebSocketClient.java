@@ -27,21 +27,6 @@ import java.util.logging.Logger;
  *   <li>Auto-reconnect khi mất kết nối (exponential backoff).</li>
  *   <li>Heartbeat PING/PONG để giữ kết nối sống.</li>
  * </ul>
- *
- * <p>Cách dùng từ JavaFX Controller:
- * <pre>
- *   AuctionWebSocketClient client = AuctionWebSocketClient.getInstance();
- *   client.addHandler(myController);          // đăng ký nhận tất cả packet
- *   client.send(Packet.of(PacketType.LOGIN, loginReq));
- *
- *   // Hoặc dùng callback một lần:
- *   client.sendAndExpect(
- *       Packet.of(PacketType.LOGIN, loginReq),
- *       PacketType.LOGIN_SUCCESS,
- *       PacketType.LOGIN_FAILED,
- *       (type, payload) -> Platform.runLater(() -> handleLoginResult(type, payload))
- *   );
- * </pre>
  */
 public class AuctionWebSocketClient extends WebSocketClient {
 
@@ -52,7 +37,6 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
-    /** Danh sách handler nhận TẤT CẢ packet (Controller chính đăng ký ở đây). */
     private final List<ServerResponseHandler> handlers = new CopyOnWriteArrayList<>();
 
     /**
@@ -97,12 +81,6 @@ public class AuctionWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
-    /**
-     * Tạo hoặc lấy singleton instance.
-     *
-     * @param serverUri URI của WebSocket server (ví dụ: {@code ws://localhost:8080})
-     * @return singleton instance
-     */
     public static AuctionWebSocketClient getInstance(URI serverUri) {
         if (instance == null) {
             synchronized (AuctionWebSocketClient.class) {
@@ -114,7 +92,6 @@ public class AuctionWebSocketClient extends WebSocketClient {
         return instance;
     }
 
-    /** Lấy instance đã tạo sẵn (gọi sau getInstance(uri) lần đầu). */
     public static AuctionWebSocketClient getInstance() {
         if (instance == null) {
             throw new IllegalStateException("Client chưa được khởi tạo. Gọi getInstance(uri) trước.");
@@ -199,8 +176,6 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     /**
      * Gửi packet tới server (fire-and-forget).
-     *
-     * @param packet packet cần gửi
      */
     public void send(Packet<?> packet) {
         if (!isOpen()) {
@@ -220,10 +195,22 @@ public class AuctionWebSocketClient extends WebSocketClient {
      * <p>Callback được gọi trên thread WebSocket — nếu update UI JavaFX thì dùng
      * {@code Platform.runLater()}.
      *
+     * <p>Callback nhận {@code (type, payload)}:
+     * <ul>
+     *   <li>{@code type == successType} — thành công</li>
+     *   <li>{@code type == failedType}  — lỗi nghiệp vụ (sai password, v.v.)</li>
+     *   <li>{@code type == null}        — timeout hoặc không thể gửi (mất kết nối / send exception)
+     *       → controller nên hiển thị "server không phản hồi" hoặc "mất kết nối"</li>
+     * </ul>
+     *
+     * <p>FIX BUG: Trước đây khi timeout (10s) hoặc khi send() thất bại, callback KHÔNG BAO GIỜ
+     * được gọi. UI treo mãi hoặc hiện "server không phản hồi" từ một cơ chế timeout khác ở
+     * controller — dù server thực ra đã kịp trả về kết quả (e.g. LOGIN_FAILED sai mật khẩu).
+     *
      * @param packet      packet cần gửi
      * @param successType PacketType mong đợi khi thành công
      * @param failedType  PacketType mong đợi khi thất bại
-     * @param callback    (type, payload) → xử lý
+     * @param callback    (type, payload) → xử lý; type=null nếu timeout/không kết nối
      */
     public void sendAndExpect(Packet<?> packet,
                               PacketType successType,
@@ -231,37 +218,67 @@ public class AuctionWebSocketClient extends WebSocketClient {
                               BiConsumer<PacketType, JsonElement> callback) {
         String requestId = java.util.UUID.randomUUID().toString();
         packet.setRequestId(requestId);
+
+        // FIX BUG B: kiểm tra kết nối TRƯỚC khi thêm vào pendingRequests.
+        // Cũ: thêm vào map → send() drop im lặng → 10s sau timeout → callback không được gọi.
+        // Mới: nếu không kết nối, gọi callback ngay với type=null → controller hiển thị lỗi tức thì.
+        if (!isOpen()) {
+            log.warning("[CLIENT] sendAndExpect: chưa kết nối, gọi callback ngay. type=" + packet.getType());
+            try {
+                callback.accept(null, null);
+            } catch (Exception e) {
+                log.warning("[CLIENT] Callback error (not connected): " + e.getMessage());
+            }
+            return;
+        }
+
         pendingRequests.put(requestId, new PendingRequest(successType, failedType, callback));
-        send(packet);
+
+        // FIX BUG B (tiếp): nếu send() throw exception sau khi đã đăng ký pending,
+        // cleanup ngay và gọi callback với type=null.
+        try {
+            send(PacketCodec.encode(packet));
+        } catch (Exception e) {
+            log.warning("[CLIENT] sendAndExpect send error: " + e.getMessage() + " | type=" + packet.getType());
+            PendingRequest orphan = pendingRequests.remove(requestId);
+            if (orphan != null) {
+                try {
+                    orphan.callback.accept(null, null);
+                } catch (Exception ce) {
+                    log.warning("[CLIENT] Callback error (send failed): " + ce.getMessage());
+                }
+            }
+            return;
+        }
 
         // Timeout: xoá pending sau 10s nếu không có response
         reconnectScheduler.schedule(() -> {
             PendingRequest removed = pendingRequests.remove(requestId);
             if (removed != null) {
+                // FIX BUG A: Trước đây chỉ log warning và bỏ qua callback.
+                // Hậu quả: nếu server trả về sau timeout (hoặc không trả về),
+                // callback không bao giờ được gọi → UI treo ở trạng thái "đang tải"
+                // hoặc hiện "server không phản hồi" từ một timeout khác của controller.
+                //
+                // Fix: luôn gọi callback với (null, null) để controller biết và hiện
+                // thông báo lỗi phù hợp.
                 log.warning("[CLIENT] Pending request timeout: " + packet.getType()
                         + " | requestId=" + requestId);
+                try {
+                    removed.callback.accept(null, null);
+                } catch (Exception e) {
+                    log.warning("[CLIENT] Timeout callback error: " + e.getMessage());
+                }
             }
         }, 10, TimeUnit.SECONDS);
     }
 
     // ── Handler management ────────────────────────────────────────────────────
 
-    /**
-     * Đăng ký handler nhận tất cả packet từ server.
-     * Thường gọi trong Controller khi scene/view được khởi tạo.
-     *
-     * @param handler handler cần đăng ký
-     */
     public void addHandler(ServerResponseHandler handler) {
         if (!handlers.contains(handler)) handlers.add(handler);
     }
 
-    /**
-     * Huỷ đăng ký handler.
-     * Thường gọi khi Controller bị destroy hoặc scene thay đổi.
-     *
-     * @param handler handler cần huỷ
-     */
     public void removeHandler(ServerResponseHandler handler) {
         handlers.remove(handler);
     }
@@ -331,10 +348,6 @@ public class AuctionWebSocketClient extends WebSocketClient {
         }, delay, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Dừng client và giải phóng tài nguyên.
-     * Gọi khi ứng dụng tắt.
-     */
     public void shutdown() {
         shuttingDown = true;
         stopHeartbeat();

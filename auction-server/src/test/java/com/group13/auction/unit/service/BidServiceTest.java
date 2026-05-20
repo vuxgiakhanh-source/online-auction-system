@@ -99,6 +99,9 @@ class BidServiceTest {
 
         // bidder đã join phiên mặc định trong hầu hết test
         bidder.addJoinedAuction(runningAuction.getId());
+
+        lenient().when(bidTransactionDAO.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
     }
 
     // =========================================================================
@@ -115,8 +118,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L; // chắc chắn > reserve
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
@@ -131,8 +132,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
@@ -150,14 +149,13 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
             // Assert — capture và kiểm tra nội dung transaction
             ArgumentCaptor<BidTransaction> captor = ArgumentCaptor.forClass(BidTransaction.class);
-            verify(bidTransactionDAO).saveTransaction(captor.capture());
+            verify(bidTransactionDAO).saveTransactionAndUpdatePrice(
+                    captor.capture(), eq(runningAuction.getId()), eq(bidAmount), eq(bidder.getId()));
             BidTransaction saved = captor.getValue();
             assertThat(saved.getResult()).isEqualTo(BidResult.ACCEPTED);
             assertThat(saved.getAmount()).isEqualTo(bidAmount);
@@ -170,16 +168,12 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
             // Assert
-            verify(auctionDAO).updateHighestPrice(
-                    eq(runningAuction.getId()),
-                    eq(bidAmount),
-                    eq(bidder.getId()));
+            verify(bidTransactionDAO).saveTransactionAndUpdatePrice(
+                    any(), eq(runningAuction.getId()), eq(bidAmount), eq(bidder.getId()));
         }
 
         @Test
@@ -188,7 +182,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
             int prevSize = runningAuction.getBidTransactionIds().size();
 
             // Act
@@ -204,8 +197,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = runningAuction.getReservePrice() + 500_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
@@ -231,8 +222,6 @@ class BidServiceTest {
             // Bid hợp lệ nhưng < reserve: startingPrice + increment = 1_200_000
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = STARTING_PRICE + 200_000L; // 1_200_000 < reserve(2_000_000)
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
@@ -250,14 +239,13 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = STARTING_PRICE + 200_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
             // Assert
             ArgumentCaptor<BidTransaction> captor = ArgumentCaptor.forClass(BidTransaction.class);
-            verify(bidTransactionDAO).saveTransaction(captor.capture());
+            verify(bidTransactionDAO).saveTransactionAndUpdatePrice(
+                    captor.capture(), eq(runningAuction.getId()), eq(bidAmount), eq(bidder.getId()));
             assertThat(captor.getValue().getResult()).isEqualTo(BidResult.ACCEPTED_RESERVE_NOT_MET);
         }
 
@@ -267,8 +255,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             long bidAmount = STARTING_PRICE + 200_000L;
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, bidAmount, strategy);
 
@@ -344,8 +330,11 @@ class BidServiceTest {
                     () -> bidService.placeBid(bidder, finished, 5_000_000L, strategy));
 
             // Assert — closed auction: exception ném trước khi TX được tạo (FIX #2 + refactor)
-            verify(bidTransactionDAO, never()).saveTransaction(argThat(tx ->
-                    tx.getResult() == BidResult.ACCEPTED || tx.getResult() == BidResult.ACCEPTED_RESERVE_NOT_MET));
+            verify(bidTransactionDAO, never()).saveTransactionAndUpdatePrice(
+                    argThat((BidTransaction tx) ->
+                            tx.getResult() == BidResult.ACCEPTED
+                                    || tx.getResult() == BidResult.ACCEPTED_RESERVE_NOT_MET),
+                    anyString(), anyLong(), anyString());
         }
     }
 
@@ -382,7 +371,8 @@ class BidServiceTest {
                     () -> bidService.placeBid(stranger, runningAuction, 2_000_000L, strategy));
 
             // Assert — FIX #2: REJECTED bid không ghi DB
-            verify(bidTransactionDAO, never()).saveTransaction(any());
+            verify(bidTransactionDAO, never()).saveTransactionAndUpdatePrice(
+                    any(), anyString(), anyLong(), anyString());
         }
 
         @Test
@@ -461,7 +451,8 @@ class BidServiceTest {
                     () -> bidService.placeBid(bidder, runningAuction, invalidAmount, strategy));
 
             // Assert — FIX #2: REJECTED bid không ghi DB
-            verify(bidTransactionDAO, never()).saveTransaction(any());
+            verify(bidTransactionDAO, never()).saveTransactionAndUpdatePrice(
+                    any(), anyString(), anyLong(), anyString());
         }
 
         @Test
@@ -567,7 +558,8 @@ class BidServiceTest {
                     () -> bidService.placeBid(banned, runningAuction, 2_000_000L, strategy));
 
             // Assert — FIX #2: REJECTED bid không ghi DB
-            verify(bidTransactionDAO, never()).saveTransaction(any());
+            verify(bidTransactionDAO, never()).saveTransactionAndUpdatePrice(
+                    any(), anyString(), anyLong(), anyString());
         }
 
         @Test
@@ -600,8 +592,6 @@ class BidServiceTest {
         void placeBid_bidWithin30sWindow_extendsEndTime() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Tạo auction kết thúc trong 20 giây nữa (nằm trong anti-sniping window 30s)
             Auction snipingAuction = TestFixture.auctionWithStatus(
                     seller, STARTING_PRICE, STARTING_PRICE, Auction.AuctionStatus.RUNNING);
@@ -633,8 +623,6 @@ class BidServiceTest {
         void placeBid_bidWithin30sWindow_persistsNewEndTime() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             Auction sniping = Auction.reconstitute(
                     java.util.UUID.randomUUID().toString(),
                     LocalDateTime.now().minusMinutes(5),
@@ -659,8 +647,6 @@ class BidServiceTest {
         void placeBid_bidWithin30sWindow_notifiesAuctionExtendedEvent() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             Auction sniping = Auction.reconstitute(
                     java.util.UUID.randomUUID().toString(),
                     LocalDateTime.now().minusMinutes(5),
@@ -690,7 +676,6 @@ class BidServiceTest {
         void placeBid_bidOutsideSnipingWindow_doesNotExtendEndTime() {
             // Arrange — auction còn 5 phút nữa mới kết thúc, không trong window
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
             long bidAmount = STARTING_PRICE + 200_000L;
             LocalDateTime endTimeBefore = runningAuction.getEndTime(); // +1 giờ (từ fixture)
 
@@ -706,8 +691,6 @@ class BidServiceTest {
         void placeBid_bidOutsideSnipingWindow_doesNotPersistEndTime() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, STARTING_PRICE + 200_000L, strategy);
 
@@ -720,8 +703,6 @@ class BidServiceTest {
         void placeBid_bidAtExactSnipingBoundary_extendsEndTime() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             Auction sniping = Auction.reconstitute(
                     java.util.UUID.randomUUID().toString(),
                     LocalDateTime.now().minusMinutes(5),
@@ -760,8 +741,6 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
             when(mockStrategy.isValidBid(runningAuction, 2_000_000L)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             // Act
             bidService.placeBid(bidder, runningAuction, 2_000_000L, mockStrategy);
 
@@ -941,8 +920,8 @@ class BidServiceTest {
         void joinAuction_sellerJoinsOwnAuction_throwsSellerCannotBidException() {
             // Arrange
             when(ratingService.isEligible(seller)).thenReturn(true);
-            // Gắn auctionId vào seller's allAuctionIds
-            seller.addAuctionId(runningAuction.getId());
+            // FIX: không cần addAuctionId nữa — check dùng auction.getItem().getSeller()
+            // runningAuction được tạo với seller làm owner (xem @BeforeEach)
 
             // Act & Assert
             AuctionBusinessException ex = assertThrows(AuctionBusinessException.class,
@@ -955,7 +934,7 @@ class BidServiceTest {
         void joinAuction_sellerJoinsOwnAuction_doesNotLockDeposit() {
             // Arrange
             when(ratingService.isEligible(seller)).thenReturn(true);
-            seller.addAuctionId(runningAuction.getId());
+            // FIX: check dùng auction.getItem().getSeller(), không cần addAuctionId
 
             // Act
             assertThrows(AuctionBusinessException.class,
@@ -971,13 +950,17 @@ class BidServiceTest {
             // Arrange
             when(ratingService.isEligible(seller)).thenReturn(true);
             doNothing().when(walletService).lockDeposit(any(), anyLong(), any());
-            // seller KHÔNG sở hữu runningAuction này
 
-            // Act — không ném exception
-            assertDoesNotThrow(() -> bidService.joinAuction(seller, runningAuction, observer));
+            // FIX: test cũ dùng runningAuction (do chính seller tạo) nhưng comment
+            // "seller KHÔNG sở hữu" — sai hoàn toàn. Phải tạo auction của seller KHÁC.
+            NormalUser otherSeller = TestFixture.normalSeller("otherSellerXX");
+            Auction otherAuction = TestFixture.runningAuction(otherSeller, STARTING_PRICE);
+
+            // Act — seller join phiên không thuộc mình → không ném exception
+            assertDoesNotThrow(() -> bidService.joinAuction(seller, otherAuction, observer));
 
             // Assert
-            assertThat(seller.hasJoined(runningAuction.getId())).isTrue();
+            assertThat(seller.hasJoined(otherAuction.getId())).isTrue();
         }
     }
 
@@ -1023,14 +1006,94 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("watch phiên → auctionDAO và userDAO được persist")
-        void watchAuction_persistsState() {
+        @DisplayName("watch phiên (chưa join) → auctionDAO và userDAO được persist WATCHING")
+        void watchAuction_notJoined_persistsWatchingActivity() {
+            // Arrange — dùng fresh user chưa join để saveUserAuctionActivity("WATCHING") được gọi.
+            // Không dùng `bidder` từ setUp() vì bidder đó đã addJoinedAuction(runningAuction).
+            NormalUser watcher = TestFixture.bidderWithBalance("watcherUsr1", 5_000_000L);
+            // watcher.hasJoined(runningAuction.getId()) == false
+
             // Act
-            bidService.watchAuction(bidder, runningAuction, observer);
+            bidService.watchAuction(watcher, runningAuction, observer);
 
             // Assert
             verify(auctionDAO).updateViewerCount(eq(runningAuction.getId()), anyInt());
-            verify(userDAO).saveUserAuctionActivity(bidder.getId(), runningAuction.getId(), "WATCHING");
+            verify(userDAO).saveUserAuctionActivity(watcher.getId(), runningAuction.getId(), "WATCHING");
+        }
+
+        @Test
+        @DisplayName("watch phiên (đã join) → saveUserAuctionActivity KHÔNG được gọi với WATCHING (bug fix)")
+        void watchAuction_alreadyJoined_doesNotPersistWatchingActivity() {
+            // Arrange — bidder từ setUp() đã addJoinedAuction(runningAuction): hasJoined() == true.
+            // BUG trước đây: watchAuction() gọi saveUserAuctionActivity("WATCHING") vô điều kiện
+            //   → ON DUPLICATE KEY UPDATE đổi activity_type JOINED → WATCHING trong DB
+            //   → lần load tiếp theo (PLACE_BID) findJoinedAuctionIdsByUserId() miss auction này
+            //   → placeBid() ném NOT_JOINED_AUCTION dù user đã join thành công.
+            // FIX: không gọi saveUserAuctionActivity("WATCHING") nếu đã hasJoined().
+
+            // Act
+            bidService.watchAuction(bidder, runningAuction, observer);
+
+            // Assert — WATCHING không được ghi đè JOINED trong DB
+            verify(userDAO, never()).saveUserAuctionActivity(
+                    bidder.getId(), runningAuction.getId(), "WATCHING");
+        }
+
+        @Test
+        @DisplayName("watch sau join → JOINED status trong DB không bị overwrite (regression #join-watch-bug)")
+        void watchAuction_afterJoin_joinedStatusPreservedInDB() {
+            // Arrange
+            when(ratingService.isEligible(bidder)).thenReturn(true);
+            doNothing().when(walletService).lockDeposit(any(), anyLong(), any());
+
+            NormalUser otherSeller = TestFixture.normalSeller("otherSellerZZ");
+            Auction otherAuction   = TestFixture.runningAuction(otherSeller, STARTING_PRICE);
+            bidService.joinAuction(bidder, otherAuction, observer); // lưu JOINED vào DB mock
+
+            // Act — client reload trang / reconnect → gửi WATCH_AUCTION lần nữa
+            bidService.watchAuction(bidder, otherAuction, observer);
+
+            // Assert — WATCHING không được gọi sau khi đã JOINED
+            verify(userDAO, never()).saveUserAuctionActivity(
+                    bidder.getId(), otherAuction.getId(), "WATCHING");
+            // JOINED vẫn được persist đúng 1 lần khi join
+            verify(userDAO, times(1)).saveUserAuctionActivity(
+                    bidder.getId(), otherAuction.getId(), "JOINED");
+        }
+
+        @Test
+        @DisplayName("watch phiên 2 lần liên tiếp → viewerCount chỉ tăng 1 (idempotent)")
+        void watchAuction_calledTwice_viewerCountOnlyIncrementsOnce() {
+            // Arrange
+            int viewerBefore = runningAuction.getViewerCount();
+
+            // Act
+            bidService.watchAuction(bidder, runningAuction, observer);
+            bidService.watchAuction(bidder, runningAuction, observer);
+
+            // Assert — phải +1, không phải +2
+            assertThat(runningAuction.getViewerCount()).isEqualTo(viewerBefore + 1);
+            // updateViewerCount chỉ được gọi đúng 1 lần (lần watch đầu tiên)
+            verify(auctionDAO, times(1)).updateViewerCount(eq(runningAuction.getId()), anyInt());
+        }
+
+        @Test
+        @DisplayName("watch sau join → viewerCount không tăng thêm (join đã tính rồi)")
+        void watchAuction_afterJoin_doesNotIncrementViewerCountAgain() {
+            // Arrange — registerJoin() đã addToWatchList + incrementViewerCount bên trong
+            when(ratingService.isEligible(bidder)).thenReturn(true);
+            doNothing().when(walletService).lockDeposit(any(), anyLong(), any());
+
+            NormalUser otherSeller = TestFixture.normalSeller("otherSellerYY");
+            Auction otherAuction = TestFixture.runningAuction(otherSeller, STARTING_PRICE);
+            bidService.joinAuction(bidder, otherAuction, observer);
+            int viewerAfterJoin = otherAuction.getViewerCount();
+
+            // Act — client gửi thêm WATCH_AUCTION sau khi đã JOIN
+            bidService.watchAuction(bidder, otherAuction, observer);
+
+            // Assert — viewerCount phải giữ nguyên, không tăng thêm
+            assertThat(otherAuction.getViewerCount()).isEqualTo(viewerAfterJoin);
         }
     }
 
@@ -1047,8 +1110,6 @@ class BidServiceTest {
         void placeBid_twoBidders_leaderIsLatestBidder() {
             // Arrange
             when(ratingService.isEligible(any(NormalUser.class))).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             NormalUser bidder2 = TestFixture.bidderWithBalance("bidderEE1", 10_000_000L);
             bidder2.addJoinedAuction(runningAuction.getId());
 
@@ -1065,12 +1126,10 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("3 bid liên tiếp → saveTransaction được gọi đúng 3 lần")
+        @DisplayName("3 bid liên tiếp → saveTransactionAndUpdatePrice được gọi đúng 3 lần")
         void placeBid_threeBids_savesThreeTransactions() {
             // Arrange
             when(ratingService.isEligible(any(NormalUser.class))).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             NormalUser bidder2 = TestFixture.bidderWithBalance("bidderFF1", 10_000_000L);
             bidder2.addJoinedAuction(runningAuction.getId());
 
@@ -1084,7 +1143,8 @@ class BidServiceTest {
             bidService.placeBid(bidder, runningAuction, bid3, strategy);
 
             // Assert
-            verify(bidTransactionDAO, times(3)).saveTransaction(any());
+            verify(bidTransactionDAO, times(3)).saveTransactionAndUpdatePrice(
+                    any(), anyString(), anyLong(), anyString());
         }
 
         @Test
@@ -1092,8 +1152,6 @@ class BidServiceTest {
         void placeBid_sameBidderBidsTwice_bothTransactionsSaved() {
             // Arrange
             when(ratingService.isEligible(bidder)).thenReturn(true);
-            when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
-
             long bid1 = STARTING_PRICE + 200_000L;
             long bid2 = bid1 + 200_000L;
 
@@ -1102,7 +1160,8 @@ class BidServiceTest {
             bidService.placeBid(bidder, runningAuction, bid2, strategy);
 
             // Assert
-            verify(bidTransactionDAO, times(2)).saveTransaction(any());
+            verify(bidTransactionDAO, times(2)).saveTransactionAndUpdatePrice(
+                    any(), anyString(), anyLong(), anyString());
             assertThat(bidder.getBidHistory()).hasSize(2);
         }
     }
