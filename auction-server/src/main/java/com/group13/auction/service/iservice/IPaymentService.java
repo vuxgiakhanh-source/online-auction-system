@@ -55,4 +55,14 @@ public interface IPaymentService {
    * @param auction phiên vừa kết thúc
    */
   void refundDeposits(Auction auction);
+
+  /**
+   * Winner xac nhan da nhan hang — doi PaymentStatus tu FUNDS_HELD sang ITEM_RECEIVED.
+   * Mo khoa quyen submit Quality Report trong 3 ngay.
+   *
+   * @param auction phien dau gia
+   * @throws IllegalStateException neu status khong phai FUNDS_HELD
+   */
+  void confirmItemReceived(Auction auction);
+
 }

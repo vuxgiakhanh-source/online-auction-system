@@ -450,6 +450,16 @@ public enum PacketType {
     PAYMENT_COMPLETED_NOTIFY,
 
     /**
+     * Winner xác nhận đã nhận hàng — mở khóa quyền submit Quality Report.
+     * Payload: {@code String auctionId}.
+     */
+    CONFIRM_ITEM_RECEIVED,
+    /** Server xác nhận nhận hàng thành công. Payload: {@link com.group13.auction.common.dto.payment.PaymentDTOs.ConfirmItemReceivedResultDTO}. */
+    CONFIRM_ITEM_RECEIVED_SUCCESS,
+    /** Server từ chối — chưa thanh toán, không phải winner, hoặc đã xác nhận rồi. Payload: {@code ErrorDTO}. */
+    CONFIRM_ITEM_RECEIVED_FAILED,
+
+    /**
      * Server push thông báo cho Winner khi hết hạn thanh toán (24h).
      * Payload: {@code PaymentExpiredDTO} (auctionId + depositForfeited).
      */
