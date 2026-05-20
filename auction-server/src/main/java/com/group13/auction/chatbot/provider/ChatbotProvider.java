@@ -14,12 +14,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -38,8 +41,8 @@ import java.util.stream.Collectors;
  * <h3>Chiến lược tìm kiếm:</h3>
  * <ol>
  *   <li><strong>Tra cứu theo ID</strong> — {@code getAnswerByQuestionId()} → O(1) với HashMap.</li>
- *   <li><strong>Tìm kiếm theo từ khóa</strong> — {@code searchByQuery()} → tính điểm phù hợp
- *       (relevance score) dựa trên số keyword khớp, trả về FAQ có điểm cao nhất.</li>
+ *   <li><strong>Tìm kiếm theo từ khóa</strong> — {@code searchByQuery()} → tính matching ratio
+ *       dựa trên số từ khớp so với độ dài câu hỏi FAQ, trả về FAQ có ratio cao nhất.</li>
  *   <li><strong>Lọc theo category</strong> — {@code getFaqsByCategory()} → O(n) filter.</li>
  * </ol>
  *
@@ -59,10 +62,10 @@ public class ChatbotProvider {
     private static final String FAQ_DATA_RESOURCE_PATH = "/chatbot/faq_data.json";
 
     /**
-     * Điểm relevance tối thiểu để một FAQ được coi là "phù hợp" với câu hỏi.
+     * Matching ratio tối thiểu để một FAQ được coi là "phù hợp" với câu hỏi.
      * Điều chỉnh hằng số này để cân bằng giữa precision và recall.
      */
-    private static final int MINIMUM_RELEVANCE_SCORE = 1;
+    private static final double MINIMUM_MATCHING_RATIO = 0.4;
 
     // ── Dữ liệu nội bộ ────────────────────────────────────────────────────────
 
@@ -172,38 +175,42 @@ public class ChatbotProvider {
     /**
      * Tìm kiếm câu trả lời theo câu hỏi tự do (free-text query).
      *
-     * <h3>Thuật toán tính điểm phù hợp (Relevance Scoring):</h3>
+     * <h3>Thuật toán matching ratio:</h3>
      * <ol>
-     *   <li>Tách câu hỏi của người dùng thành các token (phân tách bằng khoảng trắng/dấu câu).</li>
-     *   <li>Với mỗi FAQ, đếm số token khớp với keyword trong danh sách {@code keywords}.</li>
-     *   <li>Ngoài ra kiểm tra xem câu hỏi có chứa text của {@code question} field không.</li>
-     *   <li>FAQ có điểm cao nhất (và ≥ {@code MINIMUM_RELEVANCE_SCORE}) được chọn.</li>
+     *   <li>Normalize query và FAQ: lowercase, bỏ dấu tiếng Việt, bỏ ký tự đặc biệt.</li>
+     *   <li>Tokenize thành {@code Set<String>} để tránh đếm trùng từ.</li>
+     *   <li>Tính {@code matchedWordCount / totalFaqQuestionWords} cho từng FAQ.</li>
+     *   <li>FAQ có ratio cao nhất và đạt {@code MINIMUM_MATCHING_RATIO} được chọn.</li>
      * </ol>
      *
      * @param query câu hỏi người dùng nhập (free-text, tiếng Việt)
-     * @return {@code ChatbotResponse} phù hợp nhất, hoặc NOT_FOUND nếu điểm quá thấp
+     * @return {@code ChatbotResponse} phù hợp nhất, hoặc NOT_FOUND nếu ratio quá thấp
      */
     public ChatbotResponse searchByQuery(String query) {
         if (query == null || query.isBlank()) {
             return ChatbotResponse.ofNotFound("[câu hỏi trống]");
         }
 
-        String normalizedQuery = query.toLowerCase().trim();
+        Set<String> queryWords = tokenize(query);
+        if (queryWords.isEmpty()) {
+            return ChatbotResponse.ofNotFound(query);
+        }
 
-        // Tính điểm relevance cho từng FAQ và chọn cái cao nhất
-        Optional<ScoredFaq> bestMatch = allFaqs.stream()
-                .map(faq -> new ScoredFaq(faq, calculateRelevanceScore(faq, normalizedQuery)))
-                .filter(scored -> scored.score >= MINIMUM_RELEVANCE_SCORE)
-                .max((a, b) -> Integer.compare(a.score, b.score));
+        Optional<MatchedFaq> bestMatch = allFaqs.stream()
+                .map(faq -> new MatchedFaq(faq, calculateMatchingRatio(faq, queryWords)))
+                .max((a, b) -> Double.compare(a.matchingRatio, b.matchingRatio));
 
-        if (bestMatch.isPresent()) {
+        if (bestMatch.isPresent()
+                && bestMatch.get().matchingRatio >= MINIMUM_MATCHING_RATIO) {
             FAQ found = bestMatch.get().faq;
-            log.debug("[ChatbotProvider] Tìm thấy FAQ '{}' với điểm={} cho query='{}'",
-                    found.getId(), bestMatch.get().score, query);
+            log.debug("[ChatbotProvider] Tìm thấy FAQ '{}' với ratio={} cho query='{}'",
+                    found.getId(), bestMatch.get().matchingRatio, query);
             return ChatbotResponse.ofSuccess(found);
         }
 
-        log.debug("[ChatbotProvider] Không tìm thấy FAQ phù hợp cho query='{}'", query);
+        double bestRatio = bestMatch.map(matched -> matched.matchingRatio).orElse(0.0);
+        log.debug("[ChatbotProvider] Không tìm thấy FAQ phù hợp cho query='{}', bestRatio={}",
+                query, bestRatio);
         return ChatbotResponse.ofNotFound(query);
     }
 
@@ -315,101 +322,62 @@ public class ChatbotProvider {
                 && faq.getAnswer()   != null && !faq.getAnswer().isBlank();
     }
 
-    /**
-     * Tính điểm phù hợp (relevance score) giữa một FAQ và câu hỏi người dùng.
-     *
-     * <h3>Các tiêu chí tính điểm:</h3>
-     * <ul>
-     *   <li>+2 điểm: mỗi keyword của FAQ xuất hiện trong query (hoặc ngược lại).</li>
-     *   <li>+3 điểm: query chứa chuỗi con của nội dung {@code question} field.</li>
-     *   <li>+1 điểm: query khớp với category (BIDDING, PAYMENT, v.v.).</li>
-     * </ul>
-     *
-     * @param faq            FAQ cần tính điểm
-     * @param normalizedQuery câu hỏi đã chuẩn hóa (lowercase, trim)
-     * @return điểm phù hợp (≥ 0)
-     */
-    private int calculateRelevanceScore(FAQ faq, String normalizedQuery) {
-        int score = 0;
+    private double calculateMatchingRatio(FAQ faq, Set<String> queryWords) {
+        Set<String> faqQuestionWords = tokenize(faq.getQuestion());
+        if (faqQuestionWords.isEmpty() || queryWords.isEmpty()) {
+            return 0.0;
+        }
 
-        // Tiêu chí 1: Keyword matching — mỗi keyword khớp +2 điểm
+        Set<String> faqMatchingWords = getFaqMatchingWords(faq, faqQuestionWords);
+        long matchedWordCount = queryWords.stream()
+                .filter(faqMatchingWords::contains)
+                .count();
+
+        return (double) matchedWordCount / faqQuestionWords.size();
+    }
+
+    private Set<String> getFaqMatchingWords(FAQ faq, Set<String> faqQuestionWords) {
+        Set<String> matchingWords = new HashSet<>(faqQuestionWords);
         for (String keyword : faq.getKeywords()) {
-            if (faq.containsKeyword(extractRelevantToken(normalizedQuery, keyword))) {
-                score += 2;
-            }
+            matchingWords.addAll(tokenize(keyword));
         }
-
-        // Tiêu chí 2: Câu hỏi FAQ xuất hiện trong query hoặc ngược lại — +3 điểm
-        String lowerQuestion = faq.getQuestion().toLowerCase();
-        if (normalizedQuery.contains(lowerQuestion)
-                || lowerQuestion.contains(normalizedQuery)
-                || hasSignificantOverlap(normalizedQuery, lowerQuestion)) {
-            score += 3;
-        }
-
-        // Tiêu chí 3: Query đề cập đến category — +1 điểm
-        if (faq.getCategory() != null
-                && normalizedQuery.contains(faq.getCategory().toLowerCase())) {
-            score += 1;
-        }
-
-        return score;
+        return matchingWords;
     }
 
-    /**
-     * Tìm token trong query khớp với keyword cho trước.
-     * Tách query thành các từ và kiểm tra từng từ với keyword.
-     *
-     * @param query   câu hỏi đã chuẩn hóa
-     * @param keyword từ khóa cần tìm
-     * @return token phù hợp (hoặc rỗng nếu không có)
-     */
-    private String extractRelevantToken(String query, String keyword) {
-        // Tách query thành tokens và kiểm tra từng token
-        String[] tokens = query.split("[\\s,?.!;:]+");
-        for (String token : tokens) {
-            if (!token.isBlank() && (token.contains(keyword) || keyword.contains(token))) {
-                return token;
-            }
+    private Set<String> tokenize(String text) {
+        String normalizedText = normalize(text);
+        if (normalizedText.isBlank()) {
+            return Collections.emptySet();
         }
-        // Kiểm tra cả query nguyên (keyword có thể là cụm từ nhiều chữ)
-        return query;
+
+        return List.of(normalizedText.split("\\s+")).stream()
+                .filter(token -> !token.isBlank())
+                .collect(Collectors.toSet());
     }
 
-    /**
-     * Kiểm tra xem hai chuỗi có chứa đủ số từ chung hay không.
-     * Dùng để bắt trường hợp câu hỏi dài có nhiều từ chung với FAQ.
-     *
-     * @param a chuỗi thứ nhất
-     * @param b chuỗi thứ hai
-     * @return true nếu ≥ 2 từ chung (mỗi từ ≥ 3 ký tự)
-     */
-    private boolean hasSignificantOverlap(String a, String b) {
-        String[] wordsA = a.split("\\s+");
-        int commonWordCount = 0;
-
-        for (String word : wordsA) {
-            if (word.length() >= 3 && b.contains(word)) {
-                commonWordCount++;
-                if (commonWordCount >= 2) return true; // Đủ 2 từ chung — dừng sớm
-            }
+    private String normalize(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
         }
-        return false;
+
+        String normalized = text.toLowerCase().trim()
+                .replace('\u0111', 'd')
+                .replace('\u0110', 'd');
+        normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        normalized = normalized.replaceAll("[^a-z0-9\\s]", " ");
+        return normalized.replaceAll("\\s+", " ").trim();
     }
 
     // ── Inner class phụ trợ — không expose ra ngoài ───────────────────────────
 
-    /**
-     * Value object nội bộ ghép FAQ với điểm relevance.
-     * Dùng trong stream pipeline của {@link #searchByQuery(String)}.
-     */
-    private static class ScoredFaq {
+    private static class MatchedFaq {
         final FAQ faq;
-        final int score;
+        final double matchingRatio;
 
-        ScoredFaq(FAQ faq, int score) {
+        MatchedFaq(FAQ faq, double matchingRatio) {
             this.faq   = faq;
-            this.score = score;
+            this.matchingRatio = matchingRatio;
         }
     }
 }
