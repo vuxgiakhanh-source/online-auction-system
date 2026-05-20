@@ -429,9 +429,12 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
 
             bidHandler.handle(session, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "j-vc");
 
-            // VIEWER_COUNT_UPDATE được broadcast async qua thread pool
+            // FIX TIMING: VIEWER_COUNT_UPDATE được gửi qua broadcastToAuctionAsync (thread pool riêng).
+            // atLeastOnce() return ngay sau JOIN_AUCTION_SUCCESS (send đầu tiên) trước khi
+            // VIEWER_COUNT_UPDATE kịp đến → assertion kiểm tra cap.getAllValues() sẽ miss nó.
+            // atLeast(2): đợi đến khi CẢ HAI send hoàn thành: [1] JOIN_SUCCESS + [2] VIEWER_COUNT_UPDATE.
             ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
-            verify(webSocket, timeout(2000).atLeastOnce()).send(cap.capture());
+            verify(webSocket, timeout(2000).atLeast(2)).send(cap.capture());
             assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("VIEWER_COUNT_UPDATE")))
                     .as("JOIN phải trigger VIEWER_COUNT_UPDATE broadcast")
                     .isTrue();
@@ -454,8 +457,9 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
 
             bidHandler.handle(session, PacketType.WATCH_AUCTION, new JsonPrimitive(auction.getId()), "w-vc");
 
+            // FIX TIMING: atLeast(2) để đợi cả WATCH_AUCTION_SUCCESS + VIEWER_COUNT_UPDATE async.
             ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
-            verify(webSocket, timeout(2000).atLeastOnce()).send(cap.capture());
+            verify(webSocket, timeout(2000).atLeast(2)).send(cap.capture());
             assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("VIEWER_COUNT_UPDATE")))
                     .as("WATCH phải trigger VIEWER_COUNT_UPDATE broadcast")
                     .isTrue();
@@ -512,6 +516,16 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
 
             bidHandler.handle(sessA, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "ja-d");
             bidHandler.handle(sessB, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "jb-d");
+
+            // FIX TIMING: clearInvocations() gọi ngay sau join có thể chạy trước khi
+            // broadcastToAuctionAsync từ join thứ 2 hoàn thành.
+            // Nếu VIEWER_COUNT_UPDATE(count=2) từ join B chạy SAU clearInvocations,
+            // nó sẽ bị peerCap capture → assertion noneMatch("activeViewerCount\":2") sẽ fail.
+            //
+            // Fix: đợi sessB nhận đủ 2 send (JOIN_SUCCESS + VIEWER_COUNT_UPDATE(2)) từ join
+            // TRƯỚC KHI clear → đảm bảo mọi async broadcast từ join đã flush xong.
+            ArgumentCaptor<String> drainCap = ArgumentCaptor.forClass(String.class);
+            verify(webSocketPeer, timeout(2000).atLeast(2)).send(drainCap.capture());
 
             clearInvocations(webSocket, webSocketPeer);
 
