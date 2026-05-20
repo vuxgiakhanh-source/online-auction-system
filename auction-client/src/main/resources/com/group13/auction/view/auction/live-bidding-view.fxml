@@ -139,6 +139,44 @@
                             text="Gửi giá đặt"/>
                 </VBox>
 
+                <VBox spacing="12.0" styleClass="auction-info-box">
+                    <Label text="Auto-Bid"
+                           styleClass="auction-section-title"/>
+
+                    <Label fx:id="autoBidStatusLabel"
+                           text="Chưa tải trạng thái auto-bid."
+                           wrapText="true"
+                           styleClass="auction-muted-text"/>
+
+                    <TextField fx:id="autoBidMaxField"
+                               promptText="Giá tối đa, ví dụ 2000000"
+                               styleClass="auction-input"/>
+
+                    <Label text="Bước giá sẽ do hệ thống tự tính theo giá hiện tại của phiên."
+                           wrapText="true"
+                           styleClass="auction-muted-text"/>
+
+                    <HBox spacing="8.0">
+                        <Button fx:id="registerAutoBidButton"
+                                mnemonicParsing="false"
+                                onAction="#handleRegisterAutoBid"
+                                styleClass="auction-primary-button"
+                                text="Bật"/>
+
+                        <Button fx:id="updateAutoBidButton"
+                                mnemonicParsing="false"
+                                onAction="#handleUpdateAutoBid"
+                                styleClass="auction-secondary-button"
+                                text="Cập nhật"/>
+
+                        <Button fx:id="cancelAutoBidButton"
+                                mnemonicParsing="false"
+                                onAction="#handleCancelAutoBid"
+                                styleClass="auction-ghost-button"
+                                text="Hủy"/>
+                    </HBox>
+                </VBox>
+
                 <VBox spacing="10.0" VBox.vgrow="ALWAYS" styleClass="auction-info-box">
                     <Label text="Lịch sử bid mới nhất"
                            styleClass="auction-section-title"/>
