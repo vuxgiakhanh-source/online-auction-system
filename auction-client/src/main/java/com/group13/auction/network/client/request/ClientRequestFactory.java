@@ -30,7 +30,7 @@ public final class ClientRequestFactory {
     }
 
     public static Packet<RegisterRequestDTO> register(
-            String username, String password, String email) {
+        String username, String password, String email) {
         return Packet.of(PacketType.REGISTER, new RegisterRequestDTO(username, password, email));
     }
 
@@ -73,6 +73,10 @@ public final class ClientRequestFactory {
         return Packet.of(PacketType.PAYMENT_REQUEST, request);
     }
 
+    public static Packet<String> confirmItemReceived(String auctionId) {
+        return Packet.of(PacketType.CONFIRM_ITEM_RECEIVED, auctionId);
+    }
+
     public static Packet<String> acceptSecondChance(String auctionId) {
         return Packet.of(PacketType.SECOND_CHANCE_ACCEPT, auctionId);
     }
@@ -84,12 +88,12 @@ public final class ClientRequestFactory {
     // ── Auction ─────────────────────────────────────────────────────────────
 
     public static Packet<AuctionDTOs.CreateAuctionRequestDTO> createAuction(
-            AuctionDTOs.CreateAuctionRequestDTO request) {
+        AuctionDTOs.CreateAuctionRequestDTO request) {
         return Packet.of(PacketType.CREATE_AUCTION, request);
     }
 
     public static Packet<AuctionDTOs.AuctionListRequestDTO> getAuctionList(
-            AuctionDTOs.AuctionListRequestDTO request) {
+        AuctionDTOs.AuctionListRequestDTO request) {
         return Packet.of(PacketType.GET_AUCTION_LIST, request);
     }
 
@@ -102,17 +106,17 @@ public final class ClientRequestFactory {
     }
 
     public static Packet<AuctionDTOs.UpdateAuctionDTO> updateAuction(
-            AuctionDTOs.UpdateAuctionDTO request) {
+        AuctionDTOs.UpdateAuctionDTO request) {
         return Packet.of(PacketType.UPDATE_AUCTION, request);
     }
 
     public static Packet<AuctionDTOs.CancelAuctionRequestDTO> requestCancelAuction(
-            AuctionDTOs.CancelAuctionRequestDTO request) {
+        AuctionDTOs.CancelAuctionRequestDTO request) {
         return Packet.of(PacketType.CANCEL_AUCTION_REQUEST, request);
     }
 
     public static Packet<AuctionDTOs.AdminCancelAuctionDTO> adminCancelAuction(
-            AuctionDTOs.AdminCancelAuctionDTO request) {
+        AuctionDTOs.AdminCancelAuctionDTO request) {
         return Packet.of(PacketType.ADMIN_CANCEL_AUCTION, request);
     }
 
@@ -139,17 +143,17 @@ public final class ClientRequestFactory {
     }
 
     public static Packet<BidDTOs.AutoBidRequestDTO> registerAutoBid(
-            String auctionId, long maxBid) {
+        String auctionId, long maxBid) {
         return Packet.of(
-                PacketType.REGISTER_AUTO_BID,
-                new BidDTOs.AutoBidRequestDTO(auctionId, maxBid));
+            PacketType.REGISTER_AUTO_BID,
+            new BidDTOs.AutoBidRequestDTO(auctionId, maxBid));
     }
 
     public static Packet<BidDTOs.AutoBidRequestDTO> updateAutoBid(
-            String auctionId, long maxBid) {
+        String auctionId, long maxBid) {
         return Packet.of(
-                PacketType.UPDATE_AUTO_BID,
-                new BidDTOs.AutoBidRequestDTO(auctionId, maxBid));
+            PacketType.UPDATE_AUTO_BID,
+            new BidDTOs.AutoBidRequestDTO(auctionId, maxBid));
     }
 
     public static Packet<String> cancelAutoBid(String auctionId) {
@@ -167,7 +171,7 @@ public final class ClientRequestFactory {
     // ── Admin / moderation ──────────────────────────────────────────────────
 
     public static Packet<AdminDTOs.AdminBanUserDTO> adminBanUser(
-            AdminDTOs.AdminBanUserDTO request) {
+        AdminDTOs.AdminBanUserDTO request) {
         return Packet.of(PacketType.ADMIN_BAN_USER, request);
     }
 
@@ -180,7 +184,7 @@ public final class ClientRequestFactory {
     }
 
     public static Packet<AdminDTOs.CreateStaffAdminDTO> adminCreateStaff(
-            AdminDTOs.CreateStaffAdminDTO request) {
+        AdminDTOs.CreateStaffAdminDTO request) {
         return Packet.of(PacketType.ADMIN_CREATE_STAFF, request);
     }
 
@@ -195,12 +199,12 @@ public final class ClientRequestFactory {
     // ── Rating ──────────────────────────────────────────────────────────────
 
     public static Packet<RatingDTOs.RateSellerRequestDTO> rateSeller(
-            RatingDTOs.RateSellerRequestDTO request) {
+        RatingDTOs.RateSellerRequestDTO request) {
         return Packet.of(PacketType.RATE_SELLER, request);
     }
 
     public static Packet<RatingDTOs.RateBidderRequestDTO> rateBidder(
-            RatingDTOs.RateBidderRequestDTO request) {
+        RatingDTOs.RateBidderRequestDTO request) {
         return Packet.of(PacketType.RATE_BIDDER, request);
     }
 
@@ -211,7 +215,7 @@ public final class ClientRequestFactory {
     // ── Quality report ──────────────────────────────────────────────────────
 
     public static Packet<ReportDTOs.QualityReportRequestDTO> submitQualityReport(
-            ReportDTOs.QualityReportRequestDTO request) {
+        ReportDTOs.QualityReportRequestDTO request) {
         return Packet.of(PacketType.SUBMIT_QUALITY_REPORT, request);
     }
 
@@ -244,13 +248,13 @@ public final class ClientRequestFactory {
     // ── Chatbot ─────────────────────────────────────────────────────────────
 
     public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO>
-            chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
+    chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
         return Packet.of(PacketType.CHATBOT_ASK, request);
     }
 
     public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO>
-            chatbotGetFaqList(
-                    com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
+    chatbotGetFaqList(
+        com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
         return Packet.of(PacketType.CHATBOT_GET_FAQ_LIST, request);
     }
 }
