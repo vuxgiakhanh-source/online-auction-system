@@ -188,7 +188,7 @@ public class UserDAO {
                     long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
-                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
+                    int timesRestored = rs.getInt("times_restored");
 
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
@@ -201,7 +201,7 @@ public class UserDAO {
                     NormalUser user = NormalUser.reconstitute(
                             id, createdAt, createdAt, username, passwordHash, email,
                             parseAccountStatus(statusStr), rating, balance, lockedBalance,
-                            roles, hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
+                            roles, hasEverBeenPenalized, timesRestored, suspendedAt);
 
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
@@ -262,7 +262,7 @@ public class UserDAO {
      */
     public NormalUser findUserCoreByUsername(String username) {
         String sql = "SELECT id, username, password_hash, email, rating, balance, " +
-                "locked_balance, status, has_ever_been_penalized, has_ever_been_restored, " +
+                "locked_balance, status, has_ever_been_penalized, times_restored, " +
                 "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -280,7 +280,7 @@ public class UserDAO {
                     long   lockedBalance  = rs.getLong("locked_balance");
                     String statusStr      = rs.getString("status");
                     boolean penalized     = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
-                    boolean restored      = getBooleanOrDefault(rs, "has_ever_been_restored", false);
+                    int timesRestored     = rs.getInt("times_restored");
 
                     java.sql.Timestamp createdTs  = rs.getTimestamp("created_at");
                     java.sql.Timestamp suspendedTs = rs.getTimestamp("suspended_at");
@@ -292,7 +292,7 @@ public class UserDAO {
 
                     return NormalUser.reconstitute(id, createdAt, createdAt, fetchedUsername,
                             passwordHash, email, parseAccountStatus(statusStr), rating,
-                            balance, lockedBalance, roles, penalized, restored, suspendedAt);
+                            balance, lockedBalance, roles, penalized, timesRestored, suspendedAt);
                 }
             }
         } catch (SQLException e) {
@@ -322,7 +322,7 @@ public class UserDAO {
                     long lockedBalance = rs.getLong("locked_balance");
                     String statusStr = rs.getString("status");
                     boolean hasEverBeenPenalized = getBooleanOrDefault(rs, "has_ever_been_penalized", false);
-                    boolean hasEverBeenRestored = getBooleanOrDefault(rs, "has_ever_been_restored", false);
+                    int timesRestored = rs.getInt("times_restored");
 
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
@@ -335,7 +335,7 @@ public class UserDAO {
                     NormalUser user = NormalUser.reconstitute(
                             id, createdAt, createdAt, fetchedUsername, passwordHash, email,
                             parseAccountStatus(statusStr), rating, balance, lockedBalance,
-                            roles, hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
+                            roles, hasEverBeenPenalized, timesRestored, suspendedAt);
 
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
@@ -456,15 +456,14 @@ public class UserDAO {
         return rs.getBoolean(columnName);
     }
 
-    public boolean updateHasEverBeenRestored(String userId, boolean hasEverBeenRestored) {
-        String sql = "UPDATE users SET has_ever_been_restored = ? WHERE id = ?";
+    public boolean incrementTimesRestored(String userId) {
+        String sql = "UPDATE users SET times_restored = times_restored + 1 WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setBoolean(1, hasEverBeenRestored);
-            pstmt.setString(2, userId);
+            pstmt.setString(1, userId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            log.error("Lỗi cập nhật cờ hasEverBeenRestored: ", e);
+            log.error("Lỗi tăng timesRestored: ", e);
             return false;
         }
     }

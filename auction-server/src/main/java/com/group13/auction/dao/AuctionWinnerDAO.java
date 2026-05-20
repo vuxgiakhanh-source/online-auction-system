@@ -40,7 +40,7 @@ public class AuctionWinnerDAO {
     }
 
     /**
-     * Cập nhật trạng thái thanh toán (PENDING, COMPLETED, EXPIRED)
+     * Cập nhật trạng thái thanh toán (PENDING, COMPLETED, EXPIRED, FUNDS_HELD).
      */
     public boolean updatePaymentStatus(String winnerId, String status) {
         String sql = "UPDATE auction_winners SET payment_status = ? WHERE id = ?";
@@ -59,9 +59,49 @@ public class AuctionWinnerDAO {
     }
 
     /**
+     * Cập nhật trạng thái FUNDS_HELD và hạn xác nhận nhận hàng sau khi winner thanh toán.
+     */
+    public boolean updateFundsHeld(String winnerId, String status, java.time.LocalDateTime confirmReceiptDeadline) {
+        String sql = "UPDATE auction_winners SET payment_status = ?, confirm_receipt_deadline = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, status);
+            pstmt.setTimestamp(2, java.sql.Timestamp.valueOf(confirmReceiptDeadline));
+            pstmt.setString(3, winnerId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            log.error("Lỗi cập nhật FUNDS_HELD: winnerId={}, status={}, confirmReceiptDeadline={}",
+                    winnerId, status, confirmReceiptDeadline, e);
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật hạn report sau khi winner xác nhận nhận hàng.
+     */
+    public boolean updateReportDeadline(String winnerId, java.time.LocalDateTime reportDeadline) {
+        String sql = "UPDATE auction_winners SET report_deadline = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setTimestamp(1, java.sql.Timestamp.valueOf(reportDeadline));
+            pstmt.setString(2, winnerId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            log.error("Lỗi cập nhật report_deadline: winnerId={}, reportDeadline={}", winnerId, reportDeadline, e);
+            return false;
+        }
+    }
+
+    /**
      * Kiểm tra user có đang là winner/runner-up với trạng thái PENDING không.
-     * Đã thực hiện TODO trong AccountService.deleteAccount():
-     * chặn xóa tài khoản khi user chưa hoàn tất thanh toán phiên đấu giá.
+     * Dùng trong AccountService.deleteAccount() để chặn xóa tài khoản khi user
+     * chưa hoàn tất thanh toán phiên đấu giá.
      *
      * @param userId ID của user cần kiểm tra
      * @return true nếu có ít nhất 1 AuctionWinner ở trạng thái PENDING
