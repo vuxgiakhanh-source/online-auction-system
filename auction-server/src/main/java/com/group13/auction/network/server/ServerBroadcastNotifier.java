@@ -53,7 +53,7 @@ public class ServerBroadcastNotifier {
                                 String bidderUsername, boolean isAutoBid) {
         log.info("Broadcast BID_UPDATE: auctionId={}, bidder={}, amount={}, autoBid={}",
                 auction.getId(), bidderUsername, bidAmount, isAutoBid);
-        BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount);
+        BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount, bidAmount);
         PacketType type = auction.isReserveMet()
                 ? PacketType.BID_UPDATE
                 : PacketType.BID_RESERVE_NOT_MET_UPDATE;
@@ -117,22 +117,41 @@ public class ServerBroadcastNotifier {
     public void notifyAuctionEnded(Auction auction) {
         log.info("Broadcast AUCTION_ENDED_UPDATE: auctionId={}", auction.getId());
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
-        sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+        Packet<AuctionDTOs.AuctionUpdateDTO> packet = Packet.of(PacketType.AUCTION_ENDED_UPDATE, update);
+        sessionManager.broadcastToAuction(auction.getId(), packet);
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
+        }
+        if (auction.getCurrentLeader() != null) {
+            sessionManager.sendToUser(auction.getCurrentLeader().getId(), packet);
+        }
+        if (auction.getWinner() != null && auction.getWinner().getWinner() != null) {
+            sessionManager.sendToUser(auction.getWinner().getWinner().getId(), packet);
+        }
+        if (auction.getCurrentLeader() != null) {
+            sessionManager.sendToUser(auction.getCurrentLeader().getId(), packet);
+        }
     }
 
     /** Broadcast AUCTION_NO_WINNER_UPDATE khi không có ai bid. */
     public void notifyAuctionNoWinner(Auction auction) {
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, "NO_WINNER");
-        sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_NO_WINNER_UPDATE, update));
+        Packet<AuctionDTOs.AuctionUpdateDTO> packet = Packet.of(PacketType.AUCTION_NO_WINNER_UPDATE, update);
+        sessionManager.broadcastToAuction(auction.getId(), packet);
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
+        }
     }
 
     /** Broadcast AUCTION_RESERVE_NOT_MET_UPDATE khi giá chưa đạt reserve. */
     public void notifyAuctionReserveNotMet(Auction auction) {
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, "RESERVE_NOT_MET");
-        sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_RESERVE_NOT_MET_UPDATE, update));
+        Packet<AuctionDTOs.AuctionUpdateDTO> packet = Packet.of(PacketType.AUCTION_RESERVE_NOT_MET_UPDATE, update);
+        sessionManager.broadcastToAuction(auction.getId(), packet);
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
+        }
     }
 
     /** Broadcast AUCTION_CANCELED_UPDATE khi phiên bị hủy. */
