@@ -6,6 +6,7 @@ import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.Admin;
@@ -158,6 +159,7 @@ public class AuctionService implements IAuctionService {
     if (auction.getCurrentLeader() == null) {
       // TH1.1: không có ai đặt giá -> SYSTEM auto-cancel
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0L);
+      ServerBroadcastNotifier.getInstance().notifyAuctionNoWinner(auction);
       cancelAuction(auction, Admin.CancelReason.NO_WINNER);
       log.info("Phiên đóng - không có ai đặt giá: auctionId={}", auction.getId());
 
@@ -166,6 +168,7 @@ public class AuctionService implements IAuctionService {
       NormalUser leader = auction.getCurrentLeader();
       notify(auction, AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
               leader, auction.getCurrentPrice());
+      ServerBroadcastNotifier.getInstance().notifyAuctionReserveNotMet(auction);
       cancelAuction(auction, Admin.CancelReason.RESERVE_NOT_MET);
       log.info("Phiên đóng - reserve chưa đạt: auctionId={} highestPrice={} reserve={}",
               auction.getId(), auction.getCurrentPrice(), auction.getReservePrice());
@@ -189,6 +192,7 @@ public class AuctionService implements IAuctionService {
 
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_ENDED,
               winner, auction.getCurrentPrice());
+      ServerBroadcastNotifier.getInstance().notifyAuctionEnded(auction);
       log.info("Winner: auctionId={} winner={} price={}",
               auction.getId(), winner.getUsername(), auction.getCurrentPrice());
     }
