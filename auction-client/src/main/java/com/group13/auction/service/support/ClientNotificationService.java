@@ -1,5 +1,6 @@
 package com.group13.auction.service.support;
 
+import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.session.ClientEventListener;
@@ -87,6 +88,26 @@ public final class ClientNotificationService implements ClientEventListener {
                                 "Một Second Chance Offer đã hết hạn.\n"
                                         + "Mã phiên đấu giá: "
                                         + fallback(auctionId)));
+    }
+
+    @Override
+    public void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {
+        if (update == null) {
+            return;
+        }
+
+        String message = "Phiên đấu giá đã kết thúc";
+        if (update.getWinnerUsername() != null && !update.getWinnerUsername().isBlank()) {
+            message = "Chúc mừng! Phiên đấu giá đã kết thúc. Winner: " + update.getWinnerUsername();
+        } else if (update.getCancelReason() != null && !update.getCancelReason().isBlank()) {
+            message = "Phiên đấu giá đã kết thúc: " + update.getCancelReason();
+        }
+
+        String finalMessage = message
+                + "\n\nMã phiên: " + fallback(update.getAuctionId())
+                + (update.getFinalPrice() > 0 ? "\nGiá chốt: " + CurrencyUtil.formatVnd(update.getFinalPrice()) : "");
+
+        FxThreadUtil.runOnFxThread(() -> AlertUtil.showInfo(finalMessage));
     }
 
     @Override
