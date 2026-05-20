@@ -8,6 +8,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -26,200 +27,205 @@
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
-    <VBox spacing="18.0"
-          AnchorPane.topAnchor="0.0"
-          AnchorPane.bottomAnchor="0.0"
-          AnchorPane.leftAnchor="0.0"
-          AnchorPane.rightAnchor="0.0">
-        <padding>
-            <Insets top="24.0" right="42.0" bottom="22.0" left="42.0"/>
-        </padding>
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                pannable="true"
+                styleClass="auction-scroll-pane"
+                AnchorPane.topAnchor="0.0"
+                AnchorPane.bottomAnchor="0.0"
+                AnchorPane.leftAnchor="0.0"
+                AnchorPane.rightAnchor="0.0">
+        <VBox spacing="18.0">
+            <padding>
+                <Insets top="24.0" right="42.0" bottom="22.0" left="42.0"/>
+            </padding>
 
-        <!-- Header -->
-        <HBox alignment="CENTER_LEFT" spacing="16.0">
-            <Button mnemonicParsing="false"
-                    onAction="#handleBackToDetail"
-                    styleClass="auction-ghost-button"
-                    text="← Chi tiết"/>
+            <!-- Header -->
+            <HBox alignment="CENTER_LEFT" spacing="16.0">
+                <Button mnemonicParsing="false"
+                        onAction="#handleBackToDetail"
+                        styleClass="auction-ghost-button"
+                        text="← Chi tiết"/>
 
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
-                <ImageView fitWidth="210.0" preserveRatio="true">
-                    <Image url="@../../assets/images/logo.png"/>
-                </ImageView>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitWidth="210.0" preserveRatio="true">
+                        <Image url="@../../assets/images/logo.png"/>
+                    </ImageView>
 
-                <ImageView fitHeight="44.0" preserveRatio="true">
-                    <Image url="@../../assets/images/mascot-version-1.png"/>
-                </ImageView>
+                    <ImageView fitHeight="44.0" preserveRatio="true">
+                        <Image url="@../../assets/images/mascot-version-1.png"/>
+                    </ImageView>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <ProgressIndicator fx:id="loadingIndicator"
+                                   maxHeight="28.0"
+                                   maxWidth="28.0"
+                                   prefHeight="28.0"
+                                   prefWidth="28.0"
+                                   visible="false"
+                                   managed="false"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleRefreshHistory"
+                        styleClass="auction-secondary-button"
+                        text="Tải lại lịch sử"/>
             </HBox>
 
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <ProgressIndicator fx:id="loadingIndicator"
-                               maxHeight="28.0"
-                               maxWidth="28.0"
-                               prefHeight="28.0"
-                               prefWidth="28.0"
-                               visible="false"
-                               managed="false"/>
-
-            <Button mnemonicParsing="false"
-                    onAction="#handleRefreshHistory"
-                    styleClass="auction-secondary-button"
-                    text="Tải lại lịch sử"/>
-        </HBox>
-
-        <!-- Live title -->
-        <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="auction-detail-hero">
-            <VBox spacing="6.0">
-                <Label fx:id="titleLabel"
-                       text="Đang kết nối phòng đấu giá..."
-                       wrapText="true"
-                       styleClass="auction-detail-title"/>
-
-                <HBox spacing="10.0">
-                    <Label fx:id="statusLabel"
-                           text="--"
-                           styleClass="auction-status-badge"/>
-
-                    <Label fx:id="endTimeLabel"
-                           text="--"
-                           styleClass="auction-status-badge"/>
-                </HBox>
-            </VBox>
-
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="4.0">
-                <Label text="Giá hiện tại"
-                       styleClass="auction-muted-text"/>
-
-                <Label fx:id="currentPriceLabel"
-                       text="--"
-                       styleClass="auction-current-price"/>
-            </VBox>
-        </HBox>
-
-        <!-- Main live area -->
-        <HBox spacing="18.0" VBox.vgrow="ALWAYS">
-
-            <!-- Left: bidding + history -->
-            <VBox spacing="14.0" prefWidth="380.0">
-                <VBox spacing="10.0" styleClass="auction-info-box">
-                    <Label text="Thông tin realtime"
-                           styleClass="auction-section-title"/>
-
-                    <Label fx:id="leaderLabel"
-                           text="Người dẫn đầu: --"
+            <!-- Live title -->
+            <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="auction-detail-hero">
+                <VBox spacing="6.0">
+                    <Label fx:id="titleLabel"
+                           text="Đang kết nối phòng đấu giá..."
                            wrapText="true"
-                           styleClass="auction-info-value"/>
+                           styleClass="auction-detail-title"/>
 
-                    <Label fx:id="reserveLabel"
-                           text="Giá sàn: --"
-                           wrapText="true"
-                           styleClass="auction-muted-text"/>
+                    <HBox spacing="10.0">
+                        <Label fx:id="statusLabel"
+                               text="--"
+                               styleClass="auction-status-badge"/>
 
-                    <Label fx:id="messageLabel"
-                           text="Sẵn sàng."
-                           wrapText="true"
-                           styleClass="auction-muted-text"/>
-                </VBox>
-
-                <VBox spacing="12.0" styleClass="auction-info-box">
-                    <Label text="Đặt giá"
-                           styleClass="auction-section-title"/>
-
-                    <TextField fx:id="bidAmountField"
-                               promptText="Nhập giá muốn đặt, ví dụ 1500000"
-                               styleClass="auction-input"/>
-
-                    <Button fx:id="placeBidButton"
-                            mnemonicParsing="false"
-                            onAction="#handlePlaceBid"
-                            styleClass="auction-primary-button"
-                            text="Gửi giá đặt"/>
-                </VBox>
-
-                <VBox spacing="12.0" styleClass="auction-info-box">
-                    <Label text="Auto-Bid"
-                           styleClass="auction-section-title"/>
-
-                    <Label fx:id="autoBidStatusLabel"
-                           text="Chưa tải trạng thái auto-bid."
-                           wrapText="true"
-                           styleClass="auction-muted-text"/>
-
-                    <TextField fx:id="autoBidMaxField"
-                               promptText="Giá tối đa, ví dụ 2000000"
-                               styleClass="auction-input"/>
-
-                    <Label text="Bước giá sẽ do hệ thống tự tính theo giá hiện tại của phiên."
-                           wrapText="true"
-                           styleClass="auction-muted-text"/>
-
-                    <HBox spacing="8.0">
-                        <Button fx:id="registerAutoBidButton"
-                                mnemonicParsing="false"
-                                onAction="#handleRegisterAutoBid"
-                                styleClass="auction-primary-button"
-                                text="Bật"/>
-
-                        <Button fx:id="updateAutoBidButton"
-                                mnemonicParsing="false"
-                                onAction="#handleUpdateAutoBid"
-                                styleClass="auction-secondary-button"
-                                text="Cập nhật"/>
-
-                        <Button fx:id="cancelAutoBidButton"
-                                mnemonicParsing="false"
-                                onAction="#handleCancelAutoBid"
-                                styleClass="auction-ghost-button"
-                                text="Hủy"/>
+                        <Label fx:id="endTimeLabel"
+                               text="--"
+                               styleClass="auction-status-badge"/>
                     </HBox>
                 </VBox>
 
-                <VBox spacing="10.0" VBox.vgrow="ALWAYS" styleClass="auction-info-box">
-                    <Label text="Lịch sử bid mới nhất"
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                    <Label text="Giá hiện tại"
+                           styleClass="auction-muted-text"/>
+
+                    <Label fx:id="currentPriceLabel"
+                           text="--"
+                           styleClass="auction-current-price"/>
+                </VBox>
+            </HBox>
+
+            <!-- Main live area -->
+            <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+
+                <!-- Left: bidding + history -->
+                <VBox spacing="14.0" prefWidth="380.0">
+                    <VBox spacing="10.0" styleClass="auction-info-box">
+                        <Label text="Thông tin realtime"
+                               styleClass="auction-section-title"/>
+
+                        <Label fx:id="leaderLabel"
+                               text="Người dẫn đầu: --"
+                               wrapText="true"
+                               styleClass="auction-info-value"/>
+
+                        <Label fx:id="reserveLabel"
+                               text="Giá sàn: --"
+                               wrapText="true"
+                               styleClass="auction-muted-text"/>
+
+                        <Label fx:id="messageLabel"
+                               text="Sẵn sàng."
+                               wrapText="true"
+                               styleClass="auction-muted-text"/>
+                    </VBox>
+
+                    <VBox spacing="12.0" styleClass="auction-info-box">
+                        <Label text="Đặt giá"
+                               styleClass="auction-section-title"/>
+
+                        <TextField fx:id="bidAmountField"
+                                   promptText="Nhập giá muốn đặt, ví dụ 1500000"
+                                   styleClass="auction-input"/>
+
+                        <Button fx:id="placeBidButton"
+                                mnemonicParsing="false"
+                                onAction="#handlePlaceBid"
+                                styleClass="auction-primary-button"
+                                text="Gửi giá đặt"/>
+                    </VBox>
+
+                    <VBox spacing="12.0" styleClass="auction-info-box">
+                        <Label text="Auto-Bid"
+                               styleClass="auction-section-title"/>
+
+                        <Label fx:id="autoBidStatusLabel"
+                               text="Chưa tải trạng thái auto-bid."
+                               wrapText="true"
+                               styleClass="auction-muted-text"/>
+
+                        <TextField fx:id="autoBidMaxField"
+                                   promptText="Giá tối đa, ví dụ 2000000"
+                                   styleClass="auction-input"/>
+
+                        <Label text="Bước giá sẽ do hệ thống tự tính theo giá hiện tại của phiên."
+                               wrapText="true"
+                               styleClass="auction-muted-text"/>
+
+                        <HBox spacing="8.0">
+                            <Button fx:id="registerAutoBidButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleRegisterAutoBid"
+                                    styleClass="auction-primary-button"
+                                    text="Bật"/>
+
+                            <Button fx:id="updateAutoBidButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleUpdateAutoBid"
+                                    styleClass="auction-secondary-button"
+                                    text="Cập nhật"/>
+
+                            <Button fx:id="cancelAutoBidButton"
+                                    mnemonicParsing="false"
+                                    onAction="#handleCancelAutoBid"
+                                    styleClass="auction-ghost-button"
+                                    text="Hủy"/>
+                        </HBox>
+                    </VBox>
+
+                    <VBox spacing="10.0" VBox.vgrow="ALWAYS" styleClass="auction-info-box">
+                        <Label text="Lịch sử bid mới nhất"
+                               styleClass="auction-section-title"/>
+
+                        <ListView fx:id="bidHistoryListView"
+                                  VBox.vgrow="ALWAYS"
+                                  styleClass="auction-history-list"/>
+                    </VBox>
+                </VBox>
+
+                <!-- Right: chart -->
+                <VBox spacing="12.0" HBox.hgrow="ALWAYS" styleClass="auction-info-box">
+                    <Label text="Biểu đồ giá realtime"
                            styleClass="auction-section-title"/>
 
-                    <ListView fx:id="bidHistoryListView"
-                              VBox.vgrow="ALWAYS"
-                              styleClass="auction-history-list"/>
+                    <Label text="Mỗi bid hợp lệ từ server sẽ cập nhật đường giá theo thời gian thực."
+                           wrapText="true"
+                           styleClass="auction-muted-text"/>
+
+                    <LineChart fx:id="bidLineChart"
+                               animated="false"
+                               legendVisible="false"
+                               VBox.vgrow="ALWAYS"
+                               styleClass="auction-line-chart">
+                        <xAxis>
+                            <CategoryAxis label="Thời gian"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis label="Giá"/>
+                        </yAxis>
+                    </LineChart>
                 </VBox>
-            </VBox>
+            </HBox>
 
-            <!-- Right: chart -->
-            <VBox spacing="12.0" HBox.hgrow="ALWAYS" styleClass="auction-info-box">
-                <Label text="Biểu đồ giá realtime"
-                       styleClass="auction-section-title"/>
+            <!-- Chatbot launcher + signature -->
+            <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
+                <Region HBox.hgrow="ALWAYS"/>
 
-                <Label text="Mỗi bid hợp lệ từ server sẽ cập nhật đường giá theo thời gian thực."
-                       wrapText="true"
-                       styleClass="auction-muted-text"/>
+                <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                    <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-                <LineChart fx:id="bidLineChart"
-                           animated="false"
-                           legendVisible="false"
-                           VBox.vgrow="ALWAYS"
-                           styleClass="auction-line-chart">
-                    <xAxis>
-                        <CategoryAxis label="Thời gian"/>
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis label="Giá"/>
-                    </yAxis>
-                </LineChart>
-            </VBox>
-        </HBox>
-
-        <!-- Chatbot launcher + signature -->
-        <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="2.0">
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
-
-                <Label styleClass="signature-label" text="by CKNT team"/>
-            </VBox>
-        </HBox>
-    </VBox>
+                    <Label styleClass="signature-label" text="by CKNT team"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </ScrollPane>
 </AnchorPane>
