@@ -53,8 +53,23 @@ public final class AuctionLockRegistry {
      * Lấy lock của một phiên, tạo mới nếu chưa có.
      * Thread-safe nhờ {@link ConcurrentHashMap#computeIfAbsent}.
      */
+    /**
+     * FIX PERFORMANCE: đổi từ fair=true → fair=false.
+     *
+     * Fair lock (FIFO queue) dưới high contention:
+     *   - Mỗi thread phải chờ đúng thứ tự → overhead context-switch + queue management
+     *   - Throughput thực tế giảm 3–5× so với unfair
+     *
+     * Unfair lock (barge-in):
+     *   - Thread vừa release có thể acquire lại ngay nếu không có thread nào đang wait
+     *   - Tận dụng cache hot path (lock object vẫn còn trong L1/L2 cache)
+     *   - Starvation không xảy ra trong thực tế vì mỗi bid đến qua network với độ trễ ms
+     *     → không có thread nào bị block vĩnh viễn
+     *
+     * Benchmark điển hình: unfair lock cho ~4× throughput cao hơn fair lock ở 100+ threads.
+     */
     public ReentrantLock getLock(String auctionId) {
-        return locks.computeIfAbsent(auctionId, id -> new ReentrantLock(true)); // fair=true
+        return locks.computeIfAbsent(auctionId, id -> new ReentrantLock(false)); // fair=false
     }
 
     /**
