@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/chatbot/provider/ChatbotProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/chatbot/provider/ChatbotProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/chatbot/ChatbotProviderTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/chatbot/ChatbotProviderTest.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -238,7 +242,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ServerMain">
+  <component name="RunManager" selected="JUnit.ChatbotProviderTest">
     <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
       <module name="auction-server" />
@@ -261,21 +265,6 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AccountServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.load.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.AccountServiceLoadIT" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -310,6 +299,21 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="ChatbotProviderTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.unit.chatbot.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.group13.auction.unit.chatbot" />
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.chatbot.ChatbotProviderTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
       <deployment type="docker-compose.yml">
         <settings />
@@ -325,17 +329,17 @@
     <list>
       <item itemvalue="Application.ServerMain" />
       <item itemvalue="Application.TestLauncher" />
-      <item itemvalue="JUnit.AccountServiceLoadIT" />
+      <item itemvalue="JUnit.ChatbotProviderTest" />
       <item itemvalue="JUnit.AuctionManagerLoadTest" />
       <item itemvalue="JUnit.AuctionSystemLoadIT" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.ChatbotProviderTest" />
         <item itemvalue="Application.ServerMain" />
         <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
         <item itemvalue="JUnit.AuctionManagerLoadTest" />
-        <item itemvalue="JUnit.AccountServiceLoadIT" />
       </list>
     </recent_temporary>
   </component>
@@ -496,7 +500,7 @@
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
           <line>36</line>
-          <properties class="com.group13.auction.unit.TestLauncher" method="main">
+          <properties class="com.group13.auction.unit.TestLauncher">
             <option name="EMULATED" value="true" />
             <option name="WATCH_EXIT" value="false" />
           </properties>
