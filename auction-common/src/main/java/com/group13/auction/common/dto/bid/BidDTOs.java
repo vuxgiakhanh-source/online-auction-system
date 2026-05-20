@@ -242,4 +242,35 @@ public final class BidDTOs {
         public long getReservePrice() { return reservePrice; }
         public void setReservePrice(long reservePrice) { this.reservePrice = reservePrice; }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Viewer Count
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Payload của {@code VIEWER_COUNT_UPDATE}.
+     *
+     * <p>Broadcast tới tất cả watcher mỗi khi số người đang xem thay đổi:
+     * join, watch, leave, hoặc disconnect.
+     *
+     * <p><b>activeViewerCount</b> = số WebSocket connection đang live tại thời điểm event,
+     * KHÔNG phải tổng lịch sử. Client dùng giá trị này để hiển thị "X người đang xem".
+     */
+    public static class ViewerCountUpdateDTO {
+        private String auctionId;
+        /** Số live connections hiện đang watching auction này. */
+        private int activeViewerCount;
+
+        public ViewerCountUpdateDTO() {}
+
+        public ViewerCountUpdateDTO(String auctionId, int activeViewerCount) {
+            this.auctionId = auctionId;
+            this.activeViewerCount = activeViewerCount;
+        }
+
+        public String getAuctionId() { return auctionId; }
+        public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
+        public int getActiveViewerCount() { return activeViewerCount; }
+        public void setActiveViewerCount(int activeViewerCount) { this.activeViewerCount = activeViewerCount; }
+    }
 }

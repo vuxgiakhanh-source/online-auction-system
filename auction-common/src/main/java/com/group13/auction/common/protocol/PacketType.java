@@ -372,6 +372,12 @@ public enum PacketType {
     BID_UPDATE,
 
     /**
+     * Server broadcast khi so nguoi dang xem phien thay doi (join / watch / leave / disconnect).
+     * Payload: {@code ViewerCountUpdateDTO}.
+     */
+    VIEWER_COUNT_UPDATE,
+
+    /**
      * Server broadcast khi có bid hợp lệ nhưng chưa đạt reserve price.
      * Payload: {@code BidUpdateDTO}.
      */
