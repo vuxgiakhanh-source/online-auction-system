@@ -90,7 +90,17 @@
 
                             <Label text=" ?" styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
                         </HBox>
-                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng." styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
+
+                        <VBox>
+                            <Label text="OMNI là sản phẩm đầu tay của CKNT Team," 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
+
+                            <Label text="Với nhiều tính năng đang phát triển nhằm tạo nhiều môi trường:" 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
+
+                            <Label text="          An toàn - Thông minh - Tiện dụng" 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill:rgb(0, 66, 220); -fx-font-size: 25"/>
+                        </VBox>
                     </VBox>
                 </StackPane>
 
