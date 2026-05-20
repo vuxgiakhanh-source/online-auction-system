@@ -252,11 +252,11 @@ class ChatbotProviderTest {
 
 
     // =========================================================================
-    // 3. searchByQuery — Relevance Scoring + Tiếng Việt
+    // 3. searchByQuery — Matching Ratio + Tiếng Việt
     // =========================================================================
 
     @Nested
-    @DisplayName("3. searchByQuery() — Tìm kiếm Free-text & Relevance Scoring")
+    @DisplayName("3. searchByQuery() — Tìm kiếm Free-text & Matching Ratio")
     class SearchByQueryTest {
 
         // --- Happy Path: Keyword Matching ---
@@ -264,7 +264,7 @@ class ChatbotProviderTest {
         @Test
         @DisplayName("[KEYWORD] 'thanh toán 24 giờ' → FAQ thuộc PAYMENT")
         void keywordPayment_findsPaymentFaq() {
-            ChatbotResponse resp = provider.searchByQuery("thanh toán 24 giờ");
+            ChatbotResponse resp = provider.searchByQuery("thanh toán sau 24 giờ nộp tiền");
 
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus(),
                     "Query chứa keyword 'thanh toán' và '24 giờ' phải tìm được FAQ PAYMENT");
@@ -304,46 +304,46 @@ class ChatbotProviderTest {
         @Test
         @DisplayName("[KEYWORD] 'omnibid là gì' → FAQ_001 thuộc GENERAL")
         void keywordOmnibid_findsGeneralFaq() {
-            ChatbotResponse resp = provider.searchByQuery("omnibid là gì");
+            ChatbotResponse resp = provider.searchByQuery("omnibid là gì hệ thống hoạt động");
 
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus());
             assertEquals("GENERAL", resp.getCategory(),
                     "Query về OmniBid phải tìm được FAQ GENERAL");
         }
 
-        // --- Scoring: Exact Match vs Partial Match ---
+        // --- Matching Ratio: Exact Match vs Partial Match ---
 
         @Test
-        @DisplayName("[SCORING] Câu hỏi khớp hoàn toàn với question field — phải SUCCESS")
+        @DisplayName("[RATIO] Câu hỏi khớp hoàn toàn với question field — phải SUCCESS")
         void exactQuestionMatch_returnsSuccess() {
             // "Quy định về mức giá thầu tối thiểu là gì?" là nội dung question của FAQ_002
-            // Thuật toán +3 điểm khi lowerQuestion.contains(normalizedQuery) hoặc ngược lại
+            // Query khớp đầy đủ phải có matching ratio cao nhất.
             ChatbotResponse resp = provider.searchByQuery("Quy định về mức giá thầu tối thiểu là gì?");
 
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus(),
-                    "Câu hỏi khớp hoàn toàn phải trả về SUCCESS (điểm cao nhất)");
+                    "Câu hỏi khớp hoàn toàn phải trả về SUCCESS (ratio cao nhất)");
         }
 
         @Test
-        @DisplayName("[SCORING] Keyword đơn lẻ 'payment' → tìm được FAQ PAYMENT")
-        void singleEnglishKeyword_payment_findsFaq() {
-            // 'payment' là keyword trong FAQ_004 — phải đạt MINIMUM_RELEVANCE_SCORE = 1
+        @DisplayName("[RATIO] Keyword đơn lẻ 'payment' → NOT_FOUND vì ratio thấp")
+        void singleEnglishKeyword_payment_returnsNotFound() {
+            // Keyword đơn lẻ không đủ vượt threshold matching ratio.
             ChatbotResponse resp = provider.searchByQuery("payment");
 
-            assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus(),
-                    "Keyword đơn 'payment' phải đủ điểm tối thiểu để tìm được FAQ");
+            assertEquals(ChatbotResponse.ResponseStatus.NOT_FOUND, resp.getStatus(),
+                    "Keyword đơn 'payment' không đủ ratio tối thiểu để tìm được FAQ");
         }
 
         @Test
-        @DisplayName("[SCORING] Query nhiều từ khớp nhiều keyword → FAQ có điểm cao nhất được chọn")
-        void multipleKeywordMatches_highestScoredFaqSelected() {
+        @DisplayName("[RATIO] Query nhiều từ khớp nhiều keyword → FAQ có ratio cao nhất được chọn")
+        void multipleKeywordMatches_highestRatioFaqSelected() {
             // Query chứa cả 'thanh toán' lẫn '24 giờ' — cả hai đều là keyword của FAQ_004
-            // → FAQ_004 phải có điểm cao hơn các FAQ khác
+            // → FAQ_004 phải có ratio cao hơn các FAQ khác
             ChatbotResponse resp = provider.searchByQuery("thanh toán sau 24 giờ nộp tiền");
 
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus());
             assertEquals("PAYMENT", resp.getCategory(),
-                    "Query khớp nhiều keyword PAYMENT phải chọn FAQ có điểm cao nhất");
+                    "Query khớp nhiều keyword PAYMENT phải chọn FAQ có ratio cao nhất");
         }
 
         // --- Tiếng Việt ---
@@ -352,7 +352,7 @@ class ChatbotProviderTest {
         @DisplayName("[UNICODE] Query tiếng Việt đầy đủ dấu — tìm được FAQ tương ứng")
         void vietnameseQueryWithDiacritics_findsFaq() {
             // Kiểm tra engine xử lý đúng Unicode NFC — "đấu giá" không bị mất dấu
-            ChatbotResponse resp = provider.searchByQuery("đấu giá tự động");
+            ChatbotResponse resp = provider.searchByQuery("tính năng auto bid đấu giá tự động hoạt động");
 
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, resp.getStatus(),
                     "Query tiếng Việt có dấu phải tìm được FAQ (engine phải hỗ trợ Unicode)");
@@ -361,10 +361,10 @@ class ChatbotProviderTest {
         @Test
         @DisplayName("[UNICODE] Query UPPERCASE tiếng Việt — engine lowercase trước khi so khớp")
         void uppercaseVietnameseQuery_findsFaqCaseInsensitively() {
-            ChatbotResponse lower = provider.searchByQuery("thanh toán");
-            ChatbotResponse upper = provider.searchByQuery("THANH TOÁN");
+            ChatbotResponse lower = provider.searchByQuery("thanh toán sau 24 giờ nộp tiền");
+            ChatbotResponse upper = provider.searchByQuery("THANH TOÁN SAU 24 GIỜ NỘP TIỀN");
 
-            // Cả hai phải tìm được FAQ (không nhất thiết cùng FAQ nếu có FAQ khác điểm cao hơn,
+            // Cả hai phải tìm được FAQ (không nhất thiết cùng FAQ nếu có FAQ khác ratio cao hơn,
             // nhưng đều phải SUCCESS)
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, lower.getStatus(),
                     "Query thường phải tìm được FAQ");
@@ -435,11 +435,11 @@ class ChatbotProviderTest {
         @Test
         @DisplayName("[EDGE] Query chỉ toàn ký tự đặc biệt — NOT_FOUND, không crash")
         void specialCharactersOnlyQuery_returnsNotFound() {
-            // Sau khi tách bởi regex, không còn token có nghĩa — điểm = 0
+            // Sau khi normalize/tokenize, không còn token có nghĩa — ratio = 0
             assertDoesNotThrow(() -> {
                 ChatbotResponse resp = provider.searchByQuery("!@#$%^&*(),.?;:");
                 assertEquals(ChatbotResponse.ResponseStatus.NOT_FOUND, resp.getStatus(),
-                        "Ký tự đặc biệt không tạo ra token có nghĩa, điểm = 0 → NOT_FOUND");
+                        "Ký tự đặc biệt không tạo ra token có nghĩa, ratio = 0 → NOT_FOUND");
             });
         }
 
@@ -468,15 +468,15 @@ class ChatbotProviderTest {
             });
         }
 
-        // --- Scoring Threshold (MINIMUM_RELEVANCE_SCORE = 1) ---
+        // --- Matching Ratio Threshold (MINIMUM_MATCHING_RATIO = 0.4) ---
 
         @Test
-        @DisplayName("[SCORING] Query điểm thấp (không liên quan) — điểm < 1 → NOT_FOUND")
-        void lowRelevanceQuery_belowThreshold_returnsNotFound() {
+        @DisplayName("[RATIO] Query ratio thấp (không liên quan) → NOT_FOUND")
+        void lowRatioQuery_belowThreshold_returnsNotFound() {
             // ⚠️ UNICODE SUBSTRING TRAP: Phải chọn query cẩn thận!
             // extractRelevantToken() dùng String.contains() — substring match theo ký tự Unicode.
             // Ví dụ: token "ăn" (ă+n) là substring của keyword "đăng" (đ+ă+n+g)
-            // → "mèo chó nhà vườn ĂN uống" FALSE POSITIVE match keyword "đ-ĂN-g ký seller" → score ≥ 1!
+            // → query không liên quan từng có thể tạo false positive khi chỉ đếm số từ khớp.
             //
             // Query an toàn: tất cả token phải KHÔNG là substring (và ngược lại) của bất kỳ keyword nào.
             // Các query dưới đây đã được verify thủ công trên bộ faq_data.json hiện tại:
@@ -485,11 +485,11 @@ class ChatbotProviderTest {
             ChatbotResponse resp3 = provider.searchByQuery("du lịch biển mùa hè");
 
             assertEquals(ChatbotResponse.ResponseStatus.NOT_FOUND, resp1.getStatus(),
-                    "'bầu trời màu xanh lá' không liên quan đến đấu giá → điểm = 0 → NOT_FOUND");
+                    "'bầu trời màu xanh lá' không liên quan đến đấu giá → ratio thấp → NOT_FOUND");
             assertEquals(ChatbotResponse.ResponseStatus.NOT_FOUND, resp2.getStatus(),
-                    "'nấu cơm rang trứng muối' không liên quan đến đấu giá → điểm = 0 → NOT_FOUND");
+                    "'nấu cơm rang trứng muối' không liên quan đến đấu giá → ratio thấp → NOT_FOUND");
             assertEquals(ChatbotResponse.ResponseStatus.NOT_FOUND, resp3.getStatus(),
-                    "'du lịch biển mùa hè' không liên quan đến đấu giá → điểm = 0 → NOT_FOUND");
+                    "'du lịch biển mùa hè' không liên quan đến đấu giá → ratio thấp → NOT_FOUND");
         }
     }
 
@@ -882,7 +882,7 @@ class ChatbotProviderTest {
         @DisplayName("[E2E] searchByQuery → lấy faqId → getAnswerByQuestionId → cùng FAQ")
         void searchThenGetById_returnsSameFaq() {
             // Bước 1: Tìm theo query
-            ChatbotResponse searchResp = provider.searchByQuery("thanh toán 24 giờ");
+            ChatbotResponse searchResp = provider.searchByQuery("thanh toán sau 24 giờ nộp tiền");
             assertEquals(ChatbotResponse.ResponseStatus.SUCCESS, searchResp.getStatus(),
                     "Bước 1: searchByQuery phải tìm được FAQ");
 
