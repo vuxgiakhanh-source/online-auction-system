@@ -65,7 +65,7 @@ public class ChatbotProvider {
      * Matching ratio tối thiểu để một FAQ được coi là "phù hợp" với câu hỏi.
      * Điều chỉnh hằng số này để cân bằng giữa precision và recall.
      */
-    private static final double MINIMUM_MATCHING_RATIO = 0.4;
+    private static final double MINIMUM_MATCHING_RATIO = 0.3;
 
     // ── Dữ liệu nội bộ ────────────────────────────────────────────────────────
 
