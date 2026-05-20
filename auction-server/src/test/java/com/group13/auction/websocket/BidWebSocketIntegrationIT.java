@@ -49,6 +49,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -404,6 +405,136 @@ class BidWebSocketIntegrationIT extends IntegrationTestBase {
             ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
             verify(webSocket, atLeastOnce()).send(cap.capture());
             assertThat(cap.getAllValues().stream().noneMatch(s -> s.contains("PLACE_BID_SUCCESS")))
+                    .isTrue();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TC-WS-05 — VIEWER_COUNT_UPDATE (realtime active viewer count)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("TC-WS-05 VIEWER_COUNT_UPDATE — realtime active viewer count")
+    class ViewerCountBroadcast {
+
+        @Test
+        @DisplayName("TC-WS-05a: JOIN → VIEWER_COUNT_UPDATE với activeViewerCount = 1 được broadcast")
+        void join_broadcastsViewerCountUpdate() throws Exception {
+            Auction auction = givenRunningAuctionInManager("ws_vc_a", 2_000_000L, 5_000_000L);
+            NormalUser bidder = buildUserWithBalance("ws_vc_ab", 50_000_000L, userDAO);
+
+            sessionManager.register(webSocket);
+            ClientSession session = sessionManager.getByConnection(webSocket);
+            session.authenticate(bidder.getId(), bidder.getUsername(), "NORMAL_USER");
+
+            bidHandler.handle(session, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "j-vc");
+
+            // VIEWER_COUNT_UPDATE được broadcast async qua thread pool
+            ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+            verify(webSocket, timeout(2000).atLeastOnce()).send(cap.capture());
+            assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("VIEWER_COUNT_UPDATE")))
+                    .as("JOIN phải trigger VIEWER_COUNT_UPDATE broadcast")
+                    .isTrue();
+            assertThat(cap.getAllValues().stream()
+                    .filter(s -> s.contains("VIEWER_COUNT_UPDATE"))
+                    .anyMatch(s -> s.contains("\"activeViewerCount\":1")))
+                    .as("activeViewerCount phải = 1 sau khi 1 người join")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("TC-WS-05b: WATCH → VIEWER_COUNT_UPDATE với activeViewerCount = 1 được broadcast")
+        void watch_broadcastsViewerCountUpdate() throws Exception {
+            Auction auction = givenRunningAuctionInManager("ws_vc_w", 2_000_000L, 5_000_000L);
+            NormalUser watcher = buildUserWithBalance("ws_vc_wb", 50_000_000L, userDAO);
+
+            sessionManager.register(webSocket);
+            ClientSession session = sessionManager.getByConnection(webSocket);
+            session.authenticate(watcher.getId(), watcher.getUsername(), "NORMAL_USER");
+
+            bidHandler.handle(session, PacketType.WATCH_AUCTION, new JsonPrimitive(auction.getId()), "w-vc");
+
+            ArgumentCaptor<String> cap = ArgumentCaptor.forClass(String.class);
+            verify(webSocket, timeout(2000).atLeastOnce()).send(cap.capture());
+            assertThat(cap.getAllValues().stream().anyMatch(s -> s.contains("VIEWER_COUNT_UPDATE")))
+                    .as("WATCH phải trigger VIEWER_COUNT_UPDATE broadcast")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("TC-WS-05c: LEAVE → peer còn lại nhận VIEWER_COUNT_UPDATE với count đã giảm")
+        void leave_peerReceivesDecrementedCount() throws Exception {
+            Auction auction = givenRunningAuctionInManager("ws_vc_lv", 2_000_000L, 5_000_000L);
+            NormalUser bidderA = buildUserWithBalance("ws_vc_la", 50_000_000L, userDAO);
+            NormalUser bidderB = buildUserWithBalance("ws_vc_lb", 50_000_000L, userDAO);
+
+            sessionManager.register(webSocket);
+            sessionManager.register(webSocketPeer);
+            ClientSession sessA = sessionManager.getByConnection(webSocket);
+            ClientSession sessB = sessionManager.getByConnection(webSocketPeer);
+            sessA.authenticate(bidderA.getId(), bidderA.getUsername(), "NORMAL_USER");
+            sessB.authenticate(bidderB.getId(), bidderB.getUsername(), "NORMAL_USER");
+
+            bidHandler.handle(sessA, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "ja-lv");
+            bidHandler.handle(sessB, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "jb-lv");
+
+            // Xóa tất cả capture trước action cần test để assert rõ ràng hơn
+            clearInvocations(webSocket, webSocketPeer);
+
+            // Act — A rời phiên
+            bidHandler.handle(sessA, PacketType.LEAVE_AUCTION, new JsonPrimitive(auction.getId()), "lv-vc");
+
+            // B (vẫn đang watch) phải nhận VIEWER_COUNT_UPDATE với count = 1
+            ArgumentCaptor<String> peerCap = ArgumentCaptor.forClass(String.class);
+            verify(webSocketPeer, timeout(2000).atLeastOnce()).send(peerCap.capture());
+            assertThat(peerCap.getAllValues().stream()
+                    .filter(s -> s.contains("VIEWER_COUNT_UPDATE"))
+                    .anyMatch(s -> s.contains("\"activeViewerCount\":1")))
+                    .as("Sau khi A rời, B phải nhận VIEWER_COUNT_UPDATE với activeViewerCount = 1")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("TC-WS-05d: VIEWER_COUNT_UPDATE phản ánh live count, không phải historical viewer_count")
+        void viewerCountUpdate_isLiveCount_notHistoricalAccumulated() throws Exception {
+            // Historical counter (auction.getViewerCount()) chỉ tăng, không giảm.
+            // VIEWER_COUNT_UPDATE phải dùng live connection count — giảm khi user rời.
+            Auction auction = givenRunningAuctionInManager("ws_vc_d", 2_000_000L, 5_000_000L);
+            NormalUser bidderA = buildUserWithBalance("ws_vc_da", 50_000_000L, userDAO);
+            NormalUser bidderB = buildUserWithBalance("ws_vc_db", 50_000_000L, userDAO);
+
+            sessionManager.register(webSocket);
+            sessionManager.register(webSocketPeer);
+            ClientSession sessA = sessionManager.getByConnection(webSocket);
+            ClientSession sessB = sessionManager.getByConnection(webSocketPeer);
+            sessA.authenticate(bidderA.getId(), bidderA.getUsername(), "NORMAL_USER");
+            sessB.authenticate(bidderB.getId(), bidderB.getUsername(), "NORMAL_USER");
+
+            bidHandler.handle(sessA, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "ja-d");
+            bidHandler.handle(sessB, PacketType.JOIN_AUCTION, new JsonPrimitive(auction.getId()), "jb-d");
+
+            clearInvocations(webSocket, webSocketPeer);
+
+            // A rời — historical count vẫn = 2, live count phải = 1
+            bidHandler.handle(sessA, PacketType.LEAVE_AUCTION, new JsonPrimitive(auction.getId()), "lv-d");
+
+            // Historical counter không giảm (thiết kế đúng)
+            assertThat(auction.getViewerCount())
+                    .as("Historical viewer_count không giảm — dùng cho analytics, không cho realtime")
+                    .isEqualTo(2);
+
+            // Live count trong VIEWER_COUNT_UPDATE phải = 1, không phải 2
+            ArgumentCaptor<String> peerCap = ArgumentCaptor.forClass(String.class);
+            verify(webSocketPeer, timeout(2000).atLeastOnce()).send(peerCap.capture());
+            assertThat(peerCap.getAllValues().stream()
+                    .filter(s -> s.contains("VIEWER_COUNT_UPDATE"))
+                    .anyMatch(s -> s.contains("\"activeViewerCount\":1")))
+                    .as("VIEWER_COUNT_UPDATE phải chứa live count = 1 (không phải historical = 2)")
+                    .isTrue();
+            assertThat(peerCap.getAllValues().stream()
+                    .filter(s -> s.contains("VIEWER_COUNT_UPDATE"))
+                    .noneMatch(s -> s.contains("\"activeViewerCount\":2")))
+                    .as("VIEWER_COUNT_UPDATE không được chứa stale historical count = 2")
                     .isTrue();
         }
     }
