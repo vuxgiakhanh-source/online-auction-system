@@ -273,7 +273,18 @@ public class BidService implements IBidService {
     }
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
     walletService.lockDeposit(bidder, depositAmount, auction.getId());
-    registerJoin(bidder, auction, observer);
+    try {
+      registerJoin(bidder, auction, observer);
+    } catch (RuntimeException e) {
+      // FIX: rollback deposit nếu registerJoin thất bại (DB error, lock timeout, v.v.)
+      // Trước đây: lockDeposit() xong → registerJoin() ném → joinAuction() catch chỉ xóa
+      // joinedAuctionIds nhưng KHÔNG unlock deposit → user bị lock tiền mà không join được
+      // → retry lần sau: double-lock → INSUFFICIENT_DEPOSIT dù balance đủ.
+      log.warn("registerJoin failed, rolling back deposit: auctionId={}, bidderId={}, deposit={}",
+              auction.getId(), bidder.getId(), depositAmount, e);
+      walletService.unlockDeposit(bidder, depositAmount, auction.getId());
+      throw e;
+    }
     log.info("Bidder joined: auctionId={}, bidderId={}, deposit={}",
             auction.getId(), bidder.getId(), depositAmount);
   }
