@@ -129,9 +129,14 @@ public class UserDAO {
     }
 
     public boolean saveUserAuctionActivity(String userId, String auctionId, String activityType) {
+        // FIX: không bao giờ downgrade JOINED → WATCHING.
+        // JOINED là trạng thái "cao hơn" WATCHING — user đã join thì mặc nhiên cũng đang watch.
+        // Nếu record đang là JOINED mà ghi đè thành WATCHING, lần load DB tiếp theo
+        // sẽ không tìm thấy trong findJoinedAuctionIdsByUserId() → placeBid() báo NOT_JOINED.
         String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
                 "VALUES (?, ?, ?) " +
-                "ON DUPLICATE KEY UPDATE activity_type = VALUES(activity_type)";
+                "ON DUPLICATE KEY UPDATE " +
+                "  activity_type = IF(activity_type = 'JOINED', 'JOINED', VALUES(activity_type))";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);

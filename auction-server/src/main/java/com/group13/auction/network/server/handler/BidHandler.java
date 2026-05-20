@@ -160,11 +160,22 @@ public class BidHandler implements PacketHandler {
 
             long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
             AuctionDTOs.JoinAuctionResponseDTO response = new AuctionDTOs.JoinAuctionResponseDTO();
-            response.setAuction(DTOMapper.toAuctionDTO(auction));
+
+            // FIX: dùng live connection count (active viewers) thay vì historical viewer_count.
+            // auction.getViewerCount() chỉ tăng không giảm → đếm tổng lịch sử, không phải realtime.
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
+            int activeViewers = sessionManager.getActiveViewerCount(auctionId);
+            auctionDto.setViewerCount(activeViewers);
+            response.setAuction(auctionDto);
             response.setDepositAmount(depositAmount);
             response.setNewAvailableBalance(bidder.getAvailableBalance());
 
             session.send(Packet.of(PacketType.JOIN_AUCTION_SUCCESS, response, requestId));
+
+            // Broadcast viewer count mới tới tất cả watcher (bao gồm người vừa join)
+            sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.VIEWER_COUNT_UPDATE,
+                            new BidDTOs.ViewerCountUpdateDTO(auctionId, activeViewers)));
 
         } catch (AuctionBusinessException e) {
             log.warn("Join auction rejected: username={}, requestId={}, reason={}",
@@ -196,8 +207,16 @@ public class BidHandler implements PacketHandler {
             log.info("Watch auction handled: auctionId={}, userId={}, username={}, requestId={}",
                     auctionId, user.getId(), user.getUsername(), requestId);
 
-            session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS,
-                    DTOMapper.toAuctionDTO(auction), requestId));
+            // FIX: viewerCount trong response = live connections, không phải historical count
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
+            int activeViewers = sessionManager.getActiveViewerCount(auctionId);
+            auctionDto.setViewerCount(activeViewers);
+            session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS, auctionDto, requestId));
+
+            // Broadcast viewer count mới tới tất cả watcher
+            sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.VIEWER_COUNT_UPDATE,
+                            new BidDTOs.ViewerCountUpdateDTO(auctionId, activeViewers)));
 
         } catch (Exception e) {
             log.error("Watch auction failed: username={}, requestId={}",
@@ -229,6 +248,12 @@ public class BidHandler implements PacketHandler {
         }
 
         session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, null, requestId));
+
+        // Broadcast viewer count mới sau khi đã xóa watcher
+        int activeViewers = sessionManager.getActiveViewerCount(auctionId);
+        sessionManager.broadcastToAuctionAsync(auctionId,
+                Packet.of(PacketType.VIEWER_COUNT_UPDATE,
+                        new BidDTOs.ViewerCountUpdateDTO(auctionId, activeViewers)));
     }
 
     // ── PLACE BID ─────────────────────────────────────────────────────────────

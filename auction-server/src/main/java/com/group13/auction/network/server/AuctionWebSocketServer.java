@@ -78,7 +78,27 @@ public class AuctionWebSocketServer extends WebSocketServer {
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         ClientSession session = sessionManager.getByConnection(conn);
         String username = session != null ? session.getUsername() : "unknown";
+
+        // Capture danh sách auction user đang watch TRƯỚC khi unregister xóa session
+        java.util.Set<String> watchingAuctions = session != null
+                ? new java.util.HashSet<>(session.getWatchingAuctionIds())
+                : java.util.Collections.emptySet();
+
         sessionManager.unregister(conn);
+
+        // FIX: broadcast VIEWER_COUNT_UPDATE cho mỗi auction user vừa rời.
+        // Trước đây: viewer_count trong DB không giảm khi disconnect
+        // → client hiển thị số người xem ngày càng phình to, không bao giờ giảm.
+        // Sau fix: dùng live connection count (sessionManager.getActiveViewerCount)
+        // → count tự động giảm vì session đã bị unregister ở trên.
+        for (String auctionId : watchingAuctions) {
+            int activeViewers = sessionManager.getActiveViewerCount(auctionId);
+            sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.VIEWER_COUNT_UPDATE,
+                            new com.group13.auction.common.dto.bid.BidDTOs.ViewerCountUpdateDTO(
+                                    auctionId, activeViewers)));
+        }
+
         log.info("WebSocket connection closed: username={}, code={}, reason={}, remote={}, connectedCount={}",
                 username, code, reason, remote, sessionManager.getConnectedCount());
     }
