@@ -3,6 +3,7 @@ package com.group13.auction.ui.controller.home;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
+import com.group13.auction.service.support.AudioManager;
 import com.group13.auction.service.payment.SecondChanceRealtimeService;
 import com.group13.auction.ui.util.AlertUtil;
 import javafx.fxml.FXML;
@@ -19,6 +20,10 @@ public final class MainLayoutController {
 
     @FXML private Button sellerDashboardButton;
 
+    @FXML private Button backgroundAudioButton;
+
+    @FXML private Button effectsAudioButton;
+
     @FXML private VBox adminDashboardCard;
 
     @FXML private Button adminDashboardButton;
@@ -30,6 +35,7 @@ public final class MainLayoutController {
     @FXML
     public void initialize() {
         secondChanceRealtimeService.start();
+        updateAudioButtons();
 
         AppContext.getInstance()
                 .getSessionManager()
@@ -147,5 +153,36 @@ public final class MainLayoutController {
     @FXML
     public void handleOpenNotificationCenter() {
         Navigator.getInstance().goToNotificationCenter();
+    }
+
+    @FXML
+    public void handleToggleBackgroundAudio() {
+        if (AudioManager.isBackgroundMuted()) {
+            AudioManager.unmuteBackgroundMusic();
+        } else {
+            AudioManager.muteBackgroundMusic();
+        }
+        updateAudioButtons();
+    }
+
+    @FXML
+    public void handleToggleEffectsAudio() {
+        if (AudioManager.isEffectsMuted()) {
+            AudioManager.unmuteSoundEffects();
+        } else {
+            AudioManager.muteSoundEffects();
+        }
+        updateAudioButtons();
+    }
+
+    private void updateAudioButtons() {
+        if (backgroundAudioButton != null) {
+            backgroundAudioButton.setText(
+                    AudioManager.isBackgroundMuted() ? "Music OFF" : "Music ON");
+        }
+
+        if (effectsAudioButton != null) {
+            effectsAudioButton.setText(AudioManager.isEffectsMuted() ? "SFX OFF" : "SFX ON");
+        }
     }
 }

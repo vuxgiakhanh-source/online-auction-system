@@ -1,6 +1,11 @@
 package com.group13.auction.ui.controller.home;
 
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.service.support.AudioManager;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
@@ -8,6 +13,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -18,15 +24,12 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.util.Duration;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-
 /** Controller cho màn landing/welcome của OmniBid client. */
 public class LandingController implements Initializable {
 
     @FXML private ScrollPane mainScrollPane;
+    @FXML private Button backgroundAudioButton;
+    @FXML private Button effectsAudioButton;
     @FXML private StackPane revealBlock;
     @FXML private MediaView bgMediaView;
     @FXML private VBox revealContent;
@@ -46,6 +49,8 @@ public class LandingController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        updateAudioButtons();
+
         // 1. Reset nội dung chữ và lớp phủ
         if (revealContent != null) {
             revealContent.setTranslateY(80);
@@ -248,4 +253,35 @@ public class LandingController implements Initializable {
     @FXML private void handleStart() { Navigator.getInstance().goToLogin(); }
     @FXML private void handleGoToLogin() { Navigator.getInstance().goToLogin(); }
     @FXML private void handleGoToRegister() { Navigator.getInstance().goToRegister(); }
+
+    @FXML
+    private void handleToggleBackgroundAudio() {
+        if (AudioManager.isBackgroundMuted()) {
+            AudioManager.unmuteBackgroundMusic();
+        } else {
+            AudioManager.muteBackgroundMusic();
+        }
+        updateAudioButtons();
+    }
+
+    @FXML
+    private void handleToggleEffectsAudio() {
+        if (AudioManager.isEffectsMuted()) {
+            AudioManager.unmuteSoundEffects();
+        } else {
+            AudioManager.muteSoundEffects();
+        }
+        updateAudioButtons();
+    }
+
+    private void updateAudioButtons() {
+        if (backgroundAudioButton != null) {
+            backgroundAudioButton.setText(
+                    AudioManager.isBackgroundMuted() ? "Music OFF" : "Music ON");
+        }
+
+        if (effectsAudioButton != null) {
+            effectsAudioButton.setText(AudioManager.isEffectsMuted() ? "SFX OFF" : "SFX ON");
+        }
+    }
 }

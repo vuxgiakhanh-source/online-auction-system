@@ -1,6 +1,6 @@
 package com.group13.auction.ui.util;
 
-import com.group13.auction.service.support.SoundManager;
+import com.group13.auction.service.support.AudioManager;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -24,7 +24,7 @@ public final class UiSoundInstaller {
                 ActionEvent.ACTION,
                 event -> {
                     if (event.getTarget() instanceof ButtonBase) {
-                        SoundManager.playClickSound();
+                        AudioManager.playClickSound();
                     }
                 });
         scene.getProperties().put(INSTALLED_KEY, Boolean.TRUE);

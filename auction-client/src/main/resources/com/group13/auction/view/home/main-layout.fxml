@@ -44,6 +44,18 @@
 
             <Region HBox.hgrow="ALWAYS"/>
 
+            <Button fx:id="backgroundAudioButton"
+                    mnemonicParsing="false"
+                    onAction="#handleToggleBackgroundAudio"
+                    styleClass="main-header-button"
+                    text="Music ON"/>
+
+            <Button fx:id="effectsAudioButton"
+                    mnemonicParsing="false"
+                    onAction="#handleToggleEffectsAudio"
+                    styleClass="main-header-button"
+                    text="SFX ON"/>
+
             <Button mnemonicParsing="false"
                     onAction="#handleOpenProfile"
                     styleClass="main-header-button"
