@@ -111,8 +111,6 @@ public interface ClientEventListener {
     /** Server từ chối watch (WATCH_AUCTION_FAILED). */
     default void onWatchAuctionFailed(ErrorDTO error) {}
     default void onLeaveAuctionSuccess() {}
-    /** Server broadcast số người đang xem realtime (VIEWER_COUNT_UPDATE). */
-    default void onViewerCountUpdate(BidDTOs.ViewerCountUpdateDTO dto) {}
 
     // ── AUCTION LIFECYCLE (realtime broadcast) ────────────────────────────────
 
