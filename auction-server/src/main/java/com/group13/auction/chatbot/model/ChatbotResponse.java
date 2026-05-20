@@ -108,7 +108,7 @@ public class ChatbotResponse {
      * @return ChatbotResponse với status = NOT_FOUND
      */
     public static ChatbotResponse ofNotFound(String originalQuery) {
-        String fallback = "Xin lỗi, tôi chưa tìm được câu trả lời cho \""
+        String fallback = "Xin lỗi, tôi chưa hiểu câu hỏi của bạn. Câu hỏi: \""
                 + originalQuery + "\". "
                 + "Bạn có thể thử lại với từ khóa khác, hoặc liên hệ "
                 + "Admin OmniBid để được hỗ trợ trực tiếp.";
