@@ -118,22 +118,13 @@
             </VBox>
         </ScrollPane>
 
-        <!-- Footer signature -->
+        <!-- Chatbot launcher + signature -->
         <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
             <Region HBox.hgrow="ALWAYS"/>
 
-            <VBox alignment="CENTER_RIGHT" spacing="4.0">
-                <HBox alignment="CENTER_RIGHT" spacing="6.0">
-                    <ImageView fitHeight="40.0" preserveRatio="true">
-                        <Image url="@../../assets/images/mascot-version-2.png"/>
-                    </ImageView>
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-                    <ImageView fitHeight="32.0" preserveRatio="true">
-                        <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
-                    </ImageView>
-                </HBox>
-
-                <Label styleClass="chatbot-label" text="Chat with OMNI"/>
                 <Label styleClass="signature-label" text="by CKNT team"/>
             </VBox>
         </HBox>

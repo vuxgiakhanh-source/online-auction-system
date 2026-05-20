@@ -6,9 +6,9 @@
 <?import javafx.scene.layout.StackPane?>
 
 <StackPane focusTraversable="true"
-           maxWidth="126.0"
-           minWidth="126.0"
-           prefWidth="126.0"
+           maxWidth="92.0"
+           minWidth="92.0"
+           prefWidth="92.0"
            onKeyPressed="#handleLauncherKeyPressed"
            onMouseClicked="#handleOpenChatbot"
            styleClass="chatbot-launcher"
@@ -19,7 +19,7 @@
         <Insets top="2.0" right="2.0" bottom="2.0" left="2.0"/>
     </padding>
 
-    <ImageView fitWidth="122.0"
+    <ImageView fitWidth="88.0"
                pickOnBounds="true"
                preserveRatio="true">
         <Image url="@../../assets/images/chatbot.png"/>
