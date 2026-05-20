@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/seller.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.seller.SellerDashboardController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="24.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="26.0" right="42.0" bottom="26.0" left="42.0"/>
+        </padding>
+
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToHome"
+                    styleClass="seller-ghost-button"
+                    text="← Dashboard"/>
+
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="28.0"
+                               maxWidth="28.0"
+                               prefHeight="28.0"
+                               prefWidth="28.0"
+                               visible="false"
+                               managed="false"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleRefresh"
+                    styleClass="seller-secondary-button"
+                    text="Tải lại"/>
+        </HBox>
+
+        <!-- Title -->
+        <VBox spacing="8.0">
+            <Label fx:id="sellerNameLabel"
+                   text="Xin chào Seller!"
+                   styleClass="seller-page-title"/>
+
+            <Label fx:id="sellerStatusLabel"
+                   text="Đang tải thông tin tài khoản..."
+                   wrapText="true"
+                   styleClass="seller-page-subtitle"/>
+        </VBox>
+
+        <!-- Summary cards -->
+        <HBox spacing="18.0">
+            <VBox spacing="8.0"
+                  prefWidth="260.0"
+                  styleClass="seller-summary-card">
+                <Label text="Tổng phiên"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="totalAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+
+            <VBox spacing="8.0"
+                  prefWidth="260.0"
+                  styleClass="seller-summary-card">
+                <Label text="Sắp mở"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="openAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+
+            <VBox spacing="8.0"
+                  prefWidth="260.0"
+                  styleClass="seller-summary-card">
+                <Label text="Đang chạy"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="runningAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+
+            <VBox spacing="8.0"
+                  prefWidth="260.0"
+                  styleClass="seller-summary-card">
+                <Label text="Đã kết thúc"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="finishedAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+        </HBox>
+
+        <!-- Action panel -->
+        <HBox spacing="20.0">
+            <VBox spacing="14.0"
+                  prefWidth="540.0"
+                  prefHeight="230.0"
+                  styleClass="seller-action-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-create.png"/>
+                </ImageView>
+
+                <Label text="Tạo phiên đấu giá"
+                       styleClass="seller-card-title"/>
+
+                <Label text="Nhập thông tin sản phẩm, giá khởi điểm, giá sàn và thời gian mở phiên."
+                       wrapText="true"
+                       styleClass="seller-muted-text"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleCreateAuction"
+                        styleClass="seller-primary-button"
+                        text="Tạo phiên mới"/>
+            </VBox>
+
+            <VBox spacing="14.0"
+                  prefWidth="540.0"
+                  prefHeight="230.0"
+                  styleClass="seller-action-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-auction.png"/>
+                </ImageView>
+
+                <Label text="Quản lý phiên của tôi"
+                       styleClass="seller-card-title"/>
+
+                <Label text="Xem các phiên thuộc Seller hiện tại"
+                       wrapText="true"
+                       styleClass="seller-muted-text"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenSellerAuctionList"
+                        styleClass="seller-secondary-button"
+                        text="Mở danh sách"/>
+            </VBox>
+        </HBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- Status + chatbot launcher + signature -->
+        <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+            <Label fx:id="statusLabel"
+                   text="Sẵn sàng."
+                   styleClass="seller-muted-text"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</AnchorPane>

@@ -2,6 +2,32 @@
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
+function Use-Jdk17 {
+    $candidates = @()
+    if ($env:JAVA_17_HOME) { $candidates += $env:JAVA_17_HOME }
+    $candidates += @(
+        "C:\Program Files\Java\jdk-17",
+        "C:\Program Files\Eclipse Adoptium\jdk-17"
+    )
+    $candidates += (Get-ChildItem "C:\Program Files\Java" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "jdk-17*" } | ForEach-Object { $_.FullName })
+    $candidates += (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "jdk-17*" } | ForEach-Object { $_.FullName })
+
+    foreach ($jdkHome in ($candidates | Select-Object -Unique)) {
+        $javaExe = Join-Path $jdkHome "bin\java.exe"
+        if (Test-Path $javaExe) {
+            $env:JAVA_HOME = $jdkHome
+            $env:Path = "$jdkHome\bin;$env:Path"
+            Write-Host "Using JDK 17: $jdkHome"
+            return
+        }
+    }
+
+    Write-Error "Không tìm thấy JDK 17. Hãy cài JDK 17 hoặc đặt biến JAVA_17_HOME trỏ tới thư mục JDK 17."
+    exit 1
+}
+
+Use-Jdk17
+
 Write-Host "Starting MySQL (docker compose up db -d)..."
 docker compose up db -d
 

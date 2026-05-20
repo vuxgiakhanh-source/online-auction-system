@@ -269,4 +269,11 @@ public interface ClientEventListener {
     // FIX Bug #8: thêm onPong để ClientPacketDispatcher có thể dispatch PONG về UI
     /** Server phản hồi PONG sau khi client gửi PING. timestamp là echo của client. */
     default void onPong(long timestamp) {}
+
+    // ── CHATBOT ───────────────────────────────────────────────────────────────
+
+    default void onChatbotAnswer(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}
+    default void onChatbotNotFound(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}
+    default void onChatbotFaqListReceived(
+            com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListResponseDTO list) {}
 }

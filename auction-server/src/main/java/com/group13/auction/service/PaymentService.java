@@ -119,7 +119,8 @@ public class PaymentService implements IPaymentService {
       log.info("[PAYMENT] Winner {} đã thanh toán {} — tiền giữ tại SystemBank (FUNDS_HELD).",
               winner.getUsername(), auctionWinner.getFinalPrice());
 
-      auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
+      auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(),
+              auctionWinner.getPaymentStatus().name(), auctionWinner.getConfirmReceiptDeadline());
     }
   }
 
@@ -136,8 +137,7 @@ public class PaymentService implements IPaymentService {
     log.info("[PAYMENT] Winner {} xác nhận nhận hàng — 3 ngày report bắt đầu đếm.",
             auctionWinner.getWinner().getUsername());
 
-    auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(),
-            auctionWinner.getPaymentStatus().name());
+    auctionWinnerDAO.updateReportDeadline(auctionWinner.getId(), auctionWinner.getReportDeadline());
   }
 
   public void releaseToSeller(Auction auction) {

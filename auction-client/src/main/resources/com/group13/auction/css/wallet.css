@@ -1,0 +1,49 @@
+.wallet-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: 900;
+}
+
+.wallet-subtitle,
+.wallet-muted-text {
+    -fx-font-size: 15px;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+.wallet-summary-card,
+.wallet-action-card {
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+    -fx-background-radius: 26;
+    -fx-padding: 24;
+}
+
+.wallet-summary-card {
+    -fx-pref-width: 365px;
+    -fx-pref-height: 145px;
+}
+
+.wallet-action-card {
+    -fx-pref-width: 555px;
+    -fx-pref-height: 230px;
+}
+
+.wallet-card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.70);
+}
+
+.wallet-main-balance {
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #67b8ea;
+}
+
+.wallet-balance-value {
+    -fx-font-size: 25px;
+    -fx-font-weight: 900;
+}
+
+.wallet-section-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+}

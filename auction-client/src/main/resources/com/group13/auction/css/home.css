@@ -1,0 +1,337 @@
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('../assets/fonts/PlayfairDisplay-Bold.ttf'); 
+}
+
+/* LANDING HEADER */
+
+.landing-login-button,
+.landing-register-button {
+    -fx-cursor: hand;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 8 20 8 20;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.landing-login-button {
+    -fx-background-color: rgba(103, 184, 234, 0.22);
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+}
+
+.landing-register-button {
+    -fx-background-color: #67b8ea;
+    -fx-text-fill: #ffffff;
+}
+
+.landing-login-button:hover,
+.landing-register-button:hover {
+    -fx-opacity: 0.92;
+}
+
+.landing-login-button:pressed,
+.landing-register-button:pressed {
+    -fx-opacity: 0.82;
+}
+
+/* LANDING HERO */
+
+.landing-main-title {
+    -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-size: 46px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+    -fx-line-spacing: -8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+}
+
+.landing-omni {
+    -fx-font-family: "Playfair Display", serif;
+    -fx-font-size: 52px;
+    -fx-font-weight: 800; /* In đậm lên rất đẹp và chắc chắn */
+    -fx-text-fill: #ffffff;
+    -fx-line-spacing: 0; /* Khuyên dùng trả về 0 hoặc -2 để thoáng dấu */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+    
+}
+
+.landing-main-subtitle {
+    -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.85); /* Tăng độ đậm của chữ phụ */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.7), 6, 0, 0, 0);
+}
+
+.landing-main-start-button {
+    -fx-cursor: hand;
+    -fx-background-color: #67b8ea;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 18px;
+    -fx-font-weight: 900;
+    -fx-padding: 12 24 12 24;
+    -fx-min-width: 140px;
+    -fx-min-height: 50px;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.landing-main-start-button:hover {
+    -fx-opacity: 0.92;
+}
+
+.landing-main-start-button:pressed {
+    -fx-opacity: 0.82;
+}
+
+/* MAIN LAYOUT HEADER */
+
+.main-header-button,
+.main-header-danger-button {
+    -fx-cursor: hand;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-padding: 9 18 9 18;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.main-header-button {
+    -fx-background-color: rgba(255, 255, 255, 0.11);
+    -fx-border-color: rgba(255, 255, 255, 0.14);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255, 255, 255, 0.88);
+}
+
+.main-header-danger-button {
+    -fx-background-color: rgba(255, 92, 92, 0.18);
+    -fx-border-color: rgba(255, 150, 150, 0.38);
+    -fx-border-width: 1;
+    -fx-text-fill: #ffffff;
+}
+
+.main-header-button:hover,
+.main-header-danger-button:hover {
+    -fx-opacity: 0.92;
+}
+
+.main-header-button:pressed,
+.main-header-danger-button:pressed {
+    -fx-opacity: 0.82;
+}
+
+/* MAIN WELCOME */
+
+.main-welcome-title {
+    -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-size: 34px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.main-account-info {
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.76);
+}
+
+/* MAIN CARDS */
+
+.main-dashboard-card,
+.main-dashboard-card-muted,
+.main-secondary-card {
+    -fx-background-radius: 26;
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+    -fx-padding: 24;
+}
+
+.main-dashboard-card {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-border-color: rgba(255, 255, 255, 0.13);
+}
+
+.main-dashboard-card-muted {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+}
+
+.main-secondary-card {
+    -fx-background-color: rgba(103, 184, 234, 0.10);
+    -fx-border-color: rgba(103, 184, 234, 0.20);
+}
+
+.main-card-title {
+    -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.main-card-description {
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.78);
+}
+
+.main-card-description-muted {
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.68);
+}
+
+.main-card-button,
+.main-secondary-button {
+    -fx-cursor: hand;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 900;
+    -fx-padding: 10 18 10 18;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.main-card-button {
+    -fx-background-color: #67b8ea;
+    -fx-text-fill: #ffffff;
+}
+
+.main-secondary-button {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: rgba(255, 255, 255, 0.18);
+    -fx-border-width: 1;
+    -fx-text-fill: #ffffff;
+}
+
+.main-card-button:hover,
+.main-secondary-button:hover {
+    -fx-opacity: 0.92;
+}
+
+.main-card-button:pressed,
+.main-secondary-button:pressed {
+    -fx-opacity: 0.82;
+}
+
+.main-card-button:disabled,
+.main-secondary-button:disabled {
+    -fx-opacity: 0.48;
+}
+
+.main-secondary-card-title {
+    -fx-font-family: "Montserrat", "Bricolage Grotesque", "Segoe UI", sans-serif;
+    -fx-font-size: 20px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.main-secondary-card-description {
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+/* 1. Làm nhạt/trong suốt nền của ScrollPane và Viewport */
+.scroll-pane {
+    -fx-background-color: transparent; /* Bỏ màu nền mặc định */
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent; /* Giúp lộ lớp background-layer phía dưới của bạn */
+}
+
+/* 2. Làm nhạt rãnh chạy của thanh cuộn (Track) */
+.scroll-pane .scroll-bar:vertical,
+.scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: rgba(255, 255, 255, 0.3); /* Dùng màu trắng mờ siêu nhạt */
+    /* Nếu nền web của bạn màu sáng, hãy đổi thành: rgba(0, 0, 0, 0.04) */
+    -fx-pref-width: 8px;  /* Thu nhỏ độ rộng để thanh cuộn tinh tế hơn */
+    -fx-pref-height: 8px; /* Thu nhỏ độ cao cho thanh cuộn ngang */
+}
+
+/* 3. Làm nhạt cục kéo (Thumb) */
+.scroll-pane .scroll-bar .thumb {
+    /* Sử dụng màu xám nhạt và có độ trong suốt (alpha = 0.4) */
+    -fx-background-color: rgba(0, 0, 0, 0.25); 
+    -fx-background-radius: 20px; /* Bo tròn hẳn hai đầu nhìn sẽ rất sang */
+}
+
+/* 4. Hiệu ứng khi người dùng tương tác (Đậm lên một chút để dễ nhìn) */
+.scroll-pane .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.4); /* Đậm hơn một chút khi di chuột vào */
+}
+
+.scroll-pane .scroll-bar .thumb:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.6); /* Đậm thêm khi click giữ */
+}
+
+/* 5. Xóa bỏ hoàn toàn các nút mũi tên (Increment/Decrement) ở 2 đầu để thanh cuộn gọn gàng */
+.scroll-pane .scroll-bar .increment-button,
+.scroll-pane .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}
+
+.scroll-pane .scroll-bar .increment-arrow,
+.scroll-pane .scroll-bar .decrement-arrow {
+    -fx-shape: ""; /* Xóa hình mũi tên */
+    -fx-padding: 0;
+}
+
+/* Khối hộp chứa nội dung văn bản */
+/* Hộp văn bản: Hiệu ứng kính (Glassmorphism) viền sáng nhẹ */
+.content-card {
+    -fx-background-color: rgba(30, 41, 59, 0.7); /* Xám slate hơi mờ */
+    -fx-border-color: rgba(255, 255, 255, 0); /* Viền trắng rất mờ */
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
+    -fx-padding: 24px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 15, 0, 0, 10);
+}
+
+/* Chữ O: Gradient Xanh Electric -> Tím Neon */
+.drop-cap-letter {
+    -fx-text-fill: linear-gradient(to bottom right, #129096, #1282e4);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-weight: 900;
+    -fx-font-size: 160px;
+    -fx-effect: dropshadow(two-pass-box, rgba(79, 172, 254, 0.3), 10, 0, 0, 0); /* Bóng sáng glow nhẹ */
+}
+
+/* Chữ bên trong khối hộp */
+.content-text {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.video-gradient-overlay {
+    /* Gradient từ đen (90% đậm) bên trái sang trong suốt hoàn toàn bên phải */
+    -fx-background-color: linear-gradient(to right, 
+        rgba(0, 0, 0, 0.9) 10%, 
+        rgba(0, 0, 0, 0.722) 40%, 
+        rgba(0, 0, 0, 0) 100%
+    );
+}

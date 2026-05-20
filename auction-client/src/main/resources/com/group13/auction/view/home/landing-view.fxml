@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.media.MediaView?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
+
+<StackPane stylesheets="@../../css/home.css"
+           styleClass="screen-root"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.group13.auction.ui.controller.home.LandingController">
+
+    <ScrollPane fx:id="mainScrollPane"
+                fitToWidth="true"
+                styleClass="background-layer">
+        <VBox alignment="TOP_CENTER"
+              spacing="80.0"
+              style="-fx-padding: 0 0 100 0;">
+
+            <AnchorPane prefHeight="70.0">
+                <HBox alignment="CENTER_LEFT"
+                      spacing="18.0"
+                      AnchorPane.leftAnchor="18.0"
+                      AnchorPane.rightAnchor="20.0"
+                      AnchorPane.topAnchor="16.0">
+
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <ImageView fitWidth="210.0" preserveRatio="true">
+                            <Image url="@../../assets/images/logo.png"/>
+                        </ImageView>
+
+                        <ImageView fitHeight="44.0" preserveRatio="true">
+                            <Image url="@../../assets/images/mascot-version-1.png"/>
+                        </ImageView>
+                    </HBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Button fx:id="backgroundAudioButton"
+                            mnemonicParsing="false"
+                            onAction="#handleToggleBackgroundAudio"
+                            styleClass="landing-login-button"
+                            text="Music ON"/>
+
+                    <Button fx:id="effectsAudioButton"
+                            mnemonicParsing="false"
+                            onAction="#handleToggleEffectsAudio"
+                            styleClass="landing-login-button"
+                            text="SFX ON"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleGoToLogin"
+                            styleClass="landing-login-button"
+                            text="Đăng nhập"/>
+
+                    <Button mnemonicParsing="false"
+                            onAction="#handleGoToRegister"
+                            styleClass="landing-register-button"
+                            text="Đăng ký"/>
+                </HBox>
+            </AnchorPane>
+
+            <VBox alignment="CENTER" spacing="8.0">
+                <HBox alignment="CENTER" spacing="8.0">
+                    <Label text="Nền tảng"
+                           styleClass="landing-main-title"/>
+
+                    <Label text="ĐẤU GIÁ TRỰC TUYẾN"
+                           styleClass="landing-main-title"
+                           style="-fx-text-fill: white;"/>
+                </HBox>
+
+                <Label text="duy nhất bạn cần"
+                       styleClass="landing-main-title"/>
+
+                <VBox alignment="CENTER">
+                    <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
+                           styleClass="landing-main-subtitle"/>
+
+                    <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
+                           styleClass="landing-main-subtitle"/>
+                </VBox>
+
+                <Region prefHeight="8.0"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleStart"
+                        styleClass="landing-main-start-button"
+                        text="BẮT ĐẦU  ➜"/>
+            </VBox>
+
+            <StackPane fx:id="revealBlock" prefHeight="450.0">
+                <MediaView fx:id="bgMediaView" preserveRatio="true"/>
+
+                <Pane fx:id="gradientOverlay"
+                      opacity="0.0"
+                      styleClass="video-gradient-overlay"/>
+
+                <VBox fx:id="revealContent"
+                      alignment="CENTER_LEFT"
+                      opacity="0.0"
+                      spacing="15.0"
+                      style="-fx-padding: 0 0 0 100;">
+
+                    <HBox alignment="BASELINE_LEFT">
+                        <Label text="Tại sao nên chọn "
+                               styleClass="landing-main-title"
+                               style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+
+                        <Label text="OMNI"
+                               styleClass="landing-omni"
+                               style="-fx-font-size: 52px; -fx-text-fill: rgb(179, 144, 18); -fx-effect: none;"/>
+
+                        <Label text=" ?"
+                               styleClass="landing-main-title"
+                               style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                    </HBox>
+
+                    <VBox>
+                        <Label text="OMNI là sản phẩm đầu tay của CKNT Team,"
+                               styleClass="landing-main-subtitle"
+                               style="-fx-text-fill: #cccccc;"/>
+
+                        <Label text="Với nhiều tính năng nổi bật và hiện đại nhằm tạo môi trường:"
+                               styleClass="landing-main-subtitle"
+                               style="-fx-text-fill: #cccccc;"/>
+
+                        <Label text="          An toàn - Thông minh - Tiện dụng"
+                               styleClass="landing-main-subtitle"
+                               style="-fx-text-fill: #ffc700; -fx-font-size: 25px;"/>
+                    </VBox>
+                </VBox>
+            </StackPane>
+
+            <GridPane>
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50.0"/>
+                    <ColumnConstraints percentWidth="50.0"/>
+                </columnConstraints>
+
+                <AnchorPane fx:id="slideBlockO"
+                            opacity="0.0"
+                            GridPane.columnIndex="0">
+
+                    <VBox styleClass="content-card"
+                          prefHeight="120.0"
+                          AnchorPane.topAnchor="80.0"
+                          AnchorPane.leftAnchor="150.0"
+                          AnchorPane.rightAnchor="20.0">
+
+                        <TextFlow>
+                            <Text text="ptimal Pricing"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — OmniBid tối ưu hóa giá trị, mang lại mức giá tốt nhất cho cả người mua và người bán."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
+                    </VBox>
+
+                    <Label text="O"
+                           styleClass="drop-cap-letter"
+                           AnchorPane.topAnchor="0.0"
+                           AnchorPane.leftAnchor="60.0"/>
+                </AnchorPane>
+            </GridPane>
+
+            <GridPane>
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50.0"/>
+                    <ColumnConstraints percentWidth="50.0"/>
+                </columnConstraints>
+
+                <AnchorPane fx:id="slideBlockM"
+                            opacity="0.0"
+                            GridPane.columnIndex="0">
+
+                    <VBox styleClass="content-card"
+                          prefHeight="120.0"
+                          AnchorPane.topAnchor="80.0"
+                          AnchorPane.leftAnchor="160.0"
+                          AnchorPane.rightAnchor="20.0">
+
+                        <TextFlow>
+                            <Text text="aximum Security"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Minh bạch và an toàn tuyệt đối với hệ thống khóa đặt cọc (Deposit Lock) thông minh."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
+                    </VBox>
+
+                    <Label text="M"
+                           styleClass="drop-cap-letter"
+                           AnchorPane.topAnchor="0.0"
+                           AnchorPane.leftAnchor="40.0"/>
+                </AnchorPane>
+            </GridPane>
+
+            <GridPane>
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50.0"/>
+                    <ColumnConstraints percentWidth="50.0"/>
+                </columnConstraints>
+
+                <AnchorPane fx:id="slideBlockN"
+                            opacity="0.0"
+                            GridPane.columnIndex="0">
+
+                    <VBox styleClass="content-card"
+                          prefHeight="120.0"
+                          AnchorPane.topAnchor="80.0"
+                          AnchorPane.leftAnchor="153.0"
+                          AnchorPane.rightAnchor="20.0">
+
+                        <TextFlow>
+                            <Text text="ever-ending Items"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Khám phá kho tài sản đa dạng, từ những món đồ độc bản đến cơ hội đầu tư giá trị."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
+                    </VBox>
+
+                    <Label text="N"
+                           styleClass="drop-cap-letter"
+                           AnchorPane.topAnchor="0.0"
+                           AnchorPane.leftAnchor="60.0"/>
+                </AnchorPane>
+            </GridPane>
+
+            <GridPane>
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50.0"/>
+                    <ColumnConstraints percentWidth="50.0"/>
+                </columnConstraints>
+
+                <AnchorPane fx:id="slideBlockI"
+                            opacity="0.0"
+                            GridPane.columnIndex="0">
+
+                    <VBox styleClass="content-card"
+                          prefHeight="120.0"
+                          AnchorPane.topAnchor="80.0"
+                          AnchorPane.leftAnchor="100.0"
+                          AnchorPane.rightAnchor="20.0">
+
+                        <TextFlow>
+                            <Text text="nstant Bidding"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Trải nghiệm đấu giá thời gian thực mượt mà, phản hồi ngay lập tức trong từng giây."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
+                    </VBox>
+
+                    <Label text="I"
+                           styleClass="drop-cap-letter"
+                           AnchorPane.topAnchor="0.0"
+                           AnchorPane.leftAnchor="80.0"/>
+                </AnchorPane>
+            </GridPane>
+        </VBox>
+    </ScrollPane>
+
+    <AnchorPane pickOnBounds="false">
+        <VBox alignment="BOTTOM_RIGHT"
+              maxWidth="190.0"
+              pickOnBounds="false"
+              spacing="2.0"
+              AnchorPane.bottomAnchor="8.0"
+              AnchorPane.rightAnchor="16.0">
+
+            <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+            <Label styleClass="signature-label"
+                   text="by CKNT team"/>
+        </VBox>
+    </AnchorPane>
+
+</StackPane>

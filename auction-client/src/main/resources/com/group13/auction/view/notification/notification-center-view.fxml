@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/notification.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.notification.NotificationCenterController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="20.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="18.0">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="refreshButton"
+                    mnemonicParsing="false"
+                    onAction="#handleRefresh"
+                    text="Làm mới"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToHome"
+                    text="Dashboard"/>
+        </HBox>
+
+        <VBox spacing="8.0">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <ImageView fitHeight="42.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-notification.png"/>
+                </ImageView>
+
+                <Label styleClass="notification-title" text="Trung tâm thông báo"/>
+            </HBox>
+
+            <Label styleClass="notification-subtitle"
+                   text="Theo dõi thông báo hệ thống, Second Chance Offer và các cập nhật liên quan đến tài khoản."/>
+        </VBox>
+
+        <HBox spacing="22.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="16.0" styleClass="notification-list-card">
+                <VBox spacing="10.0" styleClass="notification-second-chance-panel">
+                    <Label styleClass="notification-section-title" text="Second Chance đang chờ"/>
+
+                    <VBox fx:id="secondChanceEmptyBox"
+                          alignment="CENTER"
+                          spacing="8.0"
+                          prefHeight="105.0">
+                        <Label styleClass="notification-empty-title"
+                               text="Chưa có lời mời"/>
+                        <Label styleClass="notification-muted-text"
+                               textAlignment="CENTER"
+                               wrapText="true"
+                               text="Client chỉ hiển thị Second Chance Offer nhận được từ realtime event của server."/>
+                    </VBox>
+
+                    <ListView fx:id="secondChanceListView"
+                              prefHeight="142.0"
+                              visible="false"
+                              managed="false"/>
+                </VBox>
+
+                <Label styleClass="notification-section-title" text="Danh sách thông báo"/>
+
+                <VBox fx:id="emptyStateBox"
+                      alignment="CENTER"
+                      spacing="12.0"
+                      VBox.vgrow="ALWAYS">
+                    <ImageView fitHeight="62.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-bell.png"/>
+                    </ImageView>
+
+                    <Label styleClass="notification-empty-title"
+                           text="Chưa có thông báo"/>
+
+                    <Label styleClass="notification-muted-text"
+                           textAlignment="CENTER"
+                           wrapText="true"
+                           text="Server hiện chưa trả về thông báo nào cho tài khoản này."/>
+                </VBox>
+
+                <ListView fx:id="notificationListView"
+                          visible="false"
+                          managed="false"
+                          VBox.vgrow="ALWAYS"/>
+            </VBox>
+
+            <VBox spacing="14.0" styleClass="notification-detail-card">
+                <VBox spacing="12.0" styleClass="notification-offer-detail-card">
+                    <Label styleClass="notification-section-title" text="Xử lý Second Chance"/>
+
+                    <VBox spacing="8.0">
+                        <Label fx:id="offerItemNameLabel"
+                               styleClass="notification-detail-title"
+                               wrapText="true"
+                               text="Chưa có Second Chance Offer"/>
+
+                        <Label styleClass="notification-field-title" text="Mã phiên đấu giá"/>
+                        <Label fx:id="offerAuctionIdLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Giá đề nghị"/>
+                        <Label fx:id="offerPriceLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Tiền cọc yêu cầu"/>
+                        <Label fx:id="offerDepositLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Hạn phản hồi"/>
+                        <Label fx:id="offerDeadlineLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Trạng thái"/>
+                        <Label fx:id="offerStatusLabel" styleClass="notification-field-value" text="--"/>
+                    </VBox>
+
+                    <HBox spacing="12.0">
+                        <Button fx:id="acceptSecondChanceButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleAcceptSecondChance"
+                                styleClass="notification-accept-button"
+                                text="Chấp nhận"/>
+
+                        <Button fx:id="declineSecondChanceButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleDeclineSecondChance"
+                                styleClass="notification-danger-button"
+                                text="Từ chối"/>
+
+                        <Button mnemonicParsing="false"
+                                onAction="#handleOpenSecondChanceAuction"
+                                text="Mở phiên"/>
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="12.0" VBox.vgrow="ALWAYS">
+                    <Label styleClass="notification-section-title" text="Chi tiết thông báo"/>
+
+                    <VBox spacing="8.0">
+                        <Label fx:id="titleLabel"
+                               styleClass="notification-detail-title"
+                               wrapText="true"
+                               text="Chưa chọn thông báo"/>
+
+                        <Label fx:id="bodyLabel"
+                               styleClass="notification-body-text"
+                               wrapText="true"
+                               text="Chọn một thông báo ở danh sách bên trái để xem chi tiết."/>
+                    </VBox>
+
+                    <VBox spacing="10.0">
+                        <Label styleClass="notification-field-title" text="Loại thông báo"/>
+                        <Label fx:id="typeLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Thời điểm tạo"/>
+                        <Label fx:id="createdAtLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Trạng thái đọc"/>
+                        <Label fx:id="readStateLabel" styleClass="notification-field-value" text="--"/>
+
+                        <Label styleClass="notification-field-title" text="Phiên đấu giá liên quan"/>
+                        <Label fx:id="relatedAuctionLabel" styleClass="notification-field-value" text="--"/>
+                    </VBox>
+
+                    <Region VBox.vgrow="ALWAYS"/>
+
+                    <HBox spacing="12.0">
+                        <Button fx:id="markReadButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleMarkRead"
+                                text="Đánh dấu đã đọc"/>
+
+                        <Button fx:id="openAuctionButton"
+                                disable="true"
+                                mnemonicParsing="false"
+                                onAction="#handleOpenRelatedAuction"
+                                text="Mở phiên liên quan"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="22.0"
+                               maxWidth="22.0"
+                               visible="false"
+                               managed="false"/>
+            <Label fx:id="statusLabel"
+                   styleClass="notification-muted-text"
+                   text="Sẵn sàng."/>
+        </HBox>
+
+        <!-- Chatbot launcher + signature -->
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</AnchorPane>

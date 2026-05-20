@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            stylesheets="@../../css/seller.css"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.seller.SellerAuctionDetailController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="24.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="26.0" right="42.0" bottom="26.0" left="42.0"/>
+        </padding>
+
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <Button mnemonicParsing="false"
+                    onAction="#handleBackToSellerList"
+                    styleClass="seller-ghost-button"
+                    text="← Danh sách phiên"/>
+
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <ProgressIndicator fx:id="loadingIndicator"
+                               maxHeight="28.0"
+                               maxWidth="28.0"
+                               prefHeight="28.0"
+                               prefWidth="28.0"
+                               visible="false"
+                               managed="false"/>
+        </HBox>
+
+        <!-- Title -->
+        <VBox spacing="6.0">
+            <Label text="Chi tiết phiên đấu giá"
+                   styleClass="seller-page-title"/>
+
+            <Label text="Xem thông tin tổng quan, giá hiện tại và trạng thái xử lý của phiên đấu giá."
+                   wrapText="true"
+                   styleClass="seller-page-subtitle"/>
+        </VBox>
+
+        <!-- Detail Card -->
+        <VBox spacing="22.0"
+              maxWidth="860.0"
+              styleClass="seller-detail-card">
+            <padding>
+                <Insets top="28.0" right="32.0" bottom="28.0" left="32.0"/>
+            </padding>
+
+            <VBox spacing="8.0">
+                <Label fx:id="titleLabel"
+                       text="Tên sản phẩm"
+                       wrapText="true"
+                       styleClass="seller-card-title"/>
+
+                <Label text="Thông tin được hiển thị theo dữ liệu mới nhất đã tải trong danh sách người bán."
+                       wrapText="true"
+                       styleClass="seller-muted-text"/>
+            </VBox>
+
+            <VBox spacing="12.0" styleClass="seller-detail-image-section">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label text="Ảnh sản phẩm"
+                           styleClass="seller-form-label"/>
+
+                    <Label text="Ảnh đã upload khi tạo phiên đấu giá."
+                           styleClass="seller-muted-text"/>
+                </HBox>
+
+                <FlowPane fx:id="imageGalleryPane"
+                          hgap="10.0"
+                          vgap="10.0"
+                          styleClass="seller-image-gallery"/>
+            </VBox>
+
+            <GridPane hgap="18.0" vgap="16.0" styleClass="seller-detail-grid">
+                <columnConstraints>
+                    <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                    <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>
+                </columnConstraints>
+
+                <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Mã phiên" styleClass="seller-form-label"/>
+                    <Label fx:id="auctionIdLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Loại sản phẩm" styleClass="seller-form-label"/>
+                    <Label fx:id="categoryLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                    <Label text="Trạng thái" styleClass="seller-form-label"/>
+                    <Label fx:id="statusLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <Label text="Người xem" styleClass="seller-form-label"/>
+                    <Label fx:id="viewerCountLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                    <Label text="Giá hiện tại" styleClass="seller-form-label"/>
+                    <Label fx:id="currentPriceLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                    <Label text="Giá khởi điểm" styleClass="seller-form-label"/>
+                    <Label fx:id="startingPriceLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                    <Label text="Giá sàn" styleClass="seller-form-label"/>
+                    <Label fx:id="reservePriceLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                    <Label text="Thời gian bắt đầu" styleClass="seller-form-label"/>
+                    <Label fx:id="startTimeLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+
+                <VBox spacing="6.0" GridPane.columnIndex="0" GridPane.rowIndex="4">
+                    <Label text="Thời gian kết thúc" styleClass="seller-form-label"/>
+                    <Label fx:id="endTimeLabel" text="-" styleClass="seller-detail-value"/>
+                </VBox>
+            </GridPane>
+
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <Button fx:id="editButton"
+                        mnemonicParsing="false"
+                        onAction="#handleEditAuction"
+                        styleClass="seller-secondary-button"
+                        text="Gia hạn thời gian"/>
+
+                <Button fx:id="cancelButton"
+                        mnemonicParsing="false"
+                        onAction="#handleRequestCancel"
+                        styleClass="seller-danger-button"
+                        text="Yêu cầu hủy"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label fx:id="messageLabel"
+                       text="Sẵn sàng."
+                       styleClass="seller-muted-text"/>
+            </HBox>
+        </VBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- Chatbot launcher + signature -->
+        <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</AnchorPane>
