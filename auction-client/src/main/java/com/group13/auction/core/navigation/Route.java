@@ -1,6 +1,8 @@
 package com.group13.auction.core.navigation;
 
 import com.group13.auction.config.ViewPath;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Các route chính của JavaFX client.
@@ -42,6 +44,22 @@ public enum Route {
 
     Route(String fxmlPath) {
         this.fxmlPath = fxmlPath;
+    }
+
+    /**
+     * Tìm route tương ứng với đường dẫn FXML.
+     *
+     * @param fxmlPath đường dẫn FXML cần tìm
+     * @return route nếu đường dẫn thuộc một route đã khai báo
+     */
+    public static Optional<Route> fromFxmlPath(String fxmlPath) {
+        if (fxmlPath == null || fxmlPath.isBlank()) {
+            return Optional.empty();
+        }
+
+        return Arrays.stream(values())
+            .filter(route -> route.fxmlPath.equals(fxmlPath))
+            .findFirst();
     }
 
     /**
