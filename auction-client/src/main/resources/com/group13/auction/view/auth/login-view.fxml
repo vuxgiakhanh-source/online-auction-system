@@ -21,7 +21,8 @@
 
     <Pane styleClass="background-layer"/>
 
-    <HBox alignment="CENTER_LEFT"
+    <HBox maxHeight="-Infinity"
+          maxWidth="-Infinity"
           pickOnBounds="false"
           styleClass="auth-back-container"
           StackPane.alignment="TOP_LEFT">
