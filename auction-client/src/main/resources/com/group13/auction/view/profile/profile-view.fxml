@@ -152,9 +152,13 @@
 
         <Region VBox.vgrow="ALWAYS"/>
 
+        <!-- Chatbot launcher + signature -->
         <HBox alignment="BOTTOM_RIGHT">
             <Region HBox.hgrow="ALWAYS"/>
-            <VBox alignment="CENTER_RIGHT" spacing="4.0">
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
                 <Label styleClass="signature-label" text="by CKNT team"/>
             </VBox>
         </HBox>

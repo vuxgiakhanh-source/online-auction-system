@@ -128,18 +128,29 @@
             </VBox>
         </HBox>
 
-        <HBox alignment="CENTER_LEFT" spacing="12.0">
-            <ProgressIndicator
-                    fx:id="loadingIndicator"
-                    prefWidth="24.0"
-                    prefHeight="24.0"
-                    visible="false"
-                    managed="false"/>
-            <Label
-                    fx:id="statusLabel"
-                    text="Sẵn sàng."
-                    wrapText="true"
-                    styleClass="status-label"/>
+        <!-- Status + chatbot launcher + signature -->
+        <HBox alignment="BOTTOM_LEFT" spacing="12.0">
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <ProgressIndicator
+                        fx:id="loadingIndicator"
+                        prefWidth="24.0"
+                        prefHeight="24.0"
+                        visible="false"
+                        managed="false"/>
+                <Label
+                        fx:id="statusLabel"
+                        text="Sẵn sàng."
+                        wrapText="true"
+                        styleClass="status-label"/>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+                <Label styleClass="signature-label" text="by CKNT team"/>
+            </VBox>
         </HBox>
     </VBox>
 </StackPane>

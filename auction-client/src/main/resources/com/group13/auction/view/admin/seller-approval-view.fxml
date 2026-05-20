@@ -111,5 +111,12 @@
                     wrapText="true"
                     styleClass="status-label"/>
         </HBox>
+
+        <!-- Signature -->
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Label styleClass="signature-label" text="by CKNT team"/>
+        </HBox>
     </VBox>
 </StackPane>
