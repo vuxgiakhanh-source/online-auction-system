@@ -11,6 +11,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.media.MediaView?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 
 <StackPane stylesheets="@../../css/home.css"
            styleClass="screen-root"
@@ -53,7 +56,14 @@
                 </AnchorPane>
 
                 <VBox alignment="CENTER" spacing="8.0">
-                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN" styleClass="landing-main-title"/>
+    
+                    <HBox alignment="CENTER" spacing="8.0">
+                        <Label text="Nền tảng" styleClass="landing-main-title"/>
+                        
+                        <Label text="ĐẤU GIÁ TRỰC TUYẾN" 
+                            styleClass="landing-main-title" 
+                            style="-fx-text-fill:rgb(58, 46, 222);"/> </HBox>
+
                     <Label text="duy nhất bạn cần" styleClass="landing-main-title"/>
 
                     <VBox alignment="CENTER">
@@ -62,98 +72,133 @@
                     </VBox>
 
                     <Region prefHeight="8.0"/>
-
                     <Button mnemonicParsing="false" onAction="#handleStart" styleClass="landing-main-start-button" text="BẮT ĐẦU  ➜"/>
                 </VBox>
 
-                <StackPane fx:id="revealBlock">
+                <StackPane fx:id="revealBlock" prefHeight="450.0">
                     <MediaView fx:id="bgMediaView" preserveRatio="true" />
 
-                    <VBox fx:id="revealContent" alignment="CENTER" opacity="0.0" spacing="15.0">
-                        <Label text="TẠI SAO CHỌN OMNIBID?" styleClass="landing-main-title" style="-fx-font-size: 36px;"/>
-                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời." styleClass="landing-main-subtitle"/>
+                    <Pane fx:id="gradientOverlay" opacity="0.0" styleClass="video-gradient-overlay" />
+
+                    <VBox fx:id="revealContent" alignment="CENTER_LEFT" opacity="0.0" spacing="15.0" style="-fx-padding: 0 0 0 100;">
+                        <HBox>
+                            <Label text="Tại sao bạn chọn " styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                            
+                            <Label text="OMNI"
+                                styleClass="landing-omni"
+                                style="-fx-font-size: 42px; -fx-text-fill:rgb(179, 144, 18)"/>
+
+                            <Label text=" ?" styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                        </HBox>
+
+                        <VBox>
+                            <Label text="OMNI là sản phẩm đầu tay của CKNT Team," 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
+
+                            <Label text="Với nhiều tính năng đang phát triển nhằm tạo nhiều môi trường:" 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
+
+                            <Label text="          An toàn - Thông minh - Tiện dụng" 
+                                styleClass="landing-main-subtitle" style="-fx-text-fill:rgb(194, 170, 13); -fx-font-size: 25"/>
+                        </VBox>
                     </VBox>
                 </StackPane>
 
-                <AnchorPane fx:id="slideBlockO" 
-                            opacity="0.0" 
-                            prefHeight="300.0" 
-                            AnchorPane.leftAnchor="0.0" 
-                            AnchorPane.rightAnchor="0.0">
-                    
-                    <VBox styleClass="content-card"
-                        prefWidth="300.0"
-                        prefHeight="200.0"
-                        AnchorPane.topAnchor="115.0"
-                        AnchorPane.leftAnchor="170.0"> 
-                        <Label text="Nội dung văn bản" styleClass="content-text"/>
-                    </VBox>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50.0" /> <ColumnConstraints percentWidth="50.0" /> </columnConstraints>
 
-                    <Label text="O" 
-                        styleClass="drop-cap-letter"
-                        AnchorPane.topAnchor="35.0"
-                        AnchorPane.leftAnchor="10.0"/> 
-                </AnchorPane>
+                    <AnchorPane fx:id="slideBlockO" opacity="0.0" GridPane.columnIndex="0">
+                        
+                        <VBox styleClass="content-card"
+                            prefHeight="120.0"
+                            AnchorPane.topAnchor="80.0"
+                            AnchorPane.leftAnchor="150.0"
+                            AnchorPane.rightAnchor="20.0"> 
+                            <Label text="mniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
+                                wrapText="true" 
+                                styleClass="content-text"
+                                style="-fx-font-size: 20;"/>
+                        </VBox>
+                        
+                        <Label text="O" 
+                            styleClass="drop-cap-letter" 
+                            AnchorPane.topAnchor="0.0" 
+                            AnchorPane.leftAnchor="60.0"/> 
+                    </AnchorPane>
+                </GridPane>
 
-                <AnchorPane fx:id="slideBlockM" 
-                            opacity="0.0" 
-                            prefHeight="300.0" 
-                            AnchorPane.leftAnchor="0.0" 
-                            AnchorPane.rightAnchor="0.0">
-                    
-                    <VBox styleClass="content-card"
-                        prefWidth="300.0"
-                        prefHeight="200.0"
-                        AnchorPane.topAnchor="115.0"
-                        AnchorPane.leftAnchor="170.0"> 
-                        <Label text="Nội dung văn bản" styleClass="content-text"/>
-                    </VBox>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50.0" /> <ColumnConstraints percentWidth="50.0" /> </columnConstraints>
 
-                    <Label text="M" 
-                        styleClass="drop-cap-letter"
-                        AnchorPane.topAnchor="35.0"
-                        AnchorPane.leftAnchor="10.0"/> 
-                </AnchorPane>
+                    <AnchorPane fx:id="slideBlockM" opacity="0.0" GridPane.columnIndex="0">
+                        
+                        <VBox styleClass="content-card"
+                            prefHeight="120.0"
+                            AnchorPane.topAnchor="80.0"
+                            AnchorPane.leftAnchor="160.0"
+                            AnchorPane.rightAnchor="20.0"> 
+                            <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
+                                wrapText="true" 
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
+                        </VBox>
+                        
+                        <Label text="M" 
+                            styleClass="drop-cap-letter" 
+                            AnchorPane.topAnchor="0.0" 
+                            AnchorPane.leftAnchor="40.0"/> 
+                    </AnchorPane>
+                </GridPane>
 
-                <AnchorPane fx:id="slideBlockN" 
-                            opacity="0.0" 
-                            prefHeight="300.0" 
-                            AnchorPane.leftAnchor="0.0" 
-                            AnchorPane.rightAnchor="0.0">
-                    
-                    <VBox styleClass="content-card"
-                        prefWidth="300.0"
-                        prefHeight="200.0"
-                        AnchorPane.topAnchor="115.0"
-                        AnchorPane.leftAnchor="170.0"> 
-                        <Label text="Nội dung văn bản" styleClass="content-text"/>
-                    </VBox>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50.0" /> <ColumnConstraints percentWidth="50.0" /> </columnConstraints>
 
-                    <Label text="N" 
-                        styleClass="drop-cap-letter"
-                        AnchorPane.topAnchor="35.0"
-                        AnchorPane.leftAnchor="10.0"/> 
-                </AnchorPane>
+                    <AnchorPane fx:id="slideBlockN" opacity="0.0" GridPane.columnIndex="0">
+                        
+                        <VBox styleClass="content-card"
+                            prefHeight="120.0"
+                            AnchorPane.topAnchor="80.0"
+                            AnchorPane.leftAnchor="153.0"
+                            AnchorPane.rightAnchor="20.0"> 
+                            <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
+                                wrapText="true" 
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
+                        </VBox>
+                        
+                        <Label text="N" 
+                            styleClass="drop-cap-letter" 
+                            AnchorPane.topAnchor="0.0" 
+                            AnchorPane.leftAnchor="60.0"/> 
+                    </AnchorPane>
+                </GridPane>
 
-                <AnchorPane fx:id="slideBlockI" 
-                            opacity="0.0" 
-                            prefHeight="300.0" 
-                            AnchorPane.leftAnchor="0.0" 
-                            AnchorPane.rightAnchor="0.0">
-                    
-                    <VBox styleClass="content-card"
-                        prefWidth="300.0"
-                        prefHeight="200.0"
-                        AnchorPane.topAnchor="115.0"
-                        AnchorPane.leftAnchor="170.0"> 
-                        <Label text="Nội dung văn bản" styleClass="content-text"/>
-                    </VBox>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50.0" /> <ColumnConstraints percentWidth="50.0" /> </columnConstraints>
 
-                    <Label text="I" 
-                        styleClass="drop-cap-letter"
-                        AnchorPane.topAnchor="35.0"
-                        AnchorPane.leftAnchor="10.0"/> 
-                </AnchorPane>
+                    <AnchorPane fx:id="slideBlockI" opacity="0.0" GridPane.columnIndex="0">
+                        
+                        <VBox styleClass="content-card"
+                            prefHeight="120.0"
+                            AnchorPane.topAnchor="80.0"
+                            AnchorPane.leftAnchor="100.0"
+                            AnchorPane.rightAnchor="20.0"> 
+                            <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị." 
+                                wrapText="true" 
+                                styleClass="content-text"
+                                style="-fx-font-size: 20"/>
+                        </VBox>
+                        
+                        <Label text="I" 
+                            styleClass="drop-cap-letter" 
+                            AnchorPane.topAnchor="0.0" 
+                            AnchorPane.leftAnchor="80.0"/> 
+                    </AnchorPane>
+                </GridPane>
 
             </VBox>
         </content>
