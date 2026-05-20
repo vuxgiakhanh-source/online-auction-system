@@ -144,6 +144,11 @@ public final class Navigator {
         goTo(ViewPath.QUALITY_REPORT_VIEW);
     }
 
+    /** Chuyển tới màn chatbot OMNI. */
+    public void goToChatbot() {
+        goTo(ViewPath.CHATBOT_VIEW);
+    }
+
     /** Chuyển tới dashboard Admin. */
     public void goToAdminDashboard() {
         goTo(ViewPath.ADMIN_DASHBOARD_VIEW);

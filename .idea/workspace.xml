@@ -5,9 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/mapper/ChatbotViewModelMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/service/chatbot/ChatbotService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/chatbot/ChatbotController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/shared/ChatbotLauncherController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/viewmodel/chatbot/ChatbotFaqViewModel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/viewmodel/chatbot/ChatbotMessageViewModel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/assets/images/chatbot.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/chatbot/chatbot-view.fxml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/shared/chatbot-launcher.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/config/ViewPath.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/config/ViewPath.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Navigator.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Navigator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Route.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/core/navigation/Route.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/login-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/login-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/register-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/auth/register-view.fxml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/main-layout.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/main-layout.fxml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -219,7 +233,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "backup-client",
+    "git-widget-placeholder": "Merging backup-client",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/online-auction-main",
