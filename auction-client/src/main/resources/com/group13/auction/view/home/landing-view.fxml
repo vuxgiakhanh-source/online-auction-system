@@ -19,107 +19,96 @@
            fx:controller="com.group13.auction.ui.controller.home.LandingController">
 
     <ScrollPane fx:id="mainScrollPane" fitToWidth="true" styleClass="background-layer">
-        <content>
-            <AnchorPane prefHeight="1500.0" prefWidth="1280.0">
+        <AnchorPane prefHeight="1500.0" prefWidth="1280.0">
 
-                <HBox alignment="CENTER_LEFT"
-                      spacing="18.0"
-                      AnchorPane.leftAnchor="18.0"
-                      AnchorPane.rightAnchor="20.0"
-                      AnchorPane.topAnchor="16.0">
+            <HBox alignment="CENTER_LEFT"
+                  spacing="18.0"
+                  AnchorPane.leftAnchor="18.0"
+                  AnchorPane.rightAnchor="20.0"
+                  AnchorPane.topAnchor="16.0">
 
-                    <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <ImageView fitWidth="210.0" preserveRatio="true">
-                            <Image url="@../../assets/images/logo.png"/>
-                        </ImageView>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <ImageView fitWidth="210.0" preserveRatio="true">
+                        <Image url="@../../assets/images/logo.png"/>
+                    </ImageView>
 
-                        <ImageView fitHeight="44.0" preserveRatio="true">
-                            <Image url="@../../assets/images/mascot-version-1.png"/>
-                        </ImageView>
-                    </HBox>
-
-                    <Region HBox.hgrow="ALWAYS"/>
-
-                    <Button mnemonicParsing="false"
-                            onAction="#handleGoToLogin"
-                            styleClass="landing-login-button"
-                            text="Đăng nhập"/>
-
-                    <Button mnemonicParsing="false"
-                            onAction="#handleGoToRegister"
-                            styleClass="landing-register-button"
-                            text="Đăng ký"/>
+                    <ImageView fitHeight="44.0" preserveRatio="true">
+                        <Image url="@../../assets/images/mascot-version-1.png"/>
+                    </ImageView>
                 </HBox>
 
-                <VBox alignment="CENTER"
-                      spacing="8.0"
-                      AnchorPane.leftAnchor="0.0"
-                      AnchorPane.rightAnchor="0.0"
-                      AnchorPane.topAnchor="102.0">
+                <Region HBox.hgrow="ALWAYS"/>
 
-                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN"
-                           styleClass="landing-main-title"/>
+                <Button mnemonicParsing="false"
+                        onAction="#handleGoToLogin"
+                        styleClass="landing-login-button"
+                        text="Đăng nhập"/>
 
-                    <Label text="duy nhất bạn cần"
-                           styleClass="landing-main-title"/>
+                <Button mnemonicParsing="false"
+                        onAction="#handleGoToRegister"
+                        styleClass="landing-register-button"
+                        text="Đăng ký"/>
+            </HBox>
 
-                    <VBox alignment="CENTER">
-                        <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
-                               styleClass="landing-main-subtitle"/>
+            <VBox alignment="CENTER"
+                  spacing="8.0"
+                  AnchorPane.leftAnchor="0.0"
+                  AnchorPane.rightAnchor="0.0"
+                  AnchorPane.topAnchor="102.0">
 
-                        <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
-                               styleClass="landing-main-subtitle"/>
-                    </VBox>
+                <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN"
+                       styleClass="landing-main-title"/>
 
-                    <Region prefHeight="8.0"/>
+                <Label text="duy nhất bạn cần"
+                       styleClass="landing-main-title"/>
 
-                    <Button mnemonicParsing="false"
-                            onAction="#handleStart"
-                            styleClass="landing-main-start-button"
-                            text="BẮT ĐẦU  ➜"/>
+                <VBox alignment="CENTER">
+                    <Label text="Đấu giá trực tuyến hàng nghìn sản phẩm độc đáo."
+                           styleClass="landing-main-subtitle"/>
+
+                    <Label text="Săn đồ hiếm, đồ cổ và đồ điện tử với mức giá do bạn quyết định."
+                           styleClass="landing-main-subtitle"/>
                 </VBox>
 
-                <StackPane fx:id="revealBlock"
-                           prefHeight="450.0"
-                           AnchorPane.topAnchor="480.0"
-                           AnchorPane.leftAnchor="0.0"
-                           AnchorPane.rightAnchor="0.0">
+                <Region prefHeight="8.0"/>
 
-                    <MediaView fx:id="bgMediaView" preserveRatio="true" />
+                <Button mnemonicParsing="false"
+                        onAction="#handleStart"
+                        styleClass="landing-main-start-button"
+                        text="BẮT ĐẦU  ➜"/>
+            </VBox>
 
-                    <VBox fx:id="revealContent" alignment="CENTER" opacity="0.0" spacing="15.0">
-                        <Label text="TẠI SAO CHỌN OMNIBID?"
-                               styleClass="landing-main-title"
-                               style="-fx-font-size: 36px;"/>
+            <StackPane fx:id="revealBlock"
+                       prefHeight="450.0"
+                       AnchorPane.topAnchor="480.0"
+                       AnchorPane.leftAnchor="0.0"
+                       AnchorPane.rightAnchor="0.0">
 
-                        <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời."
-                               styleClass="landing-main-subtitle"/>
-                    </VBox>
-                </StackPane>
+                <MediaView fx:id="bgMediaView"/>
 
-            </AnchorPane>
-        </content>
+                <VBox fx:id="revealContent" alignment="CENTER" opacity="0.0" spacing="15.0">
+                    <Label text="TẠI SAO CHỌN OMNIBID?"
+                           styleClass="landing-main-title"
+                           style="-fx-font-size: 36px;"/>
+
+                    <Label text="Hệ thống minh bạch, an toàn và nhanh chóng. Mang lại trải nghiệm đấu giá tuyệt vời."
+                           styleClass="landing-main-subtitle"/>
+                </VBox>
+            </StackPane>
+
+        </AnchorPane>
     </ScrollPane>
 
     <AnchorPane pickOnBounds="false">
         <VBox alignment="BOTTOM_RIGHT"
-              maxWidth="170.0"
+              maxWidth="190.0"
               pickOnBounds="false"
-              spacing="4.0"
+              spacing="2.0"
               AnchorPane.bottomAnchor="8.0"
               AnchorPane.rightAnchor="16.0">
 
-            <HBox alignment="CENTER_RIGHT" spacing="4.0">
-                <ImageView fitHeight="38.0" preserveRatio="true">
-                    <Image url="@../../assets/images/mascot-version-2.png"/>
-                </ImageView>
+            <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-                <ImageView fitHeight="34.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
-                </ImageView>
-            </HBox>
-
-            <Label styleClass="chatbot-label" text="Chat with OMNI"/>
             <Label styleClass="signature-label" text="by CKNT team"/>
         </VBox>
     </AnchorPane>

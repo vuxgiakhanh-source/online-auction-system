@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="720.0" prefWidth="1280.0"
+            styleClass="screen-root"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.group13.auction.ui.controller.chatbot.ChatbotController">
+
+    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
+
+    <VBox spacing="22.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
+        <padding>
+            <Insets top="28.0" right="42.0" bottom="24.0" left="42.0"/>
+        </padding>
+
+        <!-- Header -->
+        <HBox alignment="CENTER_LEFT" spacing="18.0">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitWidth="210.0" preserveRatio="true">
+                    <Image url="@../../assets/images/logo.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="44.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-1.png"/>
+                </ImageView>
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button mnemonicParsing="false"
+                    onAction="#handleBack"
+                    styleClass="chatbot-back-button"
+                    text="← Quay lại"/>
+        </HBox>
+
+        <!-- Title -->
+        <VBox spacing="6.0">
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <ImageView fitHeight="48.0" preserveRatio="true">
+                    <Image url="@../../assets/images/mascot-version-2.png"/>
+                </ImageView>
+
+                <ImageView fitHeight="36.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-chatbot.png"/>
+                </ImageView>
+
+                <Label text="OMNI Assistant"
+                       styleClass="chatbot-title"/>
+            </HBox>
+
+            <Label text="OMNI hỗ trợ nhanh về bidding, payment, rating và kênh Seller."
+                   styleClass="chatbot-subtitle"/>
+        </VBox>
+
+        <!-- Content -->
+        <HBox spacing="22.0" VBox.vgrow="ALWAYS">
+            <!-- FAQ panel -->
+            <VBox spacing="14.0"
+                  prefWidth="330.0"
+                  minWidth="300.0"
+                  styleClass="chatbot-side-panel">
+                <Label text="FAQ gợi ý"
+                       styleClass="chatbot-panel-title"/>
+
+                <Label text="Chọn category hoặc click một câu hỏi để OMNI trả lời nhanh."
+                       wrapText="true"
+                       styleClass="chatbot-panel-description"/>
+
+                <ComboBox fx:id="categoryComboBox"
+                          maxWidth="Infinity"
+                          onAction="#handleCategoryChanged"
+                          styleClass="chatbot-category-combo"/>
+
+                <ListView fx:id="faqListView"
+                          onMouseClicked="#handleFaqClicked"
+                          VBox.vgrow="ALWAYS"
+                          styleClass="chatbot-faq-list"/>
+            </VBox>
+
+            <!-- Chat panel -->
+            <VBox spacing="14.0"
+                  HBox.hgrow="ALWAYS"
+                  styleClass="chatbot-main-panel">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label text="Chat with OMNI"
+                           styleClass="chatbot-panel-title"/>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Label fx:id="statusLabel"
+                           text="Sẵn sàng hỗ trợ."
+                           styleClass="chatbot-status-label"/>
+                </HBox>
+
+                <ScrollPane fx:id="messageScrollPane"
+                            fitToWidth="true"
+                            VBox.vgrow="ALWAYS"
+                            styleClass="chatbot-message-scroll">
+                    <VBox fx:id="messageContainer"
+                          spacing="12.0"
+                          styleClass="chatbot-message-container"/>
+                </ScrollPane>
+
+                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="chatbot-input-row">
+                    <TextField fx:id="messageField"
+                               HBox.hgrow="ALWAYS"
+                               onAction="#handleSendMessage"
+                               promptText="Nhập câu hỏi cho OMNI..."
+                               styleClass="chatbot-input"/>
+
+                    <Button fx:id="sendButton"
+                            mnemonicParsing="false"
+                            onAction="#handleSendMessage"
+                            styleClass="chatbot-send-button"
+                            text="Gửi"/>
+                </HBox>
+            </VBox>
+        </HBox>
+
+        <!-- Signature -->
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label styleClass="signature-label" text="by CKNT team"/>
+        </HBox>
+    </VBox>
+</AnchorPane>
