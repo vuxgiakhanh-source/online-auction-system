@@ -298,11 +298,19 @@ public class BidService implements IBidService {
     lock.lock();
     try {
       user.addJoinedAuction(auction.getId());
+      // BUG FIX: chỉ incrementViewerCount nếu user chưa watch auction này.
+      // Không có guard → user join/leave/rejoin cộng dồn auction.viewerCount liên tục
+      // → DB viewerCount phình to mãi. watchAuction() đã có guard alreadyWatching nhưng
+      // registerJoin() thì không. Display dùng getActiveViewerCount() nên UI không bị ảnh hưởng,
+      // nhưng DB value ngày càng sai lệch.
+      boolean alreadyWatching = user.getWatchListAuctionIds().contains(auction.getId());
       user.addToWatchList(auction.getId());
-      auction.incrementViewerCount();
-      int viewerCount = auction.getViewerCount();
       auctionService.addObserver(auction.getId(), observer);
-      auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      if (!alreadyWatching) {
+        auction.incrementViewerCount();
+        int viewerCount = auction.getViewerCount();
+        auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+      }
       userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
     } finally {
       lock.unlock();

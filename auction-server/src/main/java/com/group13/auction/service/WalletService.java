@@ -167,6 +167,14 @@ public class WalletService implements IWalletService {
             transactionLog.add(tx);
             tx.printInfo();
             financialTransactionDAO.saveTransaction(tx);
+
+            // BUG FIX: sync lockedDeposit mới về session cache.
+            // lockDeposit() được gọi từ 2 nơi:
+            // (1) BidService.joinAsNormalUser() — bidder là session.cachedUser → update in-place ✓
+            // (2) PaymentService.acceptSecondChanceOffer() — runnerUp là fresh DB object,
+            //     KHÔNG phải session.cachedUser → lockedDeposit trong cache không tăng
+            //     → getAvailableBalance() tiếp theo trả giá trị cao hơn thực tế.
+            syncBalanceToSessionCache(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
         }
     }
 
@@ -263,6 +271,12 @@ public class WalletService implements IWalletService {
 
                 // Chỉ ghi nhận vào SystemBank sau khi RAM + DB đã persist thành công
                 systemBank.receive(finalPrice);
+
+                // BUG FIX: syncBalance sau thanh toán thành công.
+                // Tất cả method khác (deposit, withdraw, unlock, forfeit) đều gọi sync.
+                // executePaymentToBank bị bỏ sót → winner.cachedUser giữ balance cũ
+                // → getAvailableBalance() trả sai cho các request tiếp theo trong session.
+                syncBalanceToSessionCache(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
                 log.info("Payment to bank success: username={}, finalPrice={}, auctionId={}",
                         winner.getUsername(), finalPrice, auctionId);
