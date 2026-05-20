@@ -4,12 +4,13 @@ import com.group13.auction.core.navigation.Navigator;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Bounds;
-import javafx.application.Platform;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
@@ -33,6 +34,9 @@ public class LandingController implements Initializable {
     @FXML private AnchorPane slideBlockM;
     @FXML private AnchorPane slideBlockN;
     @FXML private AnchorPane slideBlockI;
+    
+    // Đã thêm biến này để điều khiển màn đen
+    @FXML private Pane gradientOverlay; 
 
     // Quản lý MediaPlayer
     private static MediaPlayer globalPlayer;
@@ -41,10 +45,13 @@ public class LandingController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // 1. Reset nội dung chữ
+        // 1. Reset nội dung chữ và lớp phủ
         if (revealContent != null) {
-            revealContent.setTranslateY(50);
+            revealContent.setTranslateY(80);
             revealContent.setOpacity(0.0);
+        }
+        if (gradientOverlay != null) {
+            gradientOverlay.setOpacity(0.0);
         }
 
         // 2. Cleanup player cũ nếu có
@@ -96,7 +103,6 @@ public class LandingController implements Initializable {
     private void initBackgroundVideo() {
         if (bgMediaView == null || revealBlock == null) return;
 
-        // Cấu hình MediaView: Chỉ bind Width, Height tự tính theo tỉ lệ
         bgMediaView.setPreserveRatio(true);
         bgMediaView.fitWidthProperty().bind(revealBlock.widthProperty());
 
@@ -109,14 +115,12 @@ public class LandingController implements Initializable {
             globalPlayer.setMute(true);
             globalPlayer.setCycleCount(MediaPlayer.INDEFINITE);
 
-            // Gán player và phát
             bgMediaView.setMediaPlayer(globalPlayer);
             
             globalPlayer.setOnReady(() -> {
                 if (globalPlayer != null) globalPlayer.play();
             });
 
-            // Vòng lặp thủ công để đảm bảo 100% không dừng
             globalPlayer.setOnEndOfMedia(() -> {
                 if (globalPlayer != null) {
                     globalPlayer.seek(Duration.ZERO);
@@ -171,29 +175,55 @@ public class LandingController implements Initializable {
         Bounds blockBounds = revealBlock.localToScene(revealBlock.getBoundsInLocal());
         if (scrollBounds == null || blockBounds == null) return;
 
-        boolean shouldShow = blockBounds.getMinY() < scrollBounds.getMaxY() - 100;
-        boolean shouldHide = blockBounds.getMinY() > scrollBounds.getMaxY();
+        // Tính toán chiều cao thực tế của khối video
+        double blockHeight = blockBounds.getHeight();
+
+        // ĐIỀU KIỆN HIỆN: Mép dưới màn hình phải vượt qua đúng 50% chiều cao của khối video
+        boolean shouldShow = scrollBounds.getMaxY() > blockBounds.getMinY() + (blockHeight * 0.5);
+        
+        // ĐIỀU KIỆN ẨN: Khi cuộn ngược lên, màn hình chỉ còn chạm vào 20% chiều cao của khối
+        boolean shouldHide = scrollBounds.getMaxY() < blockBounds.getMinY() + (blockHeight * 0.2);
 
         if (shouldShow && !isRevealed) {
             isRevealed = true;
-            FadeTransition fade = new FadeTransition(Duration.millis(600), revealContent);
-            fade.setToValue(1.0);
-            TranslateTransition slide = new TranslateTransition(Duration.millis(600), revealContent);
-            slide.setToY(0);
-            new ParallelTransition(fade, slide).play();
+            
+            FadeTransition fadeText = new FadeTransition(Duration.millis(1000), revealContent);
+            fadeText.setToValue(1.0);
+            
+            TranslateTransition slideText = new TranslateTransition(Duration.millis(1000), revealContent);
+            slideText.setToY(0); 
+
+            fadeText.setDelay(Duration.millis(300));
+            slideText.setDelay(Duration.millis(300));
+
+            if (gradientOverlay != null) {
+                FadeTransition fadeOverlay = new FadeTransition(Duration.millis(1200), gradientOverlay);
+                fadeOverlay.setToValue(1.0);
+                new ParallelTransition(fadeText, slideText, fadeOverlay).play();
+            } else {
+                new ParallelTransition(fadeText, slideText).play();
+            }
+            
         } else if (shouldHide && isRevealed) {
             isRevealed = false;
-            FadeTransition fade = new FadeTransition(Duration.millis(400), revealContent);
-            fade.setToValue(0.0);
-            TranslateTransition slide = new TranslateTransition(Duration.millis(400), revealContent);
-            slide.setToY(50);
-            new ParallelTransition(fade, slide).play();
+            
+            FadeTransition fadeText = new FadeTransition(Duration.millis(600), revealContent);
+            fadeText.setToValue(0.0);
+            
+            TranslateTransition slideText = new TranslateTransition(Duration.millis(600), revealContent);
+            slideText.setToY(80); 
+
+            if (gradientOverlay != null) {
+                FadeTransition fadeOverlay = new FadeTransition(Duration.millis(600), gradientOverlay);
+                fadeOverlay.setToValue(0.0);
+                new ParallelTransition(fadeText, slideText, fadeOverlay).play();
+            } else {
+                new ParallelTransition(fadeText, slideText).play();
+            }
         }
 
         handleSlideBlockReveal();
     }
-
-    
 
     @FXML private void handleStart() { Navigator.getInstance().goToLogin(); }
     @FXML private void handleGoToLogin() { Navigator.getInstance().goToLogin(); }

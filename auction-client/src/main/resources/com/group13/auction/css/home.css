@@ -284,15 +284,24 @@
 }
 
 /* Khối hộp chứa nội dung văn bản */
+/* Hộp văn bản: Hiệu ứng kính (Glassmorphism) viền sáng nhẹ */
 .content-card {
-    /* Màu nền xám xanh mờ (Sử dụng rgba để có độ trong suốt giống ảnh) */
-    -fx-background-color: rgba(94, 114, 138, 0.7); 
-    
-    /* Bo tròn 4 góc */
-    -fx-background-radius: 24px;
-    
-    /* Khoảng cách đệm bên trong khối */
-    -fx-padding: 20px;
+    -fx-background-color: rgba(30, 41, 59, 0.7); /* Xám slate hơi mờ */
+    -fx-border-color: rgba(255, 255, 255, 0); /* Viền trắng rất mờ */
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
+    -fx-padding: 24px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.3), 15, 0, 0, 10);
+}
+
+/* Chữ O: Gradient Xanh Electric -> Tím Neon */
+.drop-cap-letter {
+    -fx-text-fill: linear-gradient(to bottom right, #129096, #1282e4);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-weight: 900;
+    -fx-font-size: 160px;
+    -fx-effect: dropshadow(two-pass-box, rgba(79, 172, 254, 0.3), 10, 0, 0, 0); /* Bóng sáng glow nhẹ */
 }
 
 /* Chữ bên trong khối hộp */
@@ -303,15 +312,11 @@
     -fx-font-size: 14px;
 }
 
-/* Chữ cái khổng lồ (Drop Cap) */
-.drop-cap-letter {
-    -fx-text-fill: #ffffff;
-    
-    /* Sử dụng font chữ dày và tăng kích thước thật lớn */
-    -fx-font-family: "System", "Segoe UI", sans-serif;
-    -fx-font-weight: 900; /* Đậm nhất có thể */
-    -fx-font-size: 250px; /* Kích thước khổng lồ */
-    
-    /* Khử răng cưa giúp chữ mượt mà hơn */
-    -fx-font-smoothing-type: gray;
+.video-gradient-overlay {
+    /* Gradient từ đen (90% đậm) bên trái sang trong suốt hoàn toàn bên phải */
+    -fx-background-color: linear-gradient(to right, 
+        rgba(0, 0, 0, 0.9) 10%, 
+        rgba(0, 0, 0, 0.722) 50%, 
+        rgba(0, 0, 0, 0) 100%
+    );
 }
