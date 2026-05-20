@@ -14,6 +14,8 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.media.MediaView?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
 
 <StackPane stylesheets="@../../css/home.css"
            styleClass="screen-root"
@@ -89,7 +91,7 @@
             </VBox>
 
             <StackPane fx:id="revealBlock" prefHeight="450.0">
-                <MediaView fx:id="bgMediaView"/>
+                <MediaView fx:id="bgMediaView" preserveRatio="true"/>
 
                 <Pane fx:id="gradientOverlay"
                       opacity="0.0"
@@ -100,14 +102,15 @@
                       opacity="0.0"
                       spacing="15.0"
                       style="-fx-padding: 0 0 0 100;">
-                    <HBox>
-                        <Label text="Tại sao bạn chọn "
+
+                    <HBox alignment="BASELINE_LEFT">
+                        <Label text="Tại sao nên chọn "
                                styleClass="landing-main-title"
                                style="-fx-font-size: 48px; -fx-text-fill: white;"/>
 
                         <Label text="OMNI"
                                styleClass="landing-omni"
-                               style="-fx-font-size: 42px; -fx-text-fill: #b39012;"/>
+                               style="-fx-font-size: 52px; -fx-text-fill: rgb(179, 144, 18); -fx-effect: none;"/>
 
                         <Label text=" ?"
                                styleClass="landing-main-title"
@@ -119,13 +122,13 @@
                                styleClass="landing-main-subtitle"
                                style="-fx-text-fill: #cccccc;"/>
 
-                        <Label text="Với nhiều tính năng đang phát triển nhằm tạo nhiều môi trường:"
+                        <Label text="Với nhiều tính năng nổi bật và hiện đại nhằm tạo môi trường:"
                                styleClass="landing-main-subtitle"
                                style="-fx-text-fill: #cccccc;"/>
 
                         <Label text="          An toàn - Thông minh - Tiện dụng"
                                styleClass="landing-main-subtitle"
-                               style="-fx-text-fill: #c2aa0d; -fx-font-size: 25px;"/>
+                               style="-fx-text-fill: #ffc700; -fx-font-size: 25px;"/>
                     </VBox>
                 </VBox>
             </StackPane>
@@ -145,10 +148,14 @@
                           AnchorPane.topAnchor="80.0"
                           AnchorPane.leftAnchor="150.0"
                           AnchorPane.rightAnchor="20.0">
-                        <Label text="mniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị."
-                               wrapText="true"
-                               styleClass="content-text"
-                               style="-fx-font-size: 20px;"/>
+
+                        <TextFlow>
+                            <Text text="ptimal Pricing"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — OmniBid tối ưu hóa giá trị, mang lại mức giá tốt nhất cho cả người mua và người bán."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
                     </VBox>
 
                     <Label text="O"
@@ -173,10 +180,14 @@
                           AnchorPane.topAnchor="80.0"
                           AnchorPane.leftAnchor="160.0"
                           AnchorPane.rightAnchor="20.0">
-                        <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị."
-                               wrapText="true"
-                               styleClass="content-text"
-                               style="-fx-font-size: 20px;"/>
+
+                        <TextFlow>
+                            <Text text="aximum Security"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Minh bạch và an toàn tuyệt đối với hệ thống khóa đặt cọc (Deposit Lock) thông minh."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
                     </VBox>
 
                     <Label text="M"
@@ -201,10 +212,14 @@
                           AnchorPane.topAnchor="80.0"
                           AnchorPane.leftAnchor="153.0"
                           AnchorPane.rightAnchor="20.0">
-                        <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị."
-                               wrapText="true"
-                               styleClass="content-text"
-                               style="-fx-font-size: 20px;"/>
+
+                        <TextFlow>
+                            <Text text="ever-ending Items"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Khám phá kho tài sản đa dạng, từ những món đồ độc bản đến cơ hội đầu tư giá trị."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
                     </VBox>
 
                     <Label text="N"
@@ -229,10 +244,14 @@
                           AnchorPane.topAnchor="80.0"
                           AnchorPane.leftAnchor="100.0"
                           AnchorPane.rightAnchor="20.0">
-                        <Label text="OmniBid cam kết mang lại mức giá tốt nhất cho những món hàng độc nhất vô nhị."
-                               wrapText="true"
-                               styleClass="content-text"
-                               style="-fx-font-size: 20px;"/>
+
+                        <TextFlow>
+                            <Text text="nstant Bidding"
+                                  style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-fill: #00bcff;"/>
+
+                            <Text text=" — Trải nghiệm đấu giá thời gian thực mượt mà, phản hồi ngay lập tức trong từng giây."
+                                  style="-fx-font-size: 20px; -fx-fill: white;"/>
+                        </TextFlow>
                     </VBox>
 
                     <Label text="I"
@@ -241,11 +260,11 @@
                            AnchorPane.leftAnchor="80.0"/>
                 </AnchorPane>
             </GridPane>
-
         </VBox>
     </ScrollPane>
 
     <AnchorPane pickOnBounds="false">
+
         <VBox alignment="BOTTOM_RIGHT"
               maxWidth="190.0"
               pickOnBounds="false"
@@ -255,7 +274,8 @@
 
             <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-            <Label styleClass="signature-label" text="by CKNT team"/>
+            <Label styleClass="signature-label"
+                   text="by CKNT team"/>
         </VBox>
     </AnchorPane>
 
