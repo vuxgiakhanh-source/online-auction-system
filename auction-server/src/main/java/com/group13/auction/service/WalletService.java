@@ -10,6 +10,8 @@ import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.network.server.session.ClientSession;
+import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
 
@@ -68,6 +70,29 @@ public class WalletService implements IWalletService {
         return userLocks.computeIfAbsent(user.getId(), id -> new Object());
     }
 
+    /**
+     * FIX STALE CACHE: Sau khi balance hoặc lockedDeposit thay đổi trên một user object
+     * KHÁC với session cache (vd: PaymentService.refundDeposits() dùng fresh object từ DB),
+     * session cache của BidHandler không biết về thay đổi này.
+     *
+     * Hậu quả: BidHandler.lockDeposit(cachedUser, ...) kiểm tra getAvailableBalance()
+     * trên cache stale → lockedDeposit cao hơn thực tế → INSUFFICIENT_DEPOSIT dù balance đủ.
+     *
+     * Fix: sau mỗi thao tác thay đổi balance/lockedDeposit, đồng bộ ngược về session cache
+     * nếu user đang online. Chỉ cập nhật balance/lockedDeposit, KHÔNG đụng joinedAuctionIds
+     * hay roles (những field đó được quản lý riêng bởi BidService).
+     */
+    private void syncBalanceToSessionCache(String userId, long balance, long lockedDeposit) {
+        ClientSession session = SessionManager.getInstance().getByUserId(userId);
+        if (session == null) return;
+        NormalUser cached = session.getCachedUser();
+        if (cached == null) return;
+        // restoreBalances() set cả balance lẫn lockedDeposit atomic
+        cached.restoreBalances(balance, lockedDeposit);
+        log.debug("Session cache balance synced: userId={}, balance={}, lockedDeposit={}",
+                userId, balance, lockedDeposit);
+    }
+
     // ─── Deposit ──────────────────────────────────────────────────────────────
 
     /**
@@ -87,6 +112,8 @@ public class WalletService implements IWalletService {
             log.info("Deposit success: username={}, amount={}, newBalance={}",
                     user.getUsername(), amount, user.getBalance());
             userDAO.addBalance(user.getId(), amount);
+            // FIX: đồng bộ balance mới về session cache (PaymentHandler dùng fresh object)
+            syncBalanceToSessionCache(user.getId(), user.getBalance(), user.getLockedDeposit());
         }
     }
 
@@ -115,6 +142,8 @@ public class WalletService implements IWalletService {
             log.info("Withdraw success: username={}, amount={}, newBalance={}",
                     user.getUsername(), amount, user.getBalance());
             userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
+            // FIX: đồng bộ balance mới về session cache
+            syncBalanceToSessionCache(user.getId(), user.getBalance(), user.getLockedDeposit());
         }
     }
 
@@ -156,6 +185,11 @@ public class WalletService implements IWalletService {
             transactionLog.add(tx);
             tx.printInfo();
             financialTransactionDAO.saveTransaction(tx);
+            // FIX STALE CACHE: PaymentService.refundDeposits() gọi method này với fresh object
+            // từ findBiddersByAuction(), không phải session cache object → session cache
+            // của BidHandler giữ nguyên lockedDeposit cao → getAvailableBalance() trả về
+            // giá trị thấp hơn thực tế → INSUFFICIENT_DEPOSIT dù balance thực đủ.
+            syncBalanceToSessionCache(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
         }
     }
 
@@ -178,6 +212,8 @@ public class WalletService implements IWalletService {
             log.info("Deposit forfeited: username={}, depositAmount={}, auctionId={}",
                     winner.getUsername(), depositAmount, auctionId);
             financialTransactionDAO.saveTransaction(tx);
+            // FIX: sync về session cache
+            syncBalanceToSessionCache(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
         }
     }
 
