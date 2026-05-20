@@ -314,11 +314,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case LEAVE_AUCTION_SUCCESS ->
                     listeners.forEach(l -> l.onLeaveAuctionSuccess());
-            // FIX: server broadcast số người xem realtime — trước đây bị drop do không có case
-            case VIEWER_COUNT_UPDATE -> {
-                var dto = PacketCodec.fromElement(payload, BidDTOs.ViewerCountUpdateDTO.class);
-                listeners.forEach(l -> l.onViewerCountUpdate(dto));
-            }
+            // VIEWER_COUNT_UPDATE removed — viewCount giờ là tổng lượt truy cập, không còn realtime broadcast
             case GET_BID_HISTORY_FAILED -> {
                 var err = PacketCodec.fromElement(payload, ErrorDTO.class);
                 listeners.forEach(l -> l.onBidHistoryFailed(err));

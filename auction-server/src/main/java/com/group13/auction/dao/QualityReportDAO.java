@@ -51,7 +51,7 @@ public class QualityReportDAO {
                 com.group13.auction.model.user.NormalUser reporter =
                         com.group13.auction.model.user.NormalUser.reconstitute(
                                 reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
-                                parseStatus(userStatus), rating, balance, locked, roles, false, false, null);
+                                parseStatus(userStatus), rating, balance, locked, roles, false, 0, null);
 
                 String imageUrlsJson = rs.getString("image_urls");
                 java.util.List<String> imageUrls = parseJsonList(imageUrlsJson);
@@ -134,7 +134,7 @@ public class QualityReportDAO {
                             com.group13.auction.model.user.NormalUser.reconstitute(
                                     rId, createdAt, createdAt, rUsername, pwHash, email,
                                     parseStatus(userStatus), rating, balance, locked,
-                                    roles, false, false, null);
+                                    roles, false, 0, null);
 
                     java.util.List<String> imageUrls = parseJsonList(rs.getString("image_urls"));
                     String statusStr = rs.getString("status");
