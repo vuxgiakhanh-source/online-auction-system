@@ -42,10 +42,10 @@ public class NormalUser extends User {
     /** Đánh dấu seller đã từng bị trừ rating chưa — dùng để kiểm tra duyệt role Seller. */
     private boolean hasEverBeenPenalized;
     /**
-     * Đánh dấu tài khoản đã từng được auto-restore sau khi bị SUSPENDED.
-     * Cơ chế restore chỉ xảy ra 1 lần duy nhất trên mỗi tài khoản.
+     * Số lần tài khoản được auto-restore sau khi bị SUSPENDED.
+     * Hiển thị trên profile. Tăng mỗi lần restore thành công.
      */
-    private boolean hasEverBeenRestored;
+    private int timesRestored;
 
     /** Các role hiện tại của user. Mặc định khi tạo tài khoản là BIDDER. */
     private final Set<UserRole> roles;
@@ -94,12 +94,12 @@ public class NormalUser extends User {
             long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
-            boolean hasEverBeenRestored,
+            int timesRestored,
             LocalDateTime suspendedAt) {
         return new NormalUser(
                 id, createdAt, updatedAt, username, hashedPassword, email,
                 accountStatus, rating, balance, lockedDeposit, roles,
-                hasEverBeenPenalized, hasEverBeenRestored, suspendedAt);
+                hasEverBeenPenalized, timesRestored, suspendedAt);
     }
 
     // Private constructors
@@ -113,7 +113,7 @@ public class NormalUser extends User {
         this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.of(UserRole.BIDDER);
         this.hasEverBeenPenalized = false;
-        this.hasEverBeenRestored = false;
+        this.timesRestored = 0;
     }
 
     /**
@@ -133,7 +133,7 @@ public class NormalUser extends User {
             long lockedDeposit,
             Set<UserRole> roles,
             boolean hasEverBeenPenalized,
-            boolean hasEverBeenRestored,
+            int timesRestored,
             LocalDateTime suspendedAt) {
         super(id, createdAt, updatedAt, username, hashedPassword, email,
                 UserRole.BIDDER, accountStatus, rating, suspendedAt);
@@ -144,7 +144,7 @@ public class NormalUser extends User {
         this.allAuctionIds = new CopyOnWriteArrayList<>();
         this.roles = EnumSet.copyOf(roles);
         this.hasEverBeenPenalized = hasEverBeenPenalized;
-        this.hasEverBeenRestored = hasEverBeenRestored;
+        this.timesRestored = timesRestored;
     }
 
     // Role management
@@ -189,12 +189,15 @@ public class NormalUser extends User {
 
     /**
      * Kiểm tra tài khoản đã từng được auto-restore chưa.
-     * Dùng bởi {@link com.group13.auction.service.RatingService#checkAndRestoreSuspended}.
-     *
-     * @return true nếu đã được restore 1 lần
+     * Backward-compatible với RatingService guard.
      */
     public boolean isHasEverBeenRestored() {
-        return hasEverBeenRestored;
+        return timesRestored > 0;
+    }
+
+    /** Số lần tài khoản đã được restore — hiển thị trên profile. */
+    public int getTimesRestored() {
+        return timesRestored;
     }
 
     public List<BidTransaction> getBidHistory() {
@@ -254,12 +257,11 @@ public class NormalUser extends User {
     }
 
     /**
-     * Đánh dấu tài khoản đã được auto-restore 1 lần.
+     * Tăng số lần restore của tài khoản.
      * Chỉ {@link com.group13.auction.service.RatingService} gọi.
-     * Sau khi đánh dấu, tài khoản sẽ không được auto-restore nựa.
      */
     public void markRestored() {
-        this.hasEverBeenRestored = true;
+        this.timesRestored++;
         markUpdated();
     }
 
@@ -366,7 +368,7 @@ public class NormalUser extends User {
         log.info("Rating    : {}", getRating());
         log.info("Status    : {}", getAccountStatus());
         log.info("Penalized : {}", hasEverBeenPenalized);
-        log.info("Restored  : {}", hasEverBeenRestored);
+        log.info("Restored  : {} times", timesRestored);
         log.info("======================================");
     }
 }

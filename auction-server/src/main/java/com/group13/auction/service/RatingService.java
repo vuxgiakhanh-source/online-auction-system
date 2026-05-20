@@ -183,7 +183,7 @@ public class RatingService implements IRatingService {
     userDAO.updateRating(user.getId(), user.getRating());
     userDAO.updateAccountStatus(user.getId(), user.getAccountStatus().name());
     // Đã thực hiện TODO: persist cờ hasEverBeenRestored để không mất khi restart
-    userDAO.updateHasEverBeenRestored(user.getId(), normalUser.isHasEverBeenRestored());
+    userDAO.incrementTimesRestored(user.getId());
     // TODO: notificationDao.save() - báo cho user
   }
 

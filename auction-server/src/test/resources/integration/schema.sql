@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      locked_balance         BIGINT       DEFAULT 0,
                                      status                 ENUM('ACTIVE','BANNED','SUSPENDED','DELETED') DEFAULT 'ACTIVE',
                                      has_ever_been_penalized BOOLEAN     DEFAULT FALSE,
-                                     has_ever_been_restored  BOOLEAN     DEFAULT FALSE,
+                                     times_restored          INT         DEFAULT 0,
                                      suspended_at           DATETIME     NULL
 );
 

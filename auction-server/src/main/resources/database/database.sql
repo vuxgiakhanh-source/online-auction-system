@@ -31,7 +31,7 @@ CREATE TABLE users (
     -- Thêm DELETED để soft-delete theo UserDAO.delete()
                        status ENUM('ACTIVE', 'BANNED', 'SUSPENDED', 'DELETED') DEFAULT 'ACTIVE',
                        has_ever_been_penalized BOOLEAN DEFAULT FALSE,
-                       has_ever_been_restored BOOLEAN DEFAULT FALSE,
+                       times_restored          INT          DEFAULT 0,
                        suspended_at DATETIME NULL
 );
 

@@ -54,6 +54,7 @@ public final class DTOMapper {
 
         if (user instanceof NormalUser normalUser) {
             dto.setEmail(normalUser.getEmail());
+            dto.setTimesRestored(normalUser.getTimesRestored());
         } else if (user instanceof Admin admin) {
             dto.setEmail(admin.getEmail());
         }
