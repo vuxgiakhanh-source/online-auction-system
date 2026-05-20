@@ -153,9 +153,11 @@ public class PaymentService implements IPaymentService {
     NormalUser seller = auction.getItem().getSeller();
 
     synchronized (winnerLockFor(auctionWinner)) {
-      // Idempotency guard: chỉ giải ngân khi đang FUNDS_HELD.
-      // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không sinh tiền ảo.
-      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
+      // Idempotency guard: giải ngân khi FUNDS_HELD (winner chưa confirm) hoặc ITEM_RECEIVED (đã confirm, hết report window).
+      // FUNDS_HELD: timer auto-release sau 7 ngày không confirm.
+      // ITEM_RECEIVED: timer auto-release sau 3 ngày report window.
+      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD
+          && auctionWinner.getPaymentStatus() != PaymentStatus.ITEM_RECEIVED) {
         log.warn("[PAYMENT] releaseToSeller skipped — status already {}",
             auctionWinner.getPaymentStatus());
         return;
@@ -183,9 +185,10 @@ public class PaymentService implements IPaymentService {
     NormalUser winner = auctionWinner.getWinner();
 
     synchronized (winnerLockFor(auctionWinner)) {
-      // Idempotency guard: chỉ hoàn tiền khi đang FUNDS_HELD.
-      // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không double-refund.
-      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
+      // Idempotency guard: hoàn tiền khi FUNDS_HELD hoặc ITEM_RECEIVED.
+      // ITEM_RECEIVED: winner đã confirm nhận hàng nhưng admin approve quality report → vẫn phải hoàn.
+      if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD
+          && auctionWinner.getPaymentStatus() != PaymentStatus.ITEM_RECEIVED) {
         log.warn("[PAYMENT] refundToWinnerFromBank skipped — status already {}",
             auctionWinner.getPaymentStatus());
         return;
