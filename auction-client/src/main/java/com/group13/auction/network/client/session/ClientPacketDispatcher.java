@@ -9,6 +9,7 @@ import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.dto.rating.RatingDTOs;
 import com.group13.auction.common.dto.report.ReportDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
@@ -39,7 +40,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
 
     /** Listener nhận event đã được typed. */
     private final java.util.List<ClientEventListener> listeners =
-            new java.util.concurrent.CopyOnWriteArrayList<>();
+        new java.util.concurrent.CopyOnWriteArrayList<>();
 
     public void addListener(ClientEventListener listener) {
         if (!listeners.contains(listener)) listeners.add(listener);
@@ -63,22 +64,22 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             // ── AUTH ──────────────────────────────────────────────────────────
             case LOGIN_SUCCESS -> {
                 var resp = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.auth.LoginResponseDTO.class);
+                    com.group13.auction.common.dto.auth.LoginResponseDTO.class);
                 listeners.forEach(l -> l.onLoginSuccess(resp));
             }
             case LOGIN_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onLoginFailed(err));
             }
             case REGISTER_SUCCESS -> {
                 var resp = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.auth.LoginResponseDTO.class);
+                    com.group13.auction.common.dto.auth.LoginResponseDTO.class);
                 listeners.forEach(l -> l.onRegisterSuccess(resp));
             }
             case REGISTER_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onRegisterFailed(err));
             }
             case LOGOUT_SUCCESS -> listeners.forEach(ClientEventListener::onLogoutSuccess);
@@ -98,7 +99,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case CREATE_AUCTION_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onAuctionCreateFailed(err));
             }
 
@@ -109,7 +110,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case JOIN_AUCTION_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onJoinAuctionFailed(err));
             }
             case WATCH_AUCTION_SUCCESS -> {
@@ -132,7 +133,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case PLACE_BID_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onPlaceBidFailed(err));
             }
             case BID_CHART_POINT_UPDATE -> {
@@ -151,7 +152,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case REGISTER_AUTO_BID_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onAutoBidFailed(err));
             }
             case AUTO_BID_TRIGGERED_NOTIFY -> {
@@ -200,7 +201,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case DEPOSIT_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onDepositFailed(err));
             }
             case WITHDRAW_SUCCESS -> {
@@ -209,7 +210,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case WITHDRAW_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onWithdrawFailed(err));
             }
             case GET_WALLET_BALANCE_SUCCESS -> {
@@ -222,12 +223,20 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case PAYMENT_FAILED -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onPaymentFailed(err));
             }
             case PAYMENT_COMPLETED_NOTIFY -> {
                 var result = PacketCodec.fromElement(payload, PaymentDTOs.PaymentResultDTO.class);
                 listeners.forEach(l -> l.onPaymentCompletedNotify(result));
+            }
+            case CONFIRM_ITEM_RECEIVED_SUCCESS -> {
+                var result = PacketCodec.fromElement(payload, ConfirmItemReceivedResultDTO.class);
+                listeners.forEach(l -> l.onItemReceivedConfirmed(result));
+            }
+            case CONFIRM_ITEM_RECEIVED_FAILED -> {
+                var err = PacketCodec.fromElement(payload, ErrorDTO.class);
+                listeners.forEach(l -> l.onItemReceivedFailed(err));
             }
             case PAYMENT_EXPIRED_NOTIFY -> {
                 var exp = PacketCodec.fromElement(payload, PaymentDTOs.PaymentExpiredDTO.class);
@@ -249,55 +258,55 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             // ── USER / PROFILE ────────────────────────────────────────────────
             case GET_MY_PROFILE_SUCCESS, GET_USER_PROFILE_SUCCESS -> {
                 var user = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.user.UserDTO.class);
+                    com.group13.auction.common.dto.user.UserDTO.class);
                 listeners.forEach(l -> l.onUserProfileReceived(user));
             }
             case SELLER_ROLE_APPROVED_NOTIFY -> {
                 var user = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.user.UserDTO.class);
+                    com.group13.auction.common.dto.user.UserDTO.class);
                 listeners.forEach(l -> l.onSellerRoleApproved(user));
             }
             case SELLER_ROLE_REJECTED_NOTIFY -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onSellerRoleRejected(err));
             }
             case ACCOUNT_BANNED_NOTIFY -> {
                 var banned = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.rating.RatingDTOs.AccountBannedDTO.class);
+                    com.group13.auction.common.dto.rating.RatingDTOs.AccountBannedDTO.class);
                 listeners.forEach(l -> l.onAccountBanned(banned));
             }
             case ACCOUNT_SUSPENDED_NOTIFY -> {
                 var suspended = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.rating.RatingDTOs.AccountSuspendedDTO.class);
+                    com.group13.auction.common.dto.rating.RatingDTOs.AccountSuspendedDTO.class);
                 listeners.forEach(l -> l.onAccountSuspended(suspended));
             }
             case ACCOUNT_RESTORED_NOTIFY -> {
                 var restored = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.rating.RatingDTOs.AccountRestoredDTO.class);
+                    com.group13.auction.common.dto.rating.RatingDTOs.AccountRestoredDTO.class);
                 listeners.forEach(l -> l.onAccountRestored(restored));
             }
 
             // ── SYSTEM ────────────────────────────────────────────────────────
             case SYSTEM_ERROR -> {
                 var err = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.core.ErrorDTO.class);
+                    com.group13.auction.common.dto.core.ErrorDTO.class);
                 listeners.forEach(l -> l.onSystemError(err));
             }
             case SYSTEM_ANNOUNCEMENT -> {
                 var ann = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.admin.AdminDTOs.SystemAnnouncementDTO.class);
+                    com.group13.auction.common.dto.admin.AdminDTOs.SystemAnnouncementDTO.class);
                 listeners.forEach(l -> l.onSystemAnnouncement(ann));
             }
             case SERVER_SHUTDOWN_NOTIFY -> {
                 var shutdown = PacketCodec.fromElement(payload,
-                        com.group13.auction.common.dto.admin.AdminDTOs.ServerShutdownDTO.class);
+                    com.group13.auction.common.dto.admin.AdminDTOs.ServerShutdownDTO.class);
                 listeners.forEach(l -> l.onServerShutdown(shutdown));
             }
             // FIX Bug #8: dispatch PONG → onPong(timestamp) thay vì rơi vào default silent log
             case PONG -> {
                 long timestamp = payload != null && !payload.isJsonNull()
-                        ? payload.getAsLong() : System.currentTimeMillis();
+                    ? payload.getAsLong() : System.currentTimeMillis();
                 listeners.forEach(l -> l.onPong(timestamp));
             }
             case CANCEL_AUTO_BID_SUCCESS -> {
@@ -313,7 +322,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAutoBidRegistered(dto)); // tái dùng
             }
             case LEAVE_AUCTION_SUCCESS ->
-                    listeners.forEach(l -> l.onLeaveAuctionSuccess());
+                listeners.forEach(l -> l.onLeaveAuctionSuccess());
             // VIEWER_COUNT_UPDATE removed — viewCount giờ là tổng lượt truy cập, không còn realtime broadcast
             case GET_BID_HISTORY_FAILED -> {
                 var err = PacketCodec.fromElement(payload, ErrorDTO.class);
@@ -376,7 +385,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onSecondChanceAcceptFailed(err));
             }
             case SECOND_CHANCE_DECLINE_SUCCESS ->
-                    listeners.forEach(l -> l.onSecondChanceDeclineSuccess());
+                listeners.forEach(l -> l.onSecondChanceDeclineSuccess());
             case SECOND_CHANCE_EXPIRED_NOTIFY -> {
                 String auctionId = PacketCodec.fromElement(payload, String.class);
                 listeners.forEach(l -> l.onSecondChanceExpiredNotify(auctionId));
@@ -386,7 +395,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onUserProfileFailed(err));
             }
             case REQUEST_SELLER_ROLE_SUCCESS ->
-                    listeners.forEach(l -> l.onRequestSellerRoleSuccess());
+                listeners.forEach(l -> l.onRequestSellerRoleSuccess());
             case REQUEST_SELLER_ROLE_FAILED -> {
                 var err = PacketCodec.fromElement(payload, ErrorDTO.class);
                 listeners.forEach(l -> l.onRequestSellerRoleFailed(err));
@@ -409,7 +418,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case ADMIN_GET_ALL_USERS_SUCCESS -> {
                 List<UserDTO> users = PacketCodec.gson().fromJson(payload,
-                        new TypeToken<List<UserDTO>>() {}.getType());
+                    new TypeToken<List<UserDTO>>() {}.getType());
                 listeners.forEach(l -> l.onAdminAllUsersReceived(users));
             }
             case ADMIN_CREATE_STAFF_SUCCESS -> {
@@ -422,7 +431,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case ADMIN_GET_ALL_STAFF_SUCCESS -> {
                 List<UserDTO> staff = PacketCodec.gson().fromJson(payload,
-                        new TypeToken<List<UserDTO>>() {}.getType());
+                    new TypeToken<List<UserDTO>>() {}.getType());
                 listeners.forEach(l -> l.onAdminAllStaffReceived(staff));
             }
             case ADMIN_APPROVE_SELLER_ROLE_SUCCESS -> {
@@ -457,7 +466,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case ADMIN_GET_QUALITY_REPORTS_SUCCESS -> {
                 List<ReportDTOs.QualityReportDTO> reports = PacketCodec.gson().fromJson(payload,
-                        new TypeToken<List<ReportDTOs.QualityReportDTO>>() {}.getType());
+                    new TypeToken<List<ReportDTOs.QualityReportDTO>>() {}.getType());
                 listeners.forEach(l -> l.onAdminQualityReportsReceived(reports));
             }
             case ADMIN_APPROVE_QUALITY_REPORT_SUCCESS -> {
@@ -469,7 +478,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAdminApproveQualityReportFailed(err));
             }
             case ADMIN_REJECT_QUALITY_REPORT_SUCCESS ->
-                    listeners.forEach(l -> l.onAdminRejectQualityReportSuccess());
+                listeners.forEach(l -> l.onAdminRejectQualityReportSuccess());
             case QUALITY_REPORT_APPROVED_NOTIFY -> {
                 var result = PacketCodec.fromElement(payload, ReportDTOs.QualityReportResultDTO.class);
                 listeners.forEach(l -> l.onQualityReportApprovedNotify(result));
@@ -492,11 +501,11 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case GET_NOTIFICATIONS_SUCCESS -> {
                 List<AdminDTOs.NotificationDTO> notifications = PacketCodec.gson().fromJson(payload,
-                        new TypeToken<List<AdminDTOs.NotificationDTO>>() {}.getType());
+                    new TypeToken<List<AdminDTOs.NotificationDTO>>() {}.getType());
                 listeners.forEach(l -> l.onNotificationsReceived(notifications));
             }
             case MARK_NOTIFICATION_READ_SUCCESS ->
-                    listeners.forEach(l -> l.onMarkNotificationReadSuccess());
+                listeners.forEach(l -> l.onMarkNotificationReadSuccess());
 
             case CHATBOT_ANSWER, CHATBOT_NOT_FOUND -> {
                 var response = PacketCodec.fromElement(payload, ChatbotDTOs.ChatbotResponseDTO.class);
@@ -526,8 +535,8 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
         }
         if (root.has("faqs")) {
             dto.setFaqs(PacketCodec.gson().fromJson(
-                    root.get("faqs"),
-                    new TypeToken<java.util.List<ChatbotDTOs.FaqSummaryDTO>>() {}.getType()));
+                root.get("faqs"),
+                new TypeToken<java.util.List<ChatbotDTOs.FaqSummaryDTO>>() {}.getType()));
         }
         if (root.has("totalCount")) {
             dto.setTotalCount(root.get("totalCount").getAsInt());

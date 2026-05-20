@@ -52,10 +52,10 @@ QualityReportService implements IQualityReportService {
      * @param ratingService service quản lý rating
      */
     public QualityReportService(
-            IRatingService ratingService,
-            IPaymentService paymentService,
-            QualityReportDAO qualityReportDAO,
-            UserDAO userDAO) {
+        IRatingService ratingService,
+        IPaymentService paymentService,
+        QualityReportDAO qualityReportDAO,
+        UserDAO userDAO) {
         this.ratingService = ratingService;
         this.paymentService = paymentService;
         this.qualityReportDAO = qualityReportDAO;
@@ -75,9 +75,24 @@ QualityReportService implements IQualityReportService {
             log.warn("Quality report submit rejected because report is null");
             throw new IllegalArgumentException("QualityReport không được null.");
         }
+
+        // Gate: chỉ được report sau khi đã xác nhận nhận hàng (ITEM_RECEIVED)
+        com.group13.auction.model.auction.Auction auction =
+            AuctionManager.getInstance().findAuctionById(report.getAuctionId());
+        if (auction != null && auction.getWinner() != null) {
+            com.group13.auction.model.auction.AuctionWinner.PaymentStatus status =
+                auction.getWinner().getPaymentStatus();
+            if (status != com.group13.auction.model.auction.AuctionWinner.PaymentStatus.ITEM_RECEIVED) {
+                log.warn("Quality report rejected — winner has not confirmed item received: auctionId={}, status={}",
+                    report.getAuctionId(), status);
+                throw new IllegalStateException(
+                    "Vui lòng xác nhận đã nhận hàng trước khi gửi báo cáo chất lượng.");
+            }
+        }
+
         log.info("Quality report submitted: reportId={}, auctionId={}, reporterId={}, username={}",
-                report.getId(), report.getAuctionId(), report.getReporter().getId(),
-                report.getReporter().getUsername());
+            report.getId(), report.getAuctionId(), report.getReporter().getId(),
+            report.getReporter().getUsername());
 
         // Thực hiện TODO: qualityReportDAO.save(report) — lưu report xuống DB
         qualityReportDAO.saveReport(report);
@@ -111,9 +126,9 @@ QualityReportService implements IQualityReportService {
         synchronized (lock) {
             if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
                 log.warn("Approve quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
-                        report.getId(), report.getAuctionId(), report.getStatus());
+                    report.getId(), report.getAuctionId(), report.getStatus());
                 throw new IllegalStateException(
-                        "Report không ở trạng thái PENDING: " + report.getStatus());
+                    "Report không ở trạng thái PENDING: " + report.getStatus());
             }
 
             NormalUser winner = report.getReporter();
@@ -128,8 +143,8 @@ QualityReportService implements IQualityReportService {
 
             // Hoàn tiền từ SystemBank + Seller về Winner
             long finalPrice = auction.getWinner() != null
-                    ? auction.getWinner().getFinalPrice()
-                    : 0L;
+                ? auction.getWinner().getFinalPrice()
+                : 0L;
             if (finalPrice > 0) {
                 paymentService.refundToWinnerFromBank(auction);
                 report.markRefundCompleted();
@@ -143,19 +158,19 @@ QualityReportService implements IQualityReportService {
 
             // Notify Staff Admin theo dõi
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
-                    auction, winner, 0L,
-                    String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
+                AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
+                auction, winner, 0L,
+                String.format("Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
             AuctionManager.getInstance().notifyStaffObservers(event);
             AuctionManager.getInstance().notifyGlobalObservers(event);
 
             String log = String.format(
-                    "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
-                    admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
+                "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
+                admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
             admin.addActionLog(log);
             SystemAdmin.getInstance().addActionLog(log);
             QualityReportService.log.info("Quality report approved: reportId={}, auctionId={}, adminId={}, sellerId={}, winnerId={}, refundAmount={}",
-                    report.getId(), report.getAuctionId(), admin.getId(), seller.getId(), winner.getId(), finalPrice);
+                report.getId(), report.getAuctionId(), admin.getId(), seller.getId(), winner.getId(), finalPrice);
         }
     }
 
@@ -175,9 +190,9 @@ QualityReportService implements IQualityReportService {
         synchronized (lock) {
             if (report.getStatus() != QualityReport.ReportStatus.PENDING) {
                 log.warn("Reject quality report rejected because status is not PENDING: reportId={}, auctionId={}, status={}",
-                        report.getId(), report.getAuctionId(), report.getStatus());
+                    report.getId(), report.getAuctionId(), report.getStatus());
                 throw new IllegalStateException(
-                        "Report không ở trạng thái PENDING: " + report.getStatus());
+                    "Report không ở trạng thái PENDING: " + report.getStatus());
             }
 
             report.reject();
@@ -186,11 +201,11 @@ QualityReportService implements IQualityReportService {
             qualityReportDAO.updateReport(report);
 
             String log = String.format(
-                    "[QUALITY] Admin %s từ chối report của %s | Phiên: %s",
-                    admin.getUsername(), report.getReporter().getUsername(), report.getAuctionId());
+                "[QUALITY] Admin %s từ chối report của %s | Phiên: %s",
+                admin.getUsername(), report.getReporter().getUsername(), report.getAuctionId());
             admin.addActionLog(log);
             QualityReportService.log.info("Quality report rejected: reportId={}, auctionId={}, adminId={}, reporterId={}",
-                    report.getId(), report.getAuctionId(), admin.getId(), report.getReporter().getId());
+                report.getId(), report.getAuctionId(), admin.getId(), report.getReporter().getId());
         }
     }
 }

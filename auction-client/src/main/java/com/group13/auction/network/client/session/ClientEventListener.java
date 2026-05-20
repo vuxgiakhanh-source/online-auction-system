@@ -6,6 +6,7 @@ import com.group13.auction.common.dto.auth.LoginResponseDTO;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.dto.rating.RatingDTOs;
 import com.group13.auction.common.dto.report.ReportDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
@@ -155,6 +156,9 @@ public interface ClientEventListener {
     default void onWalletBalanceReceived(PaymentDTOs.WalletBalanceResponseDTO balance) {}
     default void onPaymentSuccess(PaymentDTOs.PaymentResultDTO result) {}
     default void onPaymentFailed(ErrorDTO error) {}
+
+    default void onItemReceivedConfirmed(ConfirmItemReceivedResultDTO result) {}
+    default void onItemReceivedFailed(ErrorDTO error) {}
     /** Server push cho Seller khi Winner đã thanh toán (PAYMENT_COMPLETED_NOTIFY). */
     default void onPaymentCompletedNotify(PaymentDTOs.PaymentResultDTO result) {}
     /** Server push cho Winner khi hết hạn thanh toán (PAYMENT_EXPIRED_NOTIFY). */
@@ -275,5 +279,5 @@ public interface ClientEventListener {
     default void onChatbotAnswer(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}
     default void onChatbotNotFound(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}
     default void onChatbotFaqListReceived(
-            com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListResponseDTO list) {}
+        com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListResponseDTO list) {}
 }
