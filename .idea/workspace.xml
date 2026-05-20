@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +15,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="355" />
+    <option name="cachedIndexableFilesCount" value="696" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -57,6 +58,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.IntegrationTestLauncher.executor": "Run",
+    "Application.Launcher.executor": "Run",
     "Application.ServerMain.executor": "Run",
     "Application.TestLauncher.executor": "Run",
     "Application.com.group13.auction.integration.base.IntegrationTestLauncher.executor": "Run",
@@ -217,7 +219,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "backup-client",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/online-auction-main",
@@ -241,7 +243,33 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.TestLauncher">
+  <component name="RunManager" selected="Application.Launcher">
+    <configuration name="Launcher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
+      <module name="auction-client" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="TestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.unit.TestLauncher" />
       <module name="auction-server" />
@@ -251,21 +279,6 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="AccountServiceLoadIT" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.load.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.load" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.load.AccountServiceLoadIT" />
-      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -300,21 +313,6 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="BidHandlerWebSocketSecurityTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.security.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.security" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.security.BidHandlerWebSocketSecurityTest" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
       <deployment type="docker-compose.yml">
         <settings />
@@ -328,19 +326,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Application.Launcher" />
+      <item itemvalue="Application.ServerMain" />
       <item itemvalue="Application.TestLauncher" />
-      <item itemvalue="JUnit.AccountServiceLoadIT" />
       <item itemvalue="JUnit.AuctionManagerLoadTest" />
       <item itemvalue="JUnit.AuctionSystemLoadIT" />
-      <item itemvalue="JUnit.BidHandlerWebSocketSecurityTest" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
         <item itemvalue="JUnit.AuctionManagerLoadTest" />
-        <item itemvalue="JUnit.AccountServiceLoadIT" />
-        <item itemvalue="JUnit.BidHandlerWebSocketSecurityTest" />
       </list>
     </recent_temporary>
   </component>
@@ -505,15 +503,6 @@
             <option name="WATCH_EXIT" value="false" />
           </properties>
           <option name="timeStamp" value="43" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-method">
-          <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
-          <line>51</line>
-          <properties class="com.group13.auction.ServerMain">
-            <option name="EMULATED" value="true" />
-            <option name="WATCH_EXIT" value="false" />
-          </properties>
-          <option name="timeStamp" value="51" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-field">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
