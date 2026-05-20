@@ -5,6 +5,7 @@ public final class ScreenStateKeys {
 
     public static final String SELECTED_AUCTION_ID = "selectedAuctionId";
     public static final String SELECTED_SELLER_AUCTION_ROW = "selectedSellerAuctionRow";
+    public static final String SELECTED_WON_ORDER = "selectedWonOrder";
 
     private ScreenStateKeys() {
         // Utility class.

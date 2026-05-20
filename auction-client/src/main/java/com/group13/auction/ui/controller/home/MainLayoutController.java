@@ -67,10 +67,10 @@ public final class MainLayoutController {
         Navigator.getInstance().goToRating();
     }
 
-    /** Mở màn gửi Quality Report. */
+    /** Mở màn đơn hàng đã thắng của người dùng. */
     @FXML
-    public void handleOpenQualityReport() {
-        Navigator.getInstance().goToQualityReport();
+    public void handleOpenMyOrders() {
+        Navigator.getInstance().goToMyOrders();
     }
 
     /** Mở Admin Dashboard nếu tài khoản hiện tại có quyền Admin. */

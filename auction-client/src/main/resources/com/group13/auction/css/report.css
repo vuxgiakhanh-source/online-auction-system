@@ -210,3 +210,110 @@
 .report-page .progress-indicator {
     -fx-progress-color: #67b8ea;
 }
+
+.report-page {
+    -fx-background-color: transparent;
+}
+
+.report-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.report-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.report-content {
+    -fx-background-color: transparent;
+}
+
+.report-section-card {
+    -fx-background-color: rgba(255, 255, 255, 0.94);
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(255, 255, 255, 0.55);
+    -fx-border-radius: 22px;
+    -fx-padding: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.22, 0, 8);
+}
+
+.report-section-title {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 20px;
+    -fx-font-weight: 900;
+}
+
+.report-info-grid {
+    -fx-background-color: rgba(15, 37, 60, 0.04);
+    -fx-background-radius: 16px;
+    -fx-padding: 16px;
+}
+
+.report-field-title {
+    -fx-text-fill: rgba(15, 37, 60, 0.68);
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.report-field-value {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.report-field-value.muted-id {
+    -fx-text-fill: rgba(15, 37, 60, 0.58);
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.report-text-area {
+    -fx-background-color: rgba(15, 37, 60, 0.06);
+    -fx-background-radius: 16px;
+    -fx-border-color: rgba(15, 37, 60, 0.12);
+    -fx-border-radius: 16px;
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-prompt-text-fill: rgba(15, 37, 60, 0.42);
+}
+
+.report-text-area .content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 16px;
+}
+
+.report-image-list {
+    -fx-background-color: rgba(15, 37, 60, 0.06);
+    -fx-background-radius: 16px;
+    -fx-border-color: rgba(15, 37, 60, 0.12);
+    -fx-border-radius: 16px;
+    -fx-padding: 6px;
+}
+
+.report-image-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 8px 10px;
+}
+
+.report-image-list .list-cell:selected {
+    -fx-background-color: rgba(15, 37, 60, 0.14);
+    -fx-background-radius: 10px;
+    -fx-text-fill: #0f253c;
+}
+
+.report-result-label {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.status-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}

@@ -1,0 +1,95 @@
+.order-page {
+    -fx-background-color: transparent;
+}
+
+.order-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.order-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.order-list {
+    -fx-background-color: transparent;
+}
+
+.order-card {
+    -fx-background-color: rgba(255, 255, 255, 0.94);
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(255, 255, 255, 0.55);
+    -fx-border-radius: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.22, 0, 8);
+}
+
+.order-card:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.98);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.28), 22, 0.26, 0, 10);
+}
+
+.order-title {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+}
+
+.order-muted-text {
+    -fx-text-fill: rgba(15, 37, 60, 0.68);
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+}
+
+.order-status-badge {
+    -fx-background-color: rgba(15, 37, 60, 0.10);
+    -fx-background-radius: 999px;
+    -fx-border-color: rgba(15, 37, 60, 0.18);
+    -fx-border-radius: 999px;
+    -fx-padding: 7px 14px;
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+
+.order-thumbnail-box {
+    -fx-min-height: 96px;
+    -fx-pref-height: 96px;
+    -fx-background-color: rgba(15, 37, 60, 0.08);
+    -fx-background-radius: 18px;
+    -fx-border-color: rgba(15, 37, 60, 0.12);
+    -fx-border-radius: 18px;
+}
+
+.order-thumbnail-placeholder {
+    -fx-text-fill: rgba(15, 37, 60, 0.55);
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.order-thumbnail-image {
+    -fx-background-radius: 14px;
+}
+
+.order-metric-box {
+    -fx-background-color: rgba(15, 37, 60, 0.06);
+    -fx-background-radius: 16px;
+    -fx-padding: 10px 14px;
+}
+
+.order-metric-value {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 17px;
+    -fx-font-weight: 900;
+}
+
+.order-empty-state {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(255, 255, 255, 0.45);
+    -fx-border-radius: 22px;
+    -fx-padding: 28px;
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}

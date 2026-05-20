@@ -191,6 +191,11 @@ public final class Navigator {
         goTo(Route.RATING);
     }
 
+    /** Chuyển tới màn đơn hàng đã thắng của người dùng. */
+    public void goToMyOrders() {
+        goTo(Route.MY_ORDERS);
+    }
+
     /** Chuyển tới màn gửi báo cáo chất lượng. */
     public void goToQualityReport() {
         goTo(Route.QUALITY_REPORT);
