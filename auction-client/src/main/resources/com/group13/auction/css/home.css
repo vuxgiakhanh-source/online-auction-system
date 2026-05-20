@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('../assets/fonts/PlayfairDisplay-Bold.ttf'); 
+}
+
 /* LANDING HEADER */
 
 .landing-login-button,
@@ -42,6 +47,16 @@
     -fx-text-fill: #ffffff;
     -fx-line-spacing: -8;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+}
+
+.landing-omni {
+    -fx-font-family: "Playfair Display", serif;
+    -fx-font-size: 52px;
+    -fx-font-weight: 800; /* In đậm lên rất đẹp và chắc chắn */
+    -fx-text-fill: #ffffff;
+    -fx-line-spacing: 0; /* Khuyên dùng trả về 0 hoặc -2 để thoáng dấu */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);
+    
 }
 
 .landing-main-subtitle {
