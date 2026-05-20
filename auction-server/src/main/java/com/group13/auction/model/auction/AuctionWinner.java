@@ -159,7 +159,7 @@ public class AuctionWinner extends Entity {
   /**
    * Kiểm tra Winner đã quá hạn thanh toán chưa.
    *
-   * <p>Đã thực hiện TODO (phân tách trách nhiệm): Logic scheduler không thuộc lớp Model.
+   * <p>Logic scheduler không thuộc lớp Model.
    * Model chỉ cung cấp hàm query {@code isExpired()} thuần túy.
    * Scheduler (ví dụ: {@code ScheduledExecutorService} chạy mỗi 1 phút) nằm ở tầng
    * Service/infrastructure và sẽ:
@@ -216,7 +216,6 @@ public class AuctionWinner extends Entity {
     this.paymentStatus = PaymentStatus.FUNDS_HELD;
     this.confirmReceiptDeadline = LocalDateTime.now().plusDays(7);
     markUpdated();
-    // TODO: [DB] auctionWinnerDAO.updateFundsHeld(id, paymentStatus, confirmReceiptDeadline)
   }
 
   /**
@@ -226,7 +225,6 @@ public class AuctionWinner extends Entity {
   public void confirmReceipt() {
     this.reportDeadline = LocalDateTime.now().plusDays(3);
     markUpdated();
-    // TODO: [DB] auctionWinnerDAO.updateReportDeadline(id, reportDeadline)
   }
 
   @Override
