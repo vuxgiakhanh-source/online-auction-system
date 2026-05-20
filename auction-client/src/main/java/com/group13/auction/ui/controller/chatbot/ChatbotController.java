@@ -70,10 +70,10 @@ public final class ChatbotController {
     loadFaqList(null);
   }
 
-  /** Quay lại màn chính. */
+  /** Quay lại màn đã mở chatbot trước đó. */
   @FXML
   public void handleBack() {
-    Navigator.getInstance().goToMainLayout();
+    Navigator.getInstance().goBackFromChatbot();
   }
 
   /** Gửi câu hỏi người dùng nhập tới chatbot server. */
