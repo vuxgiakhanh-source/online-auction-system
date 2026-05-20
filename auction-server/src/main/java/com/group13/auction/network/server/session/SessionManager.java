@@ -382,6 +382,24 @@ public class SessionManager {
     }
 
     /**
+     * Đếm số live WebSocket connection đang watching auction này.
+     *
+     * <p>Đây là "số người đang xem tại thời điểm này" — dùng để broadcast
+     * {@code VIEWER_COUNT_UPDATE}. Khác với {@code auction.getViewerCount()} là
+     * tổng lịch sử (chỉ tăng, không giảm).
+     *
+     * @param auctionId ID phiên
+     * @return số connections đang {@code isWatchingAuction(auctionId) == true}
+     */
+    public int getActiveViewerCount(String auctionId) {
+        int count = 0;
+        for (ClientSession session : byConnection.values()) {
+            if (session.isWatchingAuction(auctionId)) count++;
+        }
+        return count;
+    }
+
+    /**
      * Đăng ký session đang watch một auction (gọi khi JOIN_AUCTION hoặc WATCH_AUCTION thành công).
      *
      * @param connection WebSocket handle

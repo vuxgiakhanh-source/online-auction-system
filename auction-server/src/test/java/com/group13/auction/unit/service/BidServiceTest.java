@@ -1006,14 +1006,59 @@ class BidServiceTest {
         }
 
         @Test
-        @DisplayName("watch phiên → auctionDAO và userDAO được persist")
-        void watchAuction_persistsState() {
+        @DisplayName("watch phiên (chưa join) → auctionDAO và userDAO được persist WATCHING")
+        void watchAuction_notJoined_persistsWatchingActivity() {
+            // Arrange — dùng fresh user chưa join để saveUserAuctionActivity("WATCHING") được gọi.
+            // Không dùng `bidder` từ setUp() vì bidder đó đã addJoinedAuction(runningAuction).
+            NormalUser watcher = TestFixture.bidderWithBalance("watcherUsr1", 5_000_000L);
+            // watcher.hasJoined(runningAuction.getId()) == false
+
             // Act
-            bidService.watchAuction(bidder, runningAuction, observer);
+            bidService.watchAuction(watcher, runningAuction, observer);
 
             // Assert
             verify(auctionDAO).updateViewerCount(eq(runningAuction.getId()), anyInt());
-            verify(userDAO).saveUserAuctionActivity(bidder.getId(), runningAuction.getId(), "WATCHING");
+            verify(userDAO).saveUserAuctionActivity(watcher.getId(), runningAuction.getId(), "WATCHING");
+        }
+
+        @Test
+        @DisplayName("watch phiên (đã join) → saveUserAuctionActivity KHÔNG được gọi với WATCHING (bug fix)")
+        void watchAuction_alreadyJoined_doesNotPersistWatchingActivity() {
+            // Arrange — bidder từ setUp() đã addJoinedAuction(runningAuction): hasJoined() == true.
+            // BUG trước đây: watchAuction() gọi saveUserAuctionActivity("WATCHING") vô điều kiện
+            //   → ON DUPLICATE KEY UPDATE đổi activity_type JOINED → WATCHING trong DB
+            //   → lần load tiếp theo (PLACE_BID) findJoinedAuctionIdsByUserId() miss auction này
+            //   → placeBid() ném NOT_JOINED_AUCTION dù user đã join thành công.
+            // FIX: không gọi saveUserAuctionActivity("WATCHING") nếu đã hasJoined().
+
+            // Act
+            bidService.watchAuction(bidder, runningAuction, observer);
+
+            // Assert — WATCHING không được ghi đè JOINED trong DB
+            verify(userDAO, never()).saveUserAuctionActivity(
+                    bidder.getId(), runningAuction.getId(), "WATCHING");
+        }
+
+        @Test
+        @DisplayName("watch sau join → JOINED status trong DB không bị overwrite (regression #join-watch-bug)")
+        void watchAuction_afterJoin_joinedStatusPreservedInDB() {
+            // Arrange
+            when(ratingService.isEligible(bidder)).thenReturn(true);
+            doNothing().when(walletService).lockDeposit(any(), anyLong(), any());
+
+            NormalUser otherSeller = TestFixture.normalSeller("otherSellerZZ");
+            Auction otherAuction   = TestFixture.runningAuction(otherSeller, STARTING_PRICE);
+            bidService.joinAuction(bidder, otherAuction, observer); // lưu JOINED vào DB mock
+
+            // Act — client reload trang / reconnect → gửi WATCH_AUCTION lần nữa
+            bidService.watchAuction(bidder, otherAuction, observer);
+
+            // Assert — WATCHING không được gọi sau khi đã JOINED
+            verify(userDAO, never()).saveUserAuctionActivity(
+                    bidder.getId(), otherAuction.getId(), "WATCHING");
+            // JOINED vẫn được persist đúng 1 lần khi join
+            verify(userDAO, times(1)).saveUserAuctionActivity(
+                    bidder.getId(), otherAuction.getId(), "JOINED");
         }
 
         @Test

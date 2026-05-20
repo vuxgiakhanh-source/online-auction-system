@@ -363,8 +363,53 @@ class DAOIntegrationIT {
             assertThat(joinedIds).contains(auction.getId());
         }
 
-        @ParameterizedTest
+        @Test
         @Order(9)
+        @DisplayName("saveUserAuctionActivity() WATCHING không overwrite JOINED (regression #join-watch-bug)")
+        void saveUserAuctionActivity_watchingDoesNotOverwriteJoined() {
+            // Arrange — tạo user + auction thật (FK constraint)
+            String userId = userDAO.registerUser(
+                    "bidder_henry", hashPassword("pass1234"), "henry@omnibid.vn");
+            createdUserIds.add(userId);
+
+            String sellerId = userDAO.registerUser(
+                    "seller_henry_aux", hashPassword("pass1234"), "henry_seller@omnibid.vn");
+            createdUserIds.add(sellerId);
+            ensureSellerRecord(sellerId);
+
+            String itemId = UUID.randomUUID().toString();
+            itemDAO.addItem(itemId, sellerId, "Henry Test Item", "desc", 1_000_000L, "ELECTRONICS");
+            createdItemIds.add(itemId);
+
+            Item item = itemDAO.findItemById(itemId);
+            Auction auction = Auction.create(item,
+                    LocalDateTime.now().plusMinutes(1),
+                    LocalDateTime.now().plusHours(1), 1_500_000L);
+            auctionDAO.createAuction(auction);
+            createdAuctionIds.add(auction.getId());
+
+            // Step 1: user join → lưu JOINED
+            userDAO.saveUserAuctionActivity(userId, auction.getId(), "JOINED");
+            assertThat(userDAO.findJoinedAuctionIdsByUserId(userId))
+                    .as("Sau join, phải tìm thấy auction trong joinedIds")
+                    .contains(auction.getId());
+
+            // Step 2: client reload / reconnect → gửi WATCH → gọi saveUserAuctionActivity("WATCHING")
+            // Trước bug fix: ON DUPLICATE KEY UPDATE đổi activity_type → 'WATCHING'
+            //   → findJoinedAuctionIdsByUserId() miss → placeBid() báo NOT_JOINED
+            // Sau bug fix: IF(activity_type = 'JOINED', 'JOINED', VALUES(activity_type))
+            //   → row giữ nguyên 'JOINED' → findJoined vẫn trả về đúng
+            userDAO.saveUserAuctionActivity(userId, auction.getId(), "WATCHING");
+
+            // Assert — JOINED không bị overwrite
+            Set<String> joinedAfter = userDAO.findJoinedAuctionIdsByUserId(userId);
+            assertThat(joinedAfter)
+                    .as("WATCHING không được overwrite JOINED — auction phải vẫn có trong joinedIds")
+                    .contains(auction.getId());
+        }
+
+        @ParameterizedTest
+        @Order(10)
         @ValueSource(strings = {"ACTIVE", "SUSPENDED", "BANNED"})
         @DisplayName("updateAccountStatus() hỗ trợ đầy đủ các trạng thái hợp lệ")
         void updateAccountStatus_supportsAllStatuses(String status) {
