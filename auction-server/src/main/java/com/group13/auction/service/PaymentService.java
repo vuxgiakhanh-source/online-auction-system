@@ -61,13 +61,13 @@ public class PaymentService implements IPaymentService {
   }
 
   public PaymentService(
-          IAuctionService auctionService,
-          IRatingService ratingService,
-          WalletService walletService,
-          AuctionWinnerDAO auctionWinnerDAO,
-          SecondChanceOfferDAO secondChanceOfferDAO,
-          BidTransactionDAO bidTransactionDAO,
-          UserDAO userDAO) {
+      IAuctionService auctionService,
+      IRatingService ratingService,
+      WalletService walletService,
+      AuctionWinnerDAO auctionWinnerDAO,
+      SecondChanceOfferDAO secondChanceOfferDAO,
+      BidTransactionDAO bidTransactionDAO,
+      UserDAO userDAO) {
     this.auctionService = auctionService;
     this.ratingService = ratingService;
     this.walletService = walletService;
@@ -82,62 +82,70 @@ public class PaymentService implements IPaymentService {
     synchronized (auctionPaymentLock(auction)) {
       if (auction.getStatus() == AuctionStatus.PAID) {
         throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
-                "Phiên đã được thanh toán.");
+            "Phiên đã được thanh toán.");
       }
       AuctionWinner auctionWinner = requireWinner(auction);
 
       if (auctionWinner.getPaymentStatus() == PaymentStatus.EXPIRED) {
         throw new PaymentException(PaymentException.Reason.PAYMENT_EXPIRED,
-                "Thanh toán đã hết hạn.");
+            "Thanh toán đã hết hạn.");
       }
       if (auctionWinner.getPaymentStatus() == PaymentStatus.FUNDS_HELD
-              || auctionWinner.getPaymentStatus() == PaymentStatus.COMPLETED) {
+          || auctionWinner.getPaymentStatus() == PaymentStatus.COMPLETED) {
         throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
-                "Thanh toán đã được xử lý.");
+            "Thanh toán đã được xử lý.");
       }
 
       if (auctionWinner.isExpired()) {
         throw new PaymentException(PaymentException.Reason.PAYMENT_EXPIRED,
-                "Đã quá hạn 24h thanh toán.");
+            "Đã quá hạn 24h thanh toán.");
       }
 
       NormalUser winner = auctionWinner.getWinner();
 
       walletService.executePaymentToBank(
-              winner,
-              auctionWinner.getFinalPrice(),
-              auctionWinner.getDepositPaid(),
-              auction.getId());
+          winner,
+          auctionWinner.getFinalPrice(),
+          auctionWinner.getDepositPaid(),
+          auction.getId());
 
       auctionWinner.markFundsHeld();
       auctionService.markAsPaid(auction);
 
       ratingService.rewardBidder(winner);
       auctionService.notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-              winner, auctionWinner.getFinalPrice());
+          winner, auctionWinner.getFinalPrice());
 
       log.info("[PAYMENT] Winner {} đã thanh toán {} — tiền giữ tại SystemBank (FUNDS_HELD).",
-              winner.getUsername(), auctionWinner.getFinalPrice());
+          winner.getUsername(), auctionWinner.getFinalPrice());
 
       auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(),
-              auctionWinner.getPaymentStatus().name(), auctionWinner.getConfirmReceiptDeadline());
+          auctionWinner.getPaymentStatus().name(), auctionWinner.getConfirmReceiptDeadline());
     }
   }
 
-  public void confirmReceipt(Auction auction) {
+  public void confirmItemReceived(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
 
     if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
       throw new IllegalStateException(
-              "Chỉ có thể xác nhận nhận hàng khi tiền đang FUNDS_HELD. "
-                      + "Trạng thái hiện tại: " + auctionWinner.getPaymentStatus());
+          "Chỉ có thể xác nhận nhận hàng khi tiền đang FUNDS_HELD. "
+              + "Trạng thái hiện tại: " + auctionWinner.getPaymentStatus());
     }
 
-    auctionWinner.confirmReceipt();
+    auctionWinner.confirmReceipt(); // set ITEM_RECEIVED + reportDeadline = now+3days
     log.info("[PAYMENT] Winner {} xác nhận nhận hàng — 3 ngày report bắt đầu đếm.",
-            auctionWinner.getWinner().getUsername());
+        auctionWinner.getWinner().getUsername());
 
+    // Persist cả status mới lẫn reportDeadline
+    auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
     auctionWinnerDAO.updateReportDeadline(auctionWinner.getId(), auctionWinner.getReportDeadline());
+  }
+
+  /** @deprecated Dùng {@link #confirmItemReceived(Auction)} thay thế. */
+  @Deprecated
+  public void confirmReceipt(Auction auction) {
+    confirmItemReceived(auction);
   }
 
   public void releaseToSeller(Auction auction) {
@@ -149,7 +157,7 @@ public class PaymentService implements IPaymentService {
       // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không sinh tiền ảo.
       if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
         log.warn("[PAYMENT] releaseToSeller skipped — status already {}",
-                auctionWinner.getPaymentStatus());
+            auctionWinner.getPaymentStatus());
         return;
       }
       auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
@@ -167,7 +175,7 @@ public class PaymentService implements IPaymentService {
     log.info("[PAYMENT] Giải ngân {} cho Seller {} từ SystemBank.", payout, seller.getUsername());
 
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(),
-            auctionWinner.getPaymentStatus().name());
+        auctionWinner.getPaymentStatus().name());
   }
 
   public void refundToWinnerFromBank(Auction auction) {
@@ -179,7 +187,7 @@ public class PaymentService implements IPaymentService {
       // Thread thứ 2 gọi đồng thời sẽ thấy COMPLETED và bỏ qua — không double-refund.
       if (auctionWinner.getPaymentStatus() != PaymentStatus.FUNDS_HELD) {
         log.warn("[PAYMENT] refundToWinnerFromBank skipped — status already {}",
-                auctionWinner.getPaymentStatus());
+            auctionWinner.getPaymentStatus());
         return;
       }
       auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
@@ -192,7 +200,7 @@ public class PaymentService implements IPaymentService {
     userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
     log.info("[PAYMENT] SystemBank hoàn {} cho Winner {} (report thành công).",
-            auctionWinner.getFinalPrice(), winner.getUsername());
+        auctionWinner.getFinalPrice(), winner.getUsername());
   }
 
   @Override
@@ -204,7 +212,7 @@ public class PaymentService implements IPaymentService {
       AuctionWinner auctionWinner = requireWinner(auction);
 
       if (auctionWinner.getPaymentStatus() == PaymentStatus.FUNDS_HELD
-              || auctionWinner.getPaymentStatus() == PaymentStatus.COMPLETED) {
+          || auctionWinner.getPaymentStatus() == PaymentStatus.COMPLETED) {
         return;
       }
       if (auctionWinner.getPaymentStatus() == PaymentStatus.EXPIRED) {
@@ -224,11 +232,11 @@ public class PaymentService implements IPaymentService {
       if (auctionWinner.getIsSecondOffer()) {
         auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
         log.info("[PAYMENT] Second-chance winner {} không thanh toán đúng hạn | hủy phiên.",
-                winner.getUsername());
+            winner.getUsername());
       } else {
         offerSecondChance(auction);
         log.info("[PAYMENT] Winner {} không thanh toán | Cọc tịch thu | Rating phạt.",
-                winner.getUsername());
+            winner.getUsername());
       }
 
       auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
@@ -247,11 +255,11 @@ public class PaymentService implements IPaymentService {
   @Override
   public void refundDeposits(Auction auction) {
     String winnerId = auction.getWinner() != null
-            ? auction.getWinner().getWinner().getId()
-            : null;
+        ? auction.getWinner().getWinner().getId()
+        : null;
 
     log.info("[PAYMENT] Hoàn cọc cho tất cả bidder phiên {} (trừ winner {}).",
-            auction.getId(), winnerId != null ? winnerId : "N/A");
+        auction.getId(), winnerId != null ? winnerId : "N/A");
 
     List<NormalUser> participants = bidTransactionDAO.findBiddersByAuction(auction.getId());
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
@@ -277,11 +285,11 @@ public class PaymentService implements IPaymentService {
     NormalUser runnerUp = offer.getRunnerUp();
 
     AuctionWinner newWinner = AuctionWinner.create(
-            runnerUp,
-            auction.getId(),
-            offer.getOfferPrice(),
-            offer.getDepositPaid(),
-            true
+        runnerUp,
+        auction.getId(),
+        offer.getOfferPrice(),
+        offer.getDepositPaid(),
+        true
     );
 
     auction.setWinner(newWinner);
@@ -290,7 +298,7 @@ public class PaymentService implements IPaymentService {
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
 
     log.info("[PAYMENT] Runner-up {} chấp nhận Second Chance Offer | Giá: {}",
-            runnerUp.getUsername(), offer.getOfferPrice());
+        runnerUp.getUsername(), offer.getOfferPrice());
 
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }
@@ -304,14 +312,14 @@ public class PaymentService implements IPaymentService {
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
     log.info("[PAYMENT] Runner-up {} từ chối Second Chance Offer — phiên {} bị hủy.",
-            offer.getRunnerUp().getUsername(), auction.getId());
+        offer.getRunnerUp().getUsername(), auction.getId());
 
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }
 
   private void offerSecondChance(Auction auction) {
     String winnerId = auction.getWinner() != null
-            ? auction.getWinner().getWinner().getId() : null;
+        ? auction.getWinner().getWinner().getId() : null;
 
     log.info("[PAYMENT] Tìm runner-up cho phiên {} để tạo SecondChanceOffer...", auction.getId());
 
@@ -340,14 +348,14 @@ public class PaymentService implements IPaymentService {
     }
 
     SecondChanceOffer offer = SecondChanceOffer.create(
-            runnerUp, auction.getId(), offerPrice, depositPaid);
+        runnerUp, auction.getId(), offerPrice, depositPaid);
 
     auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
-            runnerUp, offerPrice,
-            String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
+        runnerUp, offerPrice,
+        String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
 
     log.info("[PAYMENT] Second Chance Offer tạo cho {} | Giá: {} | Hạn: {}",
-            runnerUp.getUsername(), offerPrice, offer.getDeadline());
+        runnerUp.getUsername(), offerPrice, offer.getDeadline());
 
     secondChanceOfferDAO.saveOffer(offer);
     return offer;

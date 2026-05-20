@@ -55,7 +55,7 @@ public class AutoBidProcessor {
      * đồng thời với ghi (recordBidActivity) từ nhiều thread.
      */
     private static final ConcurrentHashMap<String, List<LocalDateTime>> recentBidTimes =
-            new ConcurrentHashMap<>();
+        new ConcurrentHashMap<>();
 
     public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
         this.bidService     = bidService;
@@ -77,7 +77,7 @@ public class AutoBidProcessor {
 
         Collection<AutoBidRegistry.AutoBidEntry> allEntries = registry.getEntriesForAuction(auctionId);
         int maxIterations = Math.min(MAX_CHAIN_DEPTH,
-                allEntries.isEmpty() ? 2 : allEntries.size() * 2 + 2);
+            allEntries.isEmpty() ? 2 : allEntries.size() * 2 + 2);
 
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             Collection<AutoBidRegistry.AutoBidEntry> entries = registry.getEntriesForAuction(auctionId);
@@ -87,34 +87,34 @@ public class AutoBidProcessor {
 
             AutoBidPhase phase = detectPhase(auction);
 
-            // Tìm candidates: bị vượt, còn budget, sort (maxBid DESC, registeredAt ASC)
+            // Tìm candidates: bị vượt, còn budget, ONLINE, sort (maxBid DESC, registeredAt ASC)
+            // ANTI-SNIPE FIX: lọc offline ngay tại đây — không để winner là offline rồi break,
+            // vì break sẽ giết chain của tất cả user khác (kể cả người đang online có autobid).
             List<AutoBidRegistry.AutoBidEntry> candidates = new ArrayList<>();
             for (AutoBidRegistry.AutoBidEntry entry : entries) {
                 if (entry.getUserId().equals(leaderId)) continue;
+                if (!sessionManager.isOnline(entry.getUserId())) {
+                    log.debug("auto-bid candidate skipped (offline): userId={} auctionId={}",
+                        entry.getUserId(), auctionId);
+                    continue;
+                }
                 if (calcSmartBid(auction.getCurrentPrice(), entry.getMaxBid(), phase) > 0)
                     candidates.add(entry);
             }
             if (candidates.isEmpty()) break;
 
             candidates.sort(
-                    Comparator.comparingLong(AutoBidRegistry.AutoBidEntry::getMaxBid).reversed()
-                            .thenComparing(AutoBidRegistry.AutoBidEntry::getRegisteredAt)
+                Comparator.comparingLong(AutoBidRegistry.AutoBidEntry::getMaxBid).reversed()
+                    .thenComparing(AutoBidRegistry.AutoBidEntry::getRegisteredAt)
             );
 
             AutoBidRegistry.AutoBidEntry winner = candidates.get(0);
             long nextBid = calcSmartBid(auction.getCurrentPrice(), winner.getMaxBid(), phase);
 
-            // ANTI-SNIPE FIX: không auto-bid khi user offline
-            if (!sessionManager.isOnline(winner.getUserId())) {
-                log.debug("auto-bid skipped — user offline: userId={} auctionId={}",
-                        winner.getUserId(), auctionId);
-                break; // dừng chain; sẽ resume khi có bid thật tiếp theo
-            }
-
             NormalUser autoBidder = findNormalUserById(winner.getUserId());
             if (autoBidder == null) {
                 log.warn("auto-bid user not found, cancelling: userId={} auctionId={}",
-                        winner.getUserId(), auctionId);
+                    winner.getUserId(), auctionId);
                 registry.cancel(winner.getUserId(), auctionId);
                 continue;
             }
@@ -128,23 +128,23 @@ public class AutoBidProcessor {
 
                 sendAutoBidTriggeredNotify(winner, auction, nextBid);
 
-                sessionManager.broadcastToAuction(auctionId,
-                        Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid)));
-                sessionManager.broadcastToAuction(auctionId,
-                        Packet.of(PacketType.BID_CHART_POINT_UPDATE,
-                                DTOMapper.toBidChartPoint(auctionId, nextBid,
-                                        autoBidder.getUsername(), true)));
+                sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid)));
+                sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.BID_CHART_POINT_UPDATE,
+                        DTOMapper.toBidChartPoint(auctionId, nextBid,
+                            autoBidder.getUsername(), true)));
 
                 log.info("auto-bid triggered: userId={} username={} auctionId={} amount={} phase={} iteration={}",
-                        autoBidder.getId(), autoBidder.getUsername(), auctionId,
-                        nextBid, phase, iteration + 1);
+                    autoBidder.getId(), autoBidder.getUsername(), auctionId,
+                    nextBid, phase, iteration + 1);
 
             } catch (InvalidBidException e) {
                 // Giá vừa bị người khác đẩy lên trong lúc process() chạy ngoài lock.
                 // Đây là race condition tạm thời — KHÔNG cancel entry, vòng lặp kế tiếp
                 // sẽ đọc lại currentPrice mới và tính lại nextBid đúng.
                 log.debug("auto-bid stale price (race), retrying: userId={} auctionId={} reason={}",
-                        winner.getUserId(), auctionId, e.getMessage());
+                    winner.getUserId(), auctionId, e.getMessage());
 
             } catch (AuctionClosedException e) {
                 // Phiên đã đóng — cancel entry và thoát vòng lặp hẳn.
@@ -155,7 +155,7 @@ public class AutoBidProcessor {
             } catch (Exception e) {
                 // Lỗi không mong muốn (user bị ban, ví trống, ...) → cancel entry.
                 log.warn("auto-bid failed, cancelling: userId={} auctionId={} reason={}",
-                        winner.getUserId(), auctionId, e.getMessage());
+                    winner.getUserId(), auctionId, e.getMessage());
                 registry.cancel(winner.getUserId(), auctionId);
             }
         }
@@ -222,17 +222,17 @@ public class AutoBidProcessor {
     // ── Notify helpers ────────────────────────────────────────────────────────
 
     private void sendAutoBidTriggeredNotify(
-            AutoBidRegistry.AutoBidEntry entry, Auction auction, long bidAmount) {
+        AutoBidRegistry.AutoBidEntry entry, Auction auction, long bidAmount) {
         BidDTOs.AutoBidTriggeredDTO dto = new BidDTOs.AutoBidTriggeredDTO();
         dto.setAuctionId(auction.getId());
         dto.setBidAmount(bidAmount);
         dto.setNewCurrentPrice(auction.getCurrentPrice());
         dto.setRemainingMaxBid(entry.getMaxBid() - bidAmount);
         dto.setNowLeading(auction.getCurrentLeader() != null
-                && auction.getCurrentLeader().getId().equals(entry.getUserId()));
+            && auction.getCurrentLeader().getId().equals(entry.getUserId()));
         dto.setTimestamp(LocalDateTime.now());
         sessionManager.sendToUser(entry.getUserId(),
-                Packet.of(PacketType.AUTO_BID_TRIGGERED_NOTIFY, dto));
+            Packet.of(PacketType.AUTO_BID_TRIGGERED_NOTIFY, dto));
     }
 
     private void notifyExhaustedBidders(Auction auction) {
@@ -244,16 +244,24 @@ public class AutoBidProcessor {
         for (AutoBidRegistry.AutoBidEntry entry : registry.getEntriesForAuction(auctionId)) {
             if (entry.getUserId().equals(leaderId)) continue;
             if (calcSmartBid(auction.getCurrentPrice(), entry.getMaxBid(), phase) < 0) {
+                // Bug 3 fix: chỉ cancel và notify khi user ONLINE.
+                // Nếu offline: giữ entry trong registry — khi user online trở lại và có bid mới
+                // thì process() sẽ thấy budget không đủ và cancel+notify lúc đó.
+                if (!sessionManager.isOnline(entry.getUserId())) {
+                    log.debug("auto-bid exhausted but user offline, keeping entry: userId={} auctionId={}",
+                        entry.getUserId(), auctionId);
+                    continue;
+                }
                 BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
                 dto.setAuctionId(auctionId);
                 dto.setMaxBid(entry.getMaxBid());
                 dto.setCurrentPrice(auction.getCurrentPrice());
                 dto.setLeadingBidderUsername(leader != null ? leader.getUsername() : "Unknown");
                 sessionManager.sendToUser(entry.getUserId(),
-                        Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, dto));
+                    Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, dto));
                 registry.cancel(entry.getUserId(), auctionId);
                 log.info("auto-bid exhausted: userId={} auctionId={} maxBid={}",
-                        entry.getUserId(), auctionId, entry.getMaxBid());
+                    entry.getUserId(), auctionId, entry.getMaxBid());
             }
         }
     }
