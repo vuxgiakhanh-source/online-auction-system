@@ -220,6 +220,19 @@ public class UserAdminHandler implements PacketHandler {
             Admin.BanReason reason = Admin.BanReason.valueOf(req.getReason());
             accountService.banUser(admin, target, reason);
 
+            // BUG FIX: invalidate session cache của target sau khi ban.
+            // Vấn đề: AuctionHandler/PaymentHandler luôn gọi findUserByUsername() → allUsers.put()
+            // → tạo fresh object mới, overwrite allUsers[id]. Lúc đó session.cachedUser trỏ vào
+            // object cũ (reference khác allUsers[id]). Khi admin ban target, banUser() update
+            // object trong allUsers (freshObj mới nhất), nhưng session.cachedUser vẫn là object
+            // cũ ACTIVE → BidHandler.requireNormalUser() trả về object ACTIVE → user bị ban
+            // vẫn bid được. Fix: force invalidate để lần request tiếp theo BidHandler reload từ DB.
+            com.group13.auction.network.server.session.ClientSession targetSession =
+                    sessionManager.getByUserId(req.getUserId());
+            if (targetSession != null) {
+                targetSession.invalidateCachedUser();
+            }
+
             UserDTO dto = DTOMapper.toUserDTO(target, false);
             session.send(Packet.of(PacketType.ADMIN_BAN_USER_SUCCESS, dto, requestId));
 
@@ -326,6 +339,17 @@ public class UserAdminHandler implements PacketHandler {
             accountService.autoApproveSellerRole(normalUser);
             session.send(Packet.of(PacketType.ADMIN_APPROVE_SELLER_ROLE_SUCCESS,
                     DTOMapper.toUserDTO(normalUser, false), requestId));
+
+            // BUG FIX: invalidate session cache của target sau khi được duyệt SELLER.
+            // Nếu không, session.cachedUser không có SELLER role → khi target join auction
+            // của chính mình, joinAsNormalUser() check bidder.hasRole(SELLER) = false
+            // → bypass kiểm tra, seller bid được item của mình.
+            com.group13.auction.network.server.session.ClientSession targetSession =
+                    sessionManager.getByUserId(userId);
+            if (targetSession != null) {
+                targetSession.invalidateCachedUser();
+            }
+
             sessionManager.sendToUser(userId,
                     Packet.of(PacketType.SELLER_ROLE_APPROVED_NOTIFY,
                             DTOMapper.toUserDTO(normalUser, true)));
