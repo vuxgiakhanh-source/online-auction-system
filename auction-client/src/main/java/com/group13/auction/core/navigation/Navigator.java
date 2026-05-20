@@ -1,8 +1,8 @@
 package com.group13.auction.core.navigation;
 
-import com.group13.auction.config.ViewPath;
 import com.group13.auction.core.context.AppContext;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Điều hướng giữa các màn hình JavaFX.
@@ -14,6 +14,9 @@ public final class Navigator {
     private static Navigator instance;
 
     private final SceneManager sceneManager;
+
+    private Route currentRoute;
+    private Route chatbotReturnRoute;
 
     /**
      * Tạo navigator mới và gán làm instance dùng chung.
@@ -45,132 +48,181 @@ public final class Navigator {
      */
     public void goTo(Route route) {
         Objects.requireNonNull(route, "route must not be null");
+
+        if (route == Route.CHATBOT && currentRoute != null && currentRoute != Route.CHATBOT) {
+            chatbotReturnRoute = currentRoute;
+        }
+
         sceneManager.switchTo(route);
+        currentRoute = route;
     }
 
     /**
      * Chuyển tới view theo đường dẫn FXML.
      *
-     * <p>Method này được giữ lại để tương thích với controller hiện tại của project.
+     * <p>Method này được giữ lại để tương thích với controller hiện tại của project. Nếu đường dẫn
+     * thuộc một route đã khai báo, navigator vẫn ghi nhận route hiện tại để các flow như chatbot
+     * có thể quay lại đúng màn hình trước đó.
      *
      * @param viewPath đường dẫn tuyệt đối tới file FXML
      */
     public void goTo(String viewPath) {
+        Objects.requireNonNull(viewPath, "viewPath must not be null");
+
+        Optional<Route> route = Route.fromFxmlPath(viewPath);
+        if (route.isPresent()) {
+            goTo(route.get());
+            return;
+        }
+
         sceneManager.switchTo(viewPath);
+        currentRoute = null;
+    }
+
+    /**
+     * Quay lại màn hình đã mở chatbot trước đó.
+     *
+     * <p>Nếu người dùng mở chatbot khi chưa đăng nhập từ landing/login/register, nút quay lại sẽ trở
+     * về đúng màn hình đó thay vì vào dashboard. Nếu không xác định được màn trước đó, client sẽ
+     * fallback theo trạng thái đăng nhập.
+     */
+    public void goBackFromChatbot() {
+        Route destination = chatbotReturnRoute;
+        chatbotReturnRoute = null;
+
+        if (destination != null && destination != Route.CHATBOT) {
+            goTo(destination);
+            return;
+        }
+
+        if (AppContext.getInstance().getSessionManager().isLoggedIn()) {
+            goToMainLayout();
+        } else {
+            goToLanding();
+        }
+    }
+
+    /**
+     * Lấy route hiện tại nếu navigator nhận diện được.
+     *
+     * @return route hiện tại
+     */
+    public Optional<Route> getCurrentRoute() {
+        return Optional.ofNullable(currentRoute);
     }
 
     /** Chuyển tới trang landing. */
     public void goToLanding() {
-        goTo(ViewPath.LANDING_VIEW);
+        goTo(Route.LANDING);
     }
 
     /** Chuyển tới trang đăng nhập. */
     public void goToLogin() {
-        goTo(ViewPath.LOGIN_VIEW);
+        goTo(Route.LOGIN);
     }
 
     /** Chuyển tới trang đăng ký. */
     public void goToRegister() {
-        goTo(ViewPath.REGISTER_VIEW);
+        goTo(Route.REGISTER);
     }
 
     /** Chuyển tới trang chủ/layout chính. */
     public void goToMainLayout() {
-        goTo(ViewPath.MAIN_LAYOUT_VIEW);
+        goTo(Route.MAIN_LAYOUT);
     }
 
     /** Chuyển tới danh sách phiên đấu giá. */
     public void goToAuctionList() {
-        goTo(ViewPath.AUCTION_LIST_VIEW);
+        goTo(Route.AUCTION_LIST);
     }
 
     /** Chuyển tới chi tiết phiên đấu giá. */
     public void goToAuctionDetail() {
-        goTo(ViewPath.AUCTION_DETAIL_VIEW);
+        goTo(Route.AUCTION_DETAIL);
     }
 
     /** Chuyển tới màn đấu giá trực tiếp. */
     public void goToLiveBidding() {
-        goTo(ViewPath.LIVE_BIDDING_VIEW);
+        goTo(Route.LIVE_BIDDING);
     }
 
     /** Chuyển tới dashboard Seller. */
     public void goToSellerDashboard() {
-        goTo(ViewPath.SELLER_DASHBOARD_VIEW);
+        goTo(Route.SELLER_DASHBOARD);
     }
 
     /** Chuyển tới danh sách phiên của Seller. */
     public void goToSellerAuctionList() {
-        goTo(ViewPath.SELLER_AUCTION_LIST_VIEW);
+        goTo(Route.SELLER_AUCTION_LIST);
     }
 
     /** Chuyển tới form tạo phiên đấu giá. */
     public void goToCreateAuction() {
-        goTo(ViewPath.CREATE_AUCTION_VIEW);
+        goTo(Route.CREATE_AUCTION);
     }
 
     /** Chuyển tới form sửa phiên đấu giá. */
     public void goToEditAuction() {
-        goTo(ViewPath.EDIT_AUCTION_VIEW);
+        goTo(Route.EDIT_AUCTION);
     }
 
     /** Chuyển tới chi tiết phiên phía Seller. */
     public void goToSellerAuctionDetail() {
-        goTo(ViewPath.SELLER_AUCTION_DETAIL_VIEW);
+        goTo(Route.SELLER_AUCTION_DETAIL);
     }
 
     /** Chuyển tới màn ví người dùng. */
     public void goToWallet() {
-        goTo(ViewPath.WALLET_VIEW);
+        goTo(Route.WALLET);
     }
 
     /** Chuyển tới màn hồ sơ người dùng. */
     public void goToProfile() {
-        goTo(ViewPath.PROFILE_VIEW);
+        goTo(Route.PROFILE);
     }
 
     /** Chuyển tới trung tâm thông báo. */
     public void goToNotificationCenter() {
-        goTo(ViewPath.NOTIFICATION_CENTER_VIEW);
+        goTo(Route.NOTIFICATION_CENTER);
     }
 
     /** Chuyển tới màn rating. */
     public void goToRating() {
-        goTo(ViewPath.RATING_VIEW);
+        goTo(Route.RATING);
     }
 
     /** Chuyển tới màn gửi báo cáo chất lượng. */
     public void goToQualityReport() {
-        goTo(ViewPath.QUALITY_REPORT_VIEW);
+        goTo(Route.QUALITY_REPORT);
     }
 
     /** Chuyển tới màn chatbot OMNI. */
     public void goToChatbot() {
-        goTo(ViewPath.CHATBOT_VIEW);
+        goTo(Route.CHATBOT);
     }
 
     /** Chuyển tới dashboard Admin. */
     public void goToAdminDashboard() {
-        goTo(ViewPath.ADMIN_DASHBOARD_VIEW);
+        goTo(Route.ADMIN_DASHBOARD);
     }
 
     /** Chuyển tới màn Admin quản lý người dùng. */
     public void goToAdminUsers() {
-        goTo(ViewPath.ADMIN_USERS_VIEW);
+        goTo(Route.ADMIN_USERS);
     }
 
     /** Chuyển tới màn Admin quản lý phiên đấu giá. */
     public void goToAdminAuctions() {
-        goTo(ViewPath.ADMIN_AUCTIONS_VIEW);
+        goTo(Route.ADMIN_AUCTIONS);
     }
 
     /** Chuyển tới màn Admin duyệt Seller. */
     public void goToAdminSellerApproval() {
-        goTo(ViewPath.ADMIN_SELLER_APPROVAL_VIEW);
+        goTo(Route.ADMIN_SELLER_APPROVAL);
     }
 
     /** Chuyển tới màn Admin duyệt báo cáo chất lượng. */
     public void goToAdminReportReview() {
-        goTo(ViewPath.ADMIN_REPORT_REVIEW_VIEW);
+        goTo(Route.ADMIN_REPORT_REVIEW);
     }
 }
