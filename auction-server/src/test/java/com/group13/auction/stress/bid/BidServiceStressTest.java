@@ -75,10 +75,10 @@ class BidServiceStressTest extends ConcurrencyTestBase {
     void setUp() throws Exception {                         // throws Exception — bootstrapSystemAdmin cần
         TestFixture.bootstrapSystemAdmin();
 
-        lenient().when(auctionDAO.updateHighestPrice(anyString(), anyLong(), anyString())).thenReturn(true);
         lenient().when(auctionDAO.updateEndTime(anyString(), any())).thenReturn(true);
         lenient().when(auctionDAO.updateViewerCount(anyString(), anyInt())).thenReturn(true);
-        lenient().when(bidTransactionDAO.saveTransaction(any())).thenReturn(true);
+        lenient().when(bidTransactionDAO.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
         lenient().when(ratingService.isEligible(any())).thenReturn(true);
         lenient().doNothing().when(walletService).lockDeposit(any(), anyLong(), anyString());
 

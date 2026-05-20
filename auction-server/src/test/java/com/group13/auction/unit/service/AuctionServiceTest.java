@@ -2,6 +2,8 @@ package com.group13.auction.unit.service;
 
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.FinancialTransactionDAO;
+import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.item.Art;
@@ -48,6 +50,7 @@ class AuctionServiceTest {
 
     @Mock private IRatingService ratingService;
     @Mock private AuctionDAO     auctionDAO;
+    @Mock private FinancialTransactionDAO financialTransactionDAO;
 
     // ── SUT ───────────────────────────────────────────────────────────────────
 
@@ -67,7 +70,10 @@ class AuctionServiceTest {
         resetSystemBankBalance();
         resetAuctionManager();
 
-        sut = new AuctionService(ratingService, auctionDAO);
+        sut = new AuctionService(ratingService, auctionDAO, financialTransactionDAO);
+        lenient().when(auctionDAO.createAuction(any())).thenReturn(true);
+        lenient().when(financialTransactionDAO.saveTransaction(any(FinancialTransaction.class))).thenReturn(true);
+        lenient().when(financialTransactionDAO.findLockedDepositAmount(anyString(), anyString())).thenReturn(0L);
 
         seller = normalSeller("seller01");
         bidder = normalBidder("bidder01");
@@ -237,6 +243,22 @@ class AuctionServiceTest {
                     .hasMessageContaining("reservePrice");
 
             verifyNoInteractions(auctionDAO);
+        }
+
+        @Test
+        @DisplayName("createAuction — auctionDAO.createAuction() false → IllegalStateException")
+        void daoPersistFails_throwsAndDoesNotRegisterOnSeller() {
+            when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
+            when(auctionDAO.createAuction(any())).thenReturn(false);
+            LocalDateTime start = LocalDateTime.now().plusMinutes(5);
+            LocalDateTime end   = start.plusHours(1);
+            int sizeBefore = seller.getAllAuctionIds().size();
+
+            assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 1_500_000L))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Không thể lưu phiên");
+
+            assertThat(seller.getAllAuctionIds()).hasSize(sizeBefore);
         }
 
         @Test
@@ -488,6 +510,7 @@ class AuctionServiceTest {
             // Assert — SystemBank nhận được tiền cọc (> 0)
             long bankAfter = SystemBank.getInstance().getTotalBalance();
             assertThat(bankAfter).isGreaterThan(bankBefore);
+            verify(financialTransactionDAO, times(1)).saveTransaction(any(FinancialTransaction.class));
         }
 
         @Test
@@ -598,7 +621,7 @@ class AuctionServiceTest {
         }
 
         @Test
-        @DisplayName("cancelAuction — persist CANCELED status tới DB")
+        @DisplayName("cancelAuction — persist CANCELED status tới DB (đúng 1 lần)")
         void happyPath_persistsCanceledStatus() {
             // Arrange
             Auction auction = runningAuction(seller, 1_000_000L);
@@ -606,8 +629,8 @@ class AuctionServiceTest {
             // Act
             sut.cancelAuction(auction, Admin.CancelReason.NO_WINNER);
 
-            // Assert
-            verify(auctionDAO, atLeastOnce())
+            // Assert — FIX: chỉ 1 lần (bỏ lần gọi thừa thứ 2)
+            verify(auctionDAO, times(1))
                     .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
 
@@ -757,6 +780,38 @@ class AuctionServiceTest {
                     sut.cancelAuction(sysAdmin, auction, Admin.CancelReason.SYSTEM_ERROR))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("SystemAdmin");
+        }
+
+        @Test
+        @DisplayName("cancelAuction (staff) — phát AUCTION_CANCELED tới observers của phiên")
+        void happyPath_notifiesAuctionObservers() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            AuctionObserver observer = mock(AuctionObserver.class);
+            sut.addObserver(auction.getId(), observer);
+
+            // Act
+            sut.cancelAuction(staff, auction, Admin.CancelReason.FRAUDULENT_ITEM);
+
+            // Assert — FIX Bug 1: staff cancel phải notify giống system cancel
+            ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
+            verify(observer).onAuctionEnded(captor.capture());
+            assertThat(captor.getValue().getEventType())
+                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
+        }
+
+        @Test
+        @DisplayName("cancelAuction (staff) — persist status CANCELED đúng 1 lần qua DAO")
+        void happyPath_persistsCanceledStatusExactlyOnce() {
+            // Arrange
+            Auction auction = openAuction(seller, 1_000_000L);
+
+            // Act
+            sut.cancelAuction(staff, auction, Admin.CancelReason.FRAUDULENT_ITEM);
+
+            // Assert
+            verify(auctionDAO, times(1))
+                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
     }
 

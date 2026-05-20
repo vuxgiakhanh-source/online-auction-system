@@ -45,6 +45,7 @@ import static org.mockito.Mockito.*;
 class RealtimeNotificationIntegrationTest {
 
     @Mock private AuctionDAO mockAuctionDAO;
+    @Mock private com.group13.auction.dao.FinancialTransactionDAO mockFinancialTransactionDAO;
 
     private IRatingService ratingService;
     private AuctionService auctionService;
@@ -63,11 +64,17 @@ class RealtimeNotificationIntegrationTest {
         bidder  = TestFixture.bidderWithBalance("bidderUser",  5_000_000L);
         bidder2 = TestFixture.bidderWithBalance("bidder2User", 3_000_000L);
 
-        auctionService = new AuctionService(ratingService, mockAuctionDAO);
+        // FIX: dùng 3-arg constructor để inject mock FinancialTransactionDAO.
+        // Constructor 2-arg tự new FinancialTransactionDAO() thật → INSERT vào DB
+        // với auction_id chưa persist → SQLIntegrityConstraintViolationException (FK fail).
+        auctionService = new AuctionService(ratingService, mockAuctionDAO, mockFinancialTransactionDAO);
 
         // Stub DAO calls fired inside AuctionService
         when(mockAuctionDAO.updateAuctionStatus(anyString(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateAuctionResult(any(Auction.class))).thenReturn(true);
+        when(mockFinancialTransactionDAO.saveTransaction(
+                any(com.group13.auction.model.bid.FinancialTransaction.class))).thenReturn(true);
+        when(mockFinancialTransactionDAO.findLockedDepositAmount(anyString(), anyString())).thenReturn(0L);
     }
 
     @AfterEach

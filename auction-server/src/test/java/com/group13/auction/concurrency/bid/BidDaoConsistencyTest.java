@@ -59,8 +59,8 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
         mockUserDAO           = mock(UserDAO.class);
 
         when(mockRatingService.isEligible(any())).thenReturn(true);
-        when(mockBidTransactionDAO.saveTransaction(any())).thenReturn(true);
-        when(mockAuctionDAO.updateHighestPrice(any(), anyLong(), any())).thenReturn(true);
+        when(mockBidTransactionDAO.saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
         when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
         doNothing().when(mockWalletService).lockDeposit(any(), anyLong(), any());
@@ -83,7 +83,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
 
     @Test
     @Order(1)
-    @DisplayName("C1: Mỗi bid thành công phải gọi saveTransaction() và updateHighestPrice() đúng 1 lần")
+    @DisplayName("C1: Mỗi bid thành công phải gọi saveTransactionAndUpdatePrice() đúng 1 lần")
     void eachSuccessfulBidPersistsExactlyOnce() {
         NormalUser bidder = buildUser("bidderC1", USER_BALANCE);
         bidder.addJoinedAuction(auction.getId());
@@ -97,9 +97,8 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
             lock.unlock();
         }
 
-        verify(mockBidTransactionDAO, times(1)).saveTransaction(any());
-        verify(mockAuctionDAO, times(1)).updateHighestPrice(
-                eq(auction.getId()), eq(bidAmount), eq(bidder.getId()));
+        verify(mockBidTransactionDAO, times(1)).saveTransactionAndUpdatePrice(
+                any(), eq(auction.getId()), eq(bidAmount), eq(bidder.getId()));
     }
 
     // ── C2 ────────────────────────────────────────────────────────────────────
@@ -118,8 +117,8 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
         ).isInstanceOf(RuntimeException.class);
 
         // Không gọi saveTransaction cho bid bị reject
-        verify(mockBidTransactionDAO, never()).saveTransaction(any());
-        verify(mockAuctionDAO, never()).updateHighestPrice(any(), anyLong(), any());
+        verify(mockBidTransactionDAO, never()).saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString());
     }
 
     // ── C3 ────────────────────────────────────────────────────────────────────
@@ -199,6 +198,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
         // FIX #2: chỉ ACCEPTED bid mới gọi saveTransaction — không phải tổng attempts
         // attempts đếm tất cả lần gọi (kể cả rejected), saveTransaction chỉ cho ACCEPTED.
         // Verify: số lần saveTransaction <= số attempts (không ghi thừa)
-        verify(mockBidTransactionDAO, atMost(attempts.get())).saveTransaction(any());
+        verify(mockBidTransactionDAO, atMost(attempts.get())).saveTransactionAndUpdatePrice(
+                any(), anyString(), anyLong(), anyString());
     }
 }
