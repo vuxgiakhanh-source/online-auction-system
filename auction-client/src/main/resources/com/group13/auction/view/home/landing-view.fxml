@@ -56,7 +56,14 @@
                 </AnchorPane>
 
                 <VBox alignment="CENTER" spacing="8.0">
-                    <Label text="Nền tảng ĐẤU GIÁ TRỰC TUYẾN" styleClass="landing-main-title"/>
+    
+                    <HBox alignment="CENTER" spacing="8.0">
+                        <Label text="Nền tảng" styleClass="landing-main-title"/>
+                        
+                        <Label text="ĐẤU GIÁ TRỰC TUYẾN" 
+                            styleClass="landing-main-title" 
+                            style="-fx-text-fill:rgb(90, 217, 224);"/> </HBox>
+
                     <Label text="duy nhất bạn cần" styleClass="landing-main-title"/>
 
                     <VBox alignment="CENTER">
@@ -65,7 +72,6 @@
                     </VBox>
 
                     <Region prefHeight="8.0"/>
-
                     <Button mnemonicParsing="false" onAction="#handleStart" styleClass="landing-main-start-button" text="BẮT ĐẦU  ➜"/>
                 </VBox>
 
@@ -75,7 +81,15 @@
                     <Pane fx:id="gradientOverlay" opacity="0.0" styleClass="video-gradient-overlay" />
 
                     <VBox fx:id="revealContent" alignment="CENTER_LEFT" opacity="0.0" spacing="15.0" style="-fx-padding: 0 0 0 100;">
-                        <Label text="Tại sao bạn chọn OMNI?" styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                        <HBox>
+                            <Label text="Tại sao bạn chọn " styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                            
+                            <Label text="OMNI"
+                                styleClass="landing-omni"
+                                style="-fx-font-size: 42px; -fx-text-fill:rgb(73, 76, 238)"/>
+
+                            <Label text=" ?" styleClass="landing-main-title" style="-fx-font-size: 48px; -fx-text-fill: white;"/>
+                        </HBox>
                         <Label text="Hệ thống minh bạch, an toàn và nhanh chóng." styleClass="landing-main-subtitle" style="-fx-text-fill: #cccccc;"/>
                     </VBox>
                 </StackPane>
