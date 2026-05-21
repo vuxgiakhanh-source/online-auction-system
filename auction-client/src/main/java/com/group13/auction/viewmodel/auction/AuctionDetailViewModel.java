@@ -1,5 +1,6 @@
 package com.group13.auction.viewmodel.auction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /** Dữ liệu chi tiết phiên đấu giá đã format cho màn auction detail. */
@@ -22,6 +23,8 @@ public final class AuctionDetailViewModel {
     private final String startTimeText;
     private final String endTimeText;
     private final String remainingTimeText;
+    /** Thời điểm kết thúc phiên dưới dạng raw — dùng cho countdown timer. Null nếu chưa xác định. */
+    private final LocalDateTime rawEndTime;
     private final List<String> imageUrls;
     private final boolean joinable;
     private final boolean liveBiddingAllowed;
@@ -46,6 +49,7 @@ public final class AuctionDetailViewModel {
         String startTimeText,
         String endTimeText,
         String remainingTimeText,
+        LocalDateTime rawEndTime,
         List<String> imageUrls,
         boolean joinable,
         boolean liveBiddingAllowed,
@@ -67,6 +71,7 @@ public final class AuctionDetailViewModel {
         this.startTimeText = startTimeText;
         this.endTimeText = endTimeText;
         this.remainingTimeText = remainingTimeText;
+        this.rawEndTime = rawEndTime;
         this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
         this.joinable = joinable;
         this.liveBiddingAllowed = liveBiddingAllowed;
@@ -139,6 +144,11 @@ public final class AuctionDetailViewModel {
 
     public String remainingTimeText() {
         return remainingTimeText;
+    }
+
+    /** Thời điểm kết thúc raw — dùng cho countdown timer trong LiveBiddingController. */
+    public LocalDateTime rawEndTime() {
+        return rawEndTime;
     }
 
     public List<String> imageUrls() {
