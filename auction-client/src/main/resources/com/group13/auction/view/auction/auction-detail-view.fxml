@@ -199,7 +199,15 @@
                             mnemonicParsing="false"
                             onAction="#handleJoinLive"
                             styleClass="auction-primary-button"
-                            text="Join &amp; đặt giá"/>
+                            text="Tham gia đặt giá"/>
+
+                    <Button fx:id="cancelJoinButton"
+                            mnemonicParsing="false"
+                            managed="false"
+                            visible="false"
+                            onAction="#handleCancelJoin"
+                            styleClass="auction-danger-button"
+                            text="Hủy tham gia"/>
 
                     <Button fx:id="paymentButton"
                             mnemonicParsing="false"
