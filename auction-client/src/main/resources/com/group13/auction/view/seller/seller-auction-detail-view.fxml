@@ -126,7 +126,7 @@
                 </VBox>
 
                 <VBox spacing="6.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                    <Label text="Người xem" styleClass="seller-form-label"/>
+                    <Label text="Lượt truy cập" styleClass="seller-form-label"/>
                     <Label fx:id="viewerCountLabel" text="-" styleClass="seller-detail-value"/>
                 </VBox>
 

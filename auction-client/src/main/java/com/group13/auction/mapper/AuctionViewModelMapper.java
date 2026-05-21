@@ -255,7 +255,7 @@ public final class AuctionViewModelMapper {
     }
 
     private static String viewerCountText(int viewerCount) {
-        return Math.max(0, viewerCount) + " người đang xem";
+        return Math.max(0, viewerCount) + " lượt truy cập";
     }
 
     private static String remainingTimeText(LocalDateTime endTime) {

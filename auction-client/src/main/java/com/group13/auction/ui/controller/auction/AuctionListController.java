@@ -27,6 +27,9 @@ public final class AuctionListController {
 
     private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_PAGE_SIZE = 30;
+    private static final String SORT_BY_START_TIME_LABEL = "Thời gian bắt đầu";
+    private static final String SORT_BY_ACCESS_COUNT_LABEL = "Lượt truy cập";
+    private static final String SORT_BY_CURRENT_PRICE_LABEL = "Giá hiện tại";
 
     private final AuctionQueryService auctionQueryService = new AuctionQueryService();
 
@@ -76,7 +79,12 @@ public final class AuctionListController {
                 .setAll("Tất cả", "OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED");
         statusFilterComboBox.getSelectionModel().selectFirst();
 
-        sortByComboBox.getItems().setAll("START_TIME", "VIEWER_COUNT", "CURRENT_PRICE");
+        sortByComboBox
+            .getItems()
+            .setAll(
+                SORT_BY_START_TIME_LABEL,
+                SORT_BY_ACCESS_COUNT_LABEL,
+                SORT_BY_CURRENT_PRICE_LABEL);
         sortByComboBox.getSelectionModel().selectFirst();
     }
 
@@ -146,7 +154,7 @@ public final class AuctionListController {
                         createMetric("Giá hiện tại", card.currentPriceText()),
                         createMetric("Giá khởi điểm", card.startingPriceText()),
                         createMetric("Còn lại", card.remainingTimeText()),
-                        createMetric("Lượt xem", card.viewerCountText()));
+                        createMetric("Lượt truy cập", card.viewerCountText()));
 
         HBox actionRow = new HBox(10.0);
 
@@ -232,7 +240,14 @@ public final class AuctionListController {
     }
 
     private String selectedSortBy() {
-        return sortByComboBox.getValue();
+        String selectedLabel = sortByComboBox.getValue();
+        if (SORT_BY_ACCESS_COUNT_LABEL.equals(selectedLabel)) {
+            return "VIEWER_COUNT";
+        }
+        if (SORT_BY_CURRENT_PRICE_LABEL.equals(selectedLabel)) {
+            return "CURRENT_PRICE";
+        }
+        return "START_TIME";
     }
 
     private void setLoading(boolean loading, String message) {

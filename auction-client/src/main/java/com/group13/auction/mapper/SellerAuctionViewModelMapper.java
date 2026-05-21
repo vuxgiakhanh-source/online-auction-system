@@ -66,7 +66,7 @@ public final class SellerAuctionViewModelMapper {
                 DateTimeUtil.formatDateTime(endTime),
                 startTime,
                 endTime,
-                Math.max(0, auction == null ? 0 : auction.getViewerCount()) + " người xem",
+                Math.max(0, auction == null ? 0 : auction.getViewerCount()) + " lượt truy cập",
                 imageUrls(item),
                 isOpen,
                 isOpen);
