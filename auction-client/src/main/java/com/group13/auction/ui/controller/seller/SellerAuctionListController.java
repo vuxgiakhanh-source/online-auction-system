@@ -156,7 +156,7 @@ public final class SellerAuctionListController {
                         createMetric("Giá hiện tại", row.currentPriceText()),
                         createMetric("Giá khởi điểm", row.startingPriceText()),
                         createMetric("Giá sàn", row.reservePriceText()),
-                        createMetric("Lượt xem", row.viewerCountText()));
+                        createMetric("Lượt truy cập", row.viewerCountText()));
 
         HBox timeRow = new HBox(14.0);
         timeRow

@@ -162,7 +162,7 @@
                     <VBox GridPane.columnIndex="1"
                           GridPane.rowIndex="1"
                           styleClass="auction-info-box">
-                        <Label text="Lượt xem realtime" styleClass="auction-muted-text"/>
+                        <Label text="Lượt truy cập" styleClass="auction-muted-text"/>
                         <Label fx:id="viewerCountLabel" text="--" styleClass="auction-info-value"/>
                     </VBox>
 

@@ -36,7 +36,7 @@ public final class SellerAuctionRowViewModel {
      * @param endTimeText thời gian kết thúc đã format
      * @param startTime thời gian bắt đầu dạng raw
      * @param endTime thời gian kết thúc dạng raw
-     * @param viewerCountText số người xem đã format
+     * @param viewerCountText số lượt truy cập đã format
      * @param imageUrls danh sách URL ảnh sản phẩm đã upload
      * @param editable true nếu phiên còn có thể sửa
      * @param cancelRequestAllowed true nếu phiên còn có thể gửi yêu cầu hủy
