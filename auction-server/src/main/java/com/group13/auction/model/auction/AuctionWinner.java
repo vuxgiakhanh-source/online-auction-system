@@ -199,10 +199,10 @@ public class AuctionWinner extends Entity {
    * Kiểm tra Winner đã quá hạn report chưa (3 ngày sau bấm nhận hàng).
    * Hết hạn → hệ thống tự giải ngân cho Seller.
    *
-   * @return true nếu đã quá reportDeadline và tiền vẫn đang FUNDS_HELD
+   * @return true nếu đã quá reportDeadline và status đang ITEM_RECEIVED
    */
   public boolean isReportDeadlineOverdue() {
-    return paymentStatus == PaymentStatus.FUNDS_HELD
+    return paymentStatus == PaymentStatus.ITEM_RECEIVED
         && reportDeadline != null
         && LocalDateTime.now().isAfter(reportDeadline);
   }

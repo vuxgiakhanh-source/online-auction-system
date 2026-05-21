@@ -1,8 +1,10 @@
 package com.group13.auction.manager;
 
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
@@ -62,8 +64,29 @@ public class AuctionManager {
     if (dbUsers != null) {
       for (User u : dbUsers) allUsers.put(u.getId(), u);
     }
-    log.info("Đã đồng bộ dữ liệu từ Database: auctions={} users={}",
-            allAuctions.size(), allUsers.size());
+
+    // FIX Bug #1 (winner restore): Sau server restart, auction.getWinner() = null dù DB có winner.
+    // Load lại AuctionWinner cho các phiên đã FINISHED/PAID/RUNNING để PaymentHandler không báo "chưa có winner".
+    // RUNNING cũng cần restore vì server có thể crash ngay sau khi closeAuction() set winner nhưng
+    // trước khi status được flush xuống DB đúng.
+    AuctionWinnerDAO auctionWinnerDAO = new AuctionWinnerDAO();
+    int restoredCount = 0;
+    if (dbAuctions != null) {
+      for (Auction a : dbAuctions) {
+        if (a.getStatus() == Auction.AuctionStatus.FINISHED
+            || a.getStatus() == Auction.AuctionStatus.PAID
+            || a.getStatus() == Auction.AuctionStatus.RUNNING) {
+          AuctionWinner winner = auctionWinnerDAO.findByAuctionId(a.getId(), userDAO);
+          if (winner != null) {
+            a.setWinner(winner);
+            restoredCount++;
+          }
+        }
+      }
+    }
+
+    log.info("Đã đồng bộ dữ liệu từ Database: auctions={} users={} winners_restored={}",
+        allAuctions.size(), allUsers.size(), restoredCount);
   }
 
   // ── User management ───────────────────────────────────────────────────────
@@ -145,16 +168,16 @@ public class AuctionManager {
     if (event == null) return;
     AuctionEvent.AuctionEventType type = event.getEventType();
     boolean isStaffRelevant = type == AuctionEvent.AuctionEventType.AUCTION_CANCELED
-            || type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
-            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
-            || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST;
+        || type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
+        || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
+        || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST;
     if (!isStaffRelevant) return;
     for (AuctionObserver observer : staffObservers) dispatchEvent(observer, event);
   }
 
   private void dispatchEvent(AuctionObserver observer, AuctionEvent event) {
     if (event.getEventType() == AuctionEvent.AuctionEventType.BID_PLACED
-            || event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
+        || event.getEventType() == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
       observer.onBidPlaced(event);
     } else {
       observer.onAuctionEnded(event);
@@ -165,14 +188,14 @@ public class AuctionManager {
 
   public List<Auction> getRunningAuctions() {
     return allAuctions.values().stream()
-            .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
-            .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+        .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
+        .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
   }
 
   public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
     return allAuctions.values().stream()
-            .filter(a -> a.getStatus() == status)
-            .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+        .filter(a -> a.getStatus() == status)
+        .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
   }
 
   public Auction findAuctionById(String id) {

@@ -20,14 +20,14 @@ public final class AuctionViewModelMapper {
 
     /** Chuyển danh sách DTO sang danh sách card view model. */
     public static List<AuctionCardViewModel> toCardViewModels(
-            List<AuctionDTOs.AuctionDTO> auctions) {
+        List<AuctionDTOs.AuctionDTO> auctions) {
         if (auctions == null) {
             return List.of();
         }
 
         return auctions.stream()
-                .map(AuctionViewModelMapper::toCardViewModel)
-                .toList();
+            .map(AuctionViewModelMapper::toCardViewModel)
+            .toList();
     }
 
     /** Chuyển một DTO auction sang card view model. */
@@ -36,18 +36,18 @@ public final class AuctionViewModelMapper {
         LocalDateTime effectiveEndTime = effectiveEndTime(auction);
 
         return new AuctionCardViewModel(
-                safeAuctionId(auction),
-                itemName(item),
-                categoryText(item),
-                statusText(auction == null ? null : auction.getStatus()),
-                CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
-                CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
-                remainingTimeText(effectiveEndTime),
-                DateTimeUtil.formatDateTime(effectiveEndTime),
-                sellerText(item),
-                viewerCountText(auction == null ? 0 : auction.getViewerCount()),
-                primaryImageUrl(item),
-                canJoinOrWatch(auction));
+            safeAuctionId(auction),
+            itemName(item),
+            categoryText(item),
+            statusText(auction == null ? null : auction.getStatus()),
+            CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
+            CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
+            remainingTimeText(effectiveEndTime),
+            DateTimeUtil.formatDateTime(effectiveEndTime),
+            sellerText(item),
+            viewerCountText(auction == null ? 0 : auction.getViewerCount()),
+            primaryImageUrl(item),
+            canJoinOrWatch(auction));
     }
 
     /** Chuyển một DTO auction sang detail view model. */
@@ -57,36 +57,37 @@ public final class AuctionViewModelMapper {
         double currentPrice = auction == null ? 0 : auction.getCurrentPrice();
         String rawStatus = normalize(auction == null ? null : auction.getStatus());
         String currentLeaderId =
-                auction == null || auction.getCurrentLeaderId() == null
-                        ? ""
-                        : auction.getCurrentLeaderId();
+            auction == null || auction.getCurrentLeaderId() == null
+                ? ""
+                : auction.getCurrentLeaderId();
         String currentLeaderUsername =
-                auction == null || auction.getCurrentLeaderUsername() == null
-                        ? ""
-                        : auction.getCurrentLeaderUsername();
+            auction == null || auction.getCurrentLeaderUsername() == null
+                ? ""
+                : auction.getCurrentLeaderUsername();
 
         return new AuctionDetailViewModel(
-                safeAuctionId(auction),
-                itemName(item),
-                descriptionText(item),
-                categoryText(item),
-                sellerText(item),
-                rawStatus,
-                statusText(auction == null ? null : auction.getStatus()),
-                currentLeaderId,
-                currentLeaderUsername,
-                CurrencyUtil.formatVnd(currentPrice),
-                CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
-                CurrencyUtil.formatVnd(auction == null ? 0 : auction.getReservePrice()),
-                leaderText(auction),
-                viewerCountText(auction == null ? 0 : auction.getViewerCount()),
-                DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
-                DateTimeUtil.formatDateTime(effectiveEndTime),
-                remainingTimeText(effectiveEndTime),
-                imageUrls(item),
-                canJoinOrWatch(auction),
-                canBidLive(auction),
-                currentPrice);
+            safeAuctionId(auction),
+            itemName(item),
+            descriptionText(item),
+            categoryText(item),
+            sellerText(item),
+            rawStatus,
+            statusText(auction == null ? null : auction.getStatus()),
+            currentLeaderId,
+            currentLeaderUsername,
+            CurrencyUtil.formatVnd(currentPrice),
+            CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
+            CurrencyUtil.formatVnd(auction == null ? 0 : auction.getReservePrice()),
+            leaderText(auction),
+            viewerCountText(auction == null ? 0 : auction.getViewerCount()),
+            DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
+            DateTimeUtil.formatDateTime(effectiveEndTime),
+            remainingTimeText(effectiveEndTime),
+            effectiveEndTime,
+            imageUrls(item),
+            canJoinOrWatch(auction),
+            canBidLive(auction),
+            currentPrice);
     }
 
     /**
@@ -96,14 +97,14 @@ public final class AuctionViewModelMapper {
      * @return danh sách auction moderation view model
      */
     public static List<AuctionModerationViewModel> toModerationViewModels(
-            List<AuctionDTOs.AuctionDTO> auctions) {
+        List<AuctionDTOs.AuctionDTO> auctions) {
         if (auctions == null) {
             return List.of();
         }
 
         return auctions.stream()
-                .map(AuctionViewModelMapper::toModerationViewModel)
-                .toList();
+            .map(AuctionViewModelMapper::toModerationViewModel)
+            .toList();
     }
 
     /**
@@ -113,20 +114,20 @@ public final class AuctionViewModelMapper {
      * @return auction moderation view model
      */
     public static AuctionModerationViewModel toModerationViewModel(
-            AuctionDTOs.AuctionDTO auction) {
+        AuctionDTOs.AuctionDTO auction) {
         AuctionDTOs.ItemDTO item = auction == null ? null : auction.getItem();
         LocalDateTime effectiveEndTime = effectiveEndTime(auction);
         String status = auction == null ? null : auction.getStatus();
 
         return new AuctionModerationViewModel(
-                safeAuctionId(auction),
-                itemName(item),
-                sellerName(item),
-                CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
-                statusText(status),
-                DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
-                DateTimeUtil.formatDateTime(effectiveEndTime),
-                canAdminCancel(status));
+            safeAuctionId(auction),
+            itemName(item),
+            sellerName(item),
+            CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
+            statusText(status),
+            DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
+            DateTimeUtil.formatDateTime(effectiveEndTime),
+            canAdminCancel(status));
     }
 
     private static String sellerName(AuctionDTOs.ItemDTO item) {
@@ -148,9 +149,9 @@ public final class AuctionViewModelMapper {
         boolean ended = effectiveEndTime == null || !effectiveEndTime.isAfter(LocalDateTime.now());
 
         return new AuctionTimerViewModel(
-                remainingTimeText(effectiveEndTime),
-                DateTimeUtil.formatDateTime(effectiveEndTime),
-                ended);
+            remainingTimeText(effectiveEndTime),
+            DateTimeUtil.formatDateTime(effectiveEndTime),
+            ended);
     }
 
     /** Kiểm tra phiên có thể mở live bidding từ phía UI hay không. */
@@ -259,8 +260,8 @@ public final class AuctionViewModelMapper {
 
     private static String remainingTimeText(LocalDateTime endTime) {
         Duration remaining = endTime == null
-                ? Duration.ZERO
-                : Duration.between(LocalDateTime.now(), endTime);
+            ? Duration.ZERO
+            : Duration.between(LocalDateTime.now(), endTime);
 
         return DateTimeUtil.formatRemaining(remaining);
     }
@@ -271,8 +272,8 @@ public final class AuctionViewModelMapper {
         }
 
         return auction.getExtendedEndTime() != null
-                ? auction.getExtendedEndTime()
-                : auction.getEndTime();
+            ? auction.getExtendedEndTime()
+            : auction.getEndTime();
     }
 
     private static String normalize(String value) {

@@ -129,7 +129,7 @@ public class AutoBidProcessor {
                 sendAutoBidTriggeredNotify(winner, auction, nextBid);
 
                 sessionManager.broadcastToAuctionAsync(auctionId,
-                    Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid)));
+                    Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid, 0L)));
                 sessionManager.broadcastToAuctionAsync(auctionId,
                     Packet.of(PacketType.BID_CHART_POINT_UPDATE,
                         DTOMapper.toBidChartPoint(auctionId, nextBid,

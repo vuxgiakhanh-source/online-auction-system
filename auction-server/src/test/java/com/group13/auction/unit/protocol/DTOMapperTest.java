@@ -165,15 +165,15 @@ class DTOMapperTest {
             NormalUser s = TestFixture.normalSeller("dtoImgSeller1");
             List<String> imgs = List.of("/uploads/items/x.jpg", "/uploads/items/y.png");
             Art artWithImages = Art.reconstitute(
-                    "art-img-1", LocalDateTime.now(), LocalDateTime.now(),
-                    "Tranh có ảnh", "desc", 1_000_000L, s,
-                    "Nghệ sĩ", 2020, "Sơn dầu", imgs);
+                "art-img-1", LocalDateTime.now(), LocalDateTime.now(),
+                "Tranh có ảnh", "desc", 1_000_000L, s,
+                "Nghệ sĩ", 2020, "Sơn dầu", imgs);
 
             AuctionDTOs.ItemDTO dto = DTOMapper.toItemDTO(artWithImages);
 
             assertThat(dto.getImageUrls())
-                    .hasSize(2)
-                    .containsExactlyElementsOf(imgs);
+                .hasSize(2)
+                .containsExactlyElementsOf(imgs);
             assertThat(dto.hasImages()).isTrue();
         }
 
@@ -183,20 +183,20 @@ class DTOMapperTest {
             NormalUser s = TestFixture.normalSeller("dtoImgSeller2");
             List<String> imgs = List.of("/uploads/items/main.jpg");
             Art artWithImages = Art.reconstitute(
-                    "art-img-2", LocalDateTime.now(), LocalDateTime.now(),
-                    "Tranh test", "desc", 500_000L, s,
-                    "Nghệ sĩ", 2021, "Màu nước", imgs);
+                "art-img-2", LocalDateTime.now(), LocalDateTime.now(),
+                "Tranh test", "desc", 500_000L, s,
+                "Nghệ sĩ", 2021, "Màu nước", imgs);
 
             Auction auction = Auction.create(artWithImages,
-                    LocalDateTime.now().minusMinutes(1),
-                    LocalDateTime.now().plusHours(1),
-                    1_000_000L);
+                LocalDateTime.now().minusMinutes(1),
+                LocalDateTime.now().plusHours(1),
+                1_000_000L);
             auction.transitionToRunning();
 
             AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
 
             assertThat(auctionDto.getItem().getImageUrls())
-                    .containsExactly("/uploads/items/main.jpg");
+                .containsExactly("/uploads/items/main.jpg");
         }
     }
 
@@ -236,7 +236,7 @@ class DTOMapperTest {
         void auctionNoWinner_nullSafe() {
             assertThatNoException().isThrownBy(() -> {
                 AuctionDTOs.AuctionUpdateDTO dto =
-                        DTOMapper.toAuctionUpdateDTO(runningAuction, null);
+                    DTOMapper.toAuctionUpdateDTO(runningAuction, null);
                 assertThat(dto.getWinnerId()).isNull();
                 assertThat(dto.getFinalPrice()).isZero();
             });
@@ -255,7 +255,7 @@ class DTOMapperTest {
         @DisplayName("bid update với leader → tất cả fields được map đúng")
         void bidUpdate_withLeader_allFieldsMapped() {
             runningAuction.updateBid(1_800_000L, bidder);
-            BidDTOs.BidUpdateDTO dto = DTOMapper.toBidUpdateDTO(runningAuction, 1_800_000L);
+            BidDTOs.BidUpdateDTO dto = DTOMapper.toBidUpdateDTO(runningAuction, 1_800_000L, 0L);
             assertThat(dto.getAuctionId()).isEqualTo(runningAuction.getId());
             assertThat(dto.getNewCurrentPrice()).isEqualTo(1_800_000L);
             assertThat(dto.getLeaderId()).isEqualTo(bidder.getId());
@@ -275,7 +275,7 @@ class DTOMapperTest {
         @DisplayName("chart point → fields được map đúng")
         void chartPoint_allFieldsMapped() {
             BidDTOs.BidChartPointDTO dto = DTOMapper.toBidChartPoint(
-                    "auc-test-1", 2_500_000L, "alice_user", false);
+                "auc-test-1", 2_500_000L, "alice_user", false);
             assertThat(dto.getAuctionId()).isEqualTo("auc-test-1");
             assertThat(dto.getPrice()).isEqualTo(2_500_000L);
             assertThat(dto.getBidderUsername()).isEqualTo("alice_user");
@@ -287,7 +287,7 @@ class DTOMapperTest {
         @DisplayName("auto-bid chart point → isAutoBid = true")
         void chartPoint_autoBid_flagTrue() {
             BidDTOs.BidChartPointDTO dto = DTOMapper.toBidChartPoint(
-                    "auc-test-2", 3_000_000L, "bot_user", true);
+                "auc-test-2", 3_000_000L, "bot_user", true);
             assertThat(dto.isAutoBid()).isTrue();
         }
     }
