@@ -65,4 +65,5 @@ public interface IPaymentService {
    */
   void confirmItemReceived(Auction auction);
 
+  void releaseToSeller(Auction auction);
 }

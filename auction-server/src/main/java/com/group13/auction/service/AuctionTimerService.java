@@ -66,7 +66,7 @@ public class AuctionTimerService implements IAuctionTimerService {
                                    IPaymentService paymentService,
                                    SessionManager sessionManager) {
         start(auctionService, paymentService, sessionManager,
-                new TaskScheduler(1, TIMER_THREAD_NAME));
+            new TaskScheduler(1, TIMER_THREAD_NAME));
     }
 
     /**
@@ -89,10 +89,10 @@ public class AuctionTimerService implements IAuctionTimerService {
         this.scheduler = scheduler;
 
         scheduler.scheduleAtFixedRate(
-                this::scanAndProcess,
-                0,
-                SCAN_INTERVAL_SECONDS,
-                TimeUnit.SECONDS
+            this::scanAndProcess,
+            0,
+            SCAN_INTERVAL_SECONDS,
+            TimeUnit.SECONDS
         );
 
         running = true;
@@ -117,6 +117,8 @@ public class AuctionTimerService implements IAuctionTimerService {
             closeExpiredAuctions(now);
             expirePendingWinnerPayments();
             expirePendingSecondChanceOffers(now);
+            autoReleaseOverdueConfirmReceipt();   // FUNDS_HELD quá 7 ngày → giải ngân cho Seller
+            autoReleaseOverdueReportDeadline();    // ITEM_RECEIVED quá 3 ngày → giải ngân cho Seller
             // Chỉ dọn dẹp idle buckets mỗi 5 phút — tránh iterate toàn bộ users mỗi giây.
             if (++scanCount >= CLEANUP_INTERVAL_SCANS) {
                 BidRateLimiter.getInstance().cleanupIdle();
@@ -127,9 +129,67 @@ public class AuctionTimerService implements IAuctionTimerService {
         }
     }
 
+    /**
+     * Auto-release: winner không bấm "Nhận hàng" sau 7 ngày (isConfirmReceiptOverdue).
+     * FUNDS_HELD → giải ngân cho Seller ngay.
+     */
+    private void autoReleaseOverdueConfirmReceipt() {
+        List<com.group13.auction.model.auction.Auction> auctions =
+            AuctionManager.getInstance().getAuctionsByStatus(
+                com.group13.auction.model.auction.Auction.AuctionStatus.PAID);
+        for (com.group13.auction.model.auction.Auction auction : auctions) {
+            com.group13.auction.model.auction.AuctionWinner winner = auction.getWinner();
+            if (winner == null || !winner.isConfirmReceiptOverdue()) continue;
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("autoReleaseOverdueConfirmReceipt: lock timeout auctionId={}", auction.getId());
+                continue;
+            }
+            try {
+                if (auction.getWinner() == null || !auction.getWinner().isConfirmReceiptOverdue()) continue;
+                log.info("[TIMER] Auto-release (confirm receipt overdue): auctionId={}", auction.getId());
+                paymentService.releaseToSeller(auction);
+            } catch (Exception e) {
+                log.error("autoReleaseOverdueConfirmReceipt: auctionId={}", auction.getId(), e);
+            } finally {
+                lockRegistry.unlock(auction.getId());
+            }
+        }
+    }
+
+    /**
+     * Auto-release: winner đã bấm "Nhận hàng" nhưng không report sau 3 ngày (isReportDeadlineOverdue).
+     * ITEM_RECEIVED → giải ngân cho Seller.
+     */
+    private void autoReleaseOverdueReportDeadline() {
+        List<com.group13.auction.model.auction.Auction> auctions =
+            AuctionManager.getInstance().getAuctionsByStatus(
+                com.group13.auction.model.auction.Auction.AuctionStatus.PAID);
+        for (com.group13.auction.model.auction.Auction auction : auctions) {
+            com.group13.auction.model.auction.AuctionWinner winner = auction.getWinner();
+            if (winner == null || !winner.isReportDeadlineOverdue()) continue;
+
+            boolean locked = lockRegistry.tryLock(auction.getId(), CLOSE_LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("autoReleaseOverdueReportDeadline: lock timeout auctionId={}", auction.getId());
+                continue;
+            }
+            try {
+                if (auction.getWinner() == null || !auction.getWinner().isReportDeadlineOverdue()) continue;
+                log.info("[TIMER] Auto-release (report deadline overdue): auctionId={}", auction.getId());
+                paymentService.releaseToSeller(auction);
+            } catch (Exception e) {
+                log.error("autoReleaseOverdueReportDeadline: auctionId={}", auction.getId(), e);
+            } finally {
+                lockRegistry.unlock(auction.getId());
+            }
+        }
+    }
+
     private void startPendingAuctions(LocalDateTime now) {
         List<Auction> openAuctions = AuctionManager.getInstance()
-                .getAuctionsByStatus(Auction.AuctionStatus.OPEN);
+            .getAuctionsByStatus(Auction.AuctionStatus.OPEN);
 
         for (Auction auction : openAuctions) {
             if (auction.getStartTime() == null || auction.getStartTime().isAfter(now)) {
@@ -162,7 +222,7 @@ public class AuctionTimerService implements IAuctionTimerService {
 
     private void closeExpiredAuctions(LocalDateTime now) {
         List<Auction> runningAuctions = AuctionManager.getInstance()
-                .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+            .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
 
         for (Auction auction : runningAuctions) {
             if (auction.getEndTime() == null || auction.getEndTime().isAfter(now)) {
@@ -237,7 +297,7 @@ public class AuctionTimerService implements IAuctionTimerService {
      */
     private void expirePendingWinnerPayments() {
         List<Auction> finished = AuctionManager.getInstance()
-                .getAuctionsByStatus(Auction.AuctionStatus.FINISHED);
+            .getAuctionsByStatus(Auction.AuctionStatus.FINISHED);
 
         for (Auction auction : finished) {
             AuctionWinner winner = auction.getWinner();
