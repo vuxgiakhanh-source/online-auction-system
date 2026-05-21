@@ -428,7 +428,7 @@ public class BidHandler implements PacketHandler {
             reg.setRegisteredAt(LocalDateTime.now());
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_SUCCESS, reg, requestId));
 
-            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid);
+            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
             sessionManager.broadcastToAuction(req.getAuctionId(),
                 Packet.of(PacketType.BID_UPDATE, update));
 

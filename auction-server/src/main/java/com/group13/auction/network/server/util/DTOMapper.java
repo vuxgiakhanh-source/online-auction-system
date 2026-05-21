@@ -145,12 +145,6 @@ public final class DTOMapper {
         return dto;
     }
 
-    /** @deprecated Dùng {@link #toBidUpdateDTO(Auction, long, long)} để có previousPrice. */
-    @Deprecated
-    public static BidDTOs.BidUpdateDTO toBidUpdateDTO(Auction auction, long newPrice) {
-        return toBidUpdateDTO(auction, newPrice, 0L);
-    }
-
     public static BidDTOs.BidChartPointDTO toBidChartPoint(String auctionId, long price,
                                                            String bidderUsername,
                                                            boolean isAutoBid) {
