@@ -5,6 +5,7 @@ import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.auction.AuctionQueryService;
+import com.group13.auction.service.auction.JoinedAuctionState;
 import com.group13.auction.service.auction.WatchAuctionService;
 import com.group13.auction.service.payment.PaymentService;
 import com.group13.auction.ui.util.AlertUtil;
@@ -24,6 +25,7 @@ public final class AuctionDetailController {
 
     private final AuctionQueryService auctionQueryService = new AuctionQueryService();
     private final WatchAuctionService watchAuctionService = new WatchAuctionService();
+    private final JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
     private final PaymentService paymentService = new PaymentService();
 
     private String auctionId;
@@ -129,26 +131,32 @@ public final class AuctionDetailController {
     /** Tham gia phiên rồi mở màn live bidding. */
     @FXML
     public void handleJoinLive() {
+        if (joinedAuctionState.hasJoined(auctionId)) {
+            openLiveBidding();
+            return;
+        }
+
         setLoading(true, "Đang tham gia phiên đấu giá...");
 
         watchAuctionService
-                .joinAuction(auctionId)
-                .thenAccept(
-                        response ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            setLoading(false, "Tham gia thành công.");
-                                            openLiveBidding();
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không tham gia được phiên đấu giá.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .joinAuction(auctionId)
+            .thenAccept(
+                response ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            joinedAuctionState.markJoined(auctionId);
+                            setLoading(false, "Tham gia thành công.");
+                            openLiveBidding();
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không tham gia được phiên đấu giá.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     /** Watch phiên rồi mở màn live bidding. */
@@ -257,7 +265,9 @@ public final class AuctionDetailController {
         endTimeLabel.setText(detail.endTimeText());
         remainingTimeLabel.setText(detail.remainingTimeText());
 
+        boolean joinedByCurrentUser = joinedAuctionState.hasJoined(detail.auctionId());
         currentAuctionJoinable = detail.joinable();
+        joinLiveButton.setText(joinedByCurrentUser ? "Tiếp tục đặt giá" : "Tham gia đặt giá");
         joinLiveButton.setDisable(!currentAuctionJoinable);
         watchLiveButton.setDisable(!currentAuctionJoinable);
 
