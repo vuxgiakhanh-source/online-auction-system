@@ -207,7 +207,11 @@ public class WalletService implements IWalletService {
     @Override
     public void forfeitDeposit(NormalUser winner, long depositAmount, String auctionId) {
         synchronized (lockFor(winner)) {
+            // Giải phóng phần locked trước
             winner.unlockDeposit(depositAmount);
+            // FIX: trừ tiền khỏi balance — nếu không gọi dòng này thì lockedDeposit
+            // giảm về 0 nhưng availableBalance tăng lại, user vẫn giữ đủ tiền dù đã bị tịch thu.
+            winner.setBalance(Math.max(0, winner.getBalance() - depositAmount));
             userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
             systemBank.receiveForfeittedDeposit(depositAmount);

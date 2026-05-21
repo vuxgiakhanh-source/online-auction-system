@@ -262,6 +262,22 @@ public class BidHandler implements PacketHandler {
             return;
         }
 
+        // Validate bid amount trước khi làm bất kỳ thứ gì khác
+        if (req.getAmount() <= 0 || req.getAmount() < 1_000) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                    "Số tiền đặt giá không hợp lệ.", requestId),
+                requestId));
+            return;
+        }
+        if (req.getAmount() > 100_000_000_000L) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                    "Số tiền đặt giá vượt quá giới hạn cho phép.", requestId),
+                requestId));
+            return;
+        }
+
         // Rate limit theo userId — trước mọi thứ để chặn flood sớm nhất
         String rateLimitUserId = session.getUserId();
         if (rateLimitUserId != null && !rateLimiter.tryConsume(rateLimitUserId)) {
