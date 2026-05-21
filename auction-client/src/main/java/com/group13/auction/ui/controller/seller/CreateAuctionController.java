@@ -109,10 +109,10 @@ public final class CreateAuctionController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh sản phẩm");
         fileChooser
-                .getExtensionFilters()
-                .add(
-                        new FileChooser.ExtensionFilter(
-                                "Image files", "*.png", "*.jpg", "*.jpeg", "*.webp"));
+            .getExtensionFilters()
+            .add(
+                new FileChooser.ExtensionFilter(
+                    "Image files", "*.png", "*.jpg", "*.jpeg", "*.webp"));
 
         List<File> files = fileChooser.showOpenMultipleDialog(null);
         if (files == null || files.isEmpty()) {
@@ -122,7 +122,7 @@ public final class CreateAuctionController {
         for (File file : files) {
             if (selectedImagePaths.size() >= AuctionFormViewModel.MAX_IMAGE_COUNT) {
                 AlertUtil.showWarning(
-                        "Chỉ được chọn tối đa " + AuctionFormViewModel.MAX_IMAGE_COUNT + " ảnh.");
+                    "Chỉ được chọn tối đa " + AuctionFormViewModel.MAX_IMAGE_COUNT + " ảnh.");
                 break;
             }
 
@@ -140,9 +140,9 @@ public final class CreateAuctionController {
     @FXML
     public void handleRemoveSelectedImage() {
         int selectedIndex =
-                selectedImagesListView == null
-                        ? -1
-                        : selectedImagesListView.getSelectionModel().getSelectedIndex();
+            selectedImagesListView == null
+                ? -1
+                : selectedImagesListView.getSelectionModel().getSelectedIndex();
 
         if (selectedIndex < 0 || selectedIndex >= selectedImagePaths.size()) {
             AlertUtil.showWarning("Vui lòng chọn ảnh cần xóa.");
@@ -192,37 +192,37 @@ public final class CreateAuctionController {
         }
 
         setLoading(
-                true,
-                selectedImagePaths.isEmpty()
-                        ? "Đang tạo phiên đấu giá..."
-                        : "Đang upload ảnh và tạo phiên đấu giá...");
+            true,
+            selectedImagePaths.isEmpty()
+                ? "Đang tạo phiên đấu giá..."
+                : "Đang upload ảnh và tạo phiên đấu giá...");
 
         sellerAuctionService
-                .createAuction(form)
-                .thenAccept(
-                        createdAuction ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            AlertUtil.showInfo("Phiên đấu giá đã được tạo thành công.");
-                                            Navigator.getInstance().goToSellerAuctionList();
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không tạo được phiên đấu giá.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .createAuction(form)
+            .thenAccept(
+                createdAuction ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            AlertUtil.showInfo("Phiên đấu giá đã được tạo thành công.");
+                            Navigator.getInstance().goToSellerAuctionList();
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không tạo được phiên đấu giá.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void setupCategoryComboBox() {
         categoryComboBox.getItems().setAll("Điện tử", "Nghệ thuật", "Phương tiện");
         categoryComboBox
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> updateExtraFieldLabels());
+            .getSelectionModel()
+            .selectedItemProperty()
+            .addListener((observable, oldValue, newValue) -> updateExtraFieldLabels());
         categoryComboBox.getSelectionModel().selectFirst();
         updateExtraFieldLabels();
     }
@@ -284,23 +284,30 @@ public final class CreateAuctionController {
         double startingPrice = parsePositiveAmount(startingPriceField.getText(), "Giá khởi điểm");
         double reservePrice = parsePositiveAmount(reservePriceField.getText(), "Giá sàn");
 
+        // FIX Bug #2: giá sàn bí mật không được thấp hơn giá khởi điểm
+        if (reservePrice < startingPrice) {
+            throw new IllegalArgumentException(
+                "Giá sàn bí mật (" + (long) reservePrice + " đ) không được thấp hơn giá khởi điểm ("
+                    + (long) startingPrice + " đ).");
+        }
+
         LocalDateTime startTime =
-                parseDateTime(startDatePicker.getValue(), startTimeField.getText(), "Thời gian bắt đầu");
+            parseDateTime(startDatePicker.getValue(), startTimeField.getText(), "Thời gian bắt đầu");
         LocalDateTime endTime =
-                parseDateTime(endDatePicker.getValue(), endTimeField.getText(), "Thời gian kết thúc");
+            parseDateTime(endDatePicker.getValue(), endTimeField.getText(), "Thời gian kết thúc");
 
         Map<String, Object> extraFields = buildExtraFields(categoryCode);
 
         return new AuctionFormViewModel(
-                itemName,
-                description,
-                categoryCode,
-                startingPrice,
-                reservePrice,
-                startTime,
-                endTime,
-                extraFields,
-                List.copyOf(selectedImagePaths));
+            itemName,
+            description,
+            categoryCode,
+            startingPrice,
+            reservePrice,
+            startTime,
+            endTime,
+            extraFields,
+            List.copyOf(selectedImagePaths));
     }
 
     private Map<String, Object> buildExtraFields(String categoryCode) {
