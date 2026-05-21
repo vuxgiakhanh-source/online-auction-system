@@ -205,11 +205,9 @@ public class BidHandler implements PacketHandler {
             log.info("Watch auction handled: auctionId={}, userId={}, username={}, requestId={}",
                 auctionId, user.getId(), user.getUsername(), requestId);
 
-            // TOTAL ACCESS COUNT: tăng counter lịch sử mỗi lần watch, persist DB
-            auction.incrementViewerCount();
-            auctionDAO.updateViewerCount(auctionId, auction.getViewerCount());
-
-            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction); // viewerCount từ auction.getViewerCount()
+            // viewerCount đã được increment bên trong bidService.watchAuction()
+            // với guard !alreadyWatching — không increment lại ở đây tránh duplicate.
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
             session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS, auctionDto, requestId));
 
         } catch (Exception e) {
@@ -226,14 +224,20 @@ public class BidHandler implements PacketHandler {
         String auctionId = PacketCodec.fromElement(payload, String.class);
         sessionManager.removeAuctionWatcher(session.getConnection(), auctionId);
 
+        // Tra cứu phiên để leaveAuction() có thể tính và mở khóa đúng số cọc.
+        // findAuctionById() có thể trả về null nếu phiên đã kết thúc/bị xóa —
+        // leaveAuction() xử lý null-safe (bỏ qua unlock, vẫn xóa join state).
+        Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+
         // FIX TC-WS-04d root cause: dùng bidService.leaveAuction() thay vì gọi
         // removeJoinedAuction() trực tiếp. Lý do: AuctionManager.findUserByUsername()
         // luôn load user mới từ DB mỗi lần gọi — nếu chỉ xóa in-memory thì
         // PLACE_BID (dùng user object khác load từ DB) vẫn thấy JOINED và cho bid tiếp.
-        // leaveAuction() xóa cả in-memory lẫn DB (DELETE user_auction_activity).
+        // leaveAuction() xóa cả in-memory lẫn DB (DELETE user_auction_activity)
+        // và mở khóa cọc đã đặt khi join.
         NormalUser bidder = requireNormalUser(session, requestId);
         if (bidder != null) {
-            bidService.leaveAuction(bidder, auctionId);
+            bidService.leaveAuction(bidder, auction);
             log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, requestId={}",
                 auctionId, session.getUsername(), bidder.getId(), requestId);
         } else {

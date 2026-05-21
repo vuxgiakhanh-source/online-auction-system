@@ -45,12 +45,16 @@ public interface IBidService {
                 long amount, BidStrategy strategy);
 
   /**
-   * Rời phiên đấu giá: xóa join state khỏi cả in-memory lẫn DB.
-   * Phải persist xuống DB vì findUserByUsername() luôn load lại từ DB —
+   * Rời phiên đấu giá: mở khóa cọc, xóa join state khỏi cả in-memory lẫn DB.
+   *
+   * <p>Phải persist xuống DB vì findUserByUsername() luôn load lại từ DB —
    * nếu chỉ xóa in-memory thì lần gọi tiếp theo vẫn thấy user đang JOINED.
    *
-   * @param user   bidder muốn rời phiên
-   * @param auctionId id phiên cần rời
+   * <p>Nếu {@code auction} không null và user là NormalUser đang giữ cọc,
+   * cọc sẽ được mở khóa (30% giá khởi điểm) để trả lại số dư khả dụng.
+   *
+   * @param user    bidder muốn rời phiên
+   * @param auction phiên cần rời (null-safe: nếu null thì bỏ qua bước unlock cọc)
    */
-  void leaveAuction(User user, String auctionId);
+  void leaveAuction(User user, Auction auction);
 }
