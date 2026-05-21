@@ -1,11 +1,15 @@
 package com.group13.auction.dao;
 
 import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
+import com.group13.auction.model.user.NormalUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 public class AuctionWinnerDAO {
     private static final Logger log = LoggerFactory.getLogger(AuctionWinnerDAO.class);
@@ -17,7 +21,7 @@ public class AuctionWinnerDAO {
      */
     public boolean saveWinner(AuctionWinner winner) {
         String sql = "INSERT INTO auction_winners (id, auction_id, winner_id, final_price, deposit_paid, payment_status) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -32,9 +36,9 @@ public class AuctionWinnerDAO {
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             log.error("Lỗi lưu thông tin người thắng cuộc: winnerId={}, auctionId={}",
-                    winner != null ? winner.getId() : null,
-                    winner != null ? winner.getAuctionId() : null,
-                    e);
+                winner != null ? winner.getId() : null,
+                winner != null ? winner.getAuctionId() : null,
+                e);
             return false;
         }
     }
@@ -74,7 +78,7 @@ public class AuctionWinnerDAO {
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             log.error("Lỗi cập nhật FUNDS_HELD: winnerId={}, status={}, confirmReceiptDeadline={}",
-                    winnerId, status, confirmReceiptDeadline, e);
+                winnerId, status, confirmReceiptDeadline, e);
             return false;
         }
     }
@@ -99,7 +103,61 @@ public class AuctionWinnerDAO {
     }
 
     /**
-     * Kiểm tra user có đang là winner/runner-up với trạng thái PENDING không.
+     * Khôi phục AuctionWinner từ DB theo auction_id.
+     * Dùng khi server restart để restore winner vào in-memory Auction object.
+     *
+     * @param auctionId ID phiên đấu giá
+     * @param userDAO   DAO để load NormalUser theo winner_id
+     * @return AuctionWinner nếu tồn tại, null nếu không có
+     */
+    public AuctionWinner findByAuctionId(String auctionId, UserDAO userDAO) {
+        String sql = "SELECT id, auction_id, winner_id, final_price, deposit_paid, " +
+            "payment_status, payment_deadline, confirm_receipt_deadline, " +
+            "report_deadline, is_second_offer, created_at, updated_at " +
+            "FROM auction_winners WHERE auction_id = ? LIMIT 1";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) return null;
+
+                String winnerId = rs.getString("winner_id");
+                NormalUser winner = userDAO.findNormalUserById(winnerId);
+                if (winner == null) {
+                    log.warn("findByAuctionId: winner user not found in DB: userId={}", winnerId);
+                    return null;
+                }
+
+                Timestamp paymentDeadlineTs = rs.getTimestamp("payment_deadline");
+                Timestamp confirmTs = rs.getTimestamp("confirm_receipt_deadline");
+                Timestamp reportTs = rs.getTimestamp("report_deadline");
+                Timestamp createdTs = rs.getTimestamp("created_at");
+                Timestamp updatedTs = rs.getTimestamp("updated_at");
+
+                return AuctionWinner.reconstitute(
+                    rs.getString("id"),
+                    createdTs != null ? createdTs.toLocalDateTime() : null,
+                    updatedTs != null ? updatedTs.toLocalDateTime() : null,
+                    winner,
+                    rs.getString("auction_id"),
+                    rs.getLong("final_price"),
+                    rs.getLong("deposit_paid"),
+                    paymentDeadlineTs != null ? paymentDeadlineTs.toLocalDateTime() : null,
+                    confirmTs != null ? confirmTs.toLocalDateTime() : null,
+                    reportTs != null ? reportTs.toLocalDateTime() : null,
+                    PaymentStatus.valueOf(rs.getString("payment_status")),
+                    rs.getBoolean("is_second_offer")
+                );
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi load AuctionWinner từ DB: auctionId={}", auctionId, e);
+            return null;
+        }
+    }
+
+    /**
      * Dùng trong AccountService.deleteAccount() để chặn xóa tài khoản khi user
      * chưa hoàn tất thanh toán phiên đấu giá.
      *
