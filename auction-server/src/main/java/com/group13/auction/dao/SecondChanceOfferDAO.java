@@ -16,15 +16,23 @@ import java.util.List;
 public class SecondChanceOfferDAO {
     private static final Logger log = LoggerFactory.getLogger(SecondChanceOfferDAO.class);
 
+    private final UserDAO userDAO;
 
-    public SecondChanceOfferDAO() {}
+    public SecondChanceOfferDAO() {
+        this.userDAO = new UserDAO();
+    }
+
+    /** Constructor dùng trong test hoặc khi cần inject UserDAO tùy chỉnh. */
+    public SecondChanceOfferDAO(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
     /**
      * Lưu một đề nghị Second Chance mới xuống DB
      */
     public boolean saveOffer(SecondChanceOffer offer) {
         String sql = "INSERT INTO second_chance_offers (id, auction_id, runner_up_id, offer_price, deposit_paid, status, deadline) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -72,9 +80,9 @@ public class SecondChanceOfferDAO {
      */
     public SecondChanceOffer findPendingOfferByAuctionId(String auctionId) {
         String sql = "SELECT id, runner_up_id, auction_id, offer_price, deposit_paid, " +
-                "status, deadline, created_at FROM second_chance_offers " +
-                "WHERE auction_id = ? AND status = 'PENDING' " +
-                "ORDER BY deadline DESC LIMIT 1";
+            "status, deadline, created_at FROM second_chance_offers " +
+            "WHERE auction_id = ? AND status = 'PENDING' " +
+            "ORDER BY deadline DESC LIMIT 1";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, auctionId);
@@ -91,19 +99,19 @@ public class SecondChanceOfferDAO {
                     LocalDateTime createdAt = createdTs   != null ? createdTs.toLocalDateTime()   : LocalDateTime.now();
 
                     com.group13.auction.model.user.NormalUser runnerUp =
-                            new UserDAO().findNormalUserById(runnerUpId);
+                        userDAO.findNormalUserById(runnerUpId);
                     if (runnerUp == null) return null;
 
                     return SecondChanceOffer.reconstitute(
-                            offerId,
-                            createdAt,
-                            createdAt,
-                            runnerUp,
-                            auctionId,
-                            offerPrice,
-                            depositPaid,
-                            deadline,
-                            SecondChanceOffer.OfferStatus.PENDING);
+                        offerId,
+                        createdAt,
+                        createdAt,
+                        runnerUp,
+                        auctionId,
+                        offerPrice,
+                        depositPaid,
+                        deadline,
+                        SecondChanceOffer.OfferStatus.PENDING);
                 }
             }
         } catch (SQLException e) {
@@ -117,7 +125,7 @@ public class SecondChanceOfferDAO {
      */
     public List<String> findAuctionIdsWithExpiredPendingOffers(LocalDateTime asOf) {
         String sql = "SELECT DISTINCT auction_id FROM second_chance_offers "
-                + "WHERE status = 'PENDING' AND deadline < ?";
+            + "WHERE status = 'PENDING' AND deadline < ?";
         List<String> ids = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

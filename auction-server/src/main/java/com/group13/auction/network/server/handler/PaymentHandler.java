@@ -8,6 +8,7 @@ import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
@@ -49,6 +50,8 @@ public class PaymentHandler implements PacketHandler {
     private final com.group13.auction.service.AccountService accountService;
     private final SessionManager sessionManager;
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
+    // FIX: dùng field thay vì new SecondChanceOfferDAO() trên mỗi request (tránh tạo object thừa)
+    private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
 
     public PaymentHandler(PaymentService paymentService,
                           com.group13.auction.service.AccountService accountService,
@@ -341,11 +344,9 @@ public class PaymentHandler implements PacketHandler {
                 return;
             }
 
-            // FIX Bug #5: lấy offer thật từ SecondChanceOfferDAO, gọi service thật.
-            com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
-                new com.group13.auction.dao.SecondChanceOfferDAO();
+            // FIX Bug #5: lấy offer thật từ SecondChanceOfferDAO field (không tạo new mỗi request).
             com.group13.auction.model.auction.SecondChanceOffer offer =
-                offerDAO.findPendingOfferByAuctionId(auctionId);
+                secondChanceOfferDAO.findPendingOfferByAuctionId(auctionId);
 
             if (offer == null) {
                 log.warn("Second chance accept rejected because offer was not found: auctionId={}, username={}, requestId={}",
@@ -411,10 +412,8 @@ public class PaymentHandler implements PacketHandler {
             }
 
             // FIX Bug #5: lấy offer thật, gọi declineSecondChanceOffer thật.
-            com.group13.auction.dao.SecondChanceOfferDAO offerDAO =
-                new com.group13.auction.dao.SecondChanceOfferDAO();
             com.group13.auction.model.auction.SecondChanceOffer offer =
-                offerDAO.findPendingOfferByAuctionId(auctionId);
+                secondChanceOfferDAO.findPendingOfferByAuctionId(auctionId);
 
             if (offer == null) {
                 log.warn("Second chance decline rejected because offer was not found: auctionId={}, username={}, requestId={}",

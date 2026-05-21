@@ -20,8 +20,12 @@ import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.auction.BidHistoryPointViewModel;
 import com.group13.auction.viewmodel.auction.LiveBidViewModel;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletionException;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
@@ -46,6 +50,12 @@ public final class LiveBiddingController implements ClientEventListener {
     private String auctionId;
     private boolean bidAllowed;
 
+    /** Thời điểm kết thúc phiên — cập nhật khi nhận AUCTION_EXTENDED. Dùng cho countdown. */
+    private LocalDateTime auctionEndTime;
+
+    /** Timeline đếm ngược hiển thị thời gian còn lại. Hủy khi rời màn hoặc phiên kết thúc. */
+    private Timeline countdownTimer;
+
     @FXML
     private Label titleLabel;
 
@@ -63,6 +73,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
     @FXML
     private Label endTimeLabel;
+
+    /** Nhãn đếm ngược realtime — hiển thị "mm:ss" hoặc "HH:mm:ss" còn lại. */
+    @FXML
+    private Label countdownLabel;
 
     @FXML
     private Label messageLabel;
@@ -129,6 +143,7 @@ public final class LiveBiddingController implements ClientEventListener {
     /** Quay lại màn chi tiết và hủy listener realtime của controller hiện tại. */
     @FXML
     public void handleBackToDetail() {
+        stopCountdownTimer();
         cleanupRealtimeListener();
         watchAuctionService.leaveAuction(auctionId);
         Navigator.getInstance().goToAuctionDetail();
@@ -365,6 +380,8 @@ public final class LiveBiddingController implements ClientEventListener {
         FxThreadUtil.runOnFxThread(
             () -> {
                 endTimeLabel.setText(DateTimeUtil.formatDateTime(dto.getNewEndTime()));
+                // Cập nhật auctionEndTime để countdown tính lại từ mốc mới.
+                auctionEndTime = dto.getNewEndTime();
                 setMessage("Phiên được gia hạn thêm " + dto.getExtendedBySeconds() + " giây.");
             });
     }
@@ -377,6 +394,8 @@ public final class LiveBiddingController implements ClientEventListener {
 
         FxThreadUtil.runOnFxThread(
             () -> {
+                stopCountdownTimer();
+                if (countdownLabel != null) countdownLabel.setText("00:00");
                 statusLabel.setText("Đã kết thúc");
                 bidAllowed = false;
                 placeBidButton.setDisable(true);
@@ -396,6 +415,8 @@ public final class LiveBiddingController implements ClientEventListener {
 
         FxThreadUtil.runOnFxThread(
             () -> {
+                stopCountdownTimer();
+                if (countdownLabel != null) countdownLabel.setText("--:--");
                 statusLabel.setText("Đã hủy");
                 bidAllowed = false;
                 placeBidButton.setDisable(true);
@@ -482,6 +503,10 @@ public final class LiveBiddingController implements ClientEventListener {
         reserveLabel.setText(detail.reservePriceText());
         endTimeLabel.setText(detail.endTimeText());
 
+        // Khởi động countdown timer dùng rawEndTime từ ViewModel.
+        auctionEndTime = detail.rawEndTime();
+        startCountdownTimer();
+
         bidAllowed = detail.liveBiddingAllowed();
         setLoading(false, "Đã kết nối realtime. " + detail.remainingTimeText());
     }
@@ -558,6 +583,70 @@ public final class LiveBiddingController implements ClientEventListener {
 
     private boolean isCurrentAuction(String incomingAuctionId) {
         return incomingAuctionId != null && incomingAuctionId.equals(auctionId);
+    }
+
+    /**
+     * Khởi động countdown timer tick mỗi giây trên JavaFX thread.
+     * Nếu timer cũ đang chạy, dừng trước khi tạo mới (tránh leak khi renderAuctionDetail gọi lại).
+     */
+    private void startCountdownTimer() {
+        stopCountdownTimer();
+
+        if (auctionEndTime == null || countdownLabel == null) {
+            return;
+        }
+
+        countdownTimer = new Timeline(
+            new KeyFrame(javafx.util.Duration.seconds(1), event -> tickCountdown()));
+        countdownTimer.setCycleCount(Timeline.INDEFINITE);
+        countdownTimer.play();
+
+        // Tick ngay lập tức để tránh hiển thị trống 1 giây đầu.
+        tickCountdown();
+    }
+
+    /**
+     * Tính thời gian còn lại và cập nhật countdownLabel.
+     * Format: "HH:mm:ss" khi > 1 giờ, "mm:ss" khi ≤ 1 giờ, "00:00" khi hết giờ.
+     */
+    private void tickCountdown() {
+        if (auctionEndTime == null || countdownLabel == null) {
+            return;
+        }
+
+        Duration remaining = Duration.between(LocalDateTime.now(), auctionEndTime);
+
+        if (remaining.isNegative() || remaining.isZero()) {
+            countdownLabel.setText("00:00");
+            stopCountdownTimer();
+            return;
+        }
+
+        long totalSeconds = remaining.getSeconds();
+        long hours   = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        String text = hours > 0
+            ? String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            : String.format("%02d:%02d", minutes, seconds);
+
+        countdownLabel.setText(text);
+
+        // Cảnh báo thị giác: đổi style khi còn ≤ 60 giây.
+        if (totalSeconds <= 60) {
+            countdownLabel.setStyle("-fx-text-fill: #e53e3e; -fx-font-weight: bold;");
+        } else {
+            countdownLabel.setStyle("");
+        }
+    }
+
+    /** Dừng và hủy countdown timer. An toàn khi gọi nhiều lần. */
+    private void stopCountdownTimer() {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+            countdownTimer = null;
+        }
     }
 
     private void cleanupRealtimeListener() {

@@ -68,6 +68,9 @@ public class ErrorDTO {
     public static final String SELLER_OWNS_AUCTION     = "SELLER_OWNS_AUCTION";
     public static final String BALANCE_NOT_ZERO        = "BALANCE_NOT_ZERO";
     public static final String ACTIVE_AUCTION_EXISTS   = "ACTIVE_AUCTION_EXISTS";
+    /** Auction đã FINISHED/PAID nhưng winner object bị null (thường do race condition hoặc restart). */
+    public static final String WINNER_NOT_FOUND        = "WINNER_NOT_FOUND";
+    public static final String INSUFFICIENT_DEPOSIT    = "INSUFFICIENT_DEPOSIT";
 
     // ── Getters / Setters ─────────────────────────────────────────────────────
 

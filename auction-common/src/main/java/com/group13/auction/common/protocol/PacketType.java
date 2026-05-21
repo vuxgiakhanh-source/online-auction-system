@@ -514,6 +514,13 @@ public enum PacketType {
      */
     SECOND_CHANCE_EXPIRED_NOTIFY,
 
+    /**
+     * Broadcast tới tất cả watcher của phiên khi runner-up chấp nhận Second Chance Offer.
+     * Phiên có winner mới — client cần cập nhật UI hiển thị winner.
+     * Payload: {@link com.group13.auction.common.dto.auction.AuctionDTOs.AuctionUpdateDTO}.
+     */
+    SECOND_CHANCE_ACCEPTED_UPDATE,
+
     // ══════════════════════════════════════════════════════════════════════════
     // BID HISTORY — Lịch sử đấu giá (cho biểu đồ realtime)
     // ══════════════════════════════════════════════════════════════════════════
