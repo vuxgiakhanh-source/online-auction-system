@@ -90,7 +90,7 @@ public class WalletService implements IWalletService {
         // restoreBalances() set cả balance lẫn lockedDeposit atomic
         cached.restoreBalances(balance, lockedDeposit);
         log.debug("Session cache balance synced: userId={}, balance={}, lockedDeposit={}",
-                userId, balance, lockedDeposit);
+            userId, balance, lockedDeposit);
     }
 
     // ─── Deposit ──────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ public class WalletService implements IWalletService {
         synchronized (lockFor(user)) {
             user.setBalance(user.getBalance() + amount);
             log.info("Deposit success: username={}, amount={}, newBalance={}",
-                    user.getUsername(), amount, user.getBalance());
+                user.getUsername(), amount, user.getBalance());
             userDAO.addBalance(user.getId(), amount);
             // FIX: đồng bộ balance mới về session cache (PaymentHandler dùng fresh object)
             syncBalanceToSessionCache(user.getId(), user.getBalance(), user.getLockedDeposit());
@@ -135,12 +135,12 @@ public class WalletService implements IWalletService {
         synchronized (lockFor(user)) {
             if (user.getAvailableBalance() < amount) {
                 throw new IllegalArgumentException(String.format(
-                        "Số dư khả dụng không đủ. Khả dụng: %d, Yêu cầu: %d",
-                        user.getAvailableBalance(), amount));
+                    "Số dư khả dụng không đủ. Khả dụng: %d, Yêu cầu: %d",
+                    user.getAvailableBalance(), amount));
             }
             user.setBalance(user.getBalance() - amount);
             log.info("Withdraw success: username={}, amount={}, newBalance={}",
-                    user.getUsername(), amount, user.getBalance());
+                user.getUsername(), amount, user.getBalance());
             userDAO.updateBalances(user.getId(), user.getBalance(), user.getLockedDeposit());
             // FIX: đồng bộ balance mới về session cache
             syncBalanceToSessionCache(user.getId(), user.getBalance(), user.getLockedDeposit());
@@ -162,8 +162,8 @@ public class WalletService implements IWalletService {
             userDAO.updateBalances(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
 
             FinancialTransaction tx = FinancialTransaction.create(
-                    bidder.getId(), "SYSTEM_LOCKED", depositAmount,
-                    TransactionType.DEPOSIT_LOCK, auctionId);
+                bidder.getId(), "SYSTEM_LOCKED", depositAmount,
+                TransactionType.DEPOSIT_LOCK, auctionId);
             transactionLog.add(tx);
             tx.printInfo();
             financialTransactionDAO.saveTransaction(tx);
@@ -188,8 +188,8 @@ public class WalletService implements IWalletService {
             userDAO.updateBalances(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
 
             FinancialTransaction tx = FinancialTransaction.create(
-                    "SYSTEM_LOCKED", bidder.getId(), depositAmount,
-                    TransactionType.DEPOSIT_UNLOCK, auctionId);
+                "SYSTEM_LOCKED", bidder.getId(), depositAmount,
+                TransactionType.DEPOSIT_UNLOCK, auctionId);
             transactionLog.add(tx);
             tx.printInfo();
             financialTransactionDAO.saveTransaction(tx);
@@ -213,15 +213,52 @@ public class WalletService implements IWalletService {
             systemBank.receiveForfeittedDeposit(depositAmount);
 
             FinancialTransaction tx = FinancialTransaction.create(
-                    winner.getId(), "SYSTEM_BANK", depositAmount,
-                    TransactionType.DEPOSIT_FORFEIT, auctionId);
+                winner.getId(), "SYSTEM_BANK", depositAmount,
+                TransactionType.DEPOSIT_FORFEIT, auctionId);
             transactionLog.add(tx);
             tx.printInfo();
             log.info("Deposit forfeited: username={}, depositAmount={}, auctionId={}",
-                    winner.getUsername(), depositAmount, auctionId);
+                winner.getUsername(), depositAmount, auctionId);
             financialTransactionDAO.saveTransaction(tx);
             // FIX: sync về session cache
             syncBalanceToSessionCache(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
+        }
+    }
+
+    /**
+     * Phạt một phần cọc khi bidder là current leader mà tự rời phiên.
+     * Tịch thu {@code penaltyAmount} vào SystemBank, hoàn trả phần còn lại về balance.
+     * Toàn bộ thực hiện trong một lock.
+     */
+    @Override
+    public void partialForfeitDeposit(NormalUser bidder, long depositAmount,
+                                      long penaltyAmount, String auctionId) {
+        long safeDeposit = Math.max(0, depositAmount);
+        long safePenalty = Math.min(Math.max(0, penaltyAmount), safeDeposit);
+
+        synchronized (lockFor(bidder)) {
+            // Mở khóa toàn bộ cọc trước (giảm lockedDeposit)
+            bidder.unlockDeposit(safeDeposit);
+
+            // Trừ phần phạt trực tiếp khỏi balance → chuyển vào SystemBank
+            if (safePenalty > 0) {
+                bidder.setBalance(bidder.getBalance() - safePenalty);
+                systemBank.receiveForfeittedDeposit(safePenalty);
+
+                FinancialTransaction penaltyTx = FinancialTransaction.create(
+                    bidder.getId(), "SYSTEM_BANK", safePenalty,
+                    TransactionType.DEPOSIT_FORFEIT, auctionId);
+                transactionLog.add(penaltyTx);
+                financialTransactionDAO.saveTransaction(penaltyTx);
+            }
+
+            userDAO.updateBalances(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
+            syncBalanceToSessionCache(bidder.getId(), bidder.getBalance(), bidder.getLockedDeposit());
+
+            long refund = safeDeposit - safePenalty;
+            log.warn("Partial deposit forfeited (bid-then-leave): userId={}, auctionId={}, " +
+                    "totalDeposit={}, penalty={}, refund={}",
+                bidder.getId(), auctionId, safeDeposit, safePenalty, refund);
         }
     }
 
@@ -232,13 +269,13 @@ public class WalletService implements IWalletService {
      * Seller CHƯA nhận tiền - chỉ nhận qua PaymentService.releaseToSeller.
      */
     public void executePaymentToBank(
-            NormalUser winner, long finalPrice, long depositPaid, String auctionId) {
+        NormalUser winner, long finalPrice, long depositPaid, String auctionId) {
         synchronized (lockFor(winner)) {
             long remaining = finalPrice - depositPaid;
 
             if (winner.getAvailableBalance() < remaining) {
                 throw new PaymentException(PaymentException.Reason.INSUFFICIENT_BALANCE,
-                        String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
+                    String.format("Cần %d, khả dụng: %d", remaining, winner.getAvailableBalance()));
             }
 
             long originalBalance = winner.getBalance();
@@ -248,20 +285,20 @@ public class WalletService implements IWalletService {
             try {
                 winner.setBalance(winner.getBalance() - remaining);
                 batchTx.add(FinancialTransaction.create(
-                        winner.getId(), "SYSTEM_BANK", remaining,
-                        TransactionType.PAYMENT_FROM_WINNER, auctionId));
+                    winner.getId(), "SYSTEM_BANK", remaining,
+                    TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
                 winner.unlockDeposit(depositPaid);
                 winner.setBalance(winner.getBalance() - depositPaid);
                 batchTx.add(FinancialTransaction.create(
-                        "SYSTEM_LOCKED", winner.getId(), depositPaid,
-                        TransactionType.DEPOSIT_UNLOCK, auctionId));
+                    "SYSTEM_LOCKED", winner.getId(), depositPaid,
+                    TransactionType.DEPOSIT_UNLOCK, auctionId));
 
                 userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
                 batchTx.add(FinancialTransaction.create(
-                        winner.getId(), "SYSTEM_BANK", finalPrice,
-                        TransactionType.PAYMENT_FROM_WINNER, auctionId));
+                    winner.getId(), "SYSTEM_BANK", finalPrice,
+                    TransactionType.PAYMENT_FROM_WINNER, auctionId));
 
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
@@ -279,7 +316,7 @@ public class WalletService implements IWalletService {
                 syncBalanceToSessionCache(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
                 log.info("Payment to bank success: username={}, finalPrice={}, auctionId={}",
-                        winner.getUsername(), finalPrice, auctionId);
+                    winner.getUsername(), finalPrice, auctionId);
 
             } catch (Exception e) {
                 winner.restoreBalances(originalBalance, originalLocked);
@@ -290,7 +327,7 @@ public class WalletService implements IWalletService {
                 }
                 log.error("Payment rolled back: auctionId={}, error={}", auctionId, e.getMessage());
                 throw new PaymentException(PaymentException.Reason.WRONG_AMOUNT,
-                        "Giao dịch thất bại, đã rollback: " + e.getMessage());
+                    "Giao dịch thất bại, đã rollback: " + e.getMessage());
             }
         }
     }
