@@ -38,15 +38,15 @@ public class BidTransactionDAO {
 
             boolean saved = pstmt.executeUpdate() > 0;
             log.debug("Bid transaction saved: txId={}, auctionId={}, bidderId={}, amount={}, result={}",
-                    tx.getId(), tx.getAuctionId(), tx.getBidder().getId(), tx.getAmount(), tx.getResult());
+                tx.getId(), tx.getAuctionId(), tx.getBidder().getId(), tx.getAmount(), tx.getResult());
             return saved;
 
         } catch (SQLException e) {
             log.error("Failed to save bid transaction: txId={}, auctionId={}, bidderId={}",
-                    tx != null ? tx.getId() : null,
-                    tx != null ? tx.getAuctionId() : null,
-                    tx != null && tx.getBidder() != null ? tx.getBidder().getId() : null,
-                    e);
+                tx != null ? tx.getId() : null,
+                tx != null ? tx.getAuctionId() : null,
+                tx != null && tx.getBidder() != null ? tx.getBidder().getId() : null,
+                e);
             return false;
         }
     }
@@ -67,10 +67,10 @@ public class BidTransactionDAO {
     public boolean saveTransactionAndUpdatePrice(BidTransaction tx, String auctionId,
                                                  long newPrice, String bidderId) {
         String updateSql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, "
-                + "current_highest_price = ?, winning_bidder_id = ? "
-                + "WHERE id = ? AND current_price < ?";
+            + "current_highest_price = ?, winning_bidder_id = ? "
+            + "WHERE id = ? AND current_price < ?";
         String insertSql = "INSERT INTO bid_transactions (id, auction_id, bidder_id, bid_amount, result) "
-                + "VALUES (?, ?, ?, ?, ?)";
+            + "VALUES (?, ?, ?, ?, ?)";
 
         Connection conn = null;
         try {
@@ -107,7 +107,7 @@ public class BidTransactionDAO {
 
             conn.commit();
             log.debug("Bid persisted atomically: txId={}, auctionId={}, amount={}",
-                    tx.getId(), auctionId, newPrice);
+                tx.getId(), auctionId, newPrice);
             return true;
         } catch (SQLException e) {
             if (conn != null) {
@@ -118,7 +118,7 @@ public class BidTransactionDAO {
                 }
             }
             log.error("Atomic bid persist failed: txId={}, auctionId={}",
-                    tx != null ? tx.getId() : null, auctionId, e);
+                tx != null ? tx.getId() : null, auctionId, e);
             return false;
         } finally {
             if (conn != null) {
@@ -175,9 +175,9 @@ public class BidTransactionDAO {
 
         // FIX BUG #1: Thêm "AND result != 'REJECTED'" — chỉ lấy bid hợp lệ để vẽ chart
         String sql = "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time " +
-                "FROM bid_transactions " +
-                "WHERE auction_id = ? AND result != 'REJECTED' " +
-                "ORDER BY bid_time ASC, seq ASC";
+            "FROM bid_transactions " +
+            "WHERE auction_id = ? AND result != 'REJECTED' " +
+            "ORDER BY bid_time ASC, seq ASC";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -193,20 +193,20 @@ public class BidTransactionDAO {
 
                     java.sql.Timestamp ts = rs.getTimestamp("bid_time");
                     java.time.LocalDateTime bidTime = (ts != null)
-                            ? ts.toLocalDateTime()
-                            : java.time.LocalDateTime.now();
+                        ? ts.toLocalDateTime()
+                        : java.time.LocalDateTime.now();
 
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
 
                     BidTransaction tx = BidTransaction.reconstitute(
-                            id,
-                            bidTime,
-                            bidTime,
-                            bidder,
-                            fetchedAuction,
-                            amount,
-                            bidTime,
-                            BidTransaction.BidResult.valueOf(resultStr)
+                        id,
+                        bidTime,
+                        bidTime,
+                        bidder,
+                        fetchedAuction,
+                        amount,
+                        bidTime,
+                        BidTransaction.BidResult.valueOf(resultStr)
                     );
                     result.add(tx);
                 }
@@ -241,28 +241,84 @@ public class BidTransactionDAO {
 
                     java.sql.Timestamp bidTimeTs = rs.getTimestamp("bid_time");
                     java.time.LocalDateTime bidTime = (bidTimeTs != null) ?
-                            bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
+                        bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
                     UserDAO userDAO = new UserDAO();
                     NormalUser bidder = userDAO.findNormalUserById(bidderId);
 
                     return BidTransaction.reconstitute(
-                            id,
-                            bidTime,
-                            bidTime,
-                            bidder,
-                            null,
-                            amount,
-                            bidTime,
-                            BidTransaction.BidResult.valueOf(resultStr)
+                        id,
+                        bidTime,
+                        bidTime,
+                        bidder,
+                        null,
+                        amount,
+                        bidTime,
+                        BidTransaction.BidResult.valueOf(resultStr)
                     );
                 }
             }
         } catch (SQLException e) {
             log.error("Failed to find highest valid bid except bidder: auctionId={}, excludedBidderId={}",
-                    auctionId, excludedBidderId, e);
+                auctionId, excludedBidderId, e);
         }
         log.debug("No runner-up bid found: auctionId={}, excludedBidderId={}", auctionId, excludedBidderId);
         return null;
+    }
+
+    /**
+     * Đánh dấu toàn bộ bid ACCEPTED của một bidder trong một phiên là CANCELLED_BY_LEAVE.
+     * Gọi khi leader tự rời phiên — bid của họ bị xóa sổ khỏi lịch sử hợp lệ.
+     *
+     * @return số rows bị cập nhật (>= 0)
+     */
+    public int cancelBidsByBidder(String auctionId, String bidderId) {
+        String sql = "UPDATE bid_transactions SET result = 'CANCELLED_BY_LEAVE' "
+            + "WHERE auction_id = ? AND bidder_id = ? "
+            + "AND result IN ('ACCEPTED', 'ACCEPTED_RESERVE_NOT_MET')";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, auctionId);
+            pstmt.setString(2, bidderId);
+            int rows = pstmt.executeUpdate();
+            log.info("Bids cancelled by leave: auctionId={}, bidderId={}, rows={}", auctionId, bidderId, rows);
+            return rows;
+        } catch (SQLException e) {
+            log.error("Failed to cancel bids by leave: auctionId={}, bidderId={}", auctionId, bidderId, e);
+            return 0;
+        }
+    }
+
+    /**
+     * Cập nhật current_leader_id và current_price sau khi leader rời phiên.
+     * Force-update không dùng conditional WHERE current_price < ?.
+     *
+     * @param newLeaderId null nếu không còn ai dẫn đầu
+     * @param newPrice    0 nếu không còn ai dẫn đầu
+     */
+    public boolean updateLeaderAfterLeave(String auctionId, String newLeaderId, long newPrice) {
+        String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, "
+            + "current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, newPrice);
+            if (newLeaderId != null) {
+                pstmt.setString(2, newLeaderId);
+                pstmt.setLong(3, newPrice);
+                pstmt.setString(4, newLeaderId);
+            } else {
+                pstmt.setNull(2, java.sql.Types.VARCHAR);
+                pstmt.setLong(3, 0L);
+                pstmt.setNull(4, java.sql.Types.VARCHAR);
+            }
+            pstmt.setString(5, auctionId);
+            boolean ok = pstmt.executeUpdate() > 0;
+            log.info("Leader updated after leave: auctionId={}, newLeaderId={}, newPrice={}",
+                auctionId, newLeaderId, newPrice);
+            return ok;
+        } catch (SQLException e) {
+            log.error("Failed to update leader after leave: auctionId={}", auctionId, e);
+            return false;
+        }
     }
 }

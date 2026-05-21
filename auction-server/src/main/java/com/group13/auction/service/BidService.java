@@ -338,26 +338,28 @@ public class BidService implements IBidService {
   // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
 
   /**
-   * Rời phiên: xử lý cọc (có phạt nếu đang là current leader), xóa join state khỏi in-memory VÀ DB.
+   * Rời phiên: xử lý cọc và rating theo điều kiện vi phạm, xóa join state khỏi in-memory VÀ DB.
    *
-   * <p>Nếu user đang là current leader khi rời → mất 50% cọc (phạt bid cao rồi out).
-   * Nếu chưa bid hoặc không phải leader → hoàn toàn bộ cọc.
+   * <p>Phạt toàn bộ cọc + trừ 1 rating nếu thuộc một trong hai trường hợp:
+   * <ul>
+   *   <li>User đang là current leader khi rời phiên.</li>
+   *   <li>Phiên đã qua 2/3 tổng thời gian (tính từ startTime đến endTime).</li>
+   * </ul>
+   * Nếu không thuộc hai trường hợp trên → hoàn toàn bộ cọc, không phạt rating.
    * Nếu auction == null (phiên đã xóa), bỏ qua wallet operation — không ném exception.
+   *
+   * @return true nếu leader bị thay đổi (cần broadcast cho các watcher), false nếu không
    */
   @Override
-  public void leaveAuction(User user, Auction auction) {
+  public boolean leaveAuction(User user, Auction auction) {
     String auctionId = auction != null ? auction.getId() : null;
+    boolean leaderChanged = false;
 
     if (user instanceof NormalUser && auction != null) {
       NormalUser bidder = (NormalUser) user;
       long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
 
-      // FIX RACE CONDITION: đọc currentLeader trong per-auction lock.
-      // Nếu đọc ngoài lock: thread khác có thể place bid và thay leader
-      // ngay giữa lúc đọc và quyết định forfeit → forfeit nhầm người không
-      // còn dẫn đầu, hoặc bỏ sót người đang dẫn đầu.
-      // placeBid() cũng acquire cùng lock này khi gọi auction.updateBid() →
-      // đảm bảo snapshot currentLeader nhất quán với trạng thái đấu giá.
+      // Đọc + xử lý leader trong lock để tránh race condition với placeBid()
       java.util.concurrent.locks.ReentrantLock auctionLock = lockRegistry.getLock(auction.getId());
       auctionLock.lock();
       final boolean isCurrentLeader;
@@ -365,23 +367,53 @@ public class BidService implements IBidService {
         NormalUser currentLeader = auction.getCurrentLeader();
         isCurrentLeader = currentLeader != null
             && currentLeader.getId().equals(bidder.getId());
+
+        if (isCurrentLeader) {
+          // 1. Hủy toàn bộ bid ACCEPTED của leader trong DB
+          bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
+
+          // 2. Tìm người kế tiếp (bid cao nhất của người khác còn hợp lệ)
+          com.group13.auction.model.bid.BidTransaction nextBid =
+              bidTransactionDAO.findHighestValidBidExcept(auctionId, bidder.getId());
+
+          if (nextBid != null && nextBid.getBidder() != null) {
+            long nextPrice     = nextBid.getAmount();
+            NormalUser nextUser = nextBid.getBidder();
+            auction.resetLeader(nextPrice, nextUser);
+            bidTransactionDAO.updateLeaderAfterLeave(auctionId, nextUser.getId(), nextPrice);
+            log.info("Leader rolled back to next bidder: auctionId={}, newLeader={}, newPrice={}",
+                auctionId, nextUser.getUsername(), nextPrice);
+          } else {
+            // Không còn ai → reset về trạng thái chưa có bid
+            auction.resetLeader(0L, null);
+            bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, 0L);
+            log.info("Leader rolled back to empty (no other bids): auctionId={}", auctionId);
+          }
+          leaderChanged = true;
+        }
       } finally {
         auctionLock.unlock();
-        // Wallet operation (forfeit/unlock) xảy ra SAU khi release lock auction
-        // để tránh giữ lock auction trong khi chờ DB — không thay đổi quyết định
-        // vì snapshot isCurrentLeader đã được chốt trong lock.
       }
 
+      final boolean isPastTwoThirds = isPastTwoThirdsTime(auction);
+      final boolean shouldPenalize  = isCurrentLeader || isPastTwoThirds;
+
       try {
-        if (isCurrentLeader) {
-          // Leader tự rời phiên → tịch thu toàn bộ cọc
+        if (shouldPenalize) {
           walletService.forfeitDeposit(bidder, depositAmount, auction.getId());
-          log.warn("Full deposit forfeited — leader left auction: userId={}, auctionId={}, deposit={}",
-              bidder.getId(), auction.getId(), depositAmount);
+          log.warn("Full deposit forfeited on leave: userId={}, auctionId={}, deposit={}, reason={}",
+              bidder.getId(), auction.getId(), depositAmount,
+              isCurrentLeader ? "IS_LEADER" : "PAST_TWO_THIRDS");
+
+          try {
+            ratingService.penalizeEarlyLeave(bidder);
+          } catch (RuntimeException e) {
+            log.error("Rating penalty failed on leave (continuing): userId={}, auctionId={}, reason={}",
+                bidder.getId(), auction.getId(), e.getMessage());
+          }
         } else {
-          // Không phải leader → hoàn toàn bộ cọc
           walletService.unlockDeposit(bidder, depositAmount, auction.getId());
-          log.info("Deposit unlocked on leave (not leader): userId={}, auctionId={}, deposit={}",
+          log.info("Deposit unlocked on leave (no penalty): userId={}, auctionId={}, deposit={}",
               bidder.getId(), auction.getId(), depositAmount);
         }
       } catch (RuntimeException e) {
@@ -394,7 +426,28 @@ public class BidService implements IBidService {
       user.removeJoinedAuction(auctionId);
       userDAO.removeJoinedActivity(user.getId(), auctionId);
     }
-    log.info("User left auction: userId={}, auctionId={}", user.getId(), auctionId);
+    log.info("User left auction: userId={}, auctionId={}, leaderChanged={}",
+        user.getId(), auctionId, leaderChanged);
+    return leaderChanged;
+  }
+
+  /**
+   * Kiểm tra phiên đã qua 2/3 tổng thời gian chưa.
+   * Dùng endTime hiện tại (có thể đã được gia hạn bởi anti-sniping).
+   *
+   * @return true nếu thời điểm hiện tại >= startTime + 2/3 * (endTime - startTime)
+   */
+  private boolean isPastTwoThirdsTime(Auction auction) {
+    java.time.LocalDateTime startTime = auction.getStartTime();
+    java.time.LocalDateTime endTime   = auction.getEndTime();  // đã bao gồm gia hạn anti-sniping
+    if (startTime == null || endTime == null) return false;
+
+    long totalSeconds    = java.time.Duration.between(startTime, endTime).getSeconds();
+    if (totalSeconds <= 0) return false;
+
+    long twoThirdsSeconds = totalSeconds * 2 / 3;
+    java.time.LocalDateTime twoThirdsPoint = startTime.plusSeconds(twoThirdsSeconds);
+    return java.time.LocalDateTime.now().isAfter(twoThirdsPoint);
   }
 
   private static AuthenticationException buildIneligibleException(NormalUser bidder) {
