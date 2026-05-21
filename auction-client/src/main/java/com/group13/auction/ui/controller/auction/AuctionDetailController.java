@@ -319,7 +319,7 @@ public final class AuctionDetailController {
     setLoading(false, "Chi tiết phiên đã được cập nhật.");
 
     titleLabel.setText(detail.itemName());
-    ImageLoader.fillGallery(imageGalleryPane, detail.imageUrls());
+    ImageLoader.fillPreviewableGallery(imageGalleryPane, detail.imageUrls());
     categoryLabel.setText(detail.categoryText());
     statusLabel.setText(detail.statusText());
     descriptionLabel.setText(detail.description());

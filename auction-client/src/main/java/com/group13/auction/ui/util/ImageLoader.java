@@ -1,8 +1,10 @@
 package com.group13.auction.ui.util;
 
-import com.group13.auction.config.ImageConfig;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.config.ImageConfig;
 import java.util.List;
+import javafx.scene.Cursor;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
@@ -39,6 +41,20 @@ public final class ImageLoader {
      * @param imageUrls danh sách path ảnh server trả về
      */
     public static void fillGallery(FlowPane pane, List<String> imageUrls) {
+        fillGallery(pane, imageUrls, false);
+    }
+
+    /**
+     * Đổ danh sách ảnh sản phẩm vào gallery và cho phép bấm ảnh để xem kích thước lớn.
+     *
+     * @param pane FlowPane dùng làm gallery
+     * @param imageUrls danh sách path ảnh server trả về
+     */
+    public static void fillPreviewableGallery(FlowPane pane, List<String> imageUrls) {
+        fillGallery(pane, imageUrls, true);
+    }
+
+    private static void fillGallery(FlowPane pane, List<String> imageUrls, boolean previewEnabled) {
         if (pane == null) {
             return;
         }
@@ -57,16 +73,29 @@ public final class ImageLoader {
                 continue;
             }
 
-            ImageView imageView = new ImageView();
-            imageView.getStyleClass().add("product-gallery-image");
-            imageView.setFitWidth(150);
-            imageView.setFitHeight(110);
-            imageView.setPreserveRatio(true);
-            imageView.setSmooth(true);
-
-            load(imageView, path);
+            ImageView imageView = createGalleryImageView(path, previewEnabled);
             pane.getChildren().add(imageView);
         }
+    }
+
+    private static ImageView createGalleryImageView(String path, boolean previewEnabled) {
+        ImageView imageView = new ImageView();
+        imageView.getStyleClass().add("product-gallery-image");
+        imageView.setFitWidth(150);
+        imageView.setFitHeight(110);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+
+        load(imageView, path);
+
+        if (previewEnabled) {
+            imageView.getStyleClass().add("clickable-gallery-image");
+            imageView.setCursor(Cursor.HAND);
+            Tooltip.install(imageView, new Tooltip("Nhấn để xem ảnh lớn"));
+            imageView.setOnMouseClicked(event -> ImagePreviewDialog.show(imageView, path));
+        }
+
+        return imageView;
     }
 
     /**

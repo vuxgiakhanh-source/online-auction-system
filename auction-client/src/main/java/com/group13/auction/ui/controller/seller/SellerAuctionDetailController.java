@@ -121,7 +121,7 @@ public final class SellerAuctionDetailController {
 
     private void renderAuctionDetail() {
         titleLabel.setText(selectedAuction.itemName());
-        ImageLoader.fillGallery(imageGalleryPane, selectedAuction.imageUrls());
+        ImageLoader.fillPreviewableGallery(imageGalleryPane, selectedAuction.imageUrls());
         auctionIdLabel.setText(selectedAuction.auctionId());
         categoryLabel.setText(selectedAuction.categoryText());
         statusLabel.setText(selectedAuction.statusText());
