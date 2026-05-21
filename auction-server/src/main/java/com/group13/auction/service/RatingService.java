@@ -31,6 +31,8 @@ public class RatingService implements IRatingService {
   private static final double REWARD_SELLER_SALE = 0.2;
   private static final double PENALTY_LATE_PAYMENT = 1.0;
   private static final double PENALTY_SELLER_QUALITY = 1.0;
+  /** Phạt khi rời phiên đang dẫn đầu hoặc rời sau 2/3 thời gian. */
+  private static final double PENALTY_EARLY_LEAVE = 1.0;
   private static final double AUTO_SUSPEND_THRESHOLD = User.RATING_SUSPEND_THRESHOLD;
 
   /** Thời gian chờ trước khi auto-restore: 3 tháng. */
@@ -55,14 +57,14 @@ public class RatingService implements IRatingService {
   @Override
   public boolean isEligible(User user) {
     return user.getAccountStatus() == AccountStatus.ACTIVE
-            && user.getRating() >= MIN_RATING_ELIGIBLE;
+        && user.getRating() >= MIN_RATING_ELIGIBLE;
   }
 
   @Override
   public boolean canSellerCreateAuction(User seller) {
     return seller.hasRole(User.UserRole.SELLER)
-            && isEligible(seller)
-            && seller.getRating() >= MIN_RATING_SELLER;
+        && isEligible(seller)
+        && seller.getRating() >= MIN_RATING_SELLER;
   }
 
   // Tăng thưởng
@@ -121,6 +123,19 @@ public class RatingService implements IRatingService {
     userDAO.updateRatingAndPenalty(seller.getId(), seller.getRating(), isPenalized);
     userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
     // TODO: notificationDao.save() - báo cho seller
+  }
+
+  @Override
+  public void penalizeEarlyLeave(NormalUser bidder) {
+    bidder.adjustRating(-PENALTY_EARLY_LEAVE);
+    bidder.markPenalized();
+    log.warn("Rating penalty early-leave: username={}, delta=-{}, newRating={}",
+        bidder.getUsername(), PENALTY_EARLY_LEAVE, bidder.getRating());
+
+    autoSuspendIfNeeded(bidder);
+
+    userDAO.updateRatingAndPenalty(bidder.getId(), bidder.getRating(), bidder.isHasEverBeenPenalized());
+    userDAO.updateAccountStatus(bidder.getId(), bidder.getAccountStatus().name());
   }
 
   /** method dùng cho hầu như quá trình build
@@ -191,7 +206,7 @@ public class RatingService implements IRatingService {
 
   private void autoSuspendIfNeeded(User user) {
     if (user.getAccountStatus() == AccountStatus.ACTIVE
-            && user.getRating() <= AUTO_SUSPEND_THRESHOLD) {
+        && user.getRating() <= AUTO_SUSPEND_THRESHOLD) {
       user.setAccountStatus(AccountStatus.SUSPENDED);
       log.info("Account auto-suspended: username={}, rating={}, threshold={}", user.getUsername(), user.getRating(), AUTO_SUSPEND_THRESHOLD);
     }

@@ -57,7 +57,14 @@ public interface IRatingService {
   void penalizeSeller(User seller);
 
   /**
-   * Auto-restore rating sau 3 tháng bị SUSPENDED.
+   * Phạt Bidder khi rời phiên đang dẫn đầu hoặc rời sau khi đã qua 2/3 thời gian.
+   * Trừ 1.0 rating, tự động suspend/ban nếu xuống dưới ngưỡng.
+   *
+   * @param bidder bidder bị phạt
+   */
+  void penalizeEarlyLeave(NormalUser bidder);
+
+  /**
    *
    * <p>Cơ chế chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi NormalUser.
    * Sau khi được restore, tài khoản không được auto-restore thêm lần nữa
