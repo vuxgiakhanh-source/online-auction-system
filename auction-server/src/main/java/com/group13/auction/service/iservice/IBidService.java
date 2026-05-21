@@ -56,5 +56,9 @@ public interface IBidService {
    * @param user    bidder muốn rời phiên
    * @param auction phiên cần rời (null-safe: nếu null thì bỏ qua bước unlock cọc)
    */
-  void leaveAuction(User user, Auction auction);
+  /**
+   * Rời phiên. Trả về true nếu leader bị thay đổi (bid bị huỷ và người kế tiếp lên),
+   * false nếu không cần broadcast cập nhật giá cho các watcher.
+   */
+  boolean leaveAuction(User user, Auction auction);
 }

@@ -76,7 +76,7 @@ public class Auction extends Entity {
    * getBidTransactionIds() (unmodifiable view) gọi ngoài lock.
    */
   private final List<String> bidTransactionIds =
-          Collections.synchronizedList(new ArrayList<>());
+      Collections.synchronizedList(new ArrayList<>());
 
   /**
    * FIX: AtomicReference thay volatile — transitionToRunning/Close/Cancel/Paid có thể gọi
@@ -102,25 +102,25 @@ public class Auction extends Entity {
   // =========================================================================
 
   public static Auction create(
-          Item item,
-          LocalDateTime startTime,
-          LocalDateTime endTime,
-          long reservePrice) {
+      Item item,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      long reservePrice) {
     return new Auction(item, startTime, endTime, reservePrice);
   }
 
   public static Auction reconstitute(
-          String id,
-          LocalDateTime createdAt,
-          LocalDateTime updatedAt,
-          Item item,
-          LocalDateTime startTime,
-          LocalDateTime endTime,
-          long currentPrice,
-          AuctionStatus status,
-          long reservePrice) {
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      Item item,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      long currentPrice,
+      AuctionStatus status,
+      long reservePrice) {
     return new Auction(
-            id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
+        id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
   }
 
   // =========================================================================
@@ -140,15 +140,15 @@ public class Auction extends Entity {
   }
 
   private Auction(
-          String id,
-          LocalDateTime createdAt,
-          LocalDateTime updatedAt,
-          Item item,
-          LocalDateTime startTime,
-          LocalDateTime endTime,
-          long currentPrice,
-          AuctionStatus status,
-          long reservePrice) {
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      Item item,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      long currentPrice,
+      AuctionStatus status,
+      long reservePrice) {
     super(id, createdAt, updatedAt);
     this.item = item;
     this.currentPrice = currentPrice;
@@ -235,6 +235,19 @@ public class Auction extends Entity {
    */
   public void updateBid(long newPrice, NormalUser newLeader) {
     this.currentPrice = newPrice;
+    this.currentLeader = newLeader;
+    markUpdated();
+  }
+
+  /**
+   * Reset trạng thái leader khi người dẫn đầu tự rời phiên.
+   * Được gọi trong lock của BidService.leaveAuction() sau khi bid bị huỷ.
+   *
+   * @param newPrice    giá của người kế tiếp, hoặc 0 nếu không còn ai
+   * @param newLeader   người kế tiếp, hoặc null nếu không còn ai
+   */
+  public void resetLeader(long newPrice, NormalUser newLeader) {
+    this.currentPrice  = newPrice;
     this.currentLeader = newLeader;
     markUpdated();
   }

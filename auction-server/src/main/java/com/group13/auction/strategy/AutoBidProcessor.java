@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -55,6 +56,13 @@ public class AutoBidProcessor {
      * đồng thời với ghi (recordBidActivity) từ nhiều thread.
      */
     private static final ConcurrentHashMap<String, List<LocalDateTime>> recentBidTimes =
+        new ConcurrentHashMap<>();
+
+    /**
+     * Thời điểm (nanoTime) của lần auto-bid cuối cùng trên mỗi phiên.
+     * Dùng để rate-limit: không cho phép 2 auto-bid cách nhau < AUTO_BID_MIN_INTERVAL_MS.
+     */
+    private static final ConcurrentHashMap<String, Long> lastAutoBidNanoByAuction =
         new ConcurrentHashMap<>();
 
     public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
@@ -120,6 +128,9 @@ public class AutoBidProcessor {
             }
 
             try {
+                // Rate limiting: enforce minimum interval between auto-bids in same auction
+                enforceAutoBidInterval(auctionId);
+
                 AutoBidStrategy strategy = new AutoBidStrategy(winner.getMaxBid());
                 bidService.placeBid(autoBidder, auction, nextBid, strategy);
 
@@ -169,6 +180,28 @@ public class AutoBidProcessor {
      */
     public static void clearAuctionActivity(String auctionId) {
         recentBidTimes.remove(auctionId);
+        lastAutoBidNanoByAuction.remove(auctionId);
+    }
+
+    /**
+     * Đảm bảo khoảng cách tối thiểu giữa hai auto-bid liên tiếp trên cùng một phiên.
+     * Nếu chưa đủ thời gian, sleep phần còn thiếu (tối đa AUTO_BID_MIN_INTERVAL_MS ms).
+     */
+    private static void enforceAutoBidInterval(String auctionId) {
+        long minNanos = 80L * 1_000_000L;
+        long now = System.nanoTime();
+        Long last = lastAutoBidNanoByAuction.put(auctionId, now);
+        if (last == null) return;
+
+        long elapsed = now - last;
+        if (elapsed < minNanos) {
+            try {
+                long sleepMs = (minNanos - elapsed) / 1_000_000L;
+                if (sleepMs > 0) TimeUnit.MILLISECONDS.sleep(sleepMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     // ── Smart bid calculation ─────────────────────────────────────────────────

@@ -77,6 +77,16 @@ public final class AuctionDTOs {
         private boolean reserveMet;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        /**
+         * Trạng thái thanh toán của AuctionWinner (PENDING, FUNDS_HELD, ITEM_RECEIVED, ...).
+         * Null nếu auction chưa FINISHED hoặc chưa có winner.
+         * Client dùng để hiển thị đúng trạng thái đơn hàng sau refresh.
+         */
+        private String paymentStatus;
+        /** Hạn xác nhận nhận hàng (7 ngày sau thanh toán). Null nếu chưa thanh toán. */
+        private LocalDateTime confirmReceiptDeadline;
+        /** Hạn gửi report (3 ngày sau bấm nhận hàng). Null nếu chưa xác nhận nhận hàng. */
+        private LocalDateTime reportDeadline;
 
         public AuctionDTO() {}
 
@@ -108,6 +118,12 @@ public final class AuctionDTOs {
         public void setCreatedAt(LocalDateTime createdAt)                  { this.createdAt = createdAt; }
         public LocalDateTime getUpdatedAt()                                { return updatedAt; }
         public void setUpdatedAt(LocalDateTime updatedAt)                  { this.updatedAt = updatedAt; }
+        public String getPaymentStatus()                                   { return paymentStatus; }
+        public void setPaymentStatus(String paymentStatus)                 { this.paymentStatus = paymentStatus; }
+        public LocalDateTime getConfirmReceiptDeadline()                   { return confirmReceiptDeadline; }
+        public void setConfirmReceiptDeadline(LocalDateTime d)             { this.confirmReceiptDeadline = d; }
+        public LocalDateTime getReportDeadline()                           { return reportDeadline; }
+        public void setReportDeadline(LocalDateTime reportDeadline)        { this.reportDeadline = reportDeadline; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
