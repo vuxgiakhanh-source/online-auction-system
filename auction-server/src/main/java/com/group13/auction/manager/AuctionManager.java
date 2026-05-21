@@ -66,13 +66,16 @@ public class AuctionManager {
     }
 
     // FIX Bug #1 (winner restore): Sau server restart, auction.getWinner() = null dù DB có winner.
-    // Load lại AuctionWinner cho các phiên đã FINISHED/PAID để PaymentHandler không báo "chưa có winner".
+    // Load lại AuctionWinner cho các phiên đã FINISHED/PAID/RUNNING để PaymentHandler không báo "chưa có winner".
+    // RUNNING cũng cần restore vì server có thể crash ngay sau khi closeAuction() set winner nhưng
+    // trước khi status được flush xuống DB đúng.
     AuctionWinnerDAO auctionWinnerDAO = new AuctionWinnerDAO();
     int restoredCount = 0;
     if (dbAuctions != null) {
       for (Auction a : dbAuctions) {
         if (a.getStatus() == Auction.AuctionStatus.FINISHED
-            || a.getStatus() == Auction.AuctionStatus.PAID) {
+            || a.getStatus() == Auction.AuctionStatus.PAID
+            || a.getStatus() == Auction.AuctionStatus.RUNNING) {
           AuctionWinner winner = auctionWinnerDAO.findByAuctionId(a.getId(), userDAO);
           if (winner != null) {
             a.setWinner(winner);

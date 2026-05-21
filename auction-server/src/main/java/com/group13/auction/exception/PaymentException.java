@@ -11,7 +11,9 @@ public class PaymentException extends RuntimeException {
         INSUFFICIENT_BALANCE,
         WRONG_AMOUNT,
         PAYMENT_EXPIRED,
-        SELLER_REFUND_OVERDUE
+        SELLER_REFUND_OVERDUE,
+        /** Winner object là null — thường do race condition hoặc sau server restart. */
+        WINNER_NOT_FOUND
     }
 
     private final Reason reason;
@@ -31,6 +33,8 @@ public class PaymentException extends RuntimeException {
                 return "Đã quá hạn thanh toán.";
             case SELLER_REFUND_OVERDUE:
                 return "Seller không hoàn trả đúng hạn.";
+            case WINNER_NOT_FOUND:
+                return "Phiên đấu giá chưa có người thắng cuộc.";
             default:
                 return "Lỗi thanh toán.";
         }

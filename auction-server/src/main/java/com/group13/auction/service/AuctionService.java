@@ -234,18 +234,21 @@ public class AuctionService implements IAuctionService {
   public void markAsPaid(Auction auction) {
     auction.transitionToPaid();
 
-    // Kích hoạt deadline nhận hàng 7 ngày
+    // Kích hoạt deadline nhận hàng 7 ngày và persist xuống DB
     AuctionWinner auctionWinner = auction.getWinner();
     if (auctionWinner != null) {
       auctionWinner.markFundsHeld();
-      // TODO: [DB] auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(), ...)
+      // FIX: persist confirmReceiptDeadline và payment status FUNDS_HELD vào DB.
+      // Trước đây dòng này là TODO bỏ trống → restart server mất deadline → auto-release không bao giờ chạy.
+      auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(),
+          auctionWinner.getPaymentStatus().name(),
+          auctionWinner.getConfirmReceiptDeadline());
     }
 
     notify(auction, AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
         auction.getCurrentLeader(), auction.getCurrentPrice());
     log.info("Giao dịch hoàn tất - PAID: auctionId={}", auction.getId());
 
-    // Đã thực hiện TODO: auctionDAO.update(auction)
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
     cleanupObservers(auction.getId());
   }

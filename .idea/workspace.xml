@@ -242,7 +242,7 @@
     </key>
   </component>
   <component name="RunManager" selected="Application.Launcher">
-    <configuration name="Launcher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+    <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
       <module name="auction-client" />
       <extension name="coverage">
@@ -386,7 +386,7 @@
       <workItem from="1779299219803" duration="908000" />
       <workItem from="1779300409592" duration="404000" />
       <workItem from="1779306160021" duration="315000" />
-      <workItem from="1779340255204" duration="648000" />
+      <workItem from="1779340255204" duration="1359000" />
     </task>
     <servers />
   </component>

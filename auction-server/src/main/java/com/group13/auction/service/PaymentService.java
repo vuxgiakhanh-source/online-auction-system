@@ -3,12 +3,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.group13.auction.bank.SystemBank;
+import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.model.auction.Auction.AuctionStatus;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
@@ -38,6 +40,7 @@ public class PaymentService implements IPaymentService {
   private final IWalletService walletService;
   private final SystemBank systemBank = SystemBank.getInstance();
 
+  private final AuctionDAO auctionDAO;
   private final AuctionWinnerDAO auctionWinnerDAO;
   private final SecondChanceOfferDAO secondChanceOfferDAO;
   private final BidTransactionDAO bidTransactionDAO;
@@ -68,9 +71,24 @@ public class PaymentService implements IPaymentService {
       SecondChanceOfferDAO secondChanceOfferDAO,
       BidTransactionDAO bidTransactionDAO,
       UserDAO userDAO) {
+    this(auctionService, ratingService, walletService,
+        new AuctionDAO(), auctionWinnerDAO, secondChanceOfferDAO, bidTransactionDAO, userDAO);
+  }
+
+  /** Constructor đầy đủ — dùng trong test hoặc khi cần inject AuctionDAO tùy chỉnh. */
+  public PaymentService(
+      IAuctionService auctionService,
+      IRatingService ratingService,
+      WalletService walletService,
+      AuctionDAO auctionDAO,
+      AuctionWinnerDAO auctionWinnerDAO,
+      SecondChanceOfferDAO secondChanceOfferDAO,
+      BidTransactionDAO bidTransactionDAO,
+      UserDAO userDAO) {
     this.auctionService = auctionService;
     this.ratingService = ratingService;
     this.walletService = walletService;
+    this.auctionDAO = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
     this.secondChanceOfferDAO = secondChanceOfferDAO;
     this.bidTransactionDAO = bidTransactionDAO;
@@ -109,7 +127,10 @@ public class PaymentService implements IPaymentService {
           auctionWinner.getDepositPaid(),
           auction.getId());
 
-      auctionWinner.markFundsHeld();
+      // FIX: markFundsHeld() chỉ được gọi MỘT LẦN trong markAsPaid() (qua auctionService).
+      // Trước đây gọi markFundsHeld() ở đây rồi markAsPaid() lại gọi lần nữa
+      // → confirmReceiptDeadline bị reset sang thời điểm muộn hơn → auto-release trễ 7 ngày.
+      // markAsPaid() bên dưới đã gọi markFundsHeld() + persist DB (sau khi fix TODO).
       auctionService.markAsPaid(auction);
 
       ratingService.rewardBidder(winner);
@@ -118,9 +139,7 @@ public class PaymentService implements IPaymentService {
 
       log.info("[PAYMENT] Winner {} đã thanh toán {} — tiền giữ tại SystemBank (FUNDS_HELD).",
           winner.getUsername(), auctionWinner.getFinalPrice());
-
-      auctionWinnerDAO.updateFundsHeld(auctionWinner.getId(),
-          auctionWinner.getPaymentStatus().name(), auctionWinner.getConfirmReceiptDeadline());
+      // NOTE: updateFundsHeld() đã được gọi trong markAsPaid() — không cần gọi lại ở đây.
     }
   }
 
@@ -140,12 +159,6 @@ public class PaymentService implements IPaymentService {
     // Persist cả status mới lẫn reportDeadline
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
     auctionWinnerDAO.updateReportDeadline(auctionWinner.getId(), auctionWinner.getReportDeadline());
-  }
-
-  /** @deprecated Dùng {@link #confirmItemReceived(Auction)} thay thế. */
-  @Deprecated
-  public void confirmReceipt(Auction auction) {
-    confirmItemReceived(auction);
   }
 
   public void releaseToSeller(Auction auction) {
@@ -210,6 +223,13 @@ public class PaymentService implements IPaymentService {
   public void expirePayment(Auction auction) {
     synchronized (auctionPaymentLock(auction)) {
       if (auction.getStatus() == AuctionStatus.PAID) {
+        return;
+      }
+      // Guard: winner có thể null nếu auction vừa FINISHED nhưng setWinner chưa commit.
+      // Trong race condition này, timer sẽ quét lại ở lần sau — không nên crash.
+      if (auction.getWinner() == null) {
+        log.warn("[PAYMENT] expirePayment: auctionId={} status={} — winner is null, skipping.",
+            auction.getId(), auction.getStatus());
         return;
       }
       AuctionWinner auctionWinner = requireWinner(auction);
@@ -300,6 +320,21 @@ public class PaymentService implements IPaymentService {
 
     offer.setStatus(SecondChanceOffer.OfferStatus.ACCEPTED);
 
+    // FIX: persist new winner vào DB ngay lập tức.
+    // Trước đây không có dòng này → sau restart getWinner() = null → PaymentHandler crash.
+    // Đây là trường hợp song song với closeAuction() (winner thường) — phải saveWinner().
+    if (!auctionWinnerDAO.saveWinner(newWinner)) {
+      log.error("[PAYMENT] Không thể lưu second-chance AuctionWinner vào DB: auctionId={} runnerId={}",
+          auction.getId(), runnerUp.getId());
+    }
+
+    // FIX: đồng bộ trạng thái auction lên DB (trạng thái có thể đã FINISHED từ lần đóng trước).
+    auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
+
+    // FIX Bug B: broadcast realtime tới tất cả client đang xem phiên để cập nhật UI winner mới.
+    // Trước đây không có broadcast → client hiển thị trạng thái cũ (không biết có winner mới).
+    ServerBroadcastNotifier.getInstance().notifySecondChanceAccepted(auction);
+
     log.info("[PAYMENT] Runner-up {} chấp nhận Second Chance Offer | Giá: {}",
         runnerUp.getUsername(), offer.getOfferPrice());
 
@@ -364,10 +399,26 @@ public class PaymentService implements IPaymentService {
     return offer;
   }
 
+  /**
+   * Lấy AuctionWinner, throw rõ ràng nếu null.
+   *
+   * <p>Dùng PaymentException thay IllegalStateException để PaymentHandler
+   * bắt đúng catch block và trả về error code có nghĩa cho client.
+   * IllegalStateException chỉ được bắt bởi generic {@code catch (Exception e)}
+   * → log ở level ERROR không phân biệt được "lỗi nghiệp vụ" vs "lỗi hệ thống".
+   *
+   * <p>Race condition: AuctionTimerService có thể gọi closeAuction() mà chưa
+   * setWinner() xong trước khi PaymentHandler gọi vào đây — lock theo auctionId
+   * ở cả hai phía giảm thiểu rủi ro, nhưng log.error ở đây là tuyến phòng thủ cuối.
+   */
   private AuctionWinner requireWinner(Auction auction) {
     AuctionWinner w = auction.getWinner();
     if (w == null) {
-      throw new IllegalStateException("Phiên này không có winner.");
+      log.error("[PAYMENT] requireWinner: auctionId={} status={} — winner is null. " +
+              "Possible race condition between AuctionTimerService.closeAuction() and payment trigger.",
+          auction.getId(), auction.getStatus());
+      throw new PaymentException(PaymentException.Reason.WINNER_NOT_FOUND,
+          "Phiên này chưa có người thắng cuộc (winner=null). Vui lòng thử lại sau.");
     }
     return w;
   }
