@@ -18,7 +18,9 @@ public class BidTransaction extends Entity {
     ACCEPTED_RESERVE_NOT_MET,
     REJECTED,
     /** Dùng cho autobid or bỏ */
-    OUTBID
+    OUTBID,
+    /** Bid bị hủy vì người đặt tự rời phiên khi đang dẫn đầu. */
+    CANCELLED_BY_LEAVE
   }
 
   private final NormalUser bidder;
@@ -50,7 +52,7 @@ public class BidTransaction extends Entity {
                                             LocalDateTime updatedAt, NormalUser bidder, String auctionId,
                                             long amount, LocalDateTime timestamp, BidResult result) {
     return new BidTransaction(id, createdAt, updatedAt, bidder,
-            auctionId, amount, timestamp, result);
+        auctionId, amount, timestamp, result);
   }
 
   // Private constructors

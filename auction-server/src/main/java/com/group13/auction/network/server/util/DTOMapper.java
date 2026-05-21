@@ -82,6 +82,13 @@ public final class DTOMapper {
             dto.setCurrentLeaderId(auction.getCurrentLeader().getId());
             dto.setCurrentLeaderUsername(auction.getCurrentLeader().getUsername());
         }
+        // Populate winner payment info — client cần để hiển thị đúng trạng thái
+        // đơn hàng (FUNDS_HELD / ITEM_RECEIVED) sau khi refresh mà không bị stale.
+        if (auction.getWinner() != null) {
+            dto.setPaymentStatus(auction.getWinner().getPaymentStatus().name());
+            dto.setConfirmReceiptDeadline(auction.getWinner().getConfirmReceiptDeadline());
+            dto.setReportDeadline(auction.getWinner().getReportDeadline());
+        }
         return dto;
     }
 

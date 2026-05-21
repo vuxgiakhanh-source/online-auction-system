@@ -199,15 +199,22 @@ public class AuctionService implements IAuctionService {
 
       AuctionWinner auctionWinner = AuctionWinner.create(
           winner, auction.getId(), auction.getCurrentPrice(), depositPaid, false);
+
+      // BUG FIX: persist winner TRƯỚC khi transition state và updateAuctionResult.
+      // Thứ tự cũ: setWinner → transitionToClose → saveWinner (fail silently) → updateAuctionResult
+      // Nguy cơ: saveWinner fail không throw → auction bị đánh dấu FINISHED trong DB
+      // mà không có record trong auction_winners → restart: resolveWinner() = null
+      // → PaymentHandler báo "Phiên này chưa có winner".
+      // Thứ tự mới: saveWinner TRƯỚC → nếu fail thì throw, auction không transition,
+      // timer sẽ retry ở lần scan tiếp theo.
+      if (!auctionWinnerDAO.saveWinner(auctionWinner)) {
+        throw new RuntimeException(
+            "[AUCTION] Không thể lưu AuctionWinner vào DB, hủy đóng phiên: auctionId="
+                + auction.getId() + " winnerId=" + winner.getId());
+      }
+
       auction.setWinner(auctionWinner);
       auction.transitionToClose(true);
-
-      // FIX Bug #1: persist winner vào DB ngay khi tạo
-      // Thiếu dòng này → sau server restart auction.getWinner() = null → "Phiên này chưa có winner"
-      if (!auctionWinnerDAO.saveWinner(auctionWinner)) {
-        log.error("[AUCTION] Không thể lưu AuctionWinner vào DB: auctionId={} winnerId={}",
-            auction.getId(), winner.getId());
-      }
 
       recordWinnerDepositHeldInBank(winner, depositPaid, auction.getId());
 

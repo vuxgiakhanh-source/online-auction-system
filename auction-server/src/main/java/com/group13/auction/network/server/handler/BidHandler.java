@@ -224,29 +224,41 @@ public class BidHandler implements PacketHandler {
         String auctionId = PacketCodec.fromElement(payload, String.class);
         sessionManager.removeAuctionWatcher(session.getConnection(), auctionId);
 
-        // Tra cứu phiên để leaveAuction() có thể tính và mở khóa đúng số cọc.
-        // findAuctionById() có thể trả về null nếu phiên đã kết thúc/bị xóa —
-        // leaveAuction() xử lý null-safe (bỏ qua unlock, vẫn xóa join state).
         Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
 
-        // FIX TC-WS-04d root cause: dùng bidService.leaveAuction() thay vì gọi
-        // removeJoinedAuction() trực tiếp. Lý do: AuctionManager.findUserByUsername()
-        // luôn load user mới từ DB mỗi lần gọi — nếu chỉ xóa in-memory thì
-        // PLACE_BID (dùng user object khác load từ DB) vẫn thấy JOINED và cho bid tiếp.
-        // leaveAuction() xóa cả in-memory lẫn DB (DELETE user_auction_activity)
-        // và mở khóa cọc đã đặt khi join.
         NormalUser bidder = requireNormalUser(session, requestId);
         if (bidder != null) {
-            bidService.leaveAuction(bidder, auction);
-            log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, requestId={}",
-                auctionId, session.getUsername(), bidder.getId(), requestId);
+            boolean leaderChanged = bidService.leaveAuction(bidder, auction);
+            log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, leaderChanged={}, requestId={}",
+                auctionId, session.getUsername(), bidder.getId(), leaderChanged, requestId);
+
+            // Nếu leader bị thay đổi (bid bị huỷ, người kế tiếp lên), broadcast cho tất cả watcher
+            // để LiveBidding UI cập nhật giá và tên người dẫn đầu mới ngay lập tức.
+            if (leaderChanged && auction != null) {
+                long previousPrice = auction.getCurrentPrice(); // đã reset rồi nên lấy giá mới
+                com.group13.auction.common.dto.bid.BidDTOs.BidUpdateDTO update =
+                    com.group13.auction.network.server.util.DTOMapper.toBidUpdateDTO(
+                        auction,
+                        auction.getCurrentPrice(),
+                        previousPrice);
+                update.setLeaderId(
+                    auction.getCurrentLeader() != null ? auction.getCurrentLeader().getId() : null);
+                update.setLeaderUsername(
+                    auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "Chưa có");
+
+                sessionManager.broadcastToAuction(auctionId,
+                    Packet.of(PacketType.BID_UPDATE, update));
+                log.info("Leader-change broadcast sent: auctionId={}, newLeader={}, newPrice={}",
+                    auctionId,
+                    auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "none",
+                    auction.getCurrentPrice());
+            }
         } else {
             log.info("Leave auction handled (non-normal user): auctionId={}, username={}, requestId={}",
                 auctionId, session.getUsername(), requestId);
         }
 
         session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, null, requestId));
-        // TOTAL ACCESS COUNT: count chỉ tăng, không giảm khi leave — không cần broadcast
     }
 
     // ── PLACE BID ─────────────────────────────────────────────────────────────
@@ -259,6 +271,22 @@ public class BidHandler implements PacketHandler {
             log.warn("Invalid place bid payload: username={}, requestId={}", session.getUsername(), requestId, e);
             session.send(Packet.of(PacketType.PLACE_BID_FAILED,
                 ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Payload không hợp lệ.", requestId), requestId));
+            return;
+        }
+
+        // Validate bid amount trước khi làm bất kỳ thứ gì khác
+        if (req.getAmount() <= 0 || req.getAmount() < 1_000) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                    "Số tiền đặt giá không hợp lệ.", requestId),
+                requestId));
+            return;
+        }
+        if (req.getAmount() > 100_000_000_000L) {
+            session.send(Packet.of(PacketType.PLACE_BID_FAILED,
+                ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
+                    "Số tiền đặt giá vượt quá giới hạn cho phép.", requestId),
+                requestId));
             return;
         }
 

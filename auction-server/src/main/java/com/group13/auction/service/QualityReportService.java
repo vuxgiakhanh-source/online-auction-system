@@ -80,8 +80,22 @@ QualityReportService implements IQualityReportService {
         com.group13.auction.model.auction.Auction auction =
             AuctionManager.getInstance().findAuctionById(report.getAuctionId());
         if (auction != null && auction.getWinner() != null) {
+            com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
+
+            // Gate: chỉ winner thật sự mới được submit report.
+            // CONFIRM_ITEM_RECEIVED đã check chặt, nhưng submitReport nên tự bảo vệ
+            // vì report gây ra refund — không thể tin hoàn toàn vào flow trước đó.
+            String reporterId = report.getReporter() != null ? report.getReporter().getId() : null;
+            String winnerId   = auctionWinner.getWinner() != null ? auctionWinner.getWinner().getId() : null;
+            if (reporterId == null || !reporterId.equals(winnerId)) {
+                log.warn("Quality report rejected — reporter is not the auction winner: auctionId={}, reporterId={}, winnerId={}",
+                    report.getAuctionId(), reporterId, winnerId);
+                throw new IllegalStateException(
+                    "Chỉ người thắng phiên đấu giá mới có thể gửi báo cáo chất lượng.");
+            }
+
             com.group13.auction.model.auction.AuctionWinner.PaymentStatus status =
-                auction.getWinner().getPaymentStatus();
+                auctionWinner.getPaymentStatus();
             if (status != com.group13.auction.model.auction.AuctionWinner.PaymentStatus.ITEM_RECEIVED) {
                 log.warn("Quality report rejected — winner has not confirmed item received: auctionId={}, status={}",
                     report.getAuctionId(), status);
