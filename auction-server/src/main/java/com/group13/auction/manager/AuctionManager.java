@@ -71,22 +71,38 @@ public class AuctionManager {
     // trước khi status được flush xuống DB đúng.
     AuctionWinnerDAO auctionWinnerDAO = new AuctionWinnerDAO();
     int restoredCount = 0;
+    int missingWinnerCount = 0;
     if (dbAuctions != null) {
       for (Auction a : dbAuctions) {
         if (a.getStatus() == Auction.AuctionStatus.FINISHED
             || a.getStatus() == Auction.AuctionStatus.PAID
             || a.getStatus() == Auction.AuctionStatus.RUNNING) {
-          AuctionWinner winner = auctionWinnerDAO.findByAuctionId(a.getId(), userDAO);
-          if (winner != null) {
-            a.setWinner(winner);
-            restoredCount++;
+          try {
+            AuctionWinner winner = auctionWinnerDAO.findByAuctionId(a.getId(), userDAO);
+            if (winner != null) {
+              a.setWinner(winner);
+              restoredCount++;
+              log.debug("Winner restored: auctionId={}, winnerId={}, status={}",
+                  a.getId(), winner.getWinner().getId(), a.getStatus());
+            } else {
+              missingWinnerCount++;
+              log.warn("No winner in DB for {} auction: auctionId={} — payment flow bị ảnh hưởng",
+                  a.getStatus(), a.getId());
+            }
+          } catch (Exception e) {
+            log.error("Failed to restore winner: auctionId={}, status={} — skipping",
+                a.getId(), a.getStatus(), e);
           }
         }
       }
     }
 
-    log.info("Đã đồng bộ dữ liệu từ Database: auctions={} users={} winners_restored={}",
-        allAuctions.size(), allUsers.size(), restoredCount);
+    log.info("Đã đồng bộ dữ liệu từ Database: auctions={} users={} winners_restored={} missing_winners={}",
+        allAuctions.size(), allUsers.size(), restoredCount, missingWinnerCount);
+    if (missingWinnerCount > 0) {
+      log.warn("{} phiên FINISHED/PAID/RUNNING không có winner trong DB — kiểm tra bảng auction_winners",
+          missingWinnerCount);
+    }
   }
 
   // ── User management ───────────────────────────────────────────────────────

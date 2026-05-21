@@ -81,12 +81,12 @@ public class BidService implements IBidService {
   private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
 
   public BidService(
-          IAuctionService auctionService,
-          IRatingService ratingService,
-          IWalletService walletService,
-          BidTransactionDAO bidTransactionDAO,
-          AuctionDAO auctionDAO,
-          UserDAO userDAO) {
+      IAuctionService auctionService,
+      IRatingService ratingService,
+      IWalletService walletService,
+      BidTransactionDAO bidTransactionDAO,
+      AuctionDAO auctionDAO,
+      UserDAO userDAO) {
     this.auctionService = auctionService;
     this.ratingService = ratingService;
     this.walletService = walletService;
@@ -166,19 +166,19 @@ public class BidService implements IBidService {
     if (!ratingService.isEligible(bidder)) {
       // FIX #1 + #2: chỉ WARN, không ghi DB
       log.warn("Bid rejected — ineligible: auctionId={}, bidderId={}, status={}",
-              auction.getId(), bidder.getId(), bidder.getAccountStatus());
+          auction.getId(), bidder.getId(), bidder.getAccountStatus());
       throw buildIneligibleException(bidder);
     }
 
     if (!auction.isAcceptingBids()) {
       log.warn("Bid rejected — auction closed: auctionId={}, bidderId={}",
-              auction.getId(), bidder.getId());
+          auction.getId(), bidder.getId());
       throw new AuctionClosedException(auction.getStatus());
     }
 
     if (!bidder.hasJoined(auction.getId())) {
       log.warn("Bid rejected — not joined: auctionId={}, bidderId={}",
-              auction.getId(), bidder.getId());
+          auction.getId(), bidder.getId());
       throw new AuctionBusinessException(AuctionBusinessException.Reason.NOT_JOINED_AUCTION);
     }
 
@@ -193,7 +193,7 @@ public class BidService implements IBidService {
       // Re-check sau khi acquire lock (auction có thể vừa đóng)
       if (!auction.isAcceptingBids()) {
         log.warn("Bid rejected — auction closed (in lock): auctionId={}, bidderId={}",
-                auction.getId(), bidder.getId());
+            auction.getId(), bidder.getId());
         throw new AuctionClosedException(auction.getStatus());
       }
 
@@ -202,9 +202,9 @@ public class BidService implements IBidService {
       if (!strategy.isValidBid(auction, amount)) {
         // StandardBidStrategy đã tự log.warn bên trong — không log lại ở đây
         throw new InvalidBidException(
-                String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
-                        amount, auction.getCurrentPrice(), strategy.describe()),
-                amount, auction.getCurrentPrice());
+            String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
+                amount, auction.getCurrentPrice(), strategy.describe()),
+            amount, auction.getCurrentPrice());
       }
 
       // Cập nhật state auction trong RAM (atomic, trong lock)
@@ -236,9 +236,9 @@ public class BidService implements IBidService {
     // → ngay cả khi thread khác đã ghi giá cao hơn trước, query này sẽ là no-op.
     // FIX PERF: saveTransaction() cũng chạy ngoài lock → giảm lock contention.
     if (!bidTransactionDAO.saveTransactionAndUpdatePrice(
-            tx, auction.getId(), amount, bidder.getId())) {
+        tx, auction.getId(), amount, bidder.getId())) {
       log.error("Bid persist failed after RAM update: auctionId={}, bidderId={}, amount={}",
-              auction.getId(), bidder.getId(), amount);
+          auction.getId(), bidder.getId(), amount);
     }
 
     if (reserveMet) {
@@ -250,7 +250,7 @@ public class BidService implements IBidService {
     if (extendedForAntiSniping) {
       auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
       auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, bidder, amount,
-              String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
+          String.format("Phiên được gia hạn thêm %ds (anti-sniping).", ANTI_SNIPING_EXTENSION_SECONDS));
     }
   }
 
@@ -261,14 +261,14 @@ public class BidService implements IBidService {
   private void joinAsNormalUser(NormalUser bidder, Auction auction, AuctionObserver observer) {
     if (!ratingService.isEligible(bidder)) {
       log.warn("Join rejected — ineligible: auctionId={}, bidderId={}",
-              auction.getId(), bidder.getId());
+          auction.getId(), bidder.getId());
       throw buildIneligibleException(bidder);
     }
     if (bidder.hasRole(User.UserRole.SELLER)
-            && auction.getItem().getSeller() != null
-            && auction.getItem().getSeller().getId().equals(bidder.getId())) {
+        && auction.getItem().getSeller() != null
+        && auction.getItem().getSeller().getId().equals(bidder.getId())) {
       log.warn("Join rejected — seller bid own auction: auctionId={}, bidderId={}",
-              auction.getId(), bidder.getId());
+          auction.getId(), bidder.getId());
       throw new AuctionBusinessException(AuctionBusinessException.Reason.SELLER_CANNOT_BID_OWN_ITEM);
     }
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
@@ -281,12 +281,12 @@ public class BidService implements IBidService {
       // joinedAuctionIds nhưng KHÔNG unlock deposit → user bị lock tiền mà không join được
       // → retry lần sau: double-lock → INSUFFICIENT_DEPOSIT dù balance đủ.
       log.warn("registerJoin failed, rolling back deposit: auctionId={}, bidderId={}, deposit={}",
-              auction.getId(), bidder.getId(), depositAmount, e);
+          auction.getId(), bidder.getId(), depositAmount, e);
       walletService.unlockDeposit(bidder, depositAmount, auction.getId());
       throw e;
     }
     log.info("Bidder joined: auctionId={}, bidderId={}, deposit={}",
-            auction.getId(), bidder.getId(), depositAmount);
+        auction.getId(), bidder.getId(), depositAmount);
   }
 
   private void joinAsAdmin(User admin, Auction auction, AuctionObserver observer) {
@@ -322,17 +322,38 @@ public class BidService implements IBidService {
   // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
 
   /**
-   * Rời phiên: xóa join state khỏi in-memory VÀ DB.
+   * Rời phiên: mở khóa cọc, xóa join state khỏi in-memory VÀ DB.
    *
    * <p>Root cause bug TC-WS-04d: AuctionManager.findUserByUsername() luôn load user
    * mới từ DB — nên removeJoinedAuction() chỉ xóa in-memory trên object hiện tại,
    * nhưng lần load tiếp theo (PLACE_BID) sẽ tạo object mới từ DB và thấy vẫn JOINED.
    * Fix: persist xóa xuống DB ngay khi rời phiên.
+   *
+   * <p>FIX unlock deposit: join khóa cọc 30% giá khởi điểm, leave phải mở khóa tương ứng.
+   * Nếu auction == null (phiên đã xóa khỏi bộ nhớ), bỏ qua bước unlock — không ném exception.
    */
   @Override
-  public void leaveAuction(User user, String auctionId) {
-    user.removeJoinedAuction(auctionId);
-    userDAO.removeJoinedActivity(user.getId(), auctionId);
+  public void leaveAuction(User user, Auction auction) {
+    String auctionId = auction != null ? auction.getId() : null;
+
+    // Mở khóa cọc nếu là NormalUser đang giữ cọc cho phiên này
+    if (user instanceof NormalUser && auction != null) {
+      long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
+      try {
+        walletService.unlockDeposit((NormalUser) user, depositAmount, auction.getId());
+        log.info("Deposit unlocked on leave: userId={}, auctionId={}, deposit={}",
+            user.getId(), auction.getId(), depositAmount);
+      } catch (RuntimeException e) {
+        // Không block leave nếu unlock thất bại — log để debug, nhưng vẫn xóa join state
+        log.warn("Failed to unlock deposit on leave (continuing): userId={}, auctionId={}, reason={}",
+            user.getId(), auction.getId(), e.getMessage());
+      }
+    }
+
+    if (auctionId != null) {
+      user.removeJoinedAuction(auctionId);
+      userDAO.removeJoinedActivity(user.getId(), auctionId);
+    }
     log.info("User left auction: userId={}, auctionId={}", user.getId(), auctionId);
   }
 

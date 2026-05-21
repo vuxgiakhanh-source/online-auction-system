@@ -8,10 +8,13 @@ import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
@@ -52,6 +55,8 @@ public class PaymentHandler implements PacketHandler {
     private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
     // FIX: dùng field thay vì new SecondChanceOfferDAO() trên mỗi request (tránh tạo object thừa)
     private final SecondChanceOfferDAO secondChanceOfferDAO = new SecondChanceOfferDAO();
+    private final AuctionWinnerDAO auctionWinnerDAO = new AuctionWinnerDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     public PaymentHandler(PaymentService paymentService,
                           com.group13.auction.service.AccountService accountService,
@@ -189,15 +194,23 @@ public class PaymentHandler implements PacketHandler {
 
             com.group13.auction.model.auction.Auction auction =
                 AuctionManager.getInstance().findAuctionById(auctionId);
-            if (auction == null || auction.getWinner() == null) {
+            if (auction == null) {
                 session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
                     com.group13.auction.common.dto.core.ErrorDTO.of(
-                        "AUCTION_NOT_FOUND", "Không tìm thấy phiên đấu giá hoặc chưa có kết quả.", requestId),
+                        "AUCTION_NOT_FOUND", "Không tìm thấy phiên đấu giá.", requestId),
                     requestId));
                 return;
             }
 
-            com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
+            // resolveWinner() thử lazy-restore từ DB nếu in-memory null (server restart)
+            com.group13.auction.model.auction.AuctionWinner auctionWinner = resolveWinner(auction);
+            if (auctionWinner == null) {
+                session.send(Packet.of(PacketType.CONFIRM_ITEM_RECEIVED_FAILED,
+                    com.group13.auction.common.dto.core.ErrorDTO.of(
+                        "AUCTION_NOT_FOUND", "Phiên chưa có kết quả.", requestId),
+                    requestId));
+                return;
+            }
 
             // Guard: chỉ winner thật mới được xác nhận
             if (!auctionWinner.getWinner().getId().equals(winner.getId())) {
@@ -262,7 +275,8 @@ public class PaymentHandler implements PacketHandler {
             }
 
             // FIX Bug #3: chỉ winner hợp lệ mới được trigger thanh toán.
-            com.group13.auction.model.auction.AuctionWinner auctionWinner = auction.getWinner();
+            // resolveWinner() thử lazy-restore từ DB nếu in-memory null (server restart).
+            com.group13.auction.model.auction.AuctionWinner auctionWinner = resolveWinner(auction);
             if (auctionWinner == null) {
                 log.warn("Payment rejected because auction has no winner: auctionId={}, username={}, requestId={}",
                     req.getAuctionId(), session.getUsername(), requestId);
@@ -472,5 +486,34 @@ public class PaymentHandler implements PacketHandler {
             return null;
         }
         return (NormalUser) user;
+    }
+
+    /**
+     * Lấy AuctionWinner từ in-memory. Nếu null (server vừa restart),
+     * thử lazy-restore từ DB rồi gán lại vào auction để các request sau
+     * không cần query DB nữa.
+     *
+     * @return AuctionWinner hoặc null nếu thực sự không có trong DB
+     */
+    private AuctionWinner resolveWinner(Auction auction) {
+        AuctionWinner winner = auction.getWinner();
+        if (winner != null) return winner;
+
+        log.warn("Winner null in-memory, attempting lazy restore from DB: auctionId={}, status={}",
+            auction.getId(), auction.getStatus());
+        try {
+            winner = auctionWinnerDAO.findByAuctionId(auction.getId(), userDAO);
+            if (winner != null) {
+                auction.setWinner(winner);
+                log.info("Lazy winner restore success: auctionId={}, winnerId={}",
+                    auction.getId(), winner.getWinner().getId());
+            } else {
+                log.error("No winner found in DB either: auctionId={} — data inconsistency",
+                    auction.getId());
+            }
+        } catch (Exception e) {
+            log.error("Lazy winner restore failed: auctionId={}", auction.getId(), e);
+        }
+        return winner;
     }
 }
