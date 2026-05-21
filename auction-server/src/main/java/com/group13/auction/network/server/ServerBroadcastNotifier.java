@@ -50,18 +50,18 @@ public class ServerBroadcastNotifier {
     public void notifyBidUpdate(Auction auction, long bidAmount,
                                 String bidderUsername, boolean isAutoBid) {
         log.info("Broadcast BID_UPDATE: auctionId={}, bidder={}, amount={}, autoBid={}",
-                auction.getId(), bidderUsername, bidAmount, isAutoBid);
+            auction.getId(), bidderUsername, bidAmount, isAutoBid);
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, bidAmount, bidAmount);
         PacketType type = auction.isReserveMet()
-                ? PacketType.BID_UPDATE
-                : PacketType.BID_RESERVE_NOT_MET_UPDATE;
+            ? PacketType.BID_UPDATE
+            : PacketType.BID_RESERVE_NOT_MET_UPDATE;
 
         sessionManager.broadcastToAuction(auction.getId(), Packet.of(type, update));
 
         BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
-                auction.getId(), bidAmount, bidderUsername, isAutoBid);
+            auction.getId(), bidAmount, bidderUsername, isAutoBid);
         sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+            Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
     }
 
     public void notifyAutoBidTriggered(String userId, String auctionId,
@@ -93,21 +93,21 @@ public class ServerBroadcastNotifier {
     public void notifyAuctionStarted(Auction auction) {
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
         sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_STARTED_UPDATE, update));
+            Packet.of(PacketType.AUCTION_STARTED_UPDATE, update));
     }
 
     public void notifyAuctionEnded(Auction auction) {
         log.info("Broadcast AUCTION_ENDED_UPDATE: auctionId={}", auction.getId());
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
         sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+            Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
         if (auction.getItem() != null && auction.getItem().getSeller() != null) {
             persistNotification(auction.getItem().getSeller().getId(), auction.getId(),
-                    "Phiên đấu giá đã kết thúc", "Phiên đấu giá của bạn đã kết thúc với winner hợp lệ.");
+                "Phiên đấu giá đã kết thúc", "Phiên đấu giá của bạn đã kết thúc với winner hợp lệ.");
         }
         if (auction.getCurrentLeader() != null) {
             persistNotification(auction.getCurrentLeader().getId(), auction.getId(),
-                    "Bạn đã thắng phiên đấu giá", "Chúc mừng bạn đã trở thành người thắng cuộc.");
+                "Bạn đã thắng phiên đấu giá", "Chúc mừng bạn đã trở thành người thắng cuộc.");
         }
     }
 
@@ -118,7 +118,7 @@ public class ServerBroadcastNotifier {
         if (auction.getItem() != null && auction.getItem().getSeller() != null) {
             sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
             persistNotification(auction.getItem().getSeller().getId(), auction.getId(),
-                    "Phiên đấu giá đã kết thúc", "Phiên đấu giá không có người thắng.");
+                "Phiên đấu giá đã kết thúc", "Phiên đấu giá không có người thắng.");
         }
     }
 
@@ -129,26 +129,26 @@ public class ServerBroadcastNotifier {
         if (auction.getItem() != null && auction.getItem().getSeller() != null) {
             sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
             persistNotification(auction.getItem().getSeller().getId(), auction.getId(),
-                    "Phiên đấu giá đã kết thúc", "Giá chốt chưa đạt reserve.");
+                "Phiên đấu giá đã kết thúc", "Giá chốt chưa đạt reserve.");
         }
     }
 
     public void notifyAuctionCanceled(Auction auction, String reason) {
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, reason);
         sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_CANCELED_UPDATE, update));
+            Packet.of(PacketType.AUCTION_CANCELED_UPDATE, update));
     }
 
     public void notifyAuctionExtended(Auction auction,
                                       LocalDateTime newEndTime, int extendedBySeconds) {
         log.info("Broadcast AUCTION_EXTENDED: auctionId={}, newEndTime={}, extendedBy={}s",
-                auction.getId(), newEndTime, extendedBySeconds);
+            auction.getId(), newEndTime, extendedBySeconds);
         AuctionDTOs.AuctionExtendedDTO dto = new AuctionDTOs.AuctionExtendedDTO();
         dto.setAuctionId(auction.getId());
         dto.setNewEndTime(newEndTime);
         dto.setExtendedBySeconds(extendedBySeconds);
         sessionManager.broadcastToAuction(auction.getId(),
-                Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, dto));
+            Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, dto));
     }
 
     public void notifyAuctionUpcomingEnd(String auctionId, long remainingSeconds) {
@@ -156,7 +156,7 @@ public class ServerBroadcastNotifier {
         dto.setAuctionId(auctionId);
         dto.setRemainingSeconds(remainingSeconds);
         sessionManager.broadcastToAuction(auctionId,
-                Packet.of(PacketType.AUCTION_UPCOMING_END_NOTIFY, dto));
+            Packet.of(PacketType.AUCTION_UPCOMING_END_NOTIFY, dto));
     }
 
     // ── Payment ───────────────────────────────────────────────────────────────
@@ -182,24 +182,47 @@ public class ServerBroadcastNotifier {
     public void notifySecondChanceOffer(String runnerUpUserId,
                                         PaymentDTOs.SecondChanceOfferDTO offer) {
         sessionManager.sendToUser(runnerUpUserId,
-                Packet.of(PacketType.SECOND_CHANCE_OFFER_NOTIFY, offer));
+            Packet.of(PacketType.SECOND_CHANCE_OFFER_NOTIFY, offer));
     }
 
     public void notifyPaymentCompleted(String sellerId,
                                        PaymentDTOs.PaymentResultDTO result) {
         sessionManager.sendToUser(sellerId,
-                Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
+            Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
     }
 
     public void notifyPaymentExpired(String winnerId,
                                      PaymentDTOs.PaymentExpiredDTO expired) {
         sessionManager.sendToUser(winnerId,
-                Packet.of(PacketType.PAYMENT_EXPIRED_NOTIFY, expired));
+            Packet.of(PacketType.PAYMENT_EXPIRED_NOTIFY, expired));
     }
 
     public void notifySecondChanceExpired(String runnerUpUserId, String auctionId) {
         sessionManager.sendToUser(runnerUpUserId,
-                Packet.of(PacketType.SECOND_CHANCE_EXPIRED_NOTIFY, auctionId));
+            Packet.of(PacketType.SECOND_CHANCE_EXPIRED_NOTIFY, auctionId));
+    }
+
+    /**
+     * Broadcast tới tất cả watcher khi runner-up chấp nhận Second Chance Offer.
+     * Phiên có winner mới — client cần cập nhật UI (hiển thị winner, enable nút thanh toán).
+     *
+     * @param auction phiên đấu giá (đã có winner mới được set)
+     */
+    public void notifySecondChanceAccepted(Auction auction) {
+        log.info("Broadcast SECOND_CHANCE_ACCEPTED_UPDATE: auctionId={}, newWinner={}",
+            auction.getId(),
+            auction.getWinner() != null ? auction.getWinner().getWinner().getUsername() : "null");
+        AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, "SECOND_CHANCE_ACCEPTED");
+        sessionManager.broadcastToAuction(auction.getId(),
+            Packet.of(PacketType.SECOND_CHANCE_ACCEPTED_UPDATE, update));
+
+        // Notify seller riêng: có winner mới đang chờ thanh toán
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            String sellerId = auction.getItem().getSeller().getId();
+            persistNotification(sellerId, auction.getId(),
+                "Người mua mới chấp nhận Second Chance",
+                "Runner-up đã chấp nhận mua phiên của bạn. Đang chờ thanh toán.");
+        }
     }
 
     // ── Account ───────────────────────────────────────────────────────────────
@@ -223,23 +246,23 @@ public class ServerBroadcastNotifier {
     public void notifyQualityReportApproved(String winnerId,
                                             ReportDTOs.QualityReportResultDTO result) {
         sessionManager.sendToUser(winnerId,
-                Packet.of(PacketType.QUALITY_REPORT_APPROVED_NOTIFY, result));
+            Packet.of(PacketType.QUALITY_REPORT_APPROVED_NOTIFY, result));
     }
 
     public void notifyQualityReportReceived(String sellerId,
                                             ReportDTOs.QualityReportDTO report) {
         sessionManager.sendToUser(sellerId,
-                Packet.of(PacketType.QUALITY_REPORT_RECEIVED_NOTIFY, report));
+            Packet.of(PacketType.QUALITY_REPORT_RECEIVED_NOTIFY, report));
     }
 
     public void notifyQualityReportRejected(String sellerId, String reportId) {
         sessionManager.sendToUser(sellerId,
-                Packet.of(PacketType.QUALITY_REPORT_REJECTED_NOTIFY, reportId));
+            Packet.of(PacketType.QUALITY_REPORT_REJECTED_NOTIFY, reportId));
     }
 
     public void notifySellerRefundOverdue(String sellerId) {
         sessionManager.sendToUser(sellerId,
-                Packet.of(PacketType.SELLER_REFUND_OVERDUE_NOTIFY, sellerId));
+            Packet.of(PacketType.SELLER_REFUND_OVERDUE_NOTIFY, sellerId));
     }
 
     public void notifyFraudDetected(AdminDTOs.FraudDetectedDTO fraud) {
