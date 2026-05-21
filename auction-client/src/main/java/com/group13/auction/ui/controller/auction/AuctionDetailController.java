@@ -144,7 +144,6 @@ public final class AuctionDetailController {
                 response ->
                     FxThreadUtil.runOnFxThread(
                         () -> {
-                            joinedAuctionState.markJoined(auctionId);
                             setLoading(false, "Tham gia thành công.");
                             openLiveBidding();
                         }))
