@@ -322,30 +322,39 @@ public class BidService implements IBidService {
   // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
 
   /**
-   * Rời phiên: mở khóa cọc, xóa join state khỏi in-memory VÀ DB.
+   * Rời phiên: xử lý cọc (có phạt nếu đang là current leader), xóa join state khỏi in-memory VÀ DB.
    *
-   * <p>Root cause bug TC-WS-04d: AuctionManager.findUserByUsername() luôn load user
-   * mới từ DB — nên removeJoinedAuction() chỉ xóa in-memory trên object hiện tại,
-   * nhưng lần load tiếp theo (PLACE_BID) sẽ tạo object mới từ DB và thấy vẫn JOINED.
-   * Fix: persist xóa xuống DB ngay khi rời phiên.
-   *
-   * <p>FIX unlock deposit: join khóa cọc 30% giá khởi điểm, leave phải mở khóa tương ứng.
-   * Nếu auction == null (phiên đã xóa khỏi bộ nhớ), bỏ qua bước unlock — không ném exception.
+   * <p>Nếu user đang là current leader khi rời → mất 50% cọc (phạt bid cao rồi out).
+   * Nếu chưa bid hoặc không phải leader → hoàn toàn bộ cọc.
+   * Nếu auction == null (phiên đã xóa), bỏ qua wallet operation — không ném exception.
    */
   @Override
   public void leaveAuction(User user, Auction auction) {
     String auctionId = auction != null ? auction.getId() : null;
 
-    // Mở khóa cọc nếu là NormalUser đang giữ cọc cho phiên này
     if (user instanceof NormalUser && auction != null) {
+      NormalUser bidder = (NormalUser) user;
       long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
+
+      NormalUser currentLeader = auction.getCurrentLeader();
+      boolean isCurrentLeader = currentLeader != null
+          && currentLeader.getId().equals(bidder.getId());
+
       try {
-        walletService.unlockDeposit((NormalUser) user, depositAmount, auction.getId());
-        log.info("Deposit unlocked on leave: userId={}, auctionId={}, deposit={}",
-            user.getId(), auction.getId(), depositAmount);
+        if (isCurrentLeader) {
+          // Bid cao rồi out: phạt 50% cọc, hoàn 50% còn lại
+          long penaltyAmount = depositAmount / 2;
+          walletService.partialForfeitDeposit(bidder, depositAmount, penaltyAmount, auction.getId());
+          log.warn("Leave penalty applied (was current leader): userId={}, auctionId={}, deposit={}, penalty={}",
+              bidder.getId(), auction.getId(), depositAmount, penaltyAmount);
+        } else {
+          // Chưa bid hoặc không phải leader: hoàn toàn bộ cọc
+          walletService.unlockDeposit(bidder, depositAmount, auction.getId());
+          log.info("Deposit unlocked on leave (not leader): userId={}, auctionId={}, deposit={}",
+              bidder.getId(), auction.getId(), depositAmount);
+        }
       } catch (RuntimeException e) {
-        // Không block leave nếu unlock thất bại — log để debug, nhưng vẫn xóa join state
-        log.warn("Failed to unlock deposit on leave (continuing): userId={}, auctionId={}, reason={}",
+        log.error("Wallet operation failed on leave (continuing): userId={}, auctionId={}, reason={}",
             user.getId(), auction.getId(), e.getMessage());
       }
     }

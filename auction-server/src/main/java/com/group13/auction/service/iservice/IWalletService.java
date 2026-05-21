@@ -75,6 +75,21 @@ public interface IWalletService {
     void forfeitDeposit(NormalUser winner, long depositAmount, String auctionId);
 
     /**
+     * Phạt một phần cọc khi bidder là current leader mà tự rời phiên.
+     *
+     * <p>Tịch thu {@code penaltyAmount} vào SystemBank, hoàn trả phần còn lại
+     * ({@code depositAmount - penaltyAmount}) về available balance.
+     * Toàn bộ thực hiện trong một lock để tránh race condition.
+     *
+     * @param bidder        bidder bị phạt
+     * @param depositAmount tổng cọc đã khóa (30% giá khởi điểm)
+     * @param penaltyAmount phần bị tịch thu (thường 50% của depositAmount)
+     * @param auctionId     id phiên
+     */
+    void partialForfeitDeposit(NormalUser bidder, long depositAmount,
+                               long penaltyAmount, String auctionId);
+
+    /**
      * Chuyển tiền từ Winner -> SystemBank (FUNDS_HELD).
      * Seller CHƯA nhận tiền - chỉ nhận qua {@link PaymentService#releaseToSeller}.
      *
@@ -91,5 +106,5 @@ public interface IWalletService {
      * @param auctionId id phiên
      */
     void executePaymentToBank(
-            NormalUser winner, long finalPrice, long depositPaid, String auctionId);
+        NormalUser winner, long finalPrice, long depositPaid, String auctionId);
 }
