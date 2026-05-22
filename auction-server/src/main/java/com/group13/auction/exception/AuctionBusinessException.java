@@ -9,7 +9,9 @@ public class AuctionBusinessException extends RuntimeException {
         /** Tài khoản chưa đủ số dư cọc để tham gia phiên. */
         INSUFFICIENT_DEPOSIT,
         /** Seller không được tự đấu giá món hàng của chính mình. */
-        SELLER_CANNOT_BID_OWN_ITEM
+        SELLER_CANNOT_BID_OWN_ITEM,
+        /** User đã từng rời phiên này — không được tham gia lại. */
+        ALREADY_LEFT_AUCTION
     }
 
     private final Reason reason;
@@ -27,6 +29,8 @@ public class AuctionBusinessException extends RuntimeException {
                 return "Số dư không đủ để đặt cọc (cần ít nhất 30% giá khởi điểm).";
             case SELLER_CANNOT_BID_OWN_ITEM:
                 return "Seller không được tự đấu giá món hàng của chính mình.";
+            case ALREADY_LEFT_AUCTION:
+                return "Bạn đã rời phiên đấu giá này và không thể tham gia lại.";
             default:
                 return "Vi phạm logic hệ thống.";
         }

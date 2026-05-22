@@ -53,6 +53,8 @@ public abstract class User extends Entity {
 
   private Set<String> joinedAuctionIds;
   private List<String> watchListAuctionIds;
+  /** Tập auction user đã rời — không được join lại. Thread-safe nhờ ConcurrentHashMap.newKeySet(). */
+  private Set<String> leftAuctionIds;
 
   // Constructor khai sinh
 
@@ -68,6 +70,7 @@ public abstract class User extends Entity {
     this.suspendedAt = null;
     this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
     this.watchListAuctionIds = new CopyOnWriteArrayList<>();
+    this.leftAuctionIds = ConcurrentHashMap.newKeySet();
   }
 
   // Constructor hồi sinh
@@ -97,6 +100,7 @@ public abstract class User extends Entity {
     this.suspendedAt = suspendedAt;
     this.joinedAuctionIds = ConcurrentHashMap.newKeySet();
     this.watchListAuctionIds = new CopyOnWriteArrayList<>();
+    this.leftAuctionIds = ConcurrentHashMap.newKeySet();
   }
 
   // Hash mật khẩu
@@ -199,6 +203,27 @@ public abstract class User extends Entity {
    */
   public void removeFromWatchList(String auctionId) {
     watchListAuctionIds.remove(auctionId);
+  }
+
+  /**
+   * FIX: Đánh dấu user đã rời phiên — không cho join lại.
+   * Gọi trong BidService.leaveAuction() sau khi rời thành công.
+   */
+  public void addLeftAuction(String auctionId) {
+    leftAuctionIds.add(auctionId);
+  }
+
+  /** Kiểm tra user đã từng rời phiên này chưa (để chặn rejoin). */
+  public boolean hasLeft(String auctionId) {
+    return leftAuctionIds.contains(auctionId);
+  }
+
+  /** Inject leftAuctionIds từ DB — chỉ DAO gọi sau reconstitute(). */
+  public void setLeftAuctionIds(Set<String> ids) {
+    this.leftAuctionIds.clear();
+    if (ids != null) {
+      this.leftAuctionIds.addAll(ids);
+    }
   }
 
   // DAO injection setters
