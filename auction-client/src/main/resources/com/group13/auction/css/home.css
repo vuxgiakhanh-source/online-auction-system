@@ -247,54 +247,48 @@
     -fx-text-fill: rgba(255, 255, 255, 0.72);
 }
 
-/* 1. Làm nhạt/trong suốt nền của ScrollPane và Viewport */
-.scroll-pane {
-    -fx-background-color: transparent; /* Bỏ màu nền mặc định */
+/* Landing ScrollPane (landing-view.fxml — styleClass="background-layer") */
+.scroll-pane.background-layer {
+    -fx-background-color: transparent;
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
 
-.scroll-pane > .viewport {
-    -fx-background-color: transparent; /* Giúp lộ lớp background-layer phía dưới của bạn */
+.scroll-pane.background-layer > .viewport {
+    -fx-background-color: transparent;
 }
 
-/* 2. Làm nhạt rãnh chạy của thanh cuộn (Track) */
-.scroll-pane .scroll-bar:vertical,
-.scroll-pane .scroll-bar:horizontal {
-    -fx-background-color: rgba(255, 255, 255, 0.3); /* Dùng màu trắng mờ siêu nhạt */
-    /* Nếu nền web của bạn màu sáng, hãy đổi thành: rgba(0, 0, 0, 0.04) */
-    -fx-pref-width: 8px;  /* Thu nhỏ độ rộng để thanh cuộn tinh tế hơn */
-    -fx-pref-height: 8px; /* Thu nhỏ độ cao cho thanh cuộn ngang */
+.scroll-pane.background-layer .scroll-bar:vertical,
+.scroll-pane.background-layer .scroll-bar:horizontal {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-pref-width: 8px;
+    -fx-pref-height: 8px;
 }
 
-/* 3. Làm nhạt cục kéo (Thumb) */
-.scroll-pane .scroll-bar .thumb {
-    /* Sử dụng màu xám nhạt và có độ trong suốt (alpha = 0.4) */
-    -fx-background-color: rgba(0, 0, 0, 0.25); 
-    -fx-background-radius: 20px; /* Bo tròn hẳn hai đầu nhìn sẽ rất sang */
+.scroll-pane.background-layer .scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.25);
+    -fx-background-radius: 20px;
 }
 
-/* 4. Hiệu ứng khi người dùng tương tác (Đậm lên một chút để dễ nhìn) */
-.scroll-pane .scroll-bar .thumb:hover {
-    -fx-background-color: rgba(0, 0, 0, 0.4); /* Đậm hơn một chút khi di chuột vào */
+.scroll-pane.background-layer .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
 }
 
-.scroll-pane .scroll-bar .thumb:pressed {
-    -fx-background-color: rgba(0, 0, 0, 0.6); /* Đậm thêm khi click giữ */
+.scroll-pane.background-layer .scroll-bar .thumb:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
 }
 
-/* 5. Xóa bỏ hoàn toàn các nút mũi tên (Increment/Decrement) ở 2 đầu để thanh cuộn gọn gàng */
-.scroll-pane .scroll-bar .increment-button,
-.scroll-pane .scroll-bar .decrement-button {
+.scroll-pane.background-layer .scroll-bar .increment-button,
+.scroll-pane.background-layer .scroll-bar .decrement-button {
     -fx-background-color: transparent;
     -fx-padding: 0;
     -fx-pref-width: 0;
     -fx-pref-height: 0;
 }
 
-.scroll-pane .scroll-bar .increment-arrow,
-.scroll-pane .scroll-bar .decrement-arrow {
-    -fx-shape: ""; /* Xóa hình mũi tên */
+.scroll-pane.background-layer .scroll-bar .increment-arrow,
+.scroll-pane.background-layer .scroll-bar .decrement-arrow {
+    -fx-shape: "";
     -fx-padding: 0;
 }
 

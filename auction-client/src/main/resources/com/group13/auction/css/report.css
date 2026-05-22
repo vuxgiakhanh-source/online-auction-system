@@ -215,16 +215,6 @@
     -fx-background-color: transparent;
 }
 
-.report-scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-border-color: transparent;
-}
-
-.report-scroll-pane > .viewport {
-    -fx-background-color: transparent;
-}
-
 .report-content {
     -fx-background-color: transparent;
 }

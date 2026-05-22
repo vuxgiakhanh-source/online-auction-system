@@ -30,7 +30,7 @@
     <ScrollPane fitToWidth="true"
                 hbarPolicy="NEVER"
                 pannable="true"
-                styleClass="auction-scroll-pane"
+                styleClass="page-scroll-pane"
                 AnchorPane.topAnchor="0.0"
                 AnchorPane.bottomAnchor="0.0"
                 AnchorPane.leftAnchor="0.0"
