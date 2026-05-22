@@ -65,6 +65,8 @@ public final class ViewPath {
             "/com/group13/auction/view/admin/seller-approval-view.fxml";
     public static final String ADMIN_REPORT_REVIEW_VIEW =
             "/com/group13/auction/view/admin/quality-report-review-view.fxml";
+    public static final String ADMIN_STAFF_MANAGEMENT_VIEW =
+        "/com/group13/auction/view/admin/staff-admin-management-view.fxml";
 
     private ViewPath() {
         // Utility class.
