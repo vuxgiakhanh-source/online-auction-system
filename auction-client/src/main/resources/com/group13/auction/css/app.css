@@ -9,6 +9,70 @@
     -fx-background-color: #0f253c;
 }
 
+/* ── Page ScrollPane: full-screen scroll (mọi màn chính) ── */
+.page-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.page-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.page-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 10px;
+    -fx-padding: 6 4 6 2;
+}
+
+.page-scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-background-radius: 999;
+    -fx-border-color: transparent;
+}
+
+.page-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(103, 184, 234, 0.38);
+    -fx-background-insets: 2;
+    -fx-background-radius: 999;
+}
+
+.page-scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: rgba(103, 184, 234, 0.62);
+}
+
+.page-scroll-pane .scroll-bar:vertical .thumb:pressed {
+    -fx-background-color: rgba(103, 184, 234, 0.88);
+}
+
+.page-scroll-pane .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+
+.page-scroll-pane .scroll-bar .increment-button,
+.page-scroll-pane .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+    -fx-max-width: 0;
+    -fx-max-height: 0;
+}
+
+.page-scroll-pane .scroll-bar .increment-arrow,
+.page-scroll-pane .scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
 .label {
     -fx-text-fill: #ffffff;
 }
@@ -204,6 +268,34 @@
 
 .chatbot-message-scroll > .viewport {
     -fx-background-color: transparent;
+}
+
+.chatbot-message-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+    -fx-padding: 4 2 4 0;
+}
+
+.chatbot-message-scroll .scroll-bar:vertical .track {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 999;
+}
+
+.chatbot-message-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(103, 184, 234, 0.32);
+    -fx-background-insets: 1;
+    -fx-background-radius: 999;
+}
+
+.chatbot-message-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: rgba(103, 184, 234, 0.55);
+}
+
+.chatbot-message-scroll .scroll-bar .increment-button,
+.chatbot-message-scroll .scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
 }
 
 .chatbot-message-container {

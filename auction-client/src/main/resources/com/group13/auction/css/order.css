@@ -25,17 +25,6 @@
     -fx-background-color: transparent;
 }
 
-.order-scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 0;
-}
-
-.order-scroll-pane > .viewport {
-    -fx-background-color: transparent;
-}
-
 .order-list {
     -fx-background-color: transparent;
 }
@@ -183,40 +172,6 @@
     -fx-text-fill: #0f253c;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 16, 0.16, 0, 6);
-}
-
-
-/* ORDER SCROLLBAR */
-
-.order-scroll-pane .scroll-bar:vertical {
-    -fx-background-color: transparent;
-    -fx-padding: 0 0 0 8;
-}
-
-.order-scroll-pane .scroll-bar:vertical .track {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
-    -fx-background-radius: 999;
-}
-
-.order-scroll-pane .scroll-bar:vertical .thumb {
-    -fx-background-color: rgba(255, 255, 255, 0.34);
-    -fx-background-radius: 999;
-}
-
-.order-scroll-pane .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: rgba(103, 184, 234, 0.58);
-}
-
-.order-scroll-pane .increment-button,
-.order-scroll-pane .decrement-button {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-}
-
-.order-scroll-pane .increment-arrow,
-.order-scroll-pane .decrement-arrow {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
 }
 
 
