@@ -9,6 +9,7 @@ import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.service.auction.AuctionServiceSupport;
 import com.group13.auction.viewmodel.admin.SellerApprovalViewModel;
+import com.group13.auction.viewmodel.admin.StaffAdminViewModel;
 import com.group13.auction.viewmodel.admin.UserModerationViewModel;
 import java.util.List;
 import java.util.Objects;
@@ -115,6 +116,66 @@ public final class AdminUserService {
     }
 
     /**
+     * Lấy danh sách Staff Admin. Chỉ MASTER Admin được sử dụng chức năng này.
+     *
+     * @return future chứa danh sách Staff Admin
+     */
+    public CompletableFuture<List<StaffAdminViewModel>> getAllStaffAdmins() {
+        if (!currentUserIsMasterAdmin()) {
+            return AuctionServiceSupport.failedFuture(
+                "Tài khoản hiện tại không có quyền System Admin.");
+        }
+
+        return AuctionServiceSupport
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.adminGetAllStaff(),
+                PacketType.ADMIN_GET_ALL_STAFF_SUCCESS,
+                UserDTO[].class,
+                "Không tải được danh sách Staff Admin.")
+            .thenApply(UserViewModelMapper::toStaffAdminViewModels);
+    }
+
+    /**
+     * Tạo tài khoản Staff Admin mới bằng API System Admin.
+     *
+     * @param username tên đăng nhập Staff Admin
+     * @param password mật khẩu Staff Admin
+     * @param email email Staff Admin
+     * @return future chứa Staff Admin vừa được tạo
+     */
+    public CompletableFuture<StaffAdminViewModel> createStaffAdmin(
+        String username, String password, String email) {
+        if (!currentUserIsMasterAdmin()) {
+            return AuctionServiceSupport.failedFuture(
+                "Tài khoản hiện tại không có quyền System Admin.");
+        }
+        if (isBlank(username)) {
+            return AuctionServiceSupport.failedFuture("Vui lòng nhập tên đăng nhập Staff Admin.");
+        }
+        if (isBlank(password)) {
+            return AuctionServiceSupport.failedFuture("Vui lòng nhập mật khẩu Staff Admin.");
+        }
+        if (isBlank(email)) {
+            return AuctionServiceSupport.failedFuture("Vui lòng nhập email Staff Admin.");
+        }
+
+        AdminDTOs.CreateStaffAdminDTO request = new AdminDTOs.CreateStaffAdminDTO();
+        request.setUsername(username.trim());
+        request.setPassword(password);
+        request.setEmail(email.trim());
+
+        return AuctionServiceSupport
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.adminCreateStaff(request),
+                PacketType.ADMIN_CREATE_STAFF_SUCCESS,
+                UserDTO.class,
+                "Không tạo được Staff Admin.")
+            .thenApply(UserViewModelMapper::toStaffAdminViewModel);
+    }
+
+    /**
      * Lấy danh sách candidate có thể duyệt quyền Seller.
      *
      * <p>Server hiện có API {@code ADMIN_APPROVE_SELLER_ROLE}, nhưng chưa có API riêng để list
@@ -136,6 +197,14 @@ public final class AdminUserService {
                         UserDTO[].class,
                         "Không tải được danh sách ứng viên Seller.")
                 .thenApply(UserViewModelMapper::toSellerApprovalViewModels);
+    }
+
+    private boolean currentUserIsMasterAdmin() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> session.isMasterAdmin())
+            .orElse(false);
     }
 
     /**

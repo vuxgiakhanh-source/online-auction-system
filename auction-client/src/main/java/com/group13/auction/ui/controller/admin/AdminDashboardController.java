@@ -6,6 +6,7 @@ import java.util.StringJoiner;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 
 /**
  * Controller cho màn Admin Dashboard.
@@ -27,6 +28,9 @@ public final class AdminDashboardController {
     @FXML private Button sellersButton;
     @FXML private Button reportsButton;
     @FXML private Button backButton;
+    @FXML private Button staffAdminButton;
+
+    @FXML private VBox staffAdminCard;
 
     /** Khởi tạo dashboard và kiểm tra quyền Admin. */
     @FXML
@@ -38,10 +42,7 @@ public final class AdminDashboardController {
         }
 
         if (accessStatusLabel != null) {
-            accessStatusLabel.setText(
-                    admin
-                            ? "Tài khoản hiện tại có quyền Admin."
-                            : "Bạn không có quyền truy cập khu vực Admin.");
+            accessStatusLabel.setText(adminModerationService.getCurrentAdminAccessLabel());
         }
 
         if (statisticsStatusLabel != null) {
@@ -54,6 +55,14 @@ public final class AdminDashboardController {
         }
 
         setAdminActionsEnabled(admin);
+        setMasterOnlyActionsVisible(adminModerationService.currentUserIsMasterAdmin());
+    }
+
+    @FXML
+    private void handleOpenStaffAdminManagement() {
+        if (adminModerationService.currentUserIsMasterAdmin()) {
+            Navigator.getInstance().goToAdminStaffManagement();
+        }
     }
 
     @FXML
@@ -101,6 +110,21 @@ public final class AdminDashboardController {
         }
         if (reportsButton != null) {
             reportsButton.setDisable(!enabled);
+        }
+        if (staffAdminButton != null) {
+            staffAdminButton.setDisable(!enabled || !adminModerationService.currentUserIsMasterAdmin());
+        }
+    }
+
+    private void setMasterOnlyActionsVisible(boolean visible) {
+        if (staffAdminCard != null) {
+            staffAdminCard.setVisible(visible);
+            staffAdminCard.setManaged(visible);
+        }
+        if (staffAdminButton != null) {
+            staffAdminButton.setVisible(visible);
+            staffAdminButton.setManaged(visible);
+            staffAdminButton.setDisable(!visible);
         }
     }
 

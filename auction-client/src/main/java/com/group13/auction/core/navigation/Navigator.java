@@ -230,4 +230,9 @@ public final class Navigator {
     public void goToAdminReportReview() {
         goTo(Route.ADMIN_REPORT_REVIEW);
     }
+
+    /** Chuyển tới màn System Admin quản lý Staff Admin. */
+    public void goToAdminStaffManagement() {
+        goTo(Route.ADMIN_STAFF_MANAGEMENT);
+    }
 }

@@ -19,6 +19,7 @@ public final class UserSession {
     private final String email;
     private final List<String> roles;
     private final String accountStatus;
+    private final String adminType;
 
     private UserSession(
             String token,
@@ -26,13 +27,15 @@ public final class UserSession {
             String username,
             String email,
             List<String> roles,
-            String accountStatus) {
+            String accountStatus,
+            String adminType) {
         this.token = token;
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.roles = List.copyOf(roles == null ? Collections.emptyList() : roles);
         this.accountStatus = accountStatus;
+        this.adminType = adminType;
     }
 
     /**
@@ -62,7 +65,8 @@ public final class UserSession {
                 user.getUsername(),
                 user.getEmail(),
                 user.getRoles(),
-                user.getAccountStatus());
+                user.getAccountStatus(),
+                user.getAdminType());
     }
 
     /**
@@ -77,14 +81,37 @@ public final class UserSession {
      * @return session phía client
      */
     public static UserSession of(
-            String token,
-            String userId,
-            String username,
-            String email,
-            List<String> roles,
-            String accountStatus) {
+        String token,
+        String userId,
+        String username,
+        String email,
+        List<String> roles,
+        String accountStatus) {
+        return of(token, userId, username, email, roles, accountStatus, null);
+    }
+
+    /**
+     * Tạo session thủ công kèm loại Admin, hữu ích cho test hoặc dữ liệu server đã map sẵn.
+     *
+     * @param token session token
+     * @param userId id người dùng
+     * @param username tên đăng nhập
+     * @param email email người dùng
+     * @param roles danh sách role
+     * @param accountStatus trạng thái tài khoản
+     * @param adminType loại Admin: {@code MASTER}, {@code STAFF}, hoặc null nếu không phải Admin
+     * @return session phía client
+     */
+    public static UserSession of(
+        String token,
+        String userId,
+        String username,
+        String email,
+        List<String> roles,
+        String accountStatus,
+        String adminType) {
         return new UserSession(
-                requireText(token, "token"), userId, username, email, roles, accountStatus);
+            requireText(token, "token"), userId, username, email, roles, accountStatus, adminType);
     }
 
     public String getToken() {
@@ -111,6 +138,10 @@ public final class UserSession {
         return accountStatus;
     }
 
+    public String getAdminType() {
+        return adminType;
+    }
+
     /**
      * Kiểm tra user hiện tại có role nhất định hay không.
      *
@@ -126,7 +157,19 @@ public final class UserSession {
     }
 
     public boolean isAdmin() {
-        return hasRole("ADMIN");
+        return hasRole("ADMIN") || hasAdminType();
+    }
+
+    public boolean isMasterAdmin() {
+        return isAdmin() && "MASTER".equalsIgnoreCase(adminType);
+    }
+
+    public boolean isStaffAdmin() {
+        return isAdmin() && "STAFF".equalsIgnoreCase(adminType);
+    }
+
+    public boolean hasAdminType() {
+        return adminType != null && !adminType.isBlank();
     }
 
     public boolean isSeller() {

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/admin.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.admin.StaffAdminManagementController">
+
+    <VBox spacing="20.0" styleClass="admin-page">
+        <padding>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Quản lý Staff Admin" styleClass="page-title"/>
+                <Label
+                        text="System Admin có thể tạo tài khoản Staff Admin và xem danh sách Staff Admin."
+                        wrapText="true"
+                        styleClass="page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    fx:id="backButton"
+                    text="Về trang Admin"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToDashboard"/>
+        </HBox>
+
+        <HBox spacing="18.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="14.0" styleClass="detail-panel" prefWidth="360.0">
+                <VBox spacing="4.0">
+                    <Label text="Tạo Staff Admin" styleClass="section-title"/>
+                    <Label
+                            text="Tài khoản mới sẽ có quyền xử lý các nghiệp vụ quản trị được server cho phép."
+                            wrapText="true"
+                            styleClass="muted-label"/>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label text="Tên đăng nhập" styleClass="form-label"/>
+                    <TextField
+                            fx:id="usernameField"
+                            promptText="staff.username"
+                            styleClass="form-field"/>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label text="Email" styleClass="form-label"/>
+                    <TextField
+                            fx:id="emailField"
+                            promptText="staff@example.com"
+                            styleClass="form-field"/>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label text="Mật khẩu" styleClass="form-label"/>
+                    <PasswordField
+                            fx:id="passwordField"
+                            promptText="Nhập mật khẩu"
+                            styleClass="form-field"/>
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label text="Xác nhận mật khẩu" styleClass="form-label"/>
+                    <PasswordField
+                            fx:id="confirmPasswordField"
+                            promptText="Nhập lại mật khẩu"
+                            styleClass="form-field"/>
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                    <Button
+                            fx:id="clearButton"
+                            text="Xóa form"
+                            styleClass="secondary-button"
+                            onAction="#handleClearForm"/>
+                    <Button
+                            fx:id="createButton"
+                            text="Tạo Staff Admin"
+                            styleClass="primary-button"
+                            onAction="#handleCreateStaffAdmin"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="12.0" styleClass="table-panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <VBox spacing="4.0">
+                        <Label text="Danh sách Staff Admin" styleClass="section-title"/>
+                        <Label
+                                text="Dữ liệu được tải từ API System Admin."
+                                styleClass="muted-label"/>
+                    </VBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Button
+                            fx:id="refreshButton"
+                            text="Tải lại"
+                            styleClass="secondary-button"
+                            onAction="#handleRefresh"/>
+                </HBox>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <TableView fx:id="staffTable" styleClass="data-table">
+                        <columns>
+                            <TableColumn fx:id="adminIdColumn" text="Mã Admin" prefWidth="180.0"/>
+                            <TableColumn fx:id="usernameColumn" text="Tên đăng nhập" prefWidth="170.0"/>
+                            <TableColumn fx:id="emailColumn" text="Email" prefWidth="250.0"/>
+                            <TableColumn fx:id="adminTypeColumn" text="Loại Admin" prefWidth="130.0"/>
+                            <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="150.0"/>
+                        </columns>
+                    </TableView>
+
+                    <Label
+                            fx:id="emptyStateLabel"
+                            text="Chưa có dữ liệu Staff Admin."
+                            styleClass="empty-state-label"/>
+                </StackPane>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <ProgressIndicator
+                    fx:id="loadingIndicator"
+                    prefWidth="24.0"
+                    prefHeight="24.0"
+                    visible="false"
+                    managed="false"/>
+            <Label
+                    fx:id="statusLabel"
+                    text="Sẵn sàng."
+                    wrapText="true"
+                    styleClass="status-label"/>
+        </HBox>
+
+        <!-- Signature -->
+        <HBox alignment="BOTTOM_RIGHT">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Label styleClass="signature-label" text="by CKNT team"/>
+        </HBox>
+    </VBox>
+</StackPane>
