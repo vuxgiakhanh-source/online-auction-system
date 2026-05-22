@@ -77,16 +77,16 @@ public abstract class User extends Entity {
    * Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con
    */
   protected User(
-          String id,
-          LocalDateTime createdAt,
-          LocalDateTime updatedAt,
-          String username,
-          String hashedPassword,
-          String email,
-          UserRole role,
-          AccountStatus accountStatus,
-          double rating,
-          LocalDateTime suspendedAt) {
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String username,
+      String hashedPassword,
+      String email,
+      UserRole role,
+      AccountStatus accountStatus,
+      double rating,
+      LocalDateTime suspendedAt) {
     super(id, createdAt, updatedAt);
     this.username = username;
     this.hashedPassword = hashedPassword;
@@ -190,6 +190,17 @@ public abstract class User extends Entity {
     }
   }
 
+  /**
+   * FIX: Xóa phiên khỏi watchList khi user rời phiên (LEAVE hoặc disconnect).
+   * Thread-safe nhờ CopyOnWriteArrayList.
+   * Chỉ {@link com.group13.auction.service.BidService} gọi.
+   *
+   * @param auctionId id phiên cần xóa khỏi watchlist
+   */
+  public void removeFromWatchList(String auctionId) {
+    watchListAuctionIds.remove(auctionId);
+  }
+
   // DAO injection setters
 
   /**
@@ -211,8 +222,8 @@ public abstract class User extends Entity {
    */
   public void setWatchListAuctionIds(List<String> ids) {
     this.watchListAuctionIds = ids != null
-            ? new CopyOnWriteArrayList<>(ids)
-            : new CopyOnWriteArrayList<>();
+        ? new CopyOnWriteArrayList<>(ids)
+        : new CopyOnWriteArrayList<>();
   }
 
   // Setter AccountStatus - chỉ AccountService / RatingService gọi

@@ -8,19 +8,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 1. Bảng Users
 CREATE TABLE IF NOT EXISTS users (
-                                     id                     VARCHAR(36)  PRIMARY KEY,
-                                     username               VARCHAR(50)  UNIQUE NOT NULL,
-                                     password_hash          VARCHAR(255) NOT NULL,
-                                     email                  VARCHAR(100) UNIQUE NOT NULL,
-                                     created_at             TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-                                     updated_at             TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                     rating                 DECIMAL(3,2) DEFAULT 3.00,
-                                     balance                BIGINT       DEFAULT 0,
-                                     locked_balance         BIGINT       DEFAULT 0,
-                                     status                 ENUM('ACTIVE','BANNED','SUSPENDED','DELETED') DEFAULT 'ACTIVE',
-                                     has_ever_been_penalized BOOLEAN     DEFAULT FALSE,
-                                     times_restored          INT         DEFAULT 0,
-                                     suspended_at           DATETIME     NULL
+                                     id                      VARCHAR(36)  PRIMARY KEY,
+                                     username                VARCHAR(50)  UNIQUE NOT NULL,
+                                     password_hash           VARCHAR(255) NOT NULL,
+                                     email                   VARCHAR(100) UNIQUE NOT NULL,
+                                     created_at              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                                     updated_at              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                     rating                  DECIMAL(3,2) DEFAULT 3.00,
+                                     balance                 BIGINT       DEFAULT 0,
+                                     locked_balance          BIGINT       DEFAULT 0,
+                                     status                  ENUM('ACTIVE','BANNED','SUSPENDED','DELETED') DEFAULT 'ACTIVE',
+                                     has_ever_been_penalized BOOLEAN      DEFAULT FALSE,
+                                     times_restored          INT          DEFAULT 0,
+                                     suspended_at            DATETIME     NULL
 );
 
 -- 2. Bảng Sellers
@@ -55,12 +55,12 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
 -- 5. Bảng Items
 CREATE TABLE IF NOT EXISTS items (
-                                     id             VARCHAR(36)  PRIMARY KEY,
-                                     seller_id      VARCHAR(36)  NOT NULL,
-                                     name           VARCHAR(255) NOT NULL,
-                                     description    TEXT,
-                                     starting_price BIGINT       NOT NULL,
-                                     category_type  ENUM('ELECTRONICS','ART','VEHICLE','OTHER') DEFAULT 'OTHER',
+                                     id              VARCHAR(36)  PRIMARY KEY,
+                                     seller_id       VARCHAR(36)  NOT NULL,
+                                     name            VARCHAR(255) NOT NULL,
+                                     description     TEXT,
+                                     starting_price  BIGINT       NOT NULL,
+                                     category_type   ENUM('ELECTRONICS','ART','VEHICLE','OTHER') DEFAULT 'OTHER',
     -- ELECTRONICS
                                      brand           VARCHAR(255) NULL,
                                      warranty_months INT          NULL,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS items (
                                      manufacturer    VARCHAR(255) NULL,
                                      `year`          INT          NULL,
                                      mileage         DOUBLE       NULL,
-                                     image_urls      TEXT NULL,
+                                     image_urls      TEXT         NULL,
                                      created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
                                      updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                      FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
@@ -94,20 +94,22 @@ CREATE TABLE IF NOT EXISTS auctions (
                                         viewer_count          INT         DEFAULT 0,
                                         created_at            TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
                                         updated_at            TIMESTAMP   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                        FOREIGN KEY (item_id)           REFERENCES items(id)       ON DELETE CASCADE,
-                                        FOREIGN KEY (current_leader_id) REFERENCES users(id)       ON DELETE SET NULL,
-                                        FOREIGN KEY (winning_bidder_id) REFERENCES users(id)       ON DELETE SET NULL
+                                        FOREIGN KEY (item_id)           REFERENCES items(id) ON DELETE CASCADE,
+                                        FOREIGN KEY (current_leader_id) REFERENCES users(id) ON DELETE SET NULL,
+                                        FOREIGN KEY (winning_bidder_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- 7. Bảng Bid Transactions
+-- FIX: thêm CANCELLED_BY_LEAVE vào enum result — khớp với database.sql và BidService.leaveAuction()
 CREATE TABLE IF NOT EXISTS bid_transactions (
-                                                seq         BIGINT       AUTO_INCREMENT UNIQUE,
-                                                id          VARCHAR(36)  PRIMARY KEY,
-                                                auction_id  VARCHAR(36)  NOT NULL,
-                                                bidder_id   VARCHAR(36)  NOT NULL,
-                                                bid_amount  BIGINT       NOT NULL,
-                                                result      ENUM('ACCEPTED','REJECTED','ACCEPTED_RESERVE_NOT_MET') NOT NULL DEFAULT 'ACCEPTED',
-                                                bid_time    TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
+                                                seq        BIGINT       AUTO_INCREMENT UNIQUE,
+                                                id         VARCHAR(36)  PRIMARY KEY,
+                                                auction_id VARCHAR(36)  NOT NULL,
+                                                bidder_id  VARCHAR(36)  NOT NULL,
+                                                bid_amount BIGINT       NOT NULL,
+                                                result     ENUM('ACCEPTED','REJECTED','ACCEPTED_RESERVE_NOT_MET','CANCELLED_BY_LEAVE')
+                                                                        NOT NULL DEFAULT 'ACCEPTED',
+                                                bid_time   TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
                                                 FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                                 FOREIGN KEY (bidder_id)  REFERENCES users(id)    ON DELETE CASCADE
 );
@@ -177,13 +179,13 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
                                                       FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
 );
 
--- 12. Bảng Quality Reports  ← ĐÃ SỬA
+-- 12. Bảng Quality Reports
 CREATE TABLE IF NOT EXISTS quality_reports (
                                                id                     VARCHAR(36)  PRIMARY KEY,
                                                auction_id             VARCHAR(36)  NOT NULL,
                                                reporter_id            VARCHAR(36)  NOT NULL,
-                                               description            TEXT         NOT NULL,           -- bỏ DEFAULT ''
-                                               image_urls             TEXT         NOT NULL,           -- bỏ DEFAULT '[]'
+                                               description            TEXT         NOT NULL,
+                                               image_urls             TEXT         NOT NULL,
                                                status                 ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
                                                seller_refund_deadline DATETIME     NULL,
                                                refund_completed       BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -203,6 +205,49 @@ CREATE TABLE IF NOT EXISTS auto_bids (
                                          FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
 );
 
+-- 14. Bảng Notifications
+-- FIX: bảng này bị thiếu hoàn toàn trong schema.sql cũ → NotificationDAO.save() throw SQLSyntaxErrorException khi test
+CREATE TABLE IF NOT EXISTS notifications (
+                                             id         VARCHAR(36)  PRIMARY KEY,
+                                             user_id    VARCHAR(36)  NOT NULL,
+                                             auction_id VARCHAR(36)  NULL,
+                                             title      VARCHAR(255) NOT NULL,
+                                             body       TEXT         NOT NULL,
+                                             is_read    BOOLEAN      NOT NULL DEFAULT FALSE,
+                                             created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                                             updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                             FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+                                             FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
+);
+
+-- =================================================================
+-- INDEXES — đồng bộ với database.sql (production)
+-- =================================================================
+
+-- Search
+CREATE INDEX idx_items_name ON items(name);
+
+-- Bid Transactions hot path
+CREATE INDEX idx_bid_tx_auction_result_amount ON bid_transactions(auction_id, result, bid_amount DESC);
+CREATE INDEX idx_bid_tx_auction_bidder_result  ON bid_transactions(auction_id, bidder_id, result);
+
+-- AuctionTimerService quét status mỗi giây
+CREATE INDEX idx_auctions_status ON auctions(status);
+
+-- Auction Winners
+CREATE INDEX idx_auction_winners_winner_status ON auction_winners(winner_id, payment_status);
+
+-- Financial Transactions
+CREATE INDEX idx_fin_tx_sender_auction_type ON financial_transactions(sender_id, auction_id, transaction_type);
+
+-- Auto Bids
 CREATE INDEX idx_auto_bids_auction_id ON auto_bids(auction_id);
+
+-- Notifications
+CREATE INDEX idx_notifications_user_id   ON notifications(user_id);
+CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
+
+-- Quality Reports
+CREATE INDEX idx_quality_reports_status ON quality_reports(status);
 
 SET FOREIGN_KEY_CHECKS = 1;
