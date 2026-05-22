@@ -84,6 +84,27 @@
                         styleClass="primary-button"
                         onAction="#handleOpenAuctionModeration"/>
             </VBox>
+
+            <VBox
+                    fx:id="staffAdminCard"
+                    spacing="12.0"
+                    styleClass="admin-nav-card"
+                    visible="false"
+                    managed="false"
+                    HBox.hgrow="ALWAYS">
+                <Label text="Staff Admin" styleClass="card-title"/>
+                <Label
+                        text="Tạo tài khoản Staff Admin mới và xem danh sách Staff Admin hiện có."
+                        wrapText="true"
+                        styleClass="card-description"/>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Button
+                        fx:id="staffAdminButton"
+                        text="Quản lý Staff Admin"
+                        maxWidth="Infinity"
+                        styleClass="primary-button"
+                        onAction="#handleOpenStaffAdminManagement"/>
+            </VBox>
         </HBox>
 
         <HBox spacing="18.0" styleClass="admin-card-row">

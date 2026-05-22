@@ -1,6 +1,7 @@
 package com.group13.auction.service.admin;
 
 import com.group13.auction.core.context.AppContext;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,10 +19,44 @@ public final class AdminModerationService {
      */
     public boolean currentUserIsAdmin() {
         return AppContext.getInstance()
-                .getSessionManager()
-                .getCurrentSession()
-                .map(session -> session.isAdmin())
-                .orElse(false);
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> session.isAdmin())
+            .orElse(false);
+    }
+
+    /**
+     * Kiểm tra user hiện tại có quyền System Admin hay không.
+     *
+     * @return true nếu user hiện tại là MASTER Admin
+     */
+    public boolean currentUserIsMasterAdmin() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> session.isMasterAdmin())
+            .orElse(false);
+    }
+
+    /**
+     * Lấy tên cấp Admin hiện tại để hiển thị trên dashboard.
+     *
+     * @return nhãn cấp quyền Admin
+     */
+    public String getCurrentAdminAccessLabel() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> {
+                if (session.isMasterAdmin()) {
+                    return "Tài khoản hiện tại có quyền System Admin.";
+                }
+                if (session.isAdmin()) {
+                    return "Tài khoản hiện tại có quyền Staff Admin.";
+                }
+                return "Bạn không có quyền truy cập khu vực Admin.";
+            })
+            .orElse("Bạn không có quyền truy cập khu vực Admin.");
     }
 
     /**
@@ -30,11 +65,17 @@ public final class AdminModerationService {
      * @return danh sách tên module
      */
     public List<String> getSupportedAdminModules() {
-        return List.of(
-                "User moderation",
-                "Auction moderation",
-                "Seller role approval",
-                "Quality report review");
+        List<String> modules = new ArrayList<>(List.of(
+            "User moderation",
+            "Auction moderation",
+            "Seller role approval",
+            "Quality report review"));
+
+        if (currentUserIsMasterAdmin()) {
+            modules.add("Staff Admin management");
+        }
+
+        return List.copyOf(modules);
     }
 
     /**
