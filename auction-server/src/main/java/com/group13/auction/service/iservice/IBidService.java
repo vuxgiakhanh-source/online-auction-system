@@ -4,6 +4,7 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.service.BidService;
 import com.group13.auction.strategy.BidStrategy;
 
 /**
@@ -57,8 +58,9 @@ public interface IBidService {
    * @param auction phiên cần rời (null-safe: nếu null thì bỏ qua bước unlock cọc)
    */
   /**
-   * Rời phiên. Trả về true nếu leader bị thay đổi (bid bị huỷ và người kế tiếp lên),
-   * false nếu không cần broadcast cập nhật giá cho các watcher.
+   * Rời phiên. Trả về {@link com.group13.auction.service.BidService.LeaveResult}
+   * chứa đủ thông tin penalty (leaderChanged, depositForfeited, ...) được tính
+   * nhất quán bên trong lock auction — BidHandler dùng trực tiếp, không tính lại.
    */
-  boolean leaveAuction(User user, Auction auction);
+  BidService.LeaveResult leaveAuction(User user, Auction auction);
 }

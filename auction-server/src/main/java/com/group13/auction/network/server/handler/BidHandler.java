@@ -225,84 +225,44 @@ public class BidHandler implements PacketHandler {
         sessionManager.removeAuctionWatcher(session.getConnection(), auctionId);
 
         Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
-
         NormalUser bidder = requireNormalUser(session, requestId);
 
-        // Chuẩn bị response mặc định (không bị phạt)
-        AuctionDTOs.LeaveAuctionResponseDTO response = new AuctionDTOs.LeaveAuctionResponseDTO();
-        response.setAuctionId(auctionId);
-        response.setDepositForfeited(false);
-        response.setForfeitedAmount(0L);
-        response.setRatingPenalized(false);
-
         if (bidder != null) {
-            // Lưu trạng thái trước khi rời để tính penalty info
-            final boolean wasLeader = auction != null
-                && auction.getCurrentLeader() != null
-                && auction.getCurrentLeader().getId().equals(bidder.getId());
-            final boolean hasBid = auction != null && bidder.hasJoined(auctionId);
-            final long depositAmount = (auction != null)
-                ? auction.getItem().getStartingPrice() * 3 / 10 : 0L;
-
-            boolean leaderChanged = bidService.leaveAuction(bidder, auction);
+            // FIX race condition: leaveAuction() tính isLeader + isPastTwoThirds TRONG lock,
+            // trả về LeaveResult nhất quán — không tính lại ở đây tránh kết quả khác nhau
+            // khi anti-snipe extend xảy ra đúng lúc rời phiên.
+            BidService.LeaveResult result = bidService.leaveAuction(bidder, auction);
             log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, leaderChanged={}, requestId={}",
-                auctionId, session.getUsername(), bidder.getId(), leaderChanged, requestId);
+                auctionId, session.getUsername(), bidder.getId(), result.leaderChanged, requestId);
 
-            // Xác định có bị phạt không dựa vào cùng điều kiện với BidService.leaveAuction()
-            // FIX Bug 5: thông báo client về penalty để hiển thị dialog cảnh báo.
-            // Trước đây LEAVE_AUCTION_SUCCESS payload=null → client không biết bị mất tiền.
-            if (hasBid && auction != null && depositAmount > 0) {
-                boolean isPastTwoThirds = isPastTwoThirdsTime(auction);
-                boolean shouldPenalize  = wasLeader || isPastTwoThirds;
-                if (shouldPenalize) {
-                    response.setDepositForfeited(true);
-                    response.setForfeitedAmount(depositAmount);
-                    response.setRatingPenalized(true);
-                }
-            }
-            response.setNewAvailableBalance(bidder.getAvailableBalance());
-
-            // Nếu leader bị thay đổi, broadcast cho tất cả watcher
-            if (leaderChanged && auction != null) {
-                long previousPrice = auction.getCurrentPrice();
+            if (result.leaderChanged && auction != null) {
                 com.group13.auction.common.dto.bid.BidDTOs.BidUpdateDTO update =
                     com.group13.auction.network.server.util.DTOMapper.toBidUpdateDTO(
-                        auction,
-                        auction.getCurrentPrice(),
-                        previousPrice);
+                        auction, auction.getCurrentPrice(), auction.getCurrentPrice());
                 update.setLeaderId(
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getId() : null);
                 update.setLeaderUsername(
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "Chưa có");
-
-                sessionManager.broadcastToAuction(auctionId,
-                    Packet.of(PacketType.BID_UPDATE, update));
+                sessionManager.broadcastToAuction(auctionId, Packet.of(PacketType.BID_UPDATE, update));
                 log.info("Leader-change broadcast sent: auctionId={}, newLeader={}, newPrice={}",
                     auctionId,
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "none",
                     auction.getCurrentPrice());
             }
+
+            // Build response từ LeaveResult — không tính lại bất kỳ điều kiện nào
+            AuctionDTOs.LeaveAuctionResponseDTO response = new AuctionDTOs.LeaveAuctionResponseDTO();
+            response.setAuctionId(auctionId);
+            response.setDepositForfeited(result.depositForfeited);
+            response.setForfeitedAmount(result.forfeitedAmount);
+            response.setRatingPenalized(result.ratingPenalized);
+            response.setNewAvailableBalance(result.newAvailableBalance);
+            session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, response, requestId));
         } else {
             log.info("Leave auction handled (non-normal user): auctionId={}, username={}, requestId={}",
                 auctionId, session.getUsername(), requestId);
+            session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, null, requestId));
         }
-
-        session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, response, requestId));
-    }
-
-    /**
-     * Kiểm tra phiên đã qua 2/3 tổng thời gian chưa — mirror logic từ BidService.
-     * Dùng để tính penalty info trong response mà không cần expose method từ BidService.
-     */
-    private boolean isPastTwoThirdsTime(Auction auction) {
-        java.time.LocalDateTime startTime = auction.getStartTime();
-        java.time.LocalDateTime endTime   = auction.getEndTime();
-        if (startTime == null || endTime == null) return false;
-        long totalSeconds = java.time.Duration.between(startTime, endTime).getSeconds();
-        if (totalSeconds <= 0) return false;
-        long twoThirdsSeconds = totalSeconds * 2 / 3;
-        java.time.LocalDateTime twoThirdsPoint = startTime.plusSeconds(twoThirdsSeconds);
-        return java.time.LocalDateTime.now().isAfter(twoThirdsPoint);
     }
 
     // ── PLACE BID ─────────────────────────────────────────────────────────────

@@ -74,6 +74,33 @@ public class BidService implements IBidService {
   private static final long ANTI_SNIPING_WINDOW_SECONDS    = 30;
   private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
+  /**
+   * Kết quả trả về từ {@link #leaveAuction(User, Auction)}.
+   * Chứa đủ thông tin để BidHandler build response mà không cần tính lại độc lập
+   * (tránh race condition do tính 2 lần ngoài lock).
+   */
+  public static class LeaveResult {
+    public final boolean leaderChanged;
+    public final boolean depositForfeited;
+    public final long    forfeitedAmount;
+    public final boolean ratingPenalized;
+    public final long    newAvailableBalance;
+
+    LeaveResult(boolean leaderChanged, boolean depositForfeited, long forfeitedAmount,
+                boolean ratingPenalized, long newAvailableBalance) {
+      this.leaderChanged       = leaderChanged;
+      this.depositForfeited    = depositForfeited;
+      this.forfeitedAmount     = forfeitedAmount;
+      this.ratingPenalized     = ratingPenalized;
+      this.newAvailableBalance = newAvailableBalance;
+    }
+
+    /** Shorthand khi user không phải NormalUser hoặc auction null. */
+    static LeaveResult noOp() {
+      return new LeaveResult(false, false, 0L, false, 0L);
+    }
+  }
+
   private final IAuctionService    auctionService;
   private final IRatingService     ratingService;
   private final IWalletService     walletService;
@@ -307,18 +334,20 @@ public class BidService implements IBidService {
    * </ul>
    * Nếu không: hoàn toàn bộ cọc, không phạt rating.
    *
-   * <p><b>FIX #7 — Ghost bid:</b>
-   * {@code cancelBidsByBidder()} được gọi cho <b>TẤT CẢ người rời phiên</b>,
-   * không chỉ leader. Nếu chỉ cancel khi là leader, bid ACCEPTED của non-leader
-   * vẫn còn trong DB. Khi leader sau đó rời, {@code findHighestValidBidExcept()}
-   * trả về bid của người đã rời → họ bị set làm leader mới dù đã out phiên.
+   * <p><b>FIX race condition isPastTwoThirdsTime:</b>
+   * {@code isPastTwoThirds} và {@code isCurrentLeader} được tính TRONG lock auction,
+   * sau đó trả về qua {@link LeaveResult} để BidHandler dùng trực tiếp —
+   * không tính lại lần nữa bên ngoài (tránh kết quả khác nhau do anti-snipe extend đúng lúc).
    *
-   * @return true nếu leader thay đổi (cần broadcast cho các watcher)
+   * @return {@link LeaveResult} mang đủ thông tin penalty để build response
    */
   @Override
-  public boolean leaveAuction(User user, Auction auction) {
+  public LeaveResult leaveAuction(User user, Auction auction) {
     String auctionId = auction != null ? auction.getId() : null;
-    boolean leaderChanged = false;
+    boolean leaderChanged    = false;
+    boolean depositForfeited = false;
+    long    forfeitedAmount  = 0L;
+    boolean ratingPenalized  = false;
 
     if (user instanceof NormalUser && auction != null) {
       NormalUser bidder = (NormalUser) user;
@@ -326,15 +355,20 @@ public class BidService implements IBidService {
 
       java.util.concurrent.locks.ReentrantLock auctionLock = lockRegistry.getLock(auction.getId());
       auctionLock.lock();
+      // FIX: tính isCurrentLeader và isPastTwoThirds TRONG lock để giá trị nhất quán.
+      // Trước đây BidHandler tính lại ngoài lock → nếu anti-snipe extend đúng lúc rời,
+      // BidHandler thấy thời gian khác với BidService → penalty info không khớp.
       final boolean isCurrentLeader;
+      final boolean isPastTwoThirds;
+      final boolean shouldPenalize;
       try {
         NormalUser currentLeader = auction.getCurrentLeader();
         isCurrentLeader = currentLeader != null
             && currentLeader.getId().equals(bidder.getId());
+        isPastTwoThirds = isPastTwoThirdsTime(auction);
+        shouldPenalize  = isCurrentLeader || isPastTwoThirds;
 
         // FIX #7: cancel bids của bidder LUÔN LUÔN, không chỉ khi là leader.
-        // Điều này đảm bảo khi leader rời sau đó, findHighestValidBidExcept()
-        // sẽ không bao giờ trả về bid của người đã rời trước đó.
         int cancelledRows = bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
         if (cancelledRows > 0) {
           log.info("Bids cancelled on leave (FIX ghost-bid): auctionId={}, bidderId={}, rows={}",
@@ -342,9 +376,6 @@ public class BidService implements IBidService {
         }
 
         if (isCurrentLeader) {
-          // Bids của leader đã được cancel ở trên.
-          // Tìm người dẫn đầu tiếp theo từ những bid ACCEPTED còn lại
-          // (chỉ của những người vẫn còn trong phiên).
           BidTransaction nextBid =
               bidTransactionDAO.findHighestValidBidExcept(auctionId, bidder.getId());
 
@@ -356,19 +387,22 @@ public class BidService implements IBidService {
             log.info("Leader rolled back to next bidder: auctionId={}, newLeader={}, newPrice={}",
                 auctionId, nextUser.getUsername(), nextPrice);
           } else {
-            // Không còn ai → reset về trạng thái chưa có bid
             auction.resetLeader(0L, null);
             bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, 0L);
             log.info("Leader rolled back to empty (no other bids): auctionId={}", auctionId);
           }
           leaderChanged = true;
         }
+
+        // Capture penalty info trước khi unlock — giá trị này nhất quán với state trong lock
+        if (shouldPenalize) {
+          depositForfeited = true;
+          forfeitedAmount  = depositAmount;
+          ratingPenalized  = true;
+        }
       } finally {
         auctionLock.unlock();
       }
-
-      final boolean isPastTwoThirds = isPastTwoThirdsTime(auction);
-      final boolean shouldPenalize  = isCurrentLeader || isPastTwoThirds;
 
       try {
         if (shouldPenalize) {
@@ -396,13 +430,15 @@ public class BidService implements IBidService {
 
     if (auctionId != null) {
       user.removeJoinedAuction(auctionId);
-      // FIX: đánh dấu đã rời để chặn rejoin
       user.addLeftAuction(auctionId);
       userDAO.markUserLeftAuction(user.getId(), auctionId);
     }
     log.info("User left auction: userId={}, auctionId={}, leaderChanged={}",
         user.getId(), auctionId, leaderChanged);
-    return leaderChanged;
+
+    long newBalance = (user instanceof NormalUser)
+        ? ((NormalUser) user).getAvailableBalance() : 0L;
+    return new LeaveResult(leaderChanged, depositForfeited, forfeitedAmount, ratingPenalized, newBalance);
   }
 
   /**

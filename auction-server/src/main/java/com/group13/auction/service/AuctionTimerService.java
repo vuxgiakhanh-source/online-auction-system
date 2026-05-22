@@ -54,6 +54,13 @@ public class AuctionTimerService implements IAuctionTimerService {
     /** Đếm số lần scan để throttle cleanupIdle — chỉ chạy mỗi 5 phút (300 scan × 1s). */
     private int scanCount = 0;
     private static final int CLEANUP_INTERVAL_SCANS = 300;
+    /**
+     * FIX bottleneck: autoRelease (7 ngày / 3 ngày) không cần chạy mỗi giây.
+     * Chạy mỗi 60s là đủ chính xác cho deadline tính theo ngày.
+     * Trước đây iterate toàn bộ PAID auctions mỗi giây → bottleneck khi nhiều phiên.
+     */
+    private int releaseScanCount = 0;
+    private static final int RELEASE_SCAN_INTERVAL = 60;
 
     private AuctionTimerService() {}
 
@@ -117,9 +124,16 @@ public class AuctionTimerService implements IAuctionTimerService {
             closeExpiredAuctions(now);
             expirePendingWinnerPayments();
             expirePendingSecondChanceOffers(now);
-            autoReleaseOverdueConfirmReceipt();   // FUNDS_HELD quá 7 ngày → giải ngân cho Seller
-            autoReleaseOverdueReportDeadline();    // ITEM_RECEIVED quá 3 ngày → giải ngân cho Seller
-            // Chỉ dọn dẹp idle buckets mỗi 5 phút — tránh iterate toàn bộ users mỗi giây.
+
+            // FIX: autoRelease chỉ chạy mỗi 60s thay vì mỗi giây.
+            // Deadline là 7 ngày và 3 ngày — kiểm tra mỗi phút là dư thừa chính xác,
+            // không cần iterate toàn bộ PAID auctions 60 lần/phút gây bottleneck.
+            if (++releaseScanCount >= RELEASE_SCAN_INTERVAL) {
+                autoReleaseOverdueConfirmReceipt();
+                autoReleaseOverdueReportDeadline();
+                releaseScanCount = 0;
+            }
+
             if (++scanCount >= CLEANUP_INTERVAL_SCANS) {
                 BidRateLimiter.getInstance().cleanupIdle();
                 scanCount = 0;
