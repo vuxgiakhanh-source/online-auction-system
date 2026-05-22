@@ -617,18 +617,47 @@ public class BidHandler implements PacketHandler {
 
             if (entry != null) {
                 Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+                long currentPrice = auction != null ? auction.getCurrentPrice() : 0;
                 dto.setMaxBid(entry.getMaxBid());
-                dto.setCurrentSystemBid(auction != null ? auction.getCurrentPrice() : 0);
-                dto.setActive(true);
+                dto.setCurrentSystemBid(currentPrice);
                 dto.setRegisteredAt(entry.getRegisteredAt());
+
+                // Kiểm tra autobid có còn hợp lệ không: nếu maxBid < currentPrice + bước giá tối thiểu
+                // thì entry đã lỗi thời (user offline trong lúc giá bị đẩy vượt maxBid).
+                // Trường hợp này notifyExhaustedBidders() chưa xử lý vì user offline tại thời điểm đó.
+                boolean isStale = auction != null
+                    && entry.calculateNextBid(currentPrice) < 0;
+
+                if (isStale) {
+                    // Cancel entry khỏi registry và báo client autobid không còn phù hợp
+                    autoBidRegistry.cancel(bidder.getId(), auctionId);
+                    dto.setActive(false);
+                    session.send(Packet.of(PacketType.GET_AUTO_BID_STATUS_SUCCESS, dto, requestId));
+
+                    // Gửi thêm EXHAUSTED notify để client hiển thị popup cảnh báo đầy đủ
+                    BidDTOs.AutoBidExhaustedDTO exhausted = new BidDTOs.AutoBidExhaustedDTO();
+                    exhausted.setAuctionId(auctionId);
+                    exhausted.setMaxBid(entry.getMaxBid());
+                    exhausted.setCurrentPrice(currentPrice);
+                    exhausted.setLeadingBidderUsername(
+                        auction.getCurrentLeader() != null
+                            ? auction.getCurrentLeader().getUsername()
+                            : "Chưa có");
+                    session.send(Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, exhausted));
+
+                    log.info("auto-bid stale detected on status load: userId={} auctionId={} maxBid={} currentPrice={}",
+                        bidder.getId(), auctionId, entry.getMaxBid(), currentPrice);
+                } else {
+                    dto.setActive(true);
+                    session.send(Packet.of(PacketType.GET_AUTO_BID_STATUS_SUCCESS, dto, requestId));
+                }
             } else {
                 dto.setMaxBid(0);
                 dto.setCurrentSystemBid(0);
                 dto.setActive(false);
                 dto.setRegisteredAt(null);
+                session.send(Packet.of(PacketType.GET_AUTO_BID_STATUS_SUCCESS, dto, requestId));
             }
-
-            session.send(Packet.of(PacketType.GET_AUTO_BID_STATUS_SUCCESS, dto, requestId));
 
         } catch (Exception e) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
