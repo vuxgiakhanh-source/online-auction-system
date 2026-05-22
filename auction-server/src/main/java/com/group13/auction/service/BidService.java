@@ -57,27 +57,30 @@ import java.util.concurrent.ConcurrentHashMap;
  *           Thread A writeDB(giá cũ) → OVERWRITE giá cao! ✗
  *   SAU:    WHERE current_price < ? → Thread A's stale write = no-op ✓
  *   → Giá DB luôn = giá CAO NHẤT đã được chấp nhận trong RAM
+ *
+ * FIX #7 — Ghost bid khi non-leader rời phiên:
+ *   BUG: cancelBidsByBidder() CHỈ gọi khi isCurrentLeader=true.
+ *   → Non-leader rời phiên mà bids vẫn ACCEPTED trong DB.
+ *   → Khi leader sau đó rời, findHighestValidBidExcept() trả về
+ *     bid của người đã rời → set họ làm leader mới dù đã out!
+ *   FIX: cancelBidsByBidder() gọi LUÔN LUÔN cho mọi người rời phiên,
+ *   không phân biệt leader hay không. Chỉ rollback leader khi cần.
  * ═══════════════════════════════════════════════════════════════════
  */
 public class BidService implements IBidService {
 
   private static final Logger log = LoggerFactory.getLogger(BidService.class);
 
-  private static final long ANTI_SNIPING_WINDOW_SECONDS = 30;
+  private static final long ANTI_SNIPING_WINDOW_SECONDS    = 30;
   private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
-  private final IAuctionService auctionService;
-  private final IRatingService ratingService;
-  private final IWalletService walletService;
-  private final BidTransactionDAO bidTransactionDAO;
-  private final AuctionDAO auctionDAO;
-  private final UserDAO userDAO;
+  private final IAuctionService    auctionService;
+  private final IRatingService     ratingService;
+  private final IWalletService     walletService;
+  private final BidTransactionDAO  bidTransactionDAO;
+  private final AuctionDAO         auctionDAO;
+  private final UserDAO            userDAO;
 
-  /**
-   * FIX: Dùng AuctionLockRegistry thay vì map riêng —
-   * (1) cùng lock với BidHandler nên ReentrantLock reentrant tránh deadlock,
-   * (2) lockRegistry.release() trong AuctionTimerService dọn sạch entry → không leak.
-   */
   private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
 
   public BidService(
@@ -87,28 +90,24 @@ public class BidService implements IBidService {
       BidTransactionDAO bidTransactionDAO,
       AuctionDAO auctionDAO,
       UserDAO userDAO) {
-    this.auctionService = auctionService;
-    this.ratingService = ratingService;
-    this.walletService = walletService;
+    this.auctionService   = auctionService;
+    this.ratingService    = ratingService;
+    this.walletService    = walletService;
     this.bidTransactionDAO = bidTransactionDAO;
-    this.auctionDAO = auctionDAO;
-    this.userDAO = userDAO;
+    this.auctionDAO       = auctionDAO;
+    this.userDAO          = userDAO;
   }
 
   // =========================================================================
   // Public API
   // =========================================================================
 
-  /** FIX #4 (rev2): tryMarkJoined() là atomic gate — ConcurrentHashMap.add() trả về false nếu đã tồn tại.
-   * Tránh race window giữa hasJoined() check và addJoinedAuction() call. */
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
-    // Atomic check-and-mark: chỉ 1 thread được phép tiếp tục join
     if (!user.tryMarkJoined(auction.getId())) {
       log.warn("User already joined: userId={}, auctionId={}", user.getId(), auction.getId());
       return;
     }
-    // Đã mark joined — nếu join thất bại thì phải unmark để không block join lại sau
     try {
       if (user instanceof NormalUser) {
         joinAsNormalUser((NormalUser) user, auction, observer);
@@ -116,7 +115,6 @@ public class BidService implements IBidService {
         joinAsAdmin(user, auction, observer);
       }
     } catch (RuntimeException e) {
-      // Rollback mark nếu join thất bại (ineligible, insufficient deposit, v.v.)
       user.removeJoinedAuction(auction.getId());
       throw e;
     }
@@ -127,10 +125,6 @@ public class BidService implements IBidService {
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     lock.lock();
     try {
-      // FIX viewCount +2: addToWatchList() đã idempotent (check contains trước khi add),
-      // nhưng incrementViewerCount() không có guard — gọi 2 lần (vd: join rồi watch,
-      // hoặc click 2 lần) sẽ cộng +2. Check watchList TRƯỚC khi increment để đảm bảo
-      // mỗi user chỉ đóng góp đúng 1 vào viewerCount.
       boolean alreadyWatching = bidder.getWatchListAuctionIds().contains(auction.getId());
       bidder.addToWatchList(auction.getId());
       auctionService.addObserver(auction.getId(), observer);
@@ -138,11 +132,6 @@ public class BidService implements IBidService {
         auction.incrementViewerCount();
         auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
       }
-      // FIX: không ghi WATCHING nếu user đã JOINED.
-      // Bảng user_auction_activity có PK (user_id, auction_id) — chỉ 1 dòng mỗi cặp.
-      // Nếu ghi WATCHING đè lên JOINED, findJoinedAuctionIdsByUserId() sẽ miss auction này
-      // → placeBid() báo NOT_JOINED_AUCTION dù user đã join thành công.
-      // Lớp bảo vệ thứ 2 (lớp 1 là SQL IF trong saveUserAuctionActivity).
       if (!bidder.hasJoined(auction.getId())) {
         userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "WATCHING");
       }
@@ -152,19 +141,14 @@ public class BidService implements IBidService {
   }
 
   /**
-   * Đặt giá — flow 3 vùng tối ưu throughput:
-   *
-   * [NGOÀI LOCK] validate nhanh in-memory → throw ngay nếu sai, không tốn lock
-   * [TRONG LOCK ] isValidBid + updateBid + recordTx   (atomic, ngắn nhất có thể)
-   * [NGOÀI LOCK] DB write + notify + anti-sniping     (không block bid tiếp theo)
+   * Đặt giá — flow 3 vùng tối ưu throughput.
    */
   @Override
   public void placeBid(NormalUser bidder, Auction auction,
                        long amount, BidStrategy strategy) {
 
-    // ── NGOÀI LOCK: validate nhanh ────────────────────────────────────────
+    // ── NGOÀI LOCK: validate nhanh ─────────────────────────────────────────
     if (!ratingService.isEligible(bidder)) {
-      // FIX #1 + #2: chỉ WARN, không ghi DB
       log.warn("Bid rejected — ineligible: auctionId={}, bidderId={}, status={}",
           auction.getId(), bidder.getId(), bidder.getAccountStatus());
       throw buildIneligibleException(bidder);
@@ -183,7 +167,6 @@ public class BidService implements IBidService {
     }
 
     // Phát hiện bid thao túng: bid > 3× giá hiện tại → tịch thu cọc ngay
-    // Mục đích: chặn pump-and-dump (đẩy giá ảo rồi bỏ chạy).
     long currentPrice = auction.getCurrentPrice();
     if (currentPrice > 0 && amount > currentPrice * 3) {
       long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
@@ -195,10 +178,9 @@ public class BidService implements IBidService {
         log.error("Failed to forfeit deposit for manipulative bid: bidderId={}, auctionId={}",
             bidder.getId(), auction.getId(), e);
       }
-      // Vẫn cho bid tiếp tục — cọc đã bị phạt là đủ deterrent
     }
 
-    // ── TRONG LOCK: critical section per-auction ──────────────────────────
+    // ── TRONG LOCK: critical section per-auction ───────────────────────────
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     BidTransaction tx;
     boolean reserveMet;
@@ -206,28 +188,22 @@ public class BidService implements IBidService {
 
     lock.lock();
     try {
-      // Re-check sau khi acquire lock (auction có thể vừa đóng)
       if (!auction.isAcceptingBids()) {
         log.warn("Bid rejected — auction closed (in lock): auctionId={}, bidderId={}",
             auction.getId(), bidder.getId());
         throw new AuctionClosedException(auction.getStatus());
       }
 
-      // FIX #3: validate strategy trong lock — tránh race condition trên currentPrice
-      // FIX #2: nếu invalid thì THROW THẲNG, không ghi DB
       if (!strategy.isValidBid(auction, amount)) {
-        // StandardBidStrategy đã tự log.warn bên trong — không log lại ở đây
         throw new InvalidBidException(
             String.format("Bid %d không hợp lệ. Giá hiện tại: %d. %s",
                 amount, auction.getCurrentPrice(), strategy.describe()),
             amount, auction.getCurrentPrice());
       }
 
-      // Cập nhật state auction trong RAM (atomic, trong lock)
       auction.updateBid(amount, bidder);
       reserveMet = auction.isReserveMet();
 
-      // Anti-sniping: đọc endTime và extend trong cùng critical section (tránh TOCTOU).
       LocalDateTime currentEnd = auction.getEndTime();
       if (currentEnd != null) {
         long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
@@ -237,20 +213,13 @@ public class BidService implements IBidService {
         }
       }
 
-      // FIX PERF: Tạo BidTransaction object TRONG lock để capture đúng state tại thời điểm bid.
-      // Nhưng KHÔNG gọi bidTransactionDAO.saveTransaction() trong lock → tránh giữ lock
-      // trong khi đợi DB round-trip (giảm lock hold time từ ~5ms xuống ~0.1ms).
       BidResult result = reserveMet ? BidResult.ACCEPTED : BidResult.ACCEPTED_RESERVE_NOT_MET;
       tx = BidTransaction.create(bidder, auction.getId(), amount, result);
       bidder.addBidToHistory(tx);
       auction.addBidTransactionId(tx.getId());
     } finally { lock.unlock(); }
-    // ── Hết critical section ──────────────────────────────────────────────
 
-    // ── NGOÀI LOCK: DB writes song song (không block bid tiếp theo) ───────
-    // FIX RACE CONDITION: updateHighestPrice dùng conditional SQL (WHERE current_price < ?)
-    // → ngay cả khi thread khác đã ghi giá cao hơn trước, query này sẽ là no-op.
-    // FIX PERF: saveTransaction() cũng chạy ngoài lock → giảm lock contention.
+    // ── NGOÀI LOCK: DB writes ──────────────────────────────────────────────
     if (!bidTransactionDAO.saveTransactionAndUpdatePrice(
         tx, auction.getId(), amount, bidder.getId())) {
       log.error("Bid persist failed after RAM update: auctionId={}, bidderId={}, amount={}",
@@ -292,10 +261,6 @@ public class BidService implements IBidService {
     try {
       registerJoin(bidder, auction, observer);
     } catch (RuntimeException e) {
-      // FIX: rollback deposit nếu registerJoin thất bại (DB error, lock timeout, v.v.)
-      // Trước đây: lockDeposit() xong → registerJoin() ném → joinAuction() catch chỉ xóa
-      // joinedAuctionIds nhưng KHÔNG unlock deposit → user bị lock tiền mà không join được
-      // → retry lần sau: double-lock → INSUFFICIENT_DEPOSIT dù balance đủ.
       log.warn("registerJoin failed, rolling back deposit: auctionId={}, bidderId={}, deposit={}",
           auction.getId(), bidder.getId(), depositAmount, e);
       walletService.unlockDeposit(bidder, depositAmount, auction.getId());
@@ -314,18 +279,12 @@ public class BidService implements IBidService {
     lock.lock();
     try {
       user.addJoinedAuction(auction.getId());
-      // BUG FIX: chỉ incrementViewerCount nếu user chưa watch auction này.
-      // Không có guard → user join/leave/rejoin cộng dồn auction.viewerCount liên tục
-      // → DB viewerCount phình to mãi. watchAuction() đã có guard alreadyWatching nhưng
-      // registerJoin() thì không. Display dùng getActiveViewerCount() nên UI không bị ảnh hưởng,
-      // nhưng DB value ngày càng sai lệch.
       boolean alreadyWatching = user.getWatchListAuctionIds().contains(auction.getId());
       user.addToWatchList(auction.getId());
       auctionService.addObserver(auction.getId(), observer);
       if (!alreadyWatching) {
         auction.incrementViewerCount();
-        int viewerCount = auction.getViewerCount();
-        auctionDAO.updateViewerCount(auction.getId(), viewerCount);
+        auctionDAO.updateViewerCount(auction.getId(), auction.getViewerCount());
       }
       userDAO.saveUserAuctionActivity(user.getId(), auction.getId(), "JOINED");
     } finally {
@@ -333,22 +292,23 @@ public class BidService implements IBidService {
     }
   }
 
-  // recordTransaction() đã bị xóa:
-  // TX object được tạo trực tiếp trong placeBid() bên trong lock.
-  // bidTransactionDAO.saveTransaction() được gọi ngoài lock để giảm lock hold time.
-
   /**
-   * Rời phiên: xử lý cọc và rating theo điều kiện vi phạm, xóa join state khỏi in-memory VÀ DB.
+   * Rời phiên: xử lý cọc và rating theo điều kiện vi phạm, xóa join state.
    *
-   * <p>Phạt toàn bộ cọc + trừ 1 rating nếu thuộc một trong hai trường hợp:
+   * <p>Phạt toàn bộ cọc + trừ 1 rating nếu:
    * <ul>
    *   <li>User đang là current leader khi rời phiên.</li>
-   *   <li>Phiên đã qua 2/3 tổng thời gian (tính từ startTime đến endTime).</li>
+   *   <li>Phiên đã qua 2/3 tổng thời gian.</li>
    * </ul>
-   * Nếu không thuộc hai trường hợp trên → hoàn toàn bộ cọc, không phạt rating.
-   * Nếu auction == null (phiên đã xóa), bỏ qua wallet operation — không ném exception.
+   * Nếu không: hoàn toàn bộ cọc, không phạt rating.
    *
-   * @return true nếu leader bị thay đổi (cần broadcast cho các watcher), false nếu không
+   * <p><b>FIX #7 — Ghost bid:</b>
+   * {@code cancelBidsByBidder()} được gọi cho <b>TẤT CẢ người rời phiên</b>,
+   * không chỉ leader. Nếu chỉ cancel khi là leader, bid ACCEPTED của non-leader
+   * vẫn còn trong DB. Khi leader sau đó rời, {@code findHighestValidBidExcept()}
+   * trả về bid của người đã rời → họ bị set làm leader mới dù đã out phiên.
+   *
+   * @return true nếu leader thay đổi (cần broadcast cho các watcher)
    */
   @Override
   public boolean leaveAuction(User user, Auction auction) {
@@ -359,7 +319,6 @@ public class BidService implements IBidService {
       NormalUser bidder = (NormalUser) user;
       long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
 
-      // Đọc + xử lý leader trong lock để tránh race condition với placeBid()
       java.util.concurrent.locks.ReentrantLock auctionLock = lockRegistry.getLock(auction.getId());
       auctionLock.lock();
       final boolean isCurrentLeader;
@@ -368,17 +327,25 @@ public class BidService implements IBidService {
         isCurrentLeader = currentLeader != null
             && currentLeader.getId().equals(bidder.getId());
 
-        if (isCurrentLeader) {
-          // 1. Hủy toàn bộ bid ACCEPTED của leader trong DB
-          bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
+        // FIX #7: cancel bids của bidder LUÔN LUÔN, không chỉ khi là leader.
+        // Điều này đảm bảo khi leader rời sau đó, findHighestValidBidExcept()
+        // sẽ không bao giờ trả về bid của người đã rời trước đó.
+        int cancelledRows = bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
+        if (cancelledRows > 0) {
+          log.info("Bids cancelled on leave (FIX ghost-bid): auctionId={}, bidderId={}, rows={}",
+              auctionId, bidder.getId(), cancelledRows);
+        }
 
-          // 2. Tìm người kế tiếp (bid cao nhất của người khác còn hợp lệ)
-          com.group13.auction.model.bid.BidTransaction nextBid =
+        if (isCurrentLeader) {
+          // Bids của leader đã được cancel ở trên.
+          // Tìm người dẫn đầu tiếp theo từ những bid ACCEPTED còn lại
+          // (chỉ của những người vẫn còn trong phiên).
+          BidTransaction nextBid =
               bidTransactionDAO.findHighestValidBidExcept(auctionId, bidder.getId());
 
           if (nextBid != null && nextBid.getBidder() != null) {
-            long nextPrice     = nextBid.getAmount();
-            NormalUser nextUser = nextBid.getBidder();
+            long       nextPrice = nextBid.getAmount();
+            NormalUser nextUser  = nextBid.getBidder();
             auction.resetLeader(nextPrice, nextUser);
             bidTransactionDAO.updateLeaderAfterLeave(auctionId, nextUser.getId(), nextPrice);
             log.info("Leader rolled back to next bidder: auctionId={}, newLeader={}, newPrice={}",
@@ -433,16 +400,13 @@ public class BidService implements IBidService {
 
   /**
    * Kiểm tra phiên đã qua 2/3 tổng thời gian chưa.
-   * Dùng endTime hiện tại (có thể đã được gia hạn bởi anti-sniping).
-   *
-   * @return true nếu thời điểm hiện tại >= startTime + 2/3 * (endTime - startTime)
    */
   private boolean isPastTwoThirdsTime(Auction auction) {
     java.time.LocalDateTime startTime = auction.getStartTime();
-    java.time.LocalDateTime endTime   = auction.getEndTime();  // đã bao gồm gia hạn anti-sniping
+    java.time.LocalDateTime endTime   = auction.getEndTime();
     if (startTime == null || endTime == null) return false;
 
-    long totalSeconds    = java.time.Duration.between(startTime, endTime).getSeconds();
+    long totalSeconds = java.time.Duration.between(startTime, endTime).getSeconds();
     if (totalSeconds <= 0) return false;
 
     long twoThirdsSeconds = totalSeconds * 2 / 3;

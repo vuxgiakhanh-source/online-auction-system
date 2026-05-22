@@ -1,11 +1,12 @@
 package com.group13.auction;
 
 import com.group13.auction.dao.AdminDAO;
-import com.group13.auction.dao.DatabaseConnection;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
+import com.group13.auction.dao.DatabaseConnection;
 import com.group13.auction.dao.FinancialTransactionDAO;
+import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.QualityReportDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.dao.SellerDAO;
@@ -14,19 +15,19 @@ import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.item.ElectronicsFactory;
 import com.group13.auction.model.item.ItemFactory;
 import com.group13.auction.model.user.SystemAdmin;
-import com.group13.auction.network.server.image.ImageUploadServer;
 import com.group13.auction.network.server.AuctionWebSocketServer;
+import com.group13.auction.network.server.image.ImageUploadServer;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.AccountService;
 import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.AuctionTimerService;
-import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.service.BidService;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.service.QualityReportService;
 import com.group13.auction.service.RatingService;
 import com.group13.auction.service.UserService;
 import com.group13.auction.service.WalletService;
+import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.strategy.AutoBidRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class ServerMain {
     public static void main(String[] args) throws Exception {
         log.info("=== Auction WebSocket Server starting... ===");
 
-        // ── 0. Database (Docker MySQL trên localhost:3307 hoặc DB_URL) ─────────
+        // ── 0. Database ───────────────────────────────────────────────────────
         try {
             DatabaseConnection.getInstance().ensureReady(30, 2_000);
         } catch (Exception e) {
@@ -62,7 +63,7 @@ public class ServerMain {
             System.exit(1);
         }
 
-        // ── 1. Cấu hình cổng WebSocket ────────────────────────────────────────
+        // ── 1. Cổng WebSocket ────────────────────────────────────────────────
         int port = 8080;
         String portEnv = System.getenv("SERVER_PORT");
         if (portEnv != null && !portEnv.isBlank()) {
@@ -72,7 +73,7 @@ public class ServerMain {
             }
         }
 
-        // ── 2. Cấu hình cổng Image HTTP server ───────────────────────────────
+        // ── 2. Cổng Image HTTP server ─────────────────────────────────────────
         int imagePort = 8081;
         String imagePortEnv = System.getenv("IMAGE_SERVER_PORT");
         if (imagePortEnv != null && !imagePortEnv.isBlank()) {
@@ -98,25 +99,29 @@ public class ServerMain {
         SellerDAO               sellerDAO            = new SellerDAO();
         AdminDAO                adminDAO             = new AdminDAO();
         QualityReportDAO        qualityReportDAO     = new QualityReportDAO();
+        NotificationDAO         notificationDAO      = new NotificationDAO();  // NEW
 
-        // ── 5. Khởi tạo Services ──────────────────────────────────────────────
-        RatingService  ratingService  = new RatingService(userDAO);
+        // ── 5. Khởi tạo Services ─────────────────────────────────────────────
+        // NotificationDAO được inject vào RatingService và AccountService
+        // để chúng có thể lưu thông báo sau mỗi sự kiện liên quan đến user.
+        RatingService  ratingService  = new RatingService(userDAO, notificationDAO);
         WalletService  walletService  = new WalletService(financialTxDAO, userDAO, ratingService);
         AuctionService auctionService = new AuctionService(ratingService, auctionDAO);
         AccountService accountService = new AccountService(
-                ratingService, userDAO, sellerDAO, adminDAO, auctionDAO, auctionWinnerDAO);
+            ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
+            auctionWinnerDAO, notificationDAO);
         UserService    userService    = new UserService(userDAO);
 
         BidService bidService = new BidService(
-                auctionService, ratingService, walletService,
-                bidTransactionDAO, auctionDAO, userDAO);
+            auctionService, ratingService, walletService,
+            bidTransactionDAO, auctionDAO, userDAO);
 
         PaymentService paymentService = new PaymentService(
-                auctionService, ratingService, walletService,
-                auctionWinnerDAO, secondChanceOfferDAO, bidTransactionDAO, userDAO);
+            auctionService, ratingService, walletService,
+            auctionWinnerDAO, secondChanceOfferDAO, bidTransactionDAO, userDAO);
 
         QualityReportService qualityReportService = new QualityReportService(
-                ratingService, paymentService, qualityReportDAO, userDAO);
+            ratingService, paymentService, qualityReportDAO, userDAO, notificationDAO);
 
         // ── 6. Tải dữ liệu vào in-memory ─────────────────────────────────────
         AuctionManager.getInstance().loadDataFromDatabase();
@@ -134,9 +139,9 @@ public class ServerMain {
         ItemFactory itemFactory = new ElectronicsFactory(ratingService);
 
         AuctionWebSocketServer server = new AuctionWebSocketServer(
-                port, accountService, auctionService, bidService,
-                paymentService, ratingService, qualityReportService,
-                userService, itemFactory);
+            port, accountService, auctionService, bidService,
+            paymentService, ratingService, qualityReportService,
+            userService, itemFactory);
 
         // ── 10. Graceful shutdown ─────────────────────────────────────────────
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -151,6 +156,6 @@ public class ServerMain {
 
         server.start();
         log.info("=== WebSocket server on port {}, Image HTTP server on port {} ===",
-                port, imagePort);
+            port, imagePort);
     }
 }

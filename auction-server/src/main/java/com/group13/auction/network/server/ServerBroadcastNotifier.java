@@ -41,8 +41,12 @@ public class ServerBroadcastNotifier {
     public static ServerBroadcastNotifier getInstance() { return INSTANCE; }
 
     private void persistNotification(String userId, String auctionId, String title, String body) {
-        Notification notification = Notification.create(userId, auctionId, title + "\n" + body);
-        notificationDAO.save(notification);
+        try {
+            Notification notification = Notification.create(userId, auctionId, title, body);
+            notificationDAO.save(notification);
+        } catch (Exception e) {
+            log.warn("Không thể lưu notification: userId={}, title={}", userId, title, e);
+        }
     }
 
     // ── Bid events ────────────────────────────────────────────────────────────
