@@ -22,7 +22,7 @@ public class AuctionDAO {
      */
     public boolean createAuction(Auction auction) {
         String sql = "INSERT INTO auctions (id, item_id, start_time, end_time, status, reserve_price, current_price, current_leader_id, current_highest_price, winning_bidder_id, viewer_count) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -39,7 +39,6 @@ public class AuctionDAO {
             } else {
                 pstmt.setNull(8, java.sql.Types.VARCHAR);
             }
-            // Legacy columns: giữ đồng bộ để các query/handler cũ vẫn hoạt động
             pstmt.setLong(9, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(10, auction.getCurrentLeader().getId());
@@ -76,7 +75,6 @@ public class AuctionDAO {
 
     /**
      * Cập nhật toàn bộ kết quả khi phiên kết thúc.
-     * (Lưu trạng thái, giá cao nhất hiện tại và ID người chiến thắng nếu có).
      */
     public boolean updateAuctionResult(Auction auction) {
         String sql = "UPDATE auctions SET status = ?, current_price = ?, current_leader_id = ?, current_highest_price = ?, winning_bidder_id = ? WHERE id = ?";
@@ -85,22 +83,18 @@ public class AuctionDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, auction.getStatus().name());
-            pstmt.setLong(2, auction.getCurrentPrice()); // current_price
+            pstmt.setLong(2, auction.getCurrentPrice());
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(3, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(3, java.sql.Types.VARCHAR);
             }
-            // legacy current_highest_price
             pstmt.setLong(4, auction.getCurrentPrice());
-
-            // Xử lý trường hợp không có người chiến thắng (NULL)
             if (auction.getCurrentLeader() != null) {
                 pstmt.setString(5, auction.getCurrentLeader().getId());
             } else {
                 pstmt.setNull(5, java.sql.Types.VARCHAR);
             }
-
             pstmt.setString(6, auction.getId());
 
             return pstmt.executeUpdate() > 0;
@@ -111,38 +105,22 @@ public class AuctionDAO {
     }
 
     /**
-     * Cập nhật giá cao nhất khi có người đặt giá hợp lệ (Bid).
-     */
-    /**
      * Cập nhật giá cao nhất với điều kiện atomicity: chỉ update khi newPrice > current_price trong DB.
-     *
-     * FIX RACE CONDITION: updateHighestPrice() được gọi NGOÀI per-auction lock (FIX #5 cũ).
-     * Không dùng conditional có thể xảy ra stale-write:
-     *   Thread A: RAM→7.457k → unlock → [context switch]
-     *   Thread B: RAM→7.863k → unlock → DB→7.863k ✓
-     *   Thread A: resumes → DB→7.457k → OVERWRITE 7.863k! ✗
-     *
-     * Với WHERE current_price < ?, Thread A sẽ không ghi đè 7.863k.
-     * Đây là optimistic-locking nhẹ ở tầng DB, không cần SELECT FOR UPDATE.
-     *
-     * @return true nếu update thực sự xảy ra (newPrice > current DB price)
      */
     public boolean updateHighestPrice(String auctionId, long newPrice, String bidderId) {
-        // WHERE current_price < ? => chỉ ghi nếu giá mới CAO HƠN giá hiện tại trong DB
         String sql = "UPDATE auctions SET current_price = ?, current_leader_id = ?, "
-                + "current_highest_price = ?, winning_bidder_id = ? "
-                + "WHERE id = ? AND current_price < ?";
+            + "current_highest_price = ?, winning_bidder_id = ? "
+            + "WHERE id = ? AND current_price < ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setLong(1, newPrice);
             pstmt.setString(2, bidderId);
-            // legacy columns
             pstmt.setLong(3, newPrice);
             pstmt.setString(4, bidderId);
             pstmt.setString(5, auctionId);
-            pstmt.setLong(6, newPrice);   // WHERE current_price < newPrice
+            pstmt.setLong(6, newPrice);
 
             int rows = pstmt.executeUpdate();
             if (rows == 0) {
@@ -156,7 +134,7 @@ public class AuctionDAO {
     }
 
     /**
-     * Cập nhật số lượng người theo dõi (viewer_count) của phiên đấu giá
+     * Cập nhật số lượng người theo dõi (viewer_count) của phiên đấu giá.
      */
     public boolean updateViewerCount(String auctionId, int count) {
         String sql = "UPDATE auctions SET viewer_count = ? WHERE id = ?";
@@ -203,27 +181,28 @@ public class AuctionDAO {
 
             try (java.sql.ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // 1. Rút trích dữ liệu cơ bản
-                    String id = rs.getString("id");
+                    String id        = rs.getString("id");
                     String statusStr = rs.getString("status");
-                    String itemId = rs.getString("item_id");
-                    String leaderId = rs.getString("current_leader_id");
+                    String itemId    = rs.getString("item_id");
+                    String leaderId  = rs.getString("current_leader_id");
                     long currentPrice = rs.getLong("current_price");
 
-                    // 2. Xử lý thời gian an toàn
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
-                    java.time.LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+                    java.time.LocalDateTime createdAt = (createdTs != null)
+                        ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
                     java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
-                    java.time.LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : createdAt;
+                    java.time.LocalDateTime updatedAt = (updatedTs != null)
+                        ? updatedTs.toLocalDateTime() : createdAt;
 
                     java.sql.Timestamp startTs = rs.getTimestamp("start_time");
-                    java.time.LocalDateTime startTime = (startTs != null) ? startTs.toLocalDateTime() : null;
+                    java.time.LocalDateTime startTime = (startTs != null)
+                        ? startTs.toLocalDateTime() : null;
 
                     java.sql.Timestamp endTs = rs.getTimestamp("end_time");
-                    java.time.LocalDateTime endTime = (endTs != null) ? endTs.toLocalDateTime() : null;
+                    java.time.LocalDateTime endTime = (endTs != null)
+                        ? endTs.toLocalDateTime() : null;
 
-                    // 3. TÌM CÁC OBJECT LIÊN QUAN (Item và User)
                     ItemDAO itemDAO = new ItemDAO();
                     com.group13.auction.model.item.Item item = itemDAO.findItemById(itemId);
 
@@ -233,39 +212,26 @@ public class AuctionDAO {
                         currentLeader = userDAO.findNormalUserById(leaderId);
                     }
 
-                    // Đã thực hiện TODO: Đọc reserve_price từ DB và khởi tạo Strategy thực tế.
-                    // Bảng auctions cần có cột reserve_price (BIGINT/DECIMAL, NOT NULL).
                     long reservePrice = rs.getLong("reserve_price");
-                    // Nếu cột reserve_price chưa tồn tại hoặc = 0, dùng giá hiện tại làm fallback
-                    // để tránh NullPointerException trong Auction.isReserveMet().
                     if (reservePrice <= 0) {
                         reservePrice = currentPrice > 0 ? currentPrice : 1L;
                     }
 
-                    // 4. HỒI SINH AUCTION BẰNG RECONSTITUTE
-                    com.group13.auction.model.auction.Auction.AuctionStatus status = com.group13.auction.model.auction.Auction.AuctionStatus.OPEN;
+                    com.group13.auction.model.auction.Auction.AuctionStatus status =
+                        com.group13.auction.model.auction.Auction.AuctionStatus.OPEN;
                     if (statusStr != null && !statusStr.trim().isEmpty()) {
                         try {
-                            status = com.group13.auction.model.auction.Auction.AuctionStatus.valueOf(statusStr.trim().toUpperCase());
-                        } catch (IllegalArgumentException ignored) {
-                            // fallback OPEN
-                        }
+                            status = com.group13.auction.model.auction.Auction.AuctionStatus
+                                .valueOf(statusStr.trim().toUpperCase());
+                        } catch (IllegalArgumentException ignored) {}
                     }
-                    com.group13.auction.model.auction.Auction auction = com.group13.auction.model.auction.Auction.reconstitute(
-                            id,
-                            createdAt,
-                            updatedAt,
-                            item,
-                            startTime,
-                            endTime,
-                            currentPrice,
-                            status,
-                            reservePrice
-                    );
 
-                    // 5. Nạp thêm các thuộc tính không có trong hàm reconstitute
+                    com.group13.auction.model.auction.Auction auction =
+                        com.group13.auction.model.auction.Auction.reconstitute(
+                            id, createdAt, updatedAt, item,
+                            startTime, endTime, currentPrice, status, reservePrice);
+
                     if (currentLeader != null) {
-                        // reconstitute() không nhận currentLeader, nên nạp lại sau
                         auction.updateBid(currentPrice, currentLeader);
                     }
 
@@ -290,11 +256,7 @@ public class AuctionDAO {
              java.sql.ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                // Tương tự, nếu bạn đã có hàm findAuctionById, hãy gọi nó để tái tạo Object
-                // Hoặc bạn rút trích dữ liệu tại đây và gọi Auction.reconstitute(...)
                 String id = rs.getString("id");
-
-                // Giả sử bạn đã có hàm findAuctionById trong AuctionDAO:
                 com.group13.auction.model.auction.Auction auction = findAuctionById(id);
                 if (auction != null) {
                     auctions.add(auction);
@@ -308,28 +270,19 @@ public class AuctionDAO {
 
     /**
      * Lấy danh sách auctionId của Seller đang ở trạng thái OPEN hoặc RUNNING trực tiếp từ DB.
-     * Đã thực hiện TODO trong NormalUser.getUnfinishedAuctionIds():
-     * thay thế filter in-memory bằng query DB.
-     *
-     * <p>Query join qua bảng items để lấy seller_id vì auctions không lưu seller_id trực tiếp.
-     *
-     * @param sellerId UUID của seller
-     * @return danh sách auctionId còn đang mở/chạy
      */
     public java.util.List<String> findUnfinishedAuctionIdsBySellerId(String sellerId) {
         java.util.List<String> ids = new java.util.ArrayList<>();
-        String sql = "SELECT a.id FROM auctions a " +
-                "JOIN items i ON a.item_id = i.id " +
-                "WHERE i.seller_id = ? AND a.status IN ('OPEN', 'RUNNING')";
+        String sql = "SELECT a.id FROM auctions a "
+            + "JOIN items i ON a.item_id = i.id "
+            + "WHERE i.seller_id = ? AND a.status IN ('OPEN', 'RUNNING')";
 
         try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
              java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, sellerId);
             try (java.sql.ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    ids.add(rs.getString("id"));
-                }
+                while (rs.next()) ids.add(rs.getString("id"));
             }
         } catch (java.sql.SQLException e) {
             log.error("Lỗi tìm phiên chưa kết thúc của seller: sellerId={}", sellerId, e);
@@ -339,25 +292,19 @@ public class AuctionDAO {
 
     /**
      * Lấy danh sách tất cả auctionId của Seller (mọi trạng thái) từ DB.
-     * Dùng để inject setAllAuctionIds() sau khi reconstitute NormalUser.
-     *
-     * @param sellerId UUID của seller
-     * @return danh sách auctionId của seller
      */
     public java.util.List<String> findAuctionIdsBySellerId(String sellerId) {
         java.util.List<String> ids = new java.util.ArrayList<>();
-        String sql = "SELECT a.id FROM auctions a " +
-                "JOIN items i ON a.item_id = i.id " +
-                "WHERE i.seller_id = ?";
+        String sql = "SELECT a.id FROM auctions a "
+            + "JOIN items i ON a.item_id = i.id "
+            + "WHERE i.seller_id = ?";
 
         try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
              java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, sellerId);
             try (java.sql.ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    ids.add(rs.getString("id"));
-                }
+                while (rs.next()) ids.add(rs.getString("id"));
             }
         } catch (java.sql.SQLException e) {
             log.error("Lỗi lấy danh sách auctionId của seller: sellerId={}", sellerId, e);
@@ -365,4 +312,95 @@ public class AuctionDAO {
         return ids;
     }
 
+    // ── SEARCH ────────────────────────────────────────────────────────────────
+
+    /**
+     * Tìm phiên đấu giá theo tên sản phẩm (LIKE, không phân biệt hoa thường).
+     * Hỗ trợ phân trang (LIMIT/OFFSET) và sắp xếp theo whitelist cột.
+     *
+     * <p>SQL injection được ngăn bằng cách whitelist {@code sortBy}/{@code sortDir}
+     * — chỉ các giá trị đã biết mới được dùng trực tiếp trong câu SQL.
+     *
+     * @param keyword  từ khóa tìm kiếm (không cần thêm %)
+     * @param page     trang, bắt đầu từ 0
+     * @param size     số bản ghi mỗi trang
+     * @param sortBy   cột sắp xếp: currentPrice | endTime | createdAt | itemName
+     * @param sortDir  chiều: ASC | DESC
+     * @return danh sách Auction khớp, đã được reconstitute từ DB
+     */
+    public java.util.List<com.group13.auction.model.auction.Auction> searchByItemName(
+        String keyword, int page, int size, String sortBy, String sortDir) {
+
+        String orderClause = buildOrderClause(sortBy, sortDir);
+        String sql = "SELECT a.id FROM auctions a "
+            + "JOIN items i ON a.item_id = i.id "
+            + "WHERE LOWER(i.name) LIKE LOWER(?) "
+            + "ORDER BY " + orderClause + " "
+            + "LIMIT ? OFFSET ?";
+
+        java.util.List<com.group13.auction.model.auction.Auction> result = new java.util.ArrayList<>();
+        int offset = page * size;
+        String likeKeyword = "%" + keyword.trim() + "%";
+
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, likeKeyword);
+            pstmt.setInt(2, size);
+            pstmt.setInt(3, offset);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String id = rs.getString("id");
+                    com.group13.auction.model.auction.Auction auction = findAuctionById(id);
+                    if (auction != null) result.add(auction);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi tìm kiếm auction theo tên sản phẩm: keyword={}, page={}, size={}",
+                keyword, page, size, e);
+        }
+        return result;
+    }
+
+    /**
+     * Đếm tổng số phiên đấu giá khớp với keyword (dùng để tính totalPages).
+     *
+     * @param keyword từ khóa tìm kiếm
+     * @return tổng số bản ghi khớp
+     */
+    public long countByItemName(String keyword) {
+        String sql = "SELECT COUNT(*) FROM auctions a "
+            + "JOIN items i ON a.item_id = i.id "
+            + "WHERE LOWER(i.name) LIKE LOWER(?)";
+
+        String likeKeyword = "%" + keyword.trim() + "%";
+
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, likeKeyword);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi đếm auction theo tên sản phẩm: keyword={}", keyword, e);
+        }
+        return 0L;
+    }
+
+    /**
+     * Xây ORDER BY clause từ tên cột và chiều sắp xếp.
+     * Whitelist để tránh SQL injection.
+     */
+    private String buildOrderClause(String sortBy, String sortDir) {
+        String col = switch (sortBy == null ? "" : sortBy.trim()) {
+            case "currentPrice" -> "a.current_price";
+            case "endTime"      -> "a.end_time";
+            case "itemName"     -> "i.name";
+            default             -> "a.created_at";
+        };
+        String dir = "ASC".equalsIgnoreCase(sortDir) ? "ASC" : "DESC";
+        return col + " " + dir;
+    }
 }
