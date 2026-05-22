@@ -138,17 +138,21 @@ CREATE TABLE user_auction_activity (
 
 -- 9. Bảng Auction Winners
 CREATE TABLE auction_winners (
-                                 id VARCHAR(36) PRIMARY KEY,
-                                 auction_id VARCHAR(36) NOT NULL UNIQUE,
-                                 winner_id VARCHAR(36) NOT NULL,
-                                 final_price BIGINT NOT NULL,
-                                 deposit_paid BIGINT NOT NULL,
-                                 payment_status ENUM('PENDING', 'COMPLETED', 'EXPIRED', 'FUNDS_HELD', 'ITEM_RECEIVED') DEFAULT 'PENDING',
-                                 confirm_receipt_deadline DATETIME NULL,
-                                 report_deadline DATETIME NULL,
-                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                 id                       VARCHAR(36)  PRIMARY KEY,
+                                 auction_id               VARCHAR(36)  NOT NULL UNIQUE,
+                                 winner_id                VARCHAR(36)  NOT NULL,
+                                 final_price              BIGINT       NOT NULL,
+                                 deposit_paid             BIGINT       NOT NULL,
+                                 payment_status           ENUM('PENDING','COMPLETED','EXPIRED','FUNDS_HELD','ITEM_RECEIVED')
+                                                                                DEFAULT 'PENDING',
+                                 payment_deadline         DATETIME     NULL,
+                                 confirm_receipt_deadline DATETIME     NULL,
+                                 report_deadline          DATETIME     NULL,
+                                 is_second_offer          TINYINT(1)   NOT NULL DEFAULT 0,
+                                 created_at               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                                 updated_at               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                  FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
-                                 FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE
+                                 FOREIGN KEY (winner_id)  REFERENCES users(id)    ON DELETE CASCADE
 );
 
 -- 10. Bảng Second Chance Offers
