@@ -6,6 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionWinnerDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionWinnerDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/NotificationDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/NotificationDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/notification/Notification.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/notification/Notification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/UserAdminHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/AdminObserver.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/observer/AdminObserver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/AccountService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/QualityReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/QualityReportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/RatingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/RatingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/database/database.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,7 +25,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="775" />
+    <option name="cachedIndexableFilesCount" value="779" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -241,7 +253,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ServerMain">
+  <component name="RunManager" selected="Application.Launcher">
     <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
       <module name="auction-client" />
@@ -332,8 +344,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ServerMain" />
         <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.ChatbotProviderTest" />
         <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
@@ -387,7 +399,8 @@
       <workItem from="1779300409592" duration="404000" />
       <workItem from="1779306160021" duration="315000" />
       <workItem from="1779340255204" duration="1359000" />
-      <workItem from="1779372762301" duration="9768000" />
+      <workItem from="1779372762301" duration="10773000" />
+      <workItem from="1779417005631" duration="2971000" />
     </task>
     <servers />
   </component>
@@ -490,11 +503,6 @@
           <line>80</line>
           <option name="timeStamp" value="57" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
-          <line>49</line>
-          <option name="timeStamp" value="58" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
           <line>36</line>
@@ -503,15 +511,6 @@
             <option name="WATCH_EXIT" value="false" />
           </properties>
           <option name="timeStamp" value="43" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-method">
-          <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
-          <line>51</line>
-          <properties class="com.group13.auction.ServerMain">
-            <option name="EMULATED" value="true" />
-            <option name="WATCH_EXIT" value="false" />
-          </properties>
-          <option name="timeStamp" value="51" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-field">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>

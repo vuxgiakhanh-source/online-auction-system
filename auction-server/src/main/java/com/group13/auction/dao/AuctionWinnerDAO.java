@@ -20,8 +20,9 @@ public class AuctionWinnerDAO {
      * Lưu thông tin người thắng cuộc mới vào bảng auction_winners
      */
     public boolean saveWinner(AuctionWinner winner) {
-        String sql = "INSERT INTO auction_winners (id, auction_id, winner_id, final_price, deposit_paid, payment_status) " +
-            "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO auction_winners " +
+            "(id, auction_id, winner_id, final_price, deposit_paid, payment_status, payment_deadline) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -32,6 +33,9 @@ public class AuctionWinnerDAO {
             pstmt.setLong(4, winner.getFinalPrice());
             pstmt.setLong(5, winner.getDepositPaid());
             pstmt.setString(6, winner.getPaymentStatus().name());
+
+            pstmt.setTimestamp(7, winner.getPaymentDeadline() != null
+                ? java.sql.Timestamp.valueOf(winner.getPaymentDeadline()) : null);
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {

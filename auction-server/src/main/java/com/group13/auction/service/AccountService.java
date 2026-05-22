@@ -3,6 +3,7 @@ package com.group13.auction.service;
 import com.group13.auction.dao.*;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.notification.Notification;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.AdminFactory;
 import com.group13.auction.model.user.NormalUser;
@@ -29,37 +30,45 @@ public class AccountService implements IAccountService {
 
   private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
-  private final IRatingService ratingService;
-  private final AdminFactory adminFactory;
-  private final WalletService walletService;
+  private final IRatingService  ratingService;
+  private final AdminFactory    adminFactory;
+  private final WalletService   walletService;
 
-  private final UserDAO userDAO;
-  private final SellerDAO sellerDAO;
-  private final AdminDAO adminDAO;
-  private final AuctionDAO auctionDAO;
-
-  /**
-   * Đã thực hiện TODO: inject AuctionWinnerDAO để kiểm tra trạng thái thanh toán của winner/runner-up
-   * khi xóa tài khoản — dùng auctionWinnerDAO.hasPendingPayment().
-   */
+  private final UserDAO          userDAO;
+  private final SellerDAO        sellerDAO;
+  private final AdminDAO         adminDAO;
+  private final AuctionDAO       auctionDAO;
   private final AuctionWinnerDAO auctionWinnerDAO;
+  private final NotificationDAO  notificationDAO;
 
   public AccountService(
-          IRatingService ratingService,
-          UserDAO userDAO,
-          SellerDAO sellerDAO,
-          AdminDAO adminDAO,
-          AuctionDAO auctionDAO,
-          AuctionWinnerDAO auctionWinnerDAO) {
-    this.ratingService = ratingService;
-    this.adminFactory = new AdminFactory();
-    this.userDAO = userDAO;
-    this.sellerDAO = sellerDAO;
-    this.adminDAO = adminDAO;
-    this.auctionDAO = auctionDAO;
+      IRatingService ratingService,
+      UserDAO userDAO,
+      SellerDAO sellerDAO,
+      AdminDAO adminDAO,
+      AuctionDAO auctionDAO,
+      AuctionWinnerDAO auctionWinnerDAO) {
+    this(ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
+        auctionWinnerDAO, new NotificationDAO());
+  }
+
+  public AccountService(
+      IRatingService ratingService,
+      UserDAO userDAO,
+      SellerDAO sellerDAO,
+      AdminDAO adminDAO,
+      AuctionDAO auctionDAO,
+      AuctionWinnerDAO auctionWinnerDAO,
+      NotificationDAO notificationDAO) {
+    this.ratingService    = ratingService;
+    this.adminFactory     = new AdminFactory();
+    this.userDAO          = userDAO;
+    this.sellerDAO        = sellerDAO;
+    this.adminDAO         = adminDAO;
+    this.auctionDAO       = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
-    // PaymentHandler cần deposit/withdraw; WalletService chịu trách nhiệm validate và persist số dư.
-    this.walletService = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
+    this.notificationDAO  = notificationDAO;
+    this.walletService    = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
   }
 
   public void deposit(NormalUser user, long amount) {
@@ -70,14 +79,10 @@ public class AccountService implements IAccountService {
     walletService.withdraw(user, amount);
   }
 
-  // Ban
+  // ── Ban ───────────────────────────────────────────────────────────────────
 
   /**
    * Ban tài khoản với lý do cụ thể — chỉ Admin gọi.
-   *
-   * @param admin admin thực hiện
-   * @param target user bị ban
-   * @param reason lý do ban
    */
   @Override
   public void banUser(Admin admin, User target, Admin.BanReason reason) {
@@ -85,55 +90,52 @@ public class AccountService implements IAccountService {
       throw new IllegalArgumentException("Lí do ban không được null");
     }
     target.setAccountStatus(AccountStatus.BANNED);
-    String log = String.format(
-            "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);
-    admin.addActionLog(log);
-    AccountService.log.info("Ban user: admin={} target={} reason={}",
-            admin.getUsername(), target.getUsername(), reason);
+    String entry = String.format("[ACCOUNT] %s ban %s | Lý do: %s",
+        admin.getUsername(), target.getUsername(), reason);
+    admin.addActionLog(entry);
+    log.info("Ban user: admin={} target={} reason={}",
+        admin.getUsername(), target.getUsername(), reason);
 
-    // Gọi DAO để cập nhật DB
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
-    // TODO: notificationDao.save() - báo user
+
+    saveNotification(target.getId(), null,
+        "Tài khoản bị khoá",
+        String.format("Tài khoản của bạn đã bị khoá bởi quản trị viên. Lý do: %s.", reason));
   }
 
-
-  // Tạo tài khoản Admin STAFF
+  // ── Admin STAFF ───────────────────────────────────────────────────────────
 
   /**
    * Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này.
-   * AdminFactory tuyệt đối chỉ được cấp bởi System — không được tạo ở ngoài.
    */
   @Override
   public Admin createStaffAdmin(String username, String password, String email) {
     SystemAdmin system = SystemAdmin.getInstance();
 
-    // 1. Khai sinh Object trên RAM trước (Entity sẽ tự động sinh UUID cho biến id final)
     Admin newAdmin = (Admin) adminFactory.createUser(username, password, email);
 
-    // 2. Lấy ID và thông tin vừa tạo lưu xuống Database
     boolean success = adminDAO.createAdmin(
-            newAdmin.getId(),
-            newAdmin.getUsername(),
-            newAdmin.getHashedPassword(),
-            newAdmin.getEmail(),
-            "STAFF");
+        newAdmin.getId(),
+        newAdmin.getUsername(),
+        newAdmin.getHashedPassword(),
+        newAdmin.getEmail(),
+        "STAFF");
 
     if (!success) {
       throw new RuntimeException("Hệ thống lỗi: Không thể tạo Admin trong cơ sở dữ liệu.");
     }
 
-    // 3. Đăng ký Observer
     AuctionManager.getInstance().addStaffObserver(new StaffObserver(newAdmin));
     AuctionManager.getInstance().registerUser(newAdmin);
 
-    String log = String.format("[SYSTEM] Tạo admin STAFF: %s", username);
-    system.addActionLog(log);
-    AccountService.log.info("Tạo admin STAFF: username={}", username);
+    String entry = String.format("[SYSTEM] Tạo admin STAFF: %s", username);
+    system.addActionLog(entry);
+    log.info("Tạo admin STAFF: username={}", username);
 
     return newAdmin;
   }
 
-  // Duyệt Seller
+  // ── Seller role ───────────────────────────────────────────────────────────
 
   /**
    * Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
@@ -142,11 +144,11 @@ public class AccountService implements IAccountService {
   public void autoApproveSellerRole(NormalUser user) {
     if (!ratingService.isEligible(user)) {
       throw new IllegalStateException(
-              "User không đủ điều kiện để thêm role Seller (tài khoản bị khóa hoặc rating thấp).");
+          "User không đủ điều kiện để thêm role Seller (tài khoản bị khóa hoặc rating thấp).");
     }
     if (user.isHasEverBeenPenalized()) {
       throw new IllegalStateException(
-              "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller.");
+          "User đã từng bị trừ rating — không đủ điều kiện tự động duyệt role Seller.");
     }
     if (user.hasRole(User.UserRole.SELLER)) {
       log.info("{} đã có role Seller.", user.getUsername());
@@ -154,54 +156,54 @@ public class AccountService implements IAccountService {
     }
 
     user.addRole(User.UserRole.SELLER);
-    String log = String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
-    SystemAdmin.getInstance().addActionLog(log);
-    AccountService.log.info("Auto-approve role Seller: user={}", user.getUsername());
+    String entry = String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
+    SystemAdmin.getInstance().addActionLog(entry);
+    log.info("Auto-approve role Seller: user={}", user.getUsername());
 
-    // Gọi DAO để cập nhật DB
     sellerDAO.approveSellerRole(user.getId());
-    // TODO: notificationDao.save() - báo user
+
+    saveNotification(user.getId(), null,
+        "Đăng ký Seller thành công",
+        "Yêu cầu trở thành Seller của bạn đã được duyệt. Bạn có thể tạo phiên đấu giá ngay bây giờ.");
   }
 
-  // Seller request hủy phiên
+  // ── Seller cancel request ─────────────────────────────────────────────────
 
   /**
    * Seller gửi yêu cầu hủy phiên đấu giá lên hệ thống.
-   *
-   * <p>Phiên sẽ chuyển sang trạng thái {@code CANCEL_REQUESTED} và vẫn
-   * tiếp tục nhận bid cho đến khi Staff Admin approve hoặc reject.
-   *
-   * @param seller seller sở hữu phiên
-   * @param auction phiên cần yêu cầu hủy
-   * @param reason lý do yêu cầu hủy
-   * @throws IllegalArgumentException nếu seller không sở hữu phiên
-   * @throws IllegalStateException nếu phiên không ở OPEN hoặc RUNNING
    */
   public void requestCancelAuction(NormalUser seller, Auction auction, String reason) {
     if (!seller.hasRole(User.UserRole.SELLER)) {
       throw new IllegalArgumentException("Chỉ Seller mới có thể yêu cầu hủy phiên.");
     }
-    // FIX: getAllAuctionIds() luôn rỗng với user reconstitute từ DB (không có DAO inject).
-    // Dùng auction.getItem().getSeller() thay vì allAuctionIds — đáng tin cậy mọi trường hợp.
     if (auction.getItem() == null
-            || auction.getItem().getSeller() == null
-            || !auction.getItem().getSeller().getId().equals(seller.getId())) {
+        || auction.getItem().getSeller() == null
+        || !auction.getItem().getSeller().getId().equals(seller.getId())) {
       throw new IllegalArgumentException("Seller không sở hữu phiên đấu giá này.");
     }
     if (auction.getStatus() != Auction.AuctionStatus.OPEN) {
       throw new IllegalStateException(
-              "Phiên đấu giá không thể yêu cầu hủy ở trạng thái: " + auction.getStatus());
+          "Phiên đấu giá không thể yêu cầu hủy ở trạng thái: " + auction.getStatus());
     }
 
-    // Notify Staff Admin để xem xét
     AuctionEvent cancelRequestEvent = new AuctionEvent(
-            AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
-            auction, null, 0L,
-            String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
+        AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
+        auction, null, 0L,
+        String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);
 
     log.info("Seller gửi yêu cầu hủy phiên: seller={} auctionId={} reason={}",
-            seller.getUsername(), auction.getId(), reason);
+        seller.getUsername(), auction.getId(), reason);
+  }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  private void saveNotification(String userId, String auctionId, String title, String body) {
+    try {
+      notificationDAO.save(Notification.create(userId, auctionId, title, body));
+    } catch (Exception e) {
+      log.warn("Không thể lưu notification: userId={}, title={}", userId, title, e);
+    }
   }
 }
