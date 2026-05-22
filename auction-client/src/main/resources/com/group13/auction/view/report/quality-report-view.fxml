@@ -23,7 +23,11 @@
         xmlns:fx="http://javafx.com/fxml/1"
         fx:controller="com.group13.auction.ui.controller.report.QualityReportController">
 
-    <VBox spacing="20.0" styleClass="report-page">
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                pannable="true"
+                styleClass="page-scroll-pane">
+        <VBox spacing="20.0" styleClass="report-page">
         <padding>
             <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
         </padding>
@@ -46,11 +50,6 @@
                     onAction="#handleBackToOrders"/>
         </HBox>
 
-        <ScrollPane
-                fitToWidth="true"
-                hbarPolicy="NEVER"
-                VBox.vgrow="ALWAYS"
-                styleClass="report-scroll-pane">
             <VBox spacing="18.0" styleClass="report-content">
                 <padding>
                     <Insets top="2.0" right="4.0" bottom="4.0" left="4.0"/>
@@ -181,7 +180,6 @@
                     </VBox>
                 </VBox>
             </VBox>
-        </ScrollPane>
 
         <VBox spacing="8.0">
             <HBox alignment="CENTER_LEFT" spacing="12.0">
@@ -233,5 +231,6 @@
                 </VBox>
             </HBox>
         </VBox>
-    </VBox>
+        </VBox>
+    </ScrollPane>
 </StackPane>

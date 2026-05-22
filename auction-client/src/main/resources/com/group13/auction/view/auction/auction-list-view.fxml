@@ -23,11 +23,15 @@
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
-    <VBox spacing="22.0"
-          AnchorPane.topAnchor="0.0"
-          AnchorPane.bottomAnchor="0.0"
-          AnchorPane.leftAnchor="0.0"
-          AnchorPane.rightAnchor="0.0">
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                pannable="true"
+                styleClass="page-scroll-pane"
+                AnchorPane.topAnchor="0.0"
+                AnchorPane.bottomAnchor="0.0"
+                AnchorPane.leftAnchor="0.0"
+                AnchorPane.rightAnchor="0.0">
+        <VBox spacing="22.0">
         <padding>
             <Insets top="26.0" right="42.0" bottom="26.0" left="42.0"/>
         </padding>
@@ -106,17 +110,13 @@
         </HBox>
 
         <!-- Auction list -->
-        <ScrollPane fitToWidth="true"
-                    VBox.vgrow="ALWAYS"
-                    styleClass="auction-scroll-pane">
-            <VBox fx:id="auctionCardContainer"
-                  spacing="14.0"
-                  styleClass="auction-list-container">
-                <padding>
-                    <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
-                </padding>
-            </VBox>
-        </ScrollPane>
+        <VBox fx:id="auctionCardContainer"
+              spacing="14.0"
+              styleClass="auction-list-container">
+            <padding>
+                <Insets top="6.0" right="4.0" bottom="12.0" left="4.0"/>
+            </padding>
+        </VBox>
 
         <!-- Chatbot launcher + signature -->
         <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
@@ -128,5 +128,6 @@
                 <Label styleClass="signature-label" text="by CKNT team"/>
             </VBox>
         </HBox>
-    </VBox>
+        </VBox>
+    </ScrollPane>
 </AnchorPane>
