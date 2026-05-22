@@ -49,12 +49,42 @@ if (-not $ready) {
     exit 1
 }
 
+# Neu loi thieu cot DB: docker compose down -v ; docker compose up db -d
+
+function Test-ServerPortsFree {
+    $blocked = @()
+    foreach ($p in @(8080, 8081)) {
+        $conn = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($conn) { $blocked += [PSCustomObject]@{ Port = $p; Pid = $conn.OwningProcess } }
+    }
+    if ($blocked.Count -eq 0) { return }
+
+    Write-Host ""
+    Write-Host "Cannot start server - ports already in use:" -ForegroundColor Red
+    foreach ($b in $blocked) {
+        $proc = Get-Process -Id $b.Pid -ErrorAction SilentlyContinue
+        $name = if ($proc) { $proc.ProcessName } else { "?" }
+        Write-Host "  Port $($b.Port) -> PID $($b.Pid) ($name)"
+    }
+    Write-Host "Stop the old server (often a previous java -jar):" -ForegroundColor Yellow
+    Write-Host "  Stop-Process -Id $($blocked[0].Pid) -Force"
+    Write-Host "Or use other ports:" -ForegroundColor Yellow
+    Write-Host '  $env:SERVER_PORT=8082; $env:IMAGE_SERVER_PORT=8083; .\scripts\run-server-main.ps1'
+    Write-Host ""
+    exit 1
+}
+
+Test-ServerPortsFree
+
+# Maven -D flag must be quoted for PowerShell (see $mvnSkipTests below)
+$mvnSkipTests = "-Dmaven.test.skip=true"
+
 Write-Host "Building auction-server..."
-mvn -pl auction-server -am compile -DskipTests -q
+mvn -pl auction-server -am compile $mvnSkipTests -q
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "Packaging auction-server..."
-mvn -pl auction-server -am package -DskipTests -q
+mvn -pl auction-server -am package $mvnSkipTests -q
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "Starting ServerMain (JAR)..."

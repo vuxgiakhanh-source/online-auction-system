@@ -9,8 +9,11 @@ import com.group13.auction.common.dto.report.ReportDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.dao.NotificationDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.notification.Notification;
+import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 
@@ -35,6 +38,7 @@ public class ServerBroadcastNotifier {
 
     private final SessionManager sessionManager = SessionManager.getInstance();
     private final NotificationDAO notificationDAO = new NotificationDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     private ServerBroadcastNotifier() {}
 
@@ -47,6 +51,98 @@ public class ServerBroadcastNotifier {
         } catch (Exception e) {
             log.warn("Không thể lưu notification: userId={}, title={}", userId, title, e);
         }
+    }
+
+    /**
+     * Ghi thông báo inbox cho mọi user đã JOINED phiên (theo {@code user_auction_activity}).
+     */
+    public void notifyJoinedParticipants(String auctionId, String title, String body) {
+        notifyJoinedParticipants(auctionId, title, body, null);
+    }
+
+    /**
+     * @param excludeUserId bỏ qua user (ví dụ winner đã có thông báo riêng từ {@link #notifyAuctionEnded}).
+     */
+    public void notifyJoinedParticipants(String auctionId, String title, String body,
+                                         String excludeUserId) {
+        if (auctionId == null || title == null || body == null) return;
+        var joinedUserIds = userDAO.findJoinedUserIdsByAuctionId(auctionId);
+        int sent = 0;
+        for (String userId : joinedUserIds) {
+            if (excludeUserId != null && excludeUserId.equals(userId)) continue;
+            persistNotification(userId, auctionId, title, body);
+            sent++;
+        }
+        if (sent > 0) {
+            log.info("Inbox notification sent to {} joined user(s): auctionId={}, title={}",
+                sent, auctionId, title);
+        }
+    }
+
+    /**
+     * Map {@link AuctionEvent} → title/body và gửi tới toàn bộ người đã tham gia phiên.
+     */
+    public void notifyJoinedParticipantsForEvent(AuctionEvent event) {
+        if (event == null || event.getAuction() == null) return;
+        AuctionEvent.AuctionEventType type = event.getEventType();
+        if (type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
+            || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST
+            || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED
+            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED) {
+            return;
+        }
+        String auctionId = event.getAuction().getId();
+        String title = eventTitle(type);
+        String body = event.getMessage() != null && !event.getMessage().isBlank()
+            ? event.getMessage()
+            : eventBody(event);
+        String excludeUserId = type == AuctionEvent.AuctionEventType.AUCTION_ENDED
+            && event.getBidder() != null
+            ? event.getBidder().getId()
+            : null;
+        notifyJoinedParticipants(auctionId, title, body, excludeUserId);
+    }
+
+    private static String eventTitle(AuctionEvent.AuctionEventType type) {
+        return switch (type) {
+            case AUCTION_UPCOMING -> "Phiên sắp bắt đầu";
+            case AUCTION_STARTED -> "Phiên đã bắt đầu";
+            case BID_PLACED -> "Có bid mới";
+            case BID_RESERVE_NOT_MET -> "Bid chưa đạt reserve";
+            case AUCTION_EXTENDED -> "Phiên được gia hạn";
+            case AUCTION_ENDED -> "Phiên đã kết thúc";
+            case AUCTION_NO_WINNER -> "Phiên không có người thắng";
+            case RESERVE_NOT_MET_CLOSED -> "Reserve chưa đạt";
+            case PAYMENT_COMPLETED -> "Thanh toán hoàn tất";
+            case AUCTION_CANCELED -> "Phiên đã hủy";
+            case SECOND_CHANCE_OFFERED -> "Cơ hội mua thứ cấp";
+            default -> "Cập nhật phiên đấu giá";
+        };
+    }
+
+    private static String eventBody(AuctionEvent event) {
+        Auction auction = event.getAuction();
+        NormalUser bidder = event.getBidder();
+        String bidderName = bidder != null ? bidder.getUsername() : "Không có";
+        return switch (event.getEventType()) {
+            case AUCTION_UPCOMING -> "Phiên đấu giá sắp bắt đầu. Hãy chuẩn bị sẵn sàng.";
+            case AUCTION_STARTED -> "Phiên đấu giá đã chuyển sang RUNNING.";
+            case BID_PLACED -> String.format("%s đặt giá %d.", bidderName, event.getBidAmount());
+            case BID_RESERVE_NOT_MET -> String.format(
+                "%s đặt %d — chưa đạt reserve.", bidderName, event.getBidAmount());
+            case AUCTION_EXTENDED -> event.getMessage() != null
+                ? event.getMessage()
+                : "Phiên được gia hạn (anti-sniping).";
+            case AUCTION_ENDED -> String.format(
+                "Phiên kết thúc. Người dẫn đầu: %s | Giá: %d.", bidderName, event.getBidAmount());
+            case AUCTION_NO_WINNER -> "Phiên kết thúc không có ai đặt giá. Cọc sẽ được hoàn trả.";
+            case RESERVE_NOT_MET_CLOSED -> String.format(
+                "Phiên kết thúc — giá cao nhất %d chưa đạt reserve.", event.getBidAmount());
+            case PAYMENT_COMPLETED -> String.format("Giao dịch hoàn tất với giá %d.", event.getBidAmount());
+            case AUCTION_CANCELED -> "Phiên đấu giá đã bị hủy.";
+            case SECOND_CHANCE_OFFERED -> "Winner không thanh toán — hệ thống mở cơ hội mua thứ cấp.";
+            default -> "Có cập nhật mới cho phiên bạn đang tham gia.";
+        };
     }
 
     // ── Bid events ────────────────────────────────────────────────────────────

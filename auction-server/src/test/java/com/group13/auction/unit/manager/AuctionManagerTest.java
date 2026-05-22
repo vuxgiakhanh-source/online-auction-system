@@ -112,7 +112,7 @@ class AuctionManagerTest {
                 0L,
                 roles,
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -134,7 +134,7 @@ class AuctionManagerTest {
                 0L,
                 roles,
                 false,
-                false,
+                0,
                 null);
     }
 

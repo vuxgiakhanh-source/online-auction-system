@@ -88,7 +88,7 @@ class RatingServiceTest {
         lenient().when(userDAO.updateRating(anyString(), anyDouble())).thenReturn(true);
         lenient().when(userDAO.updateAccountStatus(anyString(), anyString())).thenReturn(true);
         lenient().when(userDAO.updateRatingAndPenalty(anyString(), anyDouble(), anyBoolean())).thenReturn(true);
-        lenient().when(userDAO.updateHasEverBeenRestored(anyString(), anyBoolean())).thenReturn(true);
+        lenient().when(userDAO.incrementTimesRestored(anyString())).thenReturn(true);
     }
 
     // =========================================================================
@@ -182,7 +182,7 @@ class RatingServiceTest {
                     AccountStatus.SUSPENDED,
                     RATING_MAX, 0L, 0L,
                     EnumSet.of(User.UserRole.BIDDER),
-                    false, false,
+                    false, 0,
                     LocalDateTime.now());
 
             assertFalse(ratingService.isEligible(user));
@@ -732,7 +732,7 @@ class RatingServiceTest {
 
         private NormalUser suspendedWithSuspendedAt(String username, double rating,
                                                     LocalDateTime suspendedAt,
-                                                    boolean hasEverBeenRestored) {
+                                                    int timesRestored) {
             return NormalUser.reconstitute(
                     UUID.randomUUID().toString(),
                     LocalDateTime.now(), LocalDateTime.now(),
@@ -744,7 +744,7 @@ class RatingServiceTest {
                     0L, 0L,
                     EnumSet.of(User.UserRole.BIDDER),
                     true,
-                    hasEverBeenRestored,
+                    timesRestored,
                     suspendedAt);
         }
 
@@ -791,7 +791,7 @@ class RatingServiceTest {
                     AccountStatus.SUSPENDED,
                     SUSPEND_THRESHOLD, 0L, 0L,
                     EnumSet.of(User.UserRole.BIDDER),
-                    true, false,
+                    true, 0,
                     null); // suspendedAt = null
 
             ratingService.checkAndRestoreSuspended(user);
@@ -808,7 +808,7 @@ class RatingServiceTest {
             // suspendedAt = 2 tháng 29 ngày trước
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(2).minusDays(29);
             NormalUser user = suspendedWithSuspendedAt("bidderGG4", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user, LocalDateTime.now().minusMonths(2).minusDays(29));
 
@@ -823,7 +823,7 @@ class RatingServiceTest {
             // Đặt suspendedAt = 2026/May/20 - 3M → threshold = 2026/May/20 → now.isAfter(now) = false
             LocalDateTime suspendedAt = LocalDateTime.of(2026, Month.MAY, 20, 10, 30).minusDays(30);
             NormalUser user = suspendedWithSuspendedAt("bidderGG5", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user, LocalDateTime.of(2026, Month.MAY, 20, 10, 30));
 
@@ -837,7 +837,7 @@ class RatingServiceTest {
             // suspendedAt = 3 tháng + 2 giây trước → threshold = now - 2 giây → now.isAfter = true
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(3).minusSeconds(2);
             NormalUser user = suspendedWithSuspendedAt("bidderGG6", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -852,7 +852,7 @@ class RatingServiceTest {
         void restore_ratingIncreasedByRestoreDelta() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG7", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
             double expectedRating = SUSPEND_THRESHOLD + RESTORE_DELTA; // 1.5 + 0.6 = 2.1
 
             ratingService.checkAndRestoreSuspended(user);
@@ -865,7 +865,7 @@ class RatingServiceTest {
         void restore_ratingAboveThreshold_statusSetToActive() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG8", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -877,7 +877,7 @@ class RatingServiceTest {
         void restore_hasEverBeenRestoredSetTrue() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG9", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -889,14 +889,14 @@ class RatingServiceTest {
         void restore_userDAOCalledCorrectly() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG10", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
             double expectedRating = SUSPEND_THRESHOLD + RESTORE_DELTA;
 
             ratingService.checkAndRestoreSuspended(user);
 
             verify(userDAO).updateRating(eq(user.getId()), eq(expectedRating));
             verify(userDAO).updateAccountStatus(eq(user.getId()), eq("ACTIVE"));
-            verify(userDAO).updateHasEverBeenRestored(eq(user.getId()), eq(true));
+            verify(userDAO).incrementTimesRestored(eq(user.getId()));
         }
 
         // --- Guard: hasEverBeenRestored = true → không restore lần 2 ---
@@ -906,7 +906,7 @@ class RatingServiceTest {
         void alreadyRestored_noSecondRestore() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(6);
             NormalUser user = suspendedWithSuspendedAt("bidderGG11", SUSPEND_THRESHOLD,
-                    suspendedAt, true); // hasEverBeenRestored = true
+                    suspendedAt, 1); // timesRestored = 1
             double ratingBefore = user.getRating();
 
             ratingService.checkAndRestoreSuspended(user);
@@ -923,7 +923,7 @@ class RatingServiceTest {
         void secondCallAfterRestore_isIdempotent() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG12", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user); // lần 1 → ACTIVE, restored=true
             AccountStatus statusAfterFirst = user.getAccountStatus();
@@ -947,7 +947,7 @@ class RatingServiceTest {
             // rating = 0.8 → 0.8 + 0.6 = 1.4 ≤ 1.5 → giữ SUSPENDED
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG13", 0.9,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -964,7 +964,7 @@ class RatingServiceTest {
             // 0.9 + 0.6 = 1.5, cần > 1.5 mới ACTIVE
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG14", 0.9,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -978,7 +978,7 @@ class RatingServiceTest {
         void restore_ratingJustAboveThresholdAfterDelta_statusActive() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG15", 0.96,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
@@ -993,13 +993,13 @@ class RatingServiceTest {
         void restore_exactlyThreeDaoMethodsCalled() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG16", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
 
             ratingService.checkAndRestoreSuspended(user);
 
             verify(userDAO, times(1)).updateRating(anyString(), anyDouble());
             verify(userDAO, times(1)).updateAccountStatus(anyString(), anyString());
-            verify(userDAO, times(1)).updateHasEverBeenRestored(anyString(), eq(true));
+            verify(userDAO, times(1)).incrementTimesRestored(anyString());
             verifyNoMoreInteractions(userDAO);
         }
 
@@ -1018,7 +1018,7 @@ class RatingServiceTest {
                     AccountStatus.SUSPENDED,
                     SUSPEND_THRESHOLD, 500_000L, 0L,
                     EnumSet.of(User.UserRole.BIDDER),
-                    true, false, suspendedAt);
+                    true, 0, suspendedAt);
             long balanceBefore = user.getBalance();
 
             ratingService.checkAndRestoreSuspended(user);
@@ -1031,7 +1031,7 @@ class RatingServiceTest {
         void restore_doesNotAffectUsername() {
             LocalDateTime suspendedAt = LocalDateTime.now().minusMonths(4);
             NormalUser user = suspendedWithSuspendedAt("bidderGG18", SUSPEND_THRESHOLD,
-                    suspendedAt, false);
+                    suspendedAt, 0);
             String usernameBefore = user.getUsername();
 
             ratingService.checkAndRestoreSuspended(user);
@@ -1076,7 +1076,7 @@ class RatingServiceTest {
                     AccountStatus.SUSPENDED,
                     RATING_DEFAULT, 0L, 0L,
                     EnumSet.of(User.UserRole.SELLER),
-                    false, false,
+                    false, 0,
                     LocalDateTime.now());
 
             assertFalse(ratingService.canSellerCreateAuction(seller));
@@ -1094,7 +1094,7 @@ class RatingServiceTest {
                     AccountStatus.ACTIVE,
                     1.9, 0L, 0L,
                     EnumSet.of(User.UserRole.SELLER),
-                    false, false,
+                    false, 0,
                     null);
 
             assertFalse(ratingService.canSellerCreateAuction(seller));
@@ -1112,7 +1112,7 @@ class RatingServiceTest {
                     AccountStatus.ACTIVE,
                     2.0, 0L, 0L,
                     EnumSet.of(User.UserRole.SELLER),
-                    false, false,
+                    false, 0,
                     null);
 
             assertTrue(ratingService.canSellerCreateAuction(seller));

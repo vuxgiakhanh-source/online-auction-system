@@ -1141,7 +1141,7 @@ class AuctionServiceTest {
                 User.AccountStatus.ACTIVE,
                 3.0, 5_000_000L, 0L,
                 EnumSet.of(User.UserRole.BIDDER),
-                false, false, null
+                false, 0, null
         );
     }
 
@@ -1155,7 +1155,7 @@ class AuctionServiceTest {
                 User.AccountStatus.ACTIVE,
                 3.0, 10_000_000L, 0L,
                 EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
-                false, false, null
+                false, 0, null
         );
     }
 

@@ -39,7 +39,7 @@ public abstract class ConcurrencyTestBase {
                 User.AccountStatus.ACTIVE,
                 3.0, balance, 0L,
                 EnumSet.of(User.UserRole.BIDDER),
-                false, false, null
+                false, 0, null
         );
     }
 

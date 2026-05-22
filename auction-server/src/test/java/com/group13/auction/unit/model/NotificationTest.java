@@ -23,11 +23,12 @@ class NotificationTest {
         @Test
         @DisplayName("create() — id không null, isRead=false")
         void create_defaultState() {
-            Notification n = Notification.create("user-1", "auction-1", "Bạn bị vượt giá");
+            Notification n = Notification.create("user-1", "auction-1", "Bạn bị vượt giá", "Giá hiện tại đã cao hơn max bid của bạn.");
             assertThat(n.getId()).isNotNull().isNotEmpty();
             assertThat(n.getUserId()).isEqualTo("user-1");
             assertThat(n.getAuctionId()).isEqualTo("auction-1");
-            assertThat(n.getMessage()).isEqualTo("Bạn bị vượt giá");
+            assertThat(n.getTitle()).isEqualTo("Bạn bị vượt giá");
+            assertThat(n.getBody()).isEqualTo("Giá hiện tại đã cao hơn max bid của bạn.");
             assertThat(n.isRead()).isFalse();
             assertThat(n.getCreatedAt()).isNotNull();
         }
@@ -35,8 +36,8 @@ class NotificationTest {
         @Test
         @DisplayName("create() hai lần — id khác nhau")
         void create_uniqueIds() {
-            Notification n1 = Notification.create("u", "a", "m");
-            Notification n2 = Notification.create("u", "a", "m");
+            Notification n1 = Notification.create("u", "a", "t", "b");
+            Notification n2 = Notification.create("u", "a", "t", "b");
             assertThat(n1.getId()).isNotEqualTo(n2.getId());
         }
 
@@ -45,11 +46,12 @@ class NotificationTest {
         void reconstitute_preservesFields() {
             LocalDateTime ts = LocalDateTime.of(2025, 1, 1, 10, 0);
             Notification n = Notification.reconstitute("id-42", ts, ts,
-                    "u2", "a2", "hello", true);
+                    "u2", "a2", "hello", "world", true);
             assertThat(n.getId()).isEqualTo("id-42");
             assertThat(n.getUserId()).isEqualTo("u2");
             assertThat(n.getAuctionId()).isEqualTo("a2");
-            assertThat(n.getMessage()).isEqualTo("hello");
+            assertThat(n.getTitle()).isEqualTo("hello");
+            assertThat(n.getBody()).isEqualTo("world");
             assertThat(n.isRead()).isTrue();
             assertThat(n.getCreatedAt()).isEqualTo(ts);
         }
@@ -62,7 +64,7 @@ class NotificationTest {
         @Test
         @DisplayName("markRead() — isRead chuyển sang true")
         void markRead_setsTrue() {
-            Notification n = Notification.create("u", "a", "msg");
+            Notification n = Notification.create("u", "a", "title", "body");
             assertThat(n.isRead()).isFalse();
             n.markRead();
             assertThat(n.isRead()).isTrue();
@@ -71,7 +73,7 @@ class NotificationTest {
         @Test
         @DisplayName("markRead() nhiều lần — vẫn true, không lỗi")
         void markReadMultipleTimes_noError() {
-            Notification n = Notification.create("u", "a", "msg");
+            Notification n = Notification.create("u", "a", "title", "body");
             assertThatCode(() -> {
                 n.markRead();
                 n.markRead();
@@ -83,7 +85,7 @@ class NotificationTest {
         @Test
         @DisplayName("markRead() cập nhật updatedAt")
         void markRead_updatesTimestamp() throws InterruptedException {
-            Notification n = Notification.create("u", "a", "msg");
+            Notification n = Notification.create("u", "a", "title", "body");
             LocalDateTime before = n.getUpdatedAt();
             Thread.sleep(10);
             n.markRead();
@@ -98,7 +100,7 @@ class NotificationTest {
         @Test
         @DisplayName("printInfo() không ném lỗi")
         void printInfo_noException() {
-            Notification n = Notification.create("u", "a", "msg");
+            Notification n = Notification.create("u", "a", "title", "body");
             assertThatCode(n::printInfo).doesNotThrowAnyException();
         }
     }

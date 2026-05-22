@@ -540,7 +540,7 @@ class SystemAdminTest {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 status == User.AccountStatus.SUSPENDED ? NOW.minusDays(1) : null);
     }
 }
