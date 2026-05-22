@@ -134,9 +134,9 @@ public class UserDAO {
         // Nếu record đang là JOINED mà ghi đè thành WATCHING, lần load DB tiếp theo
         // sẽ không tìm thấy trong findJoinedAuctionIdsByUserId() → placeBid() báo NOT_JOINED.
         String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
-                "VALUES (?, ?, ?) " +
-                "ON DUPLICATE KEY UPDATE " +
-                "  activity_type = IF(activity_type = 'JOINED', 'JOINED', VALUES(activity_type))";
+            "VALUES (?, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE " +
+            "  activity_type = IF(activity_type = 'JOINED', 'JOINED', VALUES(activity_type))";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);
@@ -150,12 +150,14 @@ public class UserDAO {
     }
 
     /**
-     * Xóa bản ghi JOINED của user khỏi user_auction_activity khi rời phiên.
-     * Cần thiết vì findUserByUsername() luôn load user mới từ DB — nếu không xóa,
-     * lần load tiếp theo sẽ thấy user vẫn JOINED và cho phép bid dù đã rời phiên.
+     * FIX: Thay vì xóa bản ghi JOINED, cập nhật thành LEFT để theo dõi lịch sử
+     * và chặn user rejoin phiên này khi server restart (load từ DB).
+     * findLeftAuctionIdsByUserId() sẽ đọc các bản ghi LEFT này khi load user.
      */
-    public boolean removeJoinedActivity(String userId, String auctionId) {
-        String sql = "DELETE FROM user_auction_activity WHERE user_id = ? AND auction_id = ? AND activity_type = 'JOINED'";
+    public boolean markUserLeftAuction(String userId, String auctionId) {
+        String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
+            "VALUES (?, ?, 'LEFT') " +
+            "ON DUPLICATE KEY UPDATE activity_type = 'LEFT'";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);
@@ -199,12 +201,13 @@ public class UserDAO {
                     Set<User.UserRole> roles = loadRoles(conn, id);
 
                     NormalUser user = NormalUser.reconstitute(
-                            id, createdAt, createdAt, username, passwordHash, email,
-                            parseAccountStatus(statusStr), rating, balance, lockedBalance,
-                            roles, hasEverBeenPenalized, timesRestored, suspendedAt);
+                        id, createdAt, createdAt, username, passwordHash, email,
+                        parseAccountStatus(statusStr), rating, balance, lockedBalance,
+                        roles, hasEverBeenPenalized, timesRestored, suspendedAt);
 
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
+                    user.setLeftAuctionIds(findLeftAuctionIdsByUserId(id));
                     return user;
                 }
             }
@@ -262,8 +265,8 @@ public class UserDAO {
      */
     public NormalUser findUserCoreByUsername(String username) {
         String sql = "SELECT id, username, password_hash, email, rating, balance, " +
-                "locked_balance, status, has_ever_been_penalized, times_restored, " +
-                "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
+            "locked_balance, status, has_ever_been_penalized, times_restored, " +
+            "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -291,8 +294,8 @@ public class UserDAO {
                     Set<User.UserRole> roles = loadRoles(conn, id);
 
                     return NormalUser.reconstitute(id, createdAt, createdAt, fetchedUsername,
-                            passwordHash, email, parseAccountStatus(statusStr), rating,
-                            balance, lockedBalance, roles, penalized, timesRestored, suspendedAt);
+                        passwordHash, email, parseAccountStatus(statusStr), rating,
+                        balance, lockedBalance, roles, penalized, timesRestored, suspendedAt);
                 }
             }
         } catch (SQLException e) {
@@ -333,12 +336,13 @@ public class UserDAO {
                     Set<User.UserRole> roles = loadRoles(conn, id);
 
                     NormalUser user = NormalUser.reconstitute(
-                            id, createdAt, createdAt, fetchedUsername, passwordHash, email,
-                            parseAccountStatus(statusStr), rating, balance, lockedBalance,
-                            roles, hasEverBeenPenalized, timesRestored, suspendedAt);
+                        id, createdAt, createdAt, fetchedUsername, passwordHash, email,
+                        parseAccountStatus(statusStr), rating, balance, lockedBalance,
+                        roles, hasEverBeenPenalized, timesRestored, suspendedAt);
 
                     user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(id));
                     user.setWatchListAuctionIds(findWatchListByUserId(id));
+                    user.setLeftAuctionIds(findLeftAuctionIdsByUserId(id));
                     return user;
                 }
             }
@@ -422,27 +426,35 @@ public class UserDAO {
         return findAuctionIdsByUserIdAndActivityType(userId, "JOINED");
     }
 
-    /** Tất cả user đã join phiên (activity_type = JOINED), dùng để gửi thông báo hàng loạt. */
-    public List<String> findJoinedUserIdsByAuctionId(String auctionId) {
-        List<String> userIds = new ArrayList<>();
-        String sql = "SELECT user_id FROM user_auction_activity "
-            + "WHERE auction_id = ? AND activity_type = 'JOINED'";
+    public List<String> findWatchListByUserId(String userId) {
+        return new ArrayList<>(findAuctionIdsByUserIdAndActivityType(userId, "WATCHING"));
+    }
+
+    public Set<String> findLeftAuctionIdsByUserId(String userId) {
+        return findAuctionIdsByUserIdAndActivityType(userId, "LEFT");
+    }
+
+    /**
+     * Lấy danh sách userId đang JOINED một phiên đấu giá cụ thể.
+     * Dùng bởi ServerBroadcastNotifier.notifyJoinedParticipants() để push notification
+     * tới đúng những user đang tham gia phiên.
+     *
+     * @param auctionId id phiên
+     * @return tập userId có activity_type = 'JOINED' cho phiên này
+     */
+    public Set<String> findJoinedUserIdsByAuctionId(String auctionId) {
+        Set<String> ids = new HashSet<>();
+        String sql = "SELECT user_id FROM user_auction_activity WHERE auction_id = ? AND activity_type = 'JOINED'";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, auctionId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    userIds.add(rs.getString("user_id"));
-                }
+                while (rs.next()) ids.add(rs.getString("user_id"));
             }
         } catch (SQLException e) {
-            log.error("Lỗi lấy danh sách user JOINED theo auctionId={}: {}", auctionId, e.getMessage());
+            log.error("Lỗi lấy danh sách userId đang tham gia phiên: auctionId={}", auctionId, e);
         }
-        return userIds;
-    }
-
-    public List<String> findWatchListByUserId(String userId) {
-        return new ArrayList<>(findAuctionIdsByUserIdAndActivityType(userId, "WATCHING"));
+        return ids;
     }
 
     private Set<String> findAuctionIdsByUserIdAndActivityType(String userId, String activityType) {
