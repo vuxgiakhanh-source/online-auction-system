@@ -373,7 +373,7 @@ public final class AuctionDetailController {
     if (isCurrentUserLeading(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
           + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
-          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 50% tiền cọc theo quy định.\n\n"
+          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc theo quy định.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 

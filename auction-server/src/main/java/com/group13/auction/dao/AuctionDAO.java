@@ -170,6 +170,9 @@ public class AuctionDAO {
 
     /**
      * Tìm kiếm và hồi sinh một phiên đấu giá (Auction) dựa vào ID.
+     *
+     * FIX: Đọc cột viewer_count từ ResultSet và truyền vào Auction.reconstitute()
+     * để khôi phục đúng viewerCount khi server restart, thay vì luôn reset về 0.
      */
     public com.group13.auction.model.auction.Auction findAuctionById(String auctionId) {
         String sql = "SELECT * FROM auctions WHERE id = ?";
@@ -203,6 +206,11 @@ public class AuctionDAO {
                     java.time.LocalDateTime endTime = (endTs != null)
                         ? endTs.toLocalDateTime() : null;
 
+                    // FIX: đọc viewer_count từ DB để restore đúng giá trị khi server restart.
+                    // Trước đây cột này được đọc nhưng không truyền vào reconstitute(),
+                    // nên viewerCount trong memory luôn = 0 sau mỗi lần khởi động lại.
+                    int savedViewerCount = rs.getInt("viewer_count");
+
                     ItemDAO itemDAO = new ItemDAO();
                     com.group13.auction.model.item.Item item = itemDAO.findItemById(itemId);
 
@@ -226,10 +234,12 @@ public class AuctionDAO {
                         } catch (IllegalArgumentException ignored) {}
                     }
 
+                    // FIX: dùng overload có savedViewerCount để restore viewerCount từ DB
                     com.group13.auction.model.auction.Auction auction =
                         com.group13.auction.model.auction.Auction.reconstitute(
                             id, createdAt, updatedAt, item,
-                            startTime, endTime, currentPrice, status, reservePrice);
+                            startTime, endTime, currentPrice, status, reservePrice,
+                            savedViewerCount); // <-- FIX: truyền viewer_count vào
 
                     if (currentLeader != null) {
                         auction.updateBid(currentPrice, currentLeader);

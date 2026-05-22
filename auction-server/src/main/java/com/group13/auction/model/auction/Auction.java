@@ -109,6 +109,10 @@ public class Auction extends Entity {
     return new Auction(item, startTime, endTime, reservePrice);
   }
 
+  /**
+   * Hồi sinh Auction từ DB (không có viewerCount — dùng khi DB không lưu viewer_count).
+   * viewerCount sẽ được khởi tạo = 0.
+   */
   public static Auction reconstitute(
       String id,
       LocalDateTime createdAt,
@@ -121,6 +125,34 @@ public class Auction extends Entity {
       long reservePrice) {
     return new Auction(
         id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
+  }
+
+  /**
+   * FIX: Hồi sinh Auction từ DB kèm viewer_count đã lưu.
+   *
+   * <p>Overload này dùng khi AuctionDAO đọc được cột {@code viewer_count} từ ResultSet.
+   * Trước đây {@link #reconstitute(String, LocalDateTime, LocalDateTime, Item,
+   * LocalDateTime, LocalDateTime, long, AuctionStatus, long)} không nhận viewerCount,
+   * nên mỗi lần server restart thì viewerCount trong memory bị reset = 0 dù DB vẫn
+   * lưu đúng giá trị.
+   *
+   * @param savedViewerCount giá trị viewer_count đọc từ DB (phải >= 0; âm sẽ bị clamp về 0)
+   */
+  public static Auction reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      Item item,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      long currentPrice,
+      AuctionStatus status,
+      long reservePrice,
+      int savedViewerCount) {
+    Auction auction = new Auction(
+        id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
+    auction.viewerCount.set(Math.max(0, savedViewerCount));
+    return auction;
   }
 
   // =========================================================================
@@ -275,8 +307,26 @@ public class Auction extends Entity {
     bidTransactionIds.add(bidId);
   }
 
+  /** Tăng viewerCount khi user watch hoặc join phiên (gọi trong lock của BidService). */
   public void incrementViewerCount() {
     this.viewerCount.incrementAndGet();
+  }
+
+  /**
+   * FIX: Giảm viewerCount khi user rời phiên (LEAVE hoặc disconnect).
+   *
+   * <p>Trước đây chỉ có {@link #incrementViewerCount()} mà không có decrement,
+   * khiến viewer_count trong DB chỉ tăng không giảm và không bao giờ phản ánh
+   * đúng số người đang thực sự xem.
+   *
+   * <p>Dùng CAS loop để đảm bảo atomic và không bao giờ xuống dưới 0.
+   */
+  public void decrementViewerCount() {
+    int current;
+    do {
+      current = viewerCount.get();
+      if (current <= 0) return; // clamp tại 0, không âm
+    } while (!viewerCount.compareAndSet(current, current - 1));
   }
 
   @Override

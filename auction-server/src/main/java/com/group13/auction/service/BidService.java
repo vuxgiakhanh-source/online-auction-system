@@ -65,6 +65,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *     bid của người đã rời → set họ làm leader mới dù đã out!
  *   FIX: cancelBidsByBidder() gọi LUÔN LUÔN cho mọi người rời phiên,
  *   không phân biệt leader hay không. Chỉ rollback leader khi cần.
+ *
+ * FIX #8 — ViewerCount không giảm khi user rời phiên:
+ *   BUG: leaveAuction() không gọi decrementViewerCount(), khiến
+ *   viewer_count trong DB chỉ tăng mà không bao giờ giảm.
+ *   FIX: gọi auction.decrementViewerCount() + auctionDAO.updateViewerCount()
+ *   trong lock khi user rời phiên (LEAVE hoặc disconnect).
  * ═══════════════════════════════════════════════════════════════════
  */
 public class BidService implements IBidService {
@@ -308,6 +314,10 @@ public class BidService implements IBidService {
    * vẫn còn trong DB. Khi leader sau đó rời, {@code findHighestValidBidExcept()}
    * trả về bid của người đã rời → họ bị set làm leader mới dù đã out phiên.
    *
+   * <p><b>FIX #8 — ViewerCount:</b>
+   * Gọi {@code auction.decrementViewerCount()} và persist xuống DB trong cùng lock
+   * để viewerCount trong memory và DB luôn phản ánh đúng số người còn trong phiên.
+   *
    * @return true nếu leader thay đổi (cần broadcast cho các watcher)
    */
   @Override
@@ -358,6 +368,20 @@ public class BidService implements IBidService {
           }
           leaderChanged = true;
         }
+
+        // FIX #8: Giảm viewerCount khi user rời phiên.
+        // Trước đây viewerCount chỉ tăng (incrementViewerCount trong watchAuction/registerJoin)
+        // mà không bao giờ giảm khi rời → DB chứa số ngày càng lớn, không phản ánh thực tế.
+        // Thực hiện trong lock để đồng bộ với increment.
+        boolean wasWatching = user.getWatchListAuctionIds().contains(auctionId);
+        if (wasWatching) {
+          user.removeFromWatchList(auctionId);
+          auction.decrementViewerCount();
+          auctionDAO.updateViewerCount(auctionId, auction.getViewerCount());
+          log.info("ViewerCount decremented on leave: auctionId={}, userId={}, newCount={}",
+              auctionId, user.getId(), auction.getViewerCount());
+        }
+
       } finally {
         auctionLock.unlock();
       }
