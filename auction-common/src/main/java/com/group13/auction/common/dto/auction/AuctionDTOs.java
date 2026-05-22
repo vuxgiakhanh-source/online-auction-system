@@ -371,6 +371,39 @@ public final class AuctionDTOs {
     }
 
     // ══════════════════════════════════════════════════════════════════════════
+    // LeaveAuctionResponseDTO
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Payload của LEAVE_AUCTION_SUCCESS.
+     * Mang thông tin về cọc bị tịch thu (nếu có) để client hiển thị cảnh báo.
+     */
+    public static class LeaveAuctionResponseDTO {
+        private String  auctionId;
+        /** true nếu cọc bị tịch thu toàn bộ (rời khi đang leader hoặc sau 2/3 thời gian). */
+        private boolean depositForfeited;
+        /** Số tiền cọc bị tịch thu (0 nếu không bị phạt). */
+        private long    forfeitedAmount;
+        /** true nếu rating bị trừ điểm. */
+        private boolean ratingPenalized;
+        /** Số dư khả dụng sau khi rời phiên. */
+        private long    newAvailableBalance;
+
+        public LeaveAuctionResponseDTO() {}
+
+        public String  getAuctionId()             { return auctionId; }
+        public void    setAuctionId(String v)     { this.auctionId = v; }
+        public boolean isDepositForfeited()        { return depositForfeited; }
+        public void    setDepositForfeited(boolean v) { this.depositForfeited = v; }
+        public long    getForfeitedAmount()        { return forfeitedAmount; }
+        public void    setForfeitedAmount(long v)  { this.forfeitedAmount = v; }
+        public boolean isRatingPenalized()         { return ratingPenalized; }
+        public void    setRatingPenalized(boolean v) { this.ratingPenalized = v; }
+        public long    getNewAvailableBalance()    { return newAvailableBalance; }
+        public void    setNewAvailableBalance(long v) { this.newAvailableBalance = v; }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // AuctionUpcomingEndDTO
     // ══════════════════════════════════════════════════════════════════════════
 

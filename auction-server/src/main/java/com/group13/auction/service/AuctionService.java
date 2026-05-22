@@ -53,6 +53,17 @@ public class AuctionService implements IAuctionService {
    */
   private final Map<String, List<AuctionObserver>> observersMap = new ConcurrentHashMap<>();
 
+  /**
+   * Per-auction lock dùng cho thao tác contains+add trên observer list.
+   * FIX Bug addObserver: synchronized(localVar) vi phạm Qodana "Synchronization on local variable".
+   * Thay bằng lock object gắn với auctionId — tương tự pattern đã dùng trong WalletService.
+   */
+  private final ConcurrentHashMap<String, Object> observerLocks = new ConcurrentHashMap<>();
+
+  private Object observerLockFor(String auctionId) {
+    return observerLocks.computeIfAbsent(auctionId, id -> new Object());
+  }
+
   public AuctionService(IRatingService ratingService, AuctionDAO auctionDAO) {
     this(ratingService, auctionDAO, new FinancialTransactionDAO(), new AuctionWinnerDAO());
   }
@@ -371,7 +382,11 @@ public class AuctionService implements IAuctionService {
     // computeIfAbsent và get() tách biệt.
     List<AuctionObserver> observers =
         observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
-    synchronized (observers) {
+    // FIX: synchronized trên lock object theo auctionId, không synchronized trên local variable
+    // (Qodana "Synchronization on local variable" violation).
+    // Lock đảm bảo contains()+add() là atomic — tránh duplicate observer khi nhiều thread
+    // đồng thời join cùng một phiên.
+    synchronized (observerLockFor(auctionId)) {
       if (!observers.contains(observer)) {
         observers.add(observer);
       }
@@ -441,5 +456,7 @@ public class AuctionService implements IAuctionService {
       observers.clear();
       log.info("Cleaned up {} observers for auction {}", count, auctionId);
     }
+    // FIX: dọn lock entry để tránh memory leak khi nhiều phiên kết thúc
+    observerLocks.remove(auctionId);
   }
 }

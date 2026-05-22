@@ -112,6 +112,17 @@ public interface ClientEventListener {
     /** Server từ chối watch (WATCH_AUCTION_FAILED). */
     default void onWatchAuctionFailed(ErrorDTO error) {}
     default void onLeaveAuctionSuccess() {}
+    /**
+     * Gọi khi rời phiên và có phạt cọc / rating.
+     * Dùng kiểu nguyên thủy để tránh dependency compile-time vào LeaveAuctionResponseDTO.
+     *
+     * @param depositForfeited  true nếu cọc bị tịch thu
+     * @param forfeitedAmount   số tiền cọc bị mất (0 nếu không bị phạt)
+     * @param ratingPenalized   true nếu rating bị trừ
+     * @param newAvailableBalance số dư khả dụng sau khi rời
+     */
+    default void onLeaveAuctionPenalty(boolean depositForfeited, long forfeitedAmount,
+                                       boolean ratingPenalized, long newAvailableBalance) {}
 
     // ── AUCTION LIFECYCLE (realtime broadcast) ────────────────────────────────
 

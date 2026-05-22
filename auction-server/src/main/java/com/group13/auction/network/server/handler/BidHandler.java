@@ -227,15 +227,44 @@ public class BidHandler implements PacketHandler {
         Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
 
         NormalUser bidder = requireNormalUser(session, requestId);
+
+        // Chuẩn bị response mặc định (không bị phạt)
+        AuctionDTOs.LeaveAuctionResponseDTO response = new AuctionDTOs.LeaveAuctionResponseDTO();
+        response.setAuctionId(auctionId);
+        response.setDepositForfeited(false);
+        response.setForfeitedAmount(0L);
+        response.setRatingPenalized(false);
+
         if (bidder != null) {
+            // Lưu trạng thái trước khi rời để tính penalty info
+            final boolean wasLeader = auction != null
+                && auction.getCurrentLeader() != null
+                && auction.getCurrentLeader().getId().equals(bidder.getId());
+            final boolean hasBid = auction != null && bidder.hasJoined(auctionId);
+            final long depositAmount = (auction != null)
+                ? auction.getItem().getStartingPrice() * 3 / 10 : 0L;
+
             boolean leaderChanged = bidService.leaveAuction(bidder, auction);
             log.info("Leave auction handled: auctionId={}, username={}, bidderId={}, leaderChanged={}, requestId={}",
                 auctionId, session.getUsername(), bidder.getId(), leaderChanged, requestId);
 
-            // Nếu leader bị thay đổi (bid bị huỷ, người kế tiếp lên), broadcast cho tất cả watcher
-            // để LiveBidding UI cập nhật giá và tên người dẫn đầu mới ngay lập tức.
+            // Xác định có bị phạt không dựa vào cùng điều kiện với BidService.leaveAuction()
+            // FIX Bug 5: thông báo client về penalty để hiển thị dialog cảnh báo.
+            // Trước đây LEAVE_AUCTION_SUCCESS payload=null → client không biết bị mất tiền.
+            if (hasBid && auction != null && depositAmount > 0) {
+                boolean isPastTwoThirds = isPastTwoThirdsTime(auction);
+                boolean shouldPenalize  = wasLeader || isPastTwoThirds;
+                if (shouldPenalize) {
+                    response.setDepositForfeited(true);
+                    response.setForfeitedAmount(depositAmount);
+                    response.setRatingPenalized(true);
+                }
+            }
+            response.setNewAvailableBalance(bidder.getAvailableBalance());
+
+            // Nếu leader bị thay đổi, broadcast cho tất cả watcher
             if (leaderChanged && auction != null) {
-                long previousPrice = auction.getCurrentPrice(); // đã reset rồi nên lấy giá mới
+                long previousPrice = auction.getCurrentPrice();
                 com.group13.auction.common.dto.bid.BidDTOs.BidUpdateDTO update =
                     com.group13.auction.network.server.util.DTOMapper.toBidUpdateDTO(
                         auction,
@@ -258,7 +287,22 @@ public class BidHandler implements PacketHandler {
                 auctionId, session.getUsername(), requestId);
         }
 
-        session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, null, requestId));
+        session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, response, requestId));
+    }
+
+    /**
+     * Kiểm tra phiên đã qua 2/3 tổng thời gian chưa — mirror logic từ BidService.
+     * Dùng để tính penalty info trong response mà không cần expose method từ BidService.
+     */
+    private boolean isPastTwoThirdsTime(Auction auction) {
+        java.time.LocalDateTime startTime = auction.getStartTime();
+        java.time.LocalDateTime endTime   = auction.getEndTime();
+        if (startTime == null || endTime == null) return false;
+        long totalSeconds = java.time.Duration.between(startTime, endTime).getSeconds();
+        if (totalSeconds <= 0) return false;
+        long twoThirdsSeconds = totalSeconds * 2 / 3;
+        java.time.LocalDateTime twoThirdsPoint = startTime.plusSeconds(twoThirdsSeconds);
+        return java.time.LocalDateTime.now().isAfter(twoThirdsPoint);
     }
 
     // ── PLACE BID ─────────────────────────────────────────────────────────────
