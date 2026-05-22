@@ -60,6 +60,7 @@ public final class TestFixture {
             @Override public void rewardSeller(User seller) {}
             @Override public void penalizeLatePayment(NormalUser bidder) {}
             @Override public void penalizeSeller(User seller) {}
+            @Override public void penalizeEarlyLeave(NormalUser bidder) {}
             @Override public void checkAndRestoreSuspended(User user) {}
         };
     }
@@ -76,6 +77,7 @@ public final class TestFixture {
             @Override public void rewardSeller(User seller) {}
             @Override public void penalizeLatePayment(NormalUser bidder) {}
             @Override public void penalizeSeller(User seller) {}
+            @Override public void penalizeEarlyLeave(NormalUser bidder) {}
             @Override public void checkAndRestoreSuspended(User user) {}
         };
     }
@@ -102,7 +104,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -124,7 +126,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -145,7 +147,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -167,7 +169,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -188,7 +190,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null);
     }
 
@@ -209,7 +211,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 true,
-                false,
+                0,
                 LocalDateTime.now());
     }
 

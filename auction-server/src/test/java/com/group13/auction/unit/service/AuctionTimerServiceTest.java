@@ -612,7 +612,7 @@ class AuctionTimerServiceTest {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
                 false,
-                false,
+                0,
                 null
         );
     }
@@ -631,7 +631,7 @@ class AuctionTimerServiceTest {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null
         );
     }

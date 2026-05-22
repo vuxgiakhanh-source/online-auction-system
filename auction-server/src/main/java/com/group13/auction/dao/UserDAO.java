@@ -422,6 +422,25 @@ public class UserDAO {
         return findAuctionIdsByUserIdAndActivityType(userId, "JOINED");
     }
 
+    /** Tất cả user đã join phiên (activity_type = JOINED), dùng để gửi thông báo hàng loạt. */
+    public List<String> findJoinedUserIdsByAuctionId(String auctionId) {
+        List<String> userIds = new ArrayList<>();
+        String sql = "SELECT user_id FROM user_auction_activity "
+            + "WHERE auction_id = ? AND activity_type = 'JOINED'";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    userIds.add(rs.getString("user_id"));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi lấy danh sách user JOINED theo auctionId={}: {}", auctionId, e.getMessage());
+        }
+        return userIds;
+    }
+
     public List<String> findWatchListByUserId(String userId) {
         return new ArrayList<>(findAuctionIdsByUserIdAndActivityType(userId, "WATCHING"));
     }

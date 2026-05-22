@@ -255,7 +255,7 @@ class UserServiceTest {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 false,
-                false,
+                0,
                 null
         );
     }

@@ -411,6 +411,9 @@ public class AuctionService implements IAuctionService {
     // Global (SystemAdmin) và Staff observers
     AuctionManager.getInstance().notifyGlobalObservers(event);
     AuctionManager.getInstance().notifyStaffObservers(event);
+
+    // Inbox: mọi user JOINED phiên (DB), không phụ thuộc observer in-memory / ConsoleNotifier
+    ServerBroadcastNotifier.getInstance().notifyJoinedParticipantsForEvent(event);
   }
 
   /**
