@@ -8,9 +8,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Registry lưu một {@link ReentrantLock} riêng biệt cho mỗi phiên đấu giá.
+ * Registry lưu một ReentrantLock riêng biệt cho mỗi phiên đấu giá.
+ * Lưu một {@link ReentrantLock} riêng biệt cho mỗi phiên đấu giá.
  *
- * <h3>Tại sao cần class này?</h3>
+ * <h3>Tại sao cần lock per-auction?</h3>
  * <p>Khi nhiều client đặt giá cùng lúc (concurrent bidding), nếu không có lock
  * per-auction thì xảy ra race condition:
  * <ul>
@@ -19,18 +20,30 @@ import java.util.concurrent.locks.ReentrantLock;
  *   <li>Cả hai đặt bid → cả hai pass validate → lost update</li>
  * </ul>
  *
- * <h3>Cải tiến v2 — lock với timeout:</h3>
- * <p>Thay vì {@code lock()} block vô thời hạn, dùng {@link #tryLock(String, long, TimeUnit)}
- * để tránh deadlock hoặc client bị treo quá lâu.
+ * <h3>⚠️ Giới hạn: SINGLE INSTANCE ONLY</h3>
+ * <p>Lock này là in-memory {@link ReentrantLock} — chỉ hoạt động đúng trong
+ * <b>một JVM process duy nhất</b>. Nếu deploy nhiều instance (Docker Swarm,
+ * Kubernetes horizontal scaling), mỗi instance có lock registry riêng:
+ * <pre>
+ *   Instance A: lock(auction#1) → bid accepted ✓
+ *   Instance B: lock(auction#1) → bid accepted ✓  ← cùng lúc, không biết nhau!
+ *   → race condition liên instance → giá DB bị sai
+ * </pre>
  *
- * <h3>Cách dùng (BidHandler):</h3>
+ * <h3>Khi cần scale (future work):</h3>
+ * <p>Thay thế bằng Redis distributed lock (Redisson RLock hoặc SET NX PX pattern).
+ * Business logic trong BidService và AuctionTimerService không cần thay đổi —
+ * chỉ cần swap implementation ở ServerMain.
+ *
+ * <h3>Cách dùng (AuctionTimerService):</h3>
  * <pre>{@code
  *   boolean locked = lockRegistry.tryLock(auctionId, 3, TimeUnit.SECONDS);
  *   if (!locked) { // trả lỗi timeout cho client }
  *   try {
- *       bidService.placeBid(...);
+ *       auctionService.closeAuction(...);
  *   } finally {
  *       lockRegistry.unlock(auctionId);
+ *       lockRegistry.release(auctionId);  // dọn entry sau khi phiên kết thúc
  *   }
  * }</pre>
  */
@@ -52,28 +65,18 @@ public final class AuctionLockRegistry {
     /**
      * Lấy lock của một phiên, tạo mới nếu chưa có.
      * Thread-safe nhờ {@link ConcurrentHashMap#computeIfAbsent}.
-     */
-    /**
-     * FIX PERFORMANCE: đổi từ fair=true → fair=false.
      *
-     * Fair lock (FIFO queue) dưới high contention:
-     *   - Mỗi thread phải chờ đúng thứ tự → overhead context-switch + queue management
-     *   - Throughput thực tế giảm 3–5× so với unfair
-     *
-     * Unfair lock (barge-in):
-     *   - Thread vừa release có thể acquire lại ngay nếu không có thread nào đang wait
-     *   - Tận dụng cache hot path (lock object vẫn còn trong L1/L2 cache)
-     *   - Starvation không xảy ra trong thực tế vì mỗi bid đến qua network với độ trễ ms
-     *     → không có thread nào bị block vĩnh viễn
-     *
-     * Benchmark điển hình: unfair lock cho ~4× throughput cao hơn fair lock ở 100+ threads.
+     * <p><b>FIX PERFORMANCE:</b> dùng {@code fair=false} (unfair lock).
+     * Fair lock (FIFO queue) dưới high contention cho throughput thấp hơn ~4×
+     * vì phải context-switch giữ thứ tự. Unfair lock tận dụng cache hot path.
+     * Starvation không xảy ra trong thực tế vì mỗi bid đến qua network với độ trễ ms.
      */
     public ReentrantLock getLock(String auctionId) {
         return locks.computeIfAbsent(auctionId, id -> new ReentrantLock(false)); // fair=false
     }
 
     /**
-     * Acquire lock với timeout. Trả về true nếu lấy được trong thời gian cho phép.
+     * Thử acquire lock với timeout. Trả về {@code true} nếu lấy được.
      *
      * @param auctionId ID phiên
      * @param timeout   thời gian chờ tối đa
@@ -86,7 +89,7 @@ public final class AuctionLockRegistry {
             boolean acquired = lock.tryLock(timeout, unit);
             if (!acquired) {
                 log.warn("tryLock TIMEOUT: auctionId={} timeout={}{}",
-                        auctionId, timeout, unit.name().toLowerCase());
+                    auctionId, timeout, unit.name().toLowerCase());
             }
             return acquired;
         } catch (InterruptedException e) {
@@ -124,10 +127,6 @@ public final class AuctionLockRegistry {
      * Xóa toàn bộ lock khỏi registry.
      * <b>CHỈ dùng trong unit/integration test để reset state giữa các test.</b>
      * Không bao giờ gọi trong production code.
-     *
-     * <p>Lưu ý: nếu có lock đang bị giữ khi gọi method này, lock đó vẫn tồn tại
-     * trong memory nhưng sẽ không còn được registry quản lý nữa. Đảm bảo tất cả
-     * lock đã được unlock trước khi gọi clearAll().
      */
     public void clearAll() {
         locks.clear();

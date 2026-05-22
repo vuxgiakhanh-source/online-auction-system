@@ -119,7 +119,7 @@ CREATE TABLE bid_transactions (
                                   auction_id VARCHAR(36) NOT NULL,
                                   bidder_id VARCHAR(36) NOT NULL,
                                   bid_amount BIGINT NOT NULL,
-                                  result ENUM('ACCEPTED', 'REJECTED', 'ACCEPTED_RESERVE_NOT_MET') NOT NULL DEFAULT 'ACCEPTED',
+                                  result ENUM('ACCEPTED', 'REJECTED', 'ACCEPTED_RESERVE_NOT_MET', 'CANCELLED_BY_LEAVE') NOT NULL DEFAULT 'ACCEPTED',
                                   bid_time TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3),
                                   FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
                                   FOREIGN KEY (bidder_id) REFERENCES users(id) ON DELETE CASCADE
@@ -231,13 +231,58 @@ CREATE TABLE notifications (
                                FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL
 );
 
--- Index hỗ trợ query theo auction_id (dùng trong clearAuction và loadFromDatabase)
-CREATE INDEX idx_auto_bids_auction_id ON auto_bids(auction_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read);
+-- =================================================================
+-- 4. INDEXES — Performance
+-- =================================================================
+
+-- ── Search feature ────────────────────────────────────────────────
+-- Dùng bởi AuctionDAO.searchByItemName() và countByItemName():
+--   WHERE LOWER(i.name) LIKE LOWER(?)
+-- MySQL không dùng index thông thường với LOWER(), nên dùng FULLTEXT
+-- cho search nhanh hơn nếu sau này chuyển sang MATCH AGAINST.
+-- Tạm thời dùng index thường để hỗ trợ prefix scan.
+CREATE INDEX idx_items_name ON items(name);
+
+-- ── Bid Transactions — hot path, query nhiều nhất ─────────────────
+-- findHighestValidBidExcept(): WHERE auction_id = ? AND bidder_id != ? AND result = 'ACCEPTED' ORDER BY bid_amount DESC LIMIT 1
+CREATE INDEX idx_bid_tx_auction_result_amount ON bid_transactions(auction_id, result, bid_amount DESC);
+
+-- cancelBidsByBidder(): WHERE auction_id = ? AND bidder_id = ? AND result IN ('ACCEPTED','ACCEPTED_RESERVE_NOT_MET')
+CREATE INDEX idx_bid_tx_auction_bidder_result ON bid_transactions(auction_id, bidder_id, result);
+
+-- findBiddersByAuction(): WHERE auction_id = ? AND result != 'REJECTED'
+-- findByAuctionId():      WHERE auction_id = ? AND result != 'REJECTED'
+-- Covered bởi idx_bid_tx_auction_result_amount ở trên (leading column là auction_id).
+
+-- ── Auctions — AuctionManager.getAuctionsByStatus() ──────────────
+-- Dùng khi AuctionTimerService quét RUNNING/FINISHED/OPEN mỗi giây.
+CREATE INDEX idx_auctions_status ON auctions(status);
+
+-- AuctionDAO.searchByItemName() JOIN items: JOIN auctions a ON a.item_id = i.id
+-- item_id đã là FK nên MySQL tự tạo index, không cần thêm.
+
+-- ── Auction Winners ───────────────────────────────────────────────
+-- hasPendingPayment(): WHERE winner_id = ? AND payment_status = 'PENDING'
+CREATE INDEX idx_auction_winners_winner_status ON auction_winners(winner_id, payment_status);
+
+-- AuctionTimerService expirePendingWinnerPayments(): load FINISHED auctions → winner.getPaymentStatus()
+-- Xử lý in-memory sau khi load → không cần thêm index ở đây.
+
+-- ── Financial Transactions ────────────────────────────────────────
+-- findLockedDepositAmount(): WHERE sender_id = ? AND auction_id = ? AND transaction_type = 'DEPOSIT_LOCK'
+CREATE INDEX idx_fin_tx_sender_auction_type ON financial_transactions(sender_id, auction_id, transaction_type);
+
+-- ── Các index đã có (giữ nguyên) ─────────────────────────────────
+CREATE INDEX idx_auto_bids_auction_id     ON auto_bids(auction_id);
+CREATE INDEX idx_notifications_user_id    ON notifications(user_id);
+CREATE INDEX idx_notifications_user_read  ON notifications(user_id, is_read);
+
+-- ── Quality Reports ───────────────────────────────────────────────
+-- findPending(): không có WHERE (load all PENDING) — nếu bảng lớn thêm index này:
+CREATE INDEX idx_quality_reports_status   ON quality_reports(status);
 
 -- =================================================================
--- 4. SEED DATA (DỮ LIỆU MẪU)
+-- 5. SEED DATA (DỮ LIỆU MẪU)
 -- =================================================================
 
 INSERT INTO admins (id, username, password_hash, email, level)
