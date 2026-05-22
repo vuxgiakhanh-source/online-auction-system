@@ -60,10 +60,12 @@ public class AutoBidProcessor {
 
     /**
      * Thời điểm (nanoTime) của lần auto-bid cuối cùng trên mỗi phiên.
-     * Dùng để rate-limit: không cho phép 2 auto-bid cách nhau < AUTO_BID_MIN_INTERVAL_MS.
+     * FIX race condition: dùng AtomicLong thay vì Long để getAndSet() atomic.
+     * Trước đây dùng ConcurrentHashMap<String, Long> + put() — hai thread đồng thời
+     * đọc last=null và cùng bỏ qua delay → auto-bid chain bắn quá nhanh dưới traffic cao.
      */
-    private static final ConcurrentHashMap<String, Long> lastAutoBidNanoByAuction =
-        new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicLong>
+        lastAutoBidNanoByAuction = new ConcurrentHashMap<>();
 
     public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
         this.bidService     = bidService;
@@ -185,13 +187,19 @@ public class AutoBidProcessor {
 
     /**
      * Đảm bảo khoảng cách tối thiểu giữa hai auto-bid liên tiếp trên cùng một phiên.
-     * Nếu chưa đủ thời gian, sleep phần còn thiếu (tối đa AUTO_BID_MIN_INTERVAL_MS ms).
+     * FIX: dùng AtomicLong.getAndSet() thay vì ConcurrentHashMap.put(Long).
+     * Cũ: hai thread đồng thời gọi put() đều thấy last=null → cả hai skip delay.
+     * Mới: getAndSet() là atomic — chỉ một thread thấy last=0 (first time), thread còn lại
+     * thấy last=now của thread kia và phải chờ nếu chưa đủ interval.
      */
     private static void enforceAutoBidInterval(String auctionId) {
         long minNanos = 80L * 1_000_000L;
         long now = System.nanoTime();
-        Long last = lastAutoBidNanoByAuction.put(auctionId, now);
-        if (last == null) return;
+        java.util.concurrent.atomic.AtomicLong tracker =
+            lastAutoBidNanoByAuction.computeIfAbsent(
+                auctionId, k -> new java.util.concurrent.atomic.AtomicLong(0L));
+        long last = tracker.getAndSet(now);
+        if (last == 0L) return; // lần đầu tiên, không cần delay
 
         long elapsed = now - last;
         if (elapsed < minNanos) {
