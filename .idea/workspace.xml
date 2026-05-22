@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/auction/Auction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/model/user/User.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/service/BidService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/resources/integration/schema.sql" afterDir="false" />
-    </list>
+    <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -393,7 +386,7 @@
       <workItem from="1779306160021" duration="315000" />
       <workItem from="1779340255204" duration="1359000" />
       <workItem from="1779372762301" duration="10773000" />
-      <workItem from="1779417005631" duration="12127000" />
+      <workItem from="1779417005631" duration="12773000" />
     </task>
     <servers />
   </component>
