@@ -300,18 +300,24 @@ public class WalletService implements IWalletService {
 
                 userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
 
-                batchTx.add(FinancialTransaction.create(
-                    winner.getId(), "SYSTEM_BANK", finalPrice,
-                    TransactionType.PAYMENT_FROM_WINNER, auctionId));
-
+                // FIX Bug SystemBank double-credit:
+                // TX3 (ghi thêm finalPrice như PAYMENT_FROM_WINNER) đã bị xóa.
+                // Lý do: TX1 đã ghi 'remaining = finalPrice - depositPaid' và TX2 ghi phần deposit.
+                // Ghi thêm TX3 tạo phantom record, làm audit log hiển thị winner "trả" 2×finalPrice.
+                //
+                // FIX systemBank.receive():
+                // systemBank.receive(depositPaid) đã được gọi trong AuctionService.recordWinnerDepositHeldInBank()
+                // khi phiên kết thúc (closeAuction). Do đó ở đây chỉ credit phần 'remaining' thực sự
+                // mới đến từ ví winner. Nếu gọi receive(finalPrice) sẽ bị double-count depositPaid.
                 transactionLog.addAll(batchTx);
                 for (FinancialTransaction tx : batchTx) {
                     tx.printInfo();
                     financialTransactionDAO.saveTransaction(tx);
                 }
 
-                // Chỉ ghi nhận vào SystemBank sau khi RAM + DB đã persist thành công
-                systemBank.receive(finalPrice);
+                // Chỉ ghi nhận phần còn lại (remaining) vào SystemBank sau khi RAM + DB đã persist.
+                // depositPaid đã được receive() trong recordWinnerDepositHeldInBank() tại closeAuction().
+                systemBank.receive(remaining);
 
                 // BUG FIX: syncBalance sau thanh toán thành công.
                 // Tất cả method khác (deposit, withdraw, unlock, forfeit) đều gọi sync.
