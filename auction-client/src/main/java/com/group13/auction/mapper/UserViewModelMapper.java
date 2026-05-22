@@ -6,6 +6,7 @@ import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.profile.UserProfileViewModel;
 import com.group13.auction.viewmodel.admin.SellerApprovalViewModel;
 import com.group13.auction.viewmodel.admin.UserModerationViewModel;
+import com.group13.auction.viewmodel.admin.StaffAdminViewModel;
 import java.util.Arrays;
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -108,6 +109,41 @@ public final class UserViewModelMapper {
                 rolesText(roles),
                 status,
                 isBanned(dto));
+    }
+
+    /**
+     * Chuyển mảng user DTO sang danh sách Staff Admin view model.
+     *
+     * @param staffAdmins mảng Staff Admin DTO server trả về
+     * @return danh sách view model Staff Admin
+     */
+    public static List<StaffAdminViewModel> toStaffAdminViewModels(UserDTO[] staffAdmins) {
+        if (staffAdmins == null) {
+            return List.of();
+        }
+
+        return Arrays.stream(staffAdmins)
+            .map(UserViewModelMapper::toStaffAdminViewModel)
+            .toList();
+    }
+
+    /**
+     * Chuyển một user DTO sang view model Staff Admin.
+     *
+     * @param dto Staff Admin DTO
+     * @return Staff Admin view model
+     */
+    public static StaffAdminViewModel toStaffAdminViewModel(UserDTO dto) {
+        if (dto == null) {
+            return new StaffAdminViewModel("--", "--", "--", "--", "--");
+        }
+
+        return new StaffAdminViewModel(
+            fallback(dto.getId()),
+            fallback(dto.getUsername()),
+            fallback(dto.getEmail()),
+            fallback(dto.getAdminType()),
+            accountStatusText(dto.getAccountStatus()));
     }
 
     /**
