@@ -722,6 +722,29 @@ public enum PacketType {
     SERVER_SHUTDOWN_NOTIFY,
 
     // ══════════════════════════════════════════════════════════════════════════
+    // SEARCH — Tìm kiếm sản phẩm theo tên
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Client gửi yêu cầu tìm kiếm phiên đấu giá theo tên sản phẩm.
+     * Hỗ trợ phân trang và sắp xếp.
+     * Payload: {@code SearchDTOs.ItemSearchRequestDTO}.
+     */
+    SEARCH_ITEMS,
+
+    /**
+     * Server trả về kết quả tìm kiếm (có phân trang).
+     * Payload: {@code SearchDTOs.ItemSearchResponseDTO}.
+     */
+    SEARCH_ITEMS_SUCCESS,
+
+    /**
+     * Server từ chối tìm kiếm (keyword rỗng, lỗi hệ thống, v.v.).
+     * Payload: {@code ErrorDTO}.
+     */
+    SEARCH_ITEMS_FAILED,
+
+    // ══════════════════════════════════════════════════════════════════════════
     // CHATBOT — Hỗ trợ khách hàng tự động (Rule-based FAQ)
     // ══════════════════════════════════════════════════════════════════════════
 
