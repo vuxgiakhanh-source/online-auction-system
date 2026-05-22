@@ -281,19 +281,32 @@ public class PaymentService implements IPaymentService {
         ? auction.getWinner().getWinner().getId()
         : null;
 
-    log.info("[PAYMENT] Hoàn cọc cho tất cả bidder phiên {} (trừ winner {}).",
-        auction.getId(), winnerId != null ? winnerId : "N/A");
-
     List<NormalUser> participants = bidTransactionDAO.findBiddersByAuction(auction.getId());
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
 
+    log.info("[PAYMENT] Bắt đầu hoàn cọc: auctionId={}, status={}, tổng bidder={}, winner={}, depositPerBidder={}",
+        auction.getId(), auction.getStatus(), participants.size(),
+        winnerId != null ? winnerId : "N/A", depositAmount);
+
+    int refunded = 0;
+    int skipped  = 0;
     for (NormalUser bidder : participants) {
       // FIX QODANA [Unnecessary null check]: winnerId == null || !x.equals(winnerId)
       // thay bằng Objects.equals() — null-safe, ngắn gọn, không cần guard thủ công.
       if (!Objects.equals(bidder.getId(), winnerId)) {
         walletService.unlockDeposit(bidder, depositAmount, auction.getId());
+        log.info("[PAYMENT] Hoàn cọc: userId={}, username={}, amount={}, auctionId={}",
+            bidder.getId(), bidder.getUsername(), depositAmount, auction.getId());
+        refunded++;
+      } else {
+        log.info("[PAYMENT] Bỏ qua winner: userId={}, username={}, auctionId={}",
+            bidder.getId(), bidder.getUsername(), auction.getId());
+        skipped++;
       }
     }
+
+    log.info("[PAYMENT] Hoàn cọc xong: auctionId={}, đã hoàn={}, bỏ qua (winner)={}",
+        auction.getId(), refunded, skipped);
   }
 
   public void acceptSecondChanceOffer(SecondChanceOffer offer, Auction auction) {
