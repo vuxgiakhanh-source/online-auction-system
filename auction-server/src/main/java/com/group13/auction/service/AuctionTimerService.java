@@ -267,12 +267,16 @@ public class AuctionTimerService implements IAuctionTimerService {
                     } else {
                         packetType = PacketType.AUCTION_CANCELED_UPDATE;
                     }
+                }
 
-                    try {
-                        paymentService.refundDeposits(auction);
-                    } catch (Exception refundEx) {
-                        log.error("Lỗi hoàn cọc: auctionId={}", auction.getId(), refundEx);
-                    }
+                // FIX: hoàn cọc cho tất cả bidder không phải winner.
+                // Trước đây chỉ gọi refundDeposits() trong nhánh CANCELED/NO_WINNER/RESERVE_NOT_MET,
+                // bỏ sót nhánh FINISHED → các bidder thua trong phiên có winner bị kẹt cọc mãi mãi.
+                // refundDeposits() đã tự bỏ qua winner bằng Objects.equals() nên an toàn khi gọi ở đây.
+                try {
+                    paymentService.refundDeposits(auction);
+                } catch (Exception refundEx) {
+                    log.error("Lỗi hoàn cọc: auctionId={}", auction.getId(), refundEx);
                 }
 
                 broadcastUpdate(auction, packetType);
