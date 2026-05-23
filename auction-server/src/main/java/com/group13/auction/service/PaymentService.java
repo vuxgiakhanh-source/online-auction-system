@@ -387,7 +387,6 @@ public class PaymentService implements IPaymentService {
       auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
     }
 
-    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, null, 0L);
   }
 
   public SecondChanceOffer createSecondChanceOffer(NormalUser runnerUp,
@@ -401,14 +400,19 @@ public class PaymentService implements IPaymentService {
     SecondChanceOffer offer = SecondChanceOffer.create(
         runnerUp, auction.getId(), offerPrice, depositPaid);
 
-    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
-        runnerUp, offerPrice,
-        String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
-
     log.info("[PAYMENT] Second Chance Offer tạo cho {} | Giá: {} | Hạn: {}",
         runnerUp.getUsername(), offerPrice, offer.getDeadline());
 
     secondChanceOfferDAO.saveOffer(offer);
+
+    // Inbox + realtime chỉ cho seller và runner-up (loại SecondChanceOffer), không gửi toàn bộ JOINED.
+    ServerBroadcastNotifier.getInstance().notifySecondChanceOffered(auction, runnerUp, offer);
+
+    // Audit log hệ thống (không tạo inbox cho người tham gia khác).
+    auctionService.notify(auction, AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
+        runnerUp, offerPrice,
+        String.format("Second Chance Offer: mua với giá %d trong 24h", offerPrice));
+
     return offer;
   }
 

@@ -11,7 +11,9 @@ import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.notification.Notification;
+import com.group13.auction.model.notification.NotificationTypes;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.network.server.session.SessionManager;
@@ -45,11 +47,18 @@ public class ServerBroadcastNotifier {
     public static ServerBroadcastNotifier getInstance() { return INSTANCE; }
 
     private void persistNotification(String userId, String auctionId, String title, String body) {
+        persistNotification(userId, auctionId, NotificationTypes.SYSTEM, title, body);
+    }
+
+    private void persistNotification(String userId, String auctionId, String notificationType,
+                                     String title, String body) {
         try {
-            Notification notification = Notification.create(userId, auctionId, title, body);
+            Notification notification = Notification.create(
+                userId, auctionId, notificationType, title, body);
             notificationDAO.save(notification);
         } catch (Exception e) {
-            log.warn("Không thể lưu notification: userId={}, title={}", userId, title, e);
+            log.warn("Không thể lưu notification: userId={}, type={}, title={}",
+                userId, notificationType, title, e);
         }
     }
 
@@ -285,6 +294,47 @@ public class ServerBroadcastNotifier {
             Packet.of(PacketType.SECOND_CHANCE_OFFER_NOTIFY, offer));
     }
 
+    /**
+     * Second Chance chỉ gửi inbox + realtime cho seller và runner-up (không broadcast cho mọi người JOINED).
+     */
+    public void notifySecondChanceOffered(Auction auction, NormalUser runnerUp,
+                                          SecondChanceOffer offer) {
+        if (auction == null || runnerUp == null || offer == null) {
+            return;
+        }
+
+        String auctionId = auction.getId();
+        String itemName = auction.getItem() != null ? auction.getItem().getName() : auctionId;
+        long offerPrice = offer.getOfferPrice();
+
+        persistNotification(
+            runnerUp.getId(),
+            auctionId,
+            NotificationTypes.SECOND_CHANCE_OFFER,
+            "Bạn nhận Second Chance Offer",
+            String.format(
+                "Bạn được đề nghị mua \"%s\" với giá %d. Hạn phản hồi: %s.",
+                itemName, offerPrice, offer.getDeadline()));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            NormalUser seller = auction.getItem().getSeller();
+            persistNotification(
+                seller.getId(),
+                auctionId,
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                "Second Chance Offer đã gửi",
+                String.format(
+                    "Winner không thanh toán. Hệ thống đã gửi đề nghị mua thứ cấp cho %s với giá %d.",
+                    runnerUp.getUsername(), offerPrice));
+        }
+
+        PaymentDTOs.SecondChanceOfferDTO dto = DTOMapper.toSecondChanceOfferDTO(auction, offer);
+        notifySecondChanceOffer(runnerUp.getId(), dto);
+
+        log.info("Second Chance Offer notified: auctionId={}, runnerUp={}, sellerOnly+runnerUp inbox",
+            auctionId, runnerUp.getUsername());
+    }
+
     public void notifyPaymentCompleted(String sellerId,
                                        PaymentDTOs.PaymentResultDTO result) {
         sessionManager.sendToUser(sellerId,
@@ -319,9 +369,15 @@ public class ServerBroadcastNotifier {
         // Notify seller riêng: có winner mới đang chờ thanh toán
         if (auction.getItem() != null && auction.getItem().getSeller() != null) {
             String sellerId = auction.getItem().getSeller().getId();
-            persistNotification(sellerId, auction.getId(),
+            persistNotification(sellerId, auction.getId(), NotificationTypes.SECOND_CHANCE_OFFER,
                 "Người mua mới chấp nhận Second Chance",
                 "Runner-up đã chấp nhận mua phiên của bạn. Đang chờ thanh toán.");
+        }
+        if (auction.getWinner() != null && auction.getWinner().getWinner() != null) {
+            NormalUser runnerUp = auction.getWinner().getWinner();
+            persistNotification(runnerUp.getId(), auction.getId(), NotificationTypes.SECOND_CHANCE_OFFER,
+                "Bạn đã chấp nhận Second Chance",
+                "Bạn là người thắng mới. Hãy hoàn tất thanh toán trong thời hạn quy định.");
         }
     }
 

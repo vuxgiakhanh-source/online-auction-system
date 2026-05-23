@@ -2,8 +2,10 @@ package com.group13.auction.network.server.util;
 
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
@@ -149,6 +151,20 @@ public final class DTOMapper {
             dto.setLeaderId(auction.getCurrentLeader().getId());
             dto.setLeaderUsername(auction.getCurrentLeader().getUsername());
         }
+        return dto;
+    }
+
+    public static PaymentDTOs.SecondChanceOfferDTO toSecondChanceOfferDTO(
+            Auction auction, SecondChanceOffer offer) {
+        PaymentDTOs.SecondChanceOfferDTO dto = new PaymentDTOs.SecondChanceOfferDTO();
+        dto.setOfferId(offer.getId());
+        dto.setAuctionId(offer.getAuctionId());
+        if (auction != null && auction.getItem() != null) {
+            dto.setAuctionItemName(auction.getItem().getName());
+        }
+        dto.setOfferPrice(offer.getOfferPrice());
+        dto.setDepositRequired(offer.getDepositPaid());
+        dto.setDeadline(offer.getDeadline());
         return dto;
     }
 
