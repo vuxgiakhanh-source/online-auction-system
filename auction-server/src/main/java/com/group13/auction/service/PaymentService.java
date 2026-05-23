@@ -8,6 +8,7 @@ import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.dao.UserDAO;
+import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.network.server.ServerBroadcastNotifier;
@@ -139,6 +140,13 @@ public class PaymentService implements IPaymentService {
 
       log.info("[PAYMENT] Winner {} đã thanh toán {} — tiền giữ tại SystemBank (FUNDS_HELD).",
           winner.getUsername(), auctionWinner.getFinalPrice());
+
+      PaymentDTOs.PaymentResultDTO result = new PaymentDTOs.PaymentResultDTO();
+      result.setAuctionId(auction.getId());
+      result.setFinalPrice(auctionWinner.getFinalPrice());
+      result.setPaymentStatus("FUNDS_HELD");
+      result.setPaidAt(java.time.LocalDateTime.now());
+      ServerBroadcastNotifier.getInstance().notifyPaymentSuccess(auction, result);
       // NOTE: updateFundsHeld() đã được gọi trong markAsPaid() — không cần gọi lại ở đây.
     }
   }
@@ -159,6 +167,8 @@ public class PaymentService implements IPaymentService {
     // Persist cả status mới lẫn reportDeadline
     auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
     auctionWinnerDAO.updateReportDeadline(auctionWinner.getId(), auctionWinner.getReportDeadline());
+
+    ServerBroadcastNotifier.getInstance().notifyItemReceived(auction);
   }
 
   public void releaseToSeller(Auction auction) {
@@ -263,6 +273,7 @@ public class PaymentService implements IPaymentService {
       }
 
       auctionWinnerDAO.updatePaymentStatus(auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
+      ServerBroadcastNotifier.getInstance().notifyPaymentFailed(auction);
     }
   }
 
@@ -360,6 +371,7 @@ public class PaymentService implements IPaymentService {
     }
 
     offer.setStatus(SecondChanceOffer.OfferStatus.DECLINED);
+    ServerBroadcastNotifier.getInstance().notifySecondChanceDeclined(auction, offer);
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
 
     log.info("[PAYMENT] Runner-up {} từ chối Second Chance Offer — phiên {} bị hủy.",
@@ -443,6 +455,7 @@ public class PaymentService implements IPaymentService {
   private void finalizeSecondChanceOfferExpired(SecondChanceOffer offer, Auction auction) {
     offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
     log.info("[PAYMENT] Second Chance Offer hết hạn — phiên {} bị hủy.", auction.getId());
+    ServerBroadcastNotifier.getInstance().notifySecondChanceExpired(auction, offer);
     auctionService.cancelAuction(auction, com.group13.auction.model.user.Admin.CancelReason.NO_WINNER);
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }

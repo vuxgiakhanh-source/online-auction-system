@@ -183,6 +183,10 @@ public final class ClientRequestFactory {
         return Packet.of(PacketType.ADMIN_GET_ALL_USERS);
     }
 
+    public static Packet<Void> adminGetAccountBans() {
+        return Packet.of(PacketType.ADMIN_GET_ACCOUNT_BANS);
+    }
+
     public static Packet<AdminDTOs.CreateStaffAdminDTO> adminCreateStaff(
         AdminDTOs.CreateStaffAdminDTO request) {
         return Packet.of(PacketType.ADMIN_CREATE_STAFF, request);

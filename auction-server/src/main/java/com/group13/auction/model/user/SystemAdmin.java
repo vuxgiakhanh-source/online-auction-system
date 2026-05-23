@@ -1,5 +1,6 @@
 package com.group13.auction.model.user;
 
+import com.group13.auction.dao.AccountBanDAO;
 import com.group13.auction.dao.AdminDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
@@ -38,6 +39,7 @@ public class SystemAdmin extends Admin {
     private static SystemAdmin INSTANCE;
 
     private UserDAO userDAO;
+    private AccountBanDAO accountBanDAO;
 
     // ── Bootstrap ─────────────────────────────────────────────────────────────
 
@@ -68,6 +70,7 @@ public class SystemAdmin extends Admin {
             }
 
             INSTANCE.userDAO = userDAO;
+            INSTANCE.accountBanDAO = new AccountBanDAO();
             AuctionManager.getInstance().addGlobalObserver(new SystemAdminObserver(INSTANCE));
             AuctionManager.getInstance().addToUserList(INSTANCE);
         }
@@ -111,6 +114,10 @@ public class SystemAdmin extends Admin {
                     // để phân biệt với log.error cùng nội dung trong banUserByStaff().
                     log.error("Không thể persist ban cho user: username={} source=autoBan",
                             user.getUsername());
+                } else if (accountBanDAO != null) {
+                    accountBanDAO.insertBan(
+                            user.getId(), null, "SYSTEM",
+                            BanReason.SYSTEM_AUTO.name(), null);
                 }
             }
         }
@@ -139,6 +146,10 @@ public class SystemAdmin extends Admin {
                 // để phân biệt với log.error cùng nội dung trong autoBanIfNeeded().
                 log.error("Không thể persist ban cho user: username={} source=staffBan staff={}",
                         user.getUsername(), staff.getUsername());
+            } else if (accountBanDAO != null) {
+                accountBanDAO.insertBan(
+                        user.getId(), staff.getId(), staff.getUsername(),
+                        reason.name(), null);
             }
         }
     }

@@ -1,9 +1,11 @@
 package com.group13.auction.network.server.util;
 
+import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
+import com.group13.auction.dao.AccountBanDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.item.Item;
@@ -61,6 +63,31 @@ public final class DTOMapper {
             dto.setEmail(admin.getEmail());
         }
 
+        return dto;
+    }
+
+    public static void applyActiveBan(UserDTO dto, AccountBanDAO.AccountBanRow ban) {
+        if (dto == null || ban == null) {
+            return;
+        }
+        dto.setActiveBanReason(ban.reason());
+        dto.setBannedByUsername(ban.bannedByUsername());
+        dto.setBannedAt(ban.bannedAt());
+        dto.setActiveBanNote(ban.note());
+    }
+
+    public static AdminDTOs.AccountBanDTO toAccountBanDTO(AccountBanDAO.AccountBanRow row) {
+        AdminDTOs.AccountBanDTO dto = new AdminDTOs.AccountBanDTO();
+        dto.setId(row.id());
+        dto.setUserId(row.userId());
+        dto.setUsername(row.username());
+        dto.setEmail(row.email());
+        dto.setBannedByUsername(row.bannedByUsername());
+        dto.setReason(row.reason());
+        dto.setNote(row.note());
+        dto.setBannedAt(row.bannedAt());
+        dto.setUnbannedAt(row.unbannedAt());
+        dto.setUnbannedByUsername(row.unbannedByUsername());
         return dto;
     }
 

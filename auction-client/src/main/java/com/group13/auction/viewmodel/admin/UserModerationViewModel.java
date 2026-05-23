@@ -11,25 +11,29 @@ public class UserModerationViewModel {
     private final String role;
     private final String status;
     private final boolean banned;
+    private final String banReason;
+    private final String bannedBy;
+    private final String bannedAt;
 
-    /**
-     * Tạo dữ liệu hiển thị cho một người dùng.
-     *
-     * @param userId mã người dùng
-     * @param username tên đăng nhập
-     * @param email email
-     * @param role vai trò
-     * @param status trạng thái hiển thị
-     * @param banned true nếu user đang bị khóa/cấm
-     */
     public UserModerationViewModel(
-            String userId, String username, String email, String role, String status, boolean banned) {
+            String userId,
+            String username,
+            String email,
+            String role,
+            String status,
+            boolean banned,
+            String banReason,
+            String bannedBy,
+            String bannedAt) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.role = role;
         this.status = status;
         this.banned = banned;
+        this.banReason = banReason;
+        this.bannedBy = bannedBy;
+        this.bannedAt = bannedAt;
     }
 
     public String getUserId() {
@@ -54,5 +58,17 @@ public class UserModerationViewModel {
 
     public boolean isBanned() {
         return banned;
+    }
+
+    public String getBanReason() {
+        return banReason;
+    }
+
+    public String getBannedBy() {
+        return bannedBy;
+    }
+
+    public String getBannedAt() {
+        return bannedAt;
     }
 }

@@ -96,6 +96,7 @@ public final class PacketExpectations {
         put(map, PacketType.ADMIN_UNBAN_USER,
                 PacketType.ADMIN_UNBAN_USER_SUCCESS, PacketType.ADMIN_UNBAN_USER_FAILED);
         successOnly(map, PacketType.ADMIN_GET_ALL_USERS, PacketType.ADMIN_GET_ALL_USERS_SUCCESS);
+        successOnly(map, PacketType.ADMIN_GET_ACCOUNT_BANS, PacketType.ADMIN_GET_ACCOUNT_BANS_SUCCESS);
         put(map, PacketType.ADMIN_CREATE_STAFF,
                 PacketType.ADMIN_CREATE_STAFF_SUCCESS, PacketType.ADMIN_CREATE_STAFF_FAILED);
         successOnly(map, PacketType.ADMIN_GET_ALL_STAFF, PacketType.ADMIN_GET_ALL_STAFF_SUCCESS);

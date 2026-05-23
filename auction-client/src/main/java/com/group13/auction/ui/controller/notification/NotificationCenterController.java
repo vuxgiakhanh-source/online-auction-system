@@ -25,12 +25,16 @@ import javafx.scene.layout.VBox;
 /** Controller cho màn trung tâm thông báo. */
 public final class NotificationCenterController {
 
+    private static final String SECOND_CHANCE_NOTIFICATION_TYPE = "SecondChanceOffer";
+
     private final NotificationService notificationService = new NotificationService();
     private final PaymentService paymentService = new PaymentService();
     private final SecondChanceRealtimeService secondChanceRealtimeService =
             SecondChanceRealtimeService.getInstance();
 
     @FXML private ListView<SecondChanceOfferViewModel> secondChanceListView;
+
+    @FXML private ListView<NotificationItemViewModel> secondChanceInboxListView;
 
     @FXML private VBox secondChanceEmptyBox;
 
@@ -83,6 +87,7 @@ public final class NotificationCenterController {
 
         configureSecondChanceListView();
         configureSecondChanceSelectionListener();
+        configureSecondChanceInboxListView();
 
         configureNotificationListView();
         configureNotificationSelectionListener();
@@ -211,8 +216,7 @@ public final class NotificationCenterController {
     /** Đánh dấu thông báo đang chọn là đã đọc. */
     @FXML
     public void handleMarkRead() {
-        NotificationItemViewModel selected =
-                notificationListView.getSelectionModel().getSelectedItem();
+        NotificationItemViewModel selected = selectedNotification();
 
         if (selected == null) {
             AlertUtil.showWarning("Vui lòng chọn một thông báo.");
@@ -249,8 +253,7 @@ public final class NotificationCenterController {
     /** Mở phiên đấu giá liên quan nếu thông báo có gắn mã phiên. */
     @FXML
     public void handleOpenRelatedAuction() {
-        NotificationItemViewModel selected =
-                notificationListView.getSelectionModel().getSelectedItem();
+        NotificationItemViewModel selected = selectedNotification();
 
         if (selected == null || !selected.hasRelatedAuction()) {
             AlertUtil.showWarning("Thông báo này không gắn với phiên đấu giá cụ thể.");
@@ -306,6 +309,41 @@ public final class NotificationCenterController {
                 .addListener((observable, oldValue, selected) -> renderSecondChanceDetail(selected));
     }
 
+    private void configureSecondChanceInboxListView() {
+        secondChanceInboxListView.setCellFactory(
+                ignored ->
+                        new ListCell<>() {
+                            @Override
+                            protected void updateItem(
+                                    NotificationItemViewModel notification, boolean empty) {
+                                super.updateItem(notification, empty);
+
+                                if (empty || notification == null) {
+                                    setText(null);
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                setText(
+                                        notification.title()
+                                                + "\n"
+                                                + notification.createdAtText()
+                                                + "  •  "
+                                                + notification.readStateText());
+                            }
+                        });
+
+        secondChanceInboxListView
+                .getSelectionModel()
+                .selectedItemProperty()
+                .addListener(
+                        (observable, oldValue, selected) -> {
+                            if (selected != null) {
+                                renderNotificationDetail(selected);
+                            }
+                        });
+    }
+
     private void configureNotificationListView() {
         notificationListView.setCellFactory(
                 ignored ->
@@ -352,7 +390,7 @@ public final class NotificationCenterController {
                         notifications ->
                                 FxThreadUtil.runOnFxThread(
                                         () -> {
-                                            renderNotifications(notifications);
+                                            renderAllNotifications(notifications);
                                             setLoading(false, "Đã tải danh sách thông báo.");
                                         }))
                 .exceptionally(
@@ -382,6 +420,37 @@ public final class NotificationCenterController {
         }
 
         secondChanceListView.getSelectionModel().selectFirst();
+    }
+
+    private void renderAllNotifications(List<NotificationItemViewModel> notifications) {
+        List<NotificationItemViewModel> safeNotifications =
+                notifications == null ? List.of() : notifications;
+
+        List<NotificationItemViewModel> general = new java.util.ArrayList<>();
+        List<NotificationItemViewModel> secondChanceInbox = new java.util.ArrayList<>();
+        for (NotificationItemViewModel item : safeNotifications) {
+            if (SECOND_CHANCE_NOTIFICATION_TYPE.equals(item.type())) {
+                secondChanceInbox.add(item);
+            } else {
+                general.add(item);
+            }
+        }
+
+        renderNotifications(general);
+        renderSecondChanceInbox(secondChanceInbox);
+    }
+
+    private void renderSecondChanceInbox(List<NotificationItemViewModel> inboxItems) {
+        List<NotificationItemViewModel> safeItems = inboxItems == null ? List.of() : inboxItems;
+        secondChanceInboxListView.setItems(FXCollections.observableArrayList(safeItems));
+
+        boolean empty = safeItems.isEmpty();
+        secondChanceInboxListView.setVisible(!empty);
+        secondChanceInboxListView.setManaged(!empty);
+
+        if (!empty) {
+            secondChanceInboxListView.getSelectionModel().selectFirst();
+        }
     }
 
     private void renderNotifications(List<NotificationItemViewModel> notifications) {
@@ -473,15 +542,30 @@ public final class NotificationCenterController {
         openAuctionButton.setDisable(true);
     }
 
+    private NotificationItemViewModel selectedNotification() {
+        NotificationItemViewModel fromGeneral =
+                notificationListView.getSelectionModel().getSelectedItem();
+        if (fromGeneral != null) {
+            return fromGeneral;
+        }
+        return secondChanceInboxListView.getSelectionModel().getSelectedItem();
+    }
+
     private void replaceSelectedNotification(NotificationItemViewModel updatedNotification) {
-        int selectedIndex = notificationListView.getSelectionModel().getSelectedIndex();
-        if (selectedIndex < 0) {
+        int generalIndex = notificationListView.getSelectionModel().getSelectedIndex();
+        if (generalIndex >= 0) {
+            notificationListView.getItems().set(generalIndex, updatedNotification);
+            notificationListView.getSelectionModel().select(generalIndex);
+            renderNotificationDetail(updatedNotification);
             return;
         }
 
-        notificationListView.getItems().set(selectedIndex, updatedNotification);
-        notificationListView.getSelectionModel().select(selectedIndex);
-        renderNotificationDetail(updatedNotification);
+        int scoIndex = secondChanceInboxListView.getSelectionModel().getSelectedIndex();
+        if (scoIndex >= 0) {
+            secondChanceInboxListView.getItems().set(scoIndex, updatedNotification);
+            secondChanceInboxListView.getSelectionModel().select(scoIndex);
+            renderNotificationDetail(updatedNotification);
+        }
     }
 
     private void openAuctionDetail(String auctionId) {
@@ -498,9 +582,9 @@ public final class NotificationCenterController {
         refreshButton.setDisable(loading);
         notificationListView.setDisable(loading);
         secondChanceListView.setDisable(loading);
+        secondChanceInboxListView.setDisable(loading);
 
-        NotificationItemViewModel selectedNotification =
-                notificationListView.getSelectionModel().getSelectedItem();
+        NotificationItemViewModel selectedNotification = selectedNotification();
         markReadButton.setDisable(
                 loading || selectedNotification == null || selectedNotification.read());
         openAuctionButton.setDisable(
