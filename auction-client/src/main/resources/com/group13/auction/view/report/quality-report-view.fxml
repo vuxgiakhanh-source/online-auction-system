@@ -36,7 +36,7 @@
             <VBox spacing="6.0">
                 <Label text="Báo cáo chất lượng đơn hàng" styleClass="page-title"/>
                 <Label
-                        text="Gửi thông tin phản hồi cho đơn hàng đã thanh toán khi sản phẩm nhận được có vấn đề."
+                        text="Gửi thông tin phản hồi cho đơn hàng đã nhận khi sản phẩm có vấn đề."
                         styleClass="page-subtitle"
                         wrapText="true"/>
             </VBox>

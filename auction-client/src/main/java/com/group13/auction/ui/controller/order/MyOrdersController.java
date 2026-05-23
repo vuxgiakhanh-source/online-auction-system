@@ -1,5 +1,6 @@
 package com.group13.auction.ui.controller.order;
 
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.state.ScreenStateKeys;
@@ -8,6 +9,7 @@ import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.order.WonOrderViewModel;
+import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
@@ -117,6 +119,7 @@ public final class MyOrdersController {
     bottomRow.setAlignment(Pos.CENTER_LEFT);
 
     VBox priceBox = createMetric("Giá thắng", order.winningPriceText());
+    VBox hintBox = createHintBox(order);
 
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -125,12 +128,13 @@ public final class MyOrdersController {
     detailButton.getStyleClass().add("secondary-button");
     detailButton.setOnAction(event -> openAuctionDetail(order));
 
-    Button reportButton = new Button("Gửi báo cáo");
-    reportButton.getStyleClass().add("primary-button");
-    reportButton.setDisable(!order.reportable());
-    reportButton.setOnAction(event -> openQualityReport(order));
+    Button primaryActionButton = createPrimaryActionButton(order);
 
-    bottomRow.getChildren().addAll(priceBox, spacer, detailButton, reportButton);
+    bottomRow.getChildren().addAll(priceBox, hintBox, spacer, detailButton);
+    if (primaryActionButton != null) {
+      bottomRow.getChildren().add(primaryActionButton);
+    }
+
     card.getChildren().addAll(topRow, bottomRow);
     return card;
   }
@@ -176,6 +180,56 @@ public final class MyOrdersController {
     return metric;
   }
 
+  private VBox createHintBox(WonOrderViewModel order) {
+    VBox hintBox = new VBox(4.0);
+    hintBox.getStyleClass().add("order-hint-box");
+
+    Label hintLabel = new Label(order.actionHintText());
+    hintLabel.getStyleClass().add("order-muted-text");
+    hintLabel.setWrapText(true);
+
+    hintBox.getChildren().add(hintLabel);
+
+    if (order.canConfirmReceipt() && !isPlaceholder(order.confirmReceiptDeadlineText())) {
+      Label deadlineLabel = new Label("Hạn xác nhận: " + order.confirmReceiptDeadlineText());
+      deadlineLabel.getStyleClass().add("order-muted-text");
+      hintBox.getChildren().add(deadlineLabel);
+    }
+
+    if (order.canSubmitReport() && !isPlaceholder(order.reportDeadlineText())) {
+      Label deadlineLabel = new Label("Hạn gửi báo cáo: " + order.reportDeadlineText());
+      deadlineLabel.getStyleClass().add("order-muted-text");
+      hintBox.getChildren().add(deadlineLabel);
+    }
+
+    return hintBox;
+  }
+
+  private Button createPrimaryActionButton(WonOrderViewModel order) {
+    if (order.canPay()) {
+      Button payButton = new Button("Thanh toán");
+      payButton.getStyleClass().add("primary-button");
+      payButton.setOnAction(event -> payForOrder(order));
+      return payButton;
+    }
+
+    if (order.canConfirmReceipt()) {
+      Button confirmButton = new Button("Đã nhận hàng");
+      confirmButton.getStyleClass().add("primary-button");
+      confirmButton.setOnAction(event -> confirmItemReceived(order));
+      return confirmButton;
+    }
+
+    if (order.canSubmitReport()) {
+      Button reportButton = new Button("Gửi báo cáo");
+      reportButton.getStyleClass().add("primary-button");
+      reportButton.setOnAction(event -> openQualityReport(order));
+      return reportButton;
+    }
+
+    return null;
+  }
+
   private Label createEmptyState() {
     Label emptyLabel = new Label("Bạn chưa có đơn hàng nào từ phiên đấu giá đã thắng.");
     emptyLabel.getStyleClass().add("order-empty-state");
@@ -195,9 +249,61 @@ public final class MyOrdersController {
     Navigator.getInstance().goToAuctionDetail();
   }
 
+  private void payForOrder(WonOrderViewModel order) {
+    setLoading(true, "Đang xử lý thanh toán...");
+
+    wonOrderService
+        .payForOrder(order.auctionId())
+        .whenComplete(
+            (result, throwable) ->
+                FxThreadUtil.runOnFxThread(() -> handlePaymentResult(result, throwable)));
+  }
+
+  private void handlePaymentResult(PaymentResultViewModel result, Throwable throwable) {
+    if (throwable != null) {
+      setLoading(false, "Không thanh toán được đơn hàng.");
+      AlertUtil.showError(extractMessage(throwable));
+      return;
+    }
+
+    String message =
+        result == null
+            ? "Thanh toán thành công."
+            : "Thanh toán thành công. Số dư hiện tại: " + result.newBalanceText();
+
+    showStatus(message);
+    loadOrders();
+  }
+
+  private void confirmItemReceived(WonOrderViewModel order) {
+    setLoading(true, "Đang xác nhận nhận hàng...");
+
+    wonOrderService
+        .confirmItemReceived(order.auctionId())
+        .whenComplete(
+            (result, throwable) ->
+                FxThreadUtil.runOnFxThread(() -> handleConfirmResult(result, throwable)));
+  }
+
+  private void handleConfirmResult(ConfirmItemReceivedResultDTO result, Throwable throwable) {
+    if (throwable != null) {
+      setLoading(false, "Không xác nhận được trạng thái nhận hàng.");
+      AlertUtil.showError(extractMessage(throwable));
+      return;
+    }
+
+    String message =
+        result != null && result.isCanSubmitReport()
+            ? "Đã xác nhận nhận hàng. Bạn có thể gửi báo cáo nếu sản phẩm có vấn đề."
+            : "Đã xác nhận nhận hàng.";
+
+    showStatus(message);
+    loadOrders();
+  }
+
   private void openQualityReport(WonOrderViewModel order) {
-    if (!order.reportable()) {
-      showStatus("Chỉ có thể gửi báo cáo cho đơn hàng đã thanh toán.");
+    if (!order.canSubmitReport()) {
+      showStatus("Vui lòng xác nhận đã nhận hàng trước khi gửi báo cáo.");
       return;
     }
 
@@ -238,5 +344,9 @@ public final class MyOrdersController {
 
     String message = current == null ? null : current.getMessage();
     return message == null || message.isBlank() ? "Không tải được dữ liệu." : message;
+  }
+
+  private boolean isPlaceholder(String value) {
+    return value == null || value.isBlank() || "--".equals(value.trim());
   }
 }

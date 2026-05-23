@@ -1,5 +1,6 @@
 package com.group13.auction.service.payment;
 
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.mapper.PaymentViewModelMapper;
@@ -57,6 +58,28 @@ public final class PaymentService {
                         PaymentDTOs.PaymentResultDTO.class,
                         "Không thực hiện được thanh toán.")
                 .thenApply(PaymentViewModelMapper::toPaymentResultViewModel);
+    }
+
+    /**
+     * Gửi yêu cầu xác nhận đã nhận hàng cho đơn hàng đã thanh toán.
+     *
+     * <p>Server sẽ kiểm tra người dùng hiện tại có phải winner của phiên đấu giá hay không và trạng
+     * thái thanh toán hiện tại có cho phép xác nhận nhận hàng hay không.
+     *
+     * @param auctionId mã phiên đấu giá
+     * @return future chứa kết quả xác nhận nhận hàng từ server
+     */
+    public CompletableFuture<ConfirmItemReceivedResultDTO> confirmItemReceived(String auctionId) {
+        if (auctionId == null || auctionId.isBlank()) {
+            return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá cần xác nhận.");
+        }
+
+        return AuctionServiceSupport.sendRequest(
+            networkFacade,
+            ClientRequestFactory.confirmItemReceived(auctionId.trim()),
+            PacketType.CONFIRM_ITEM_RECEIVED_SUCCESS,
+            ConfirmItemReceivedResultDTO.class,
+            "Không xác nhận được trạng thái nhận hàng.");
     }
 
     /**
