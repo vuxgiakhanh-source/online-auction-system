@@ -180,3 +180,10 @@
 .order-page .progress-indicator {
     -fx-progress-color: #67b8ea;
 }
+
+.order-hint-box {
+    -fx-background-color: rgba(15, 37, 60, 0.05);
+    -fx-background-radius: 16px;
+    -fx-padding: 10px 14px;
+    -fx-max-width: 360px;
+}

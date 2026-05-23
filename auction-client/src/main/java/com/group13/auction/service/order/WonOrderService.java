@@ -1,13 +1,16 @@
 package com.group13.auction.service.order;
 
 import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.common.dto.payment.ConfirmItemReceivedResultDTO;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.mapper.WonOrderViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.service.auction.AuctionServiceSupport;
+import com.group13.auction.service.payment.PaymentService;
 import com.group13.auction.viewmodel.order.WonOrderViewModel;
+import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -16,7 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-/** Service tải danh sách các phiên đấu giá mà người dùng hiện tại đã thắng. */
+/** Service tải và xử lý các phiên đấu giá mà người dùng hiện tại đã thắng. */
 public final class WonOrderService {
 
   private static final String STATUS_FINISHED = "FINISHED";
@@ -24,6 +27,7 @@ public final class WonOrderService {
   private static final int PAGE_SIZE = 100;
 
   private final ClientNetworkFacade networkFacade;
+  private final PaymentService paymentService;
 
   /** Tạo service dùng network facade mặc định của ứng dụng. */
   public WonOrderService() {
@@ -37,13 +41,11 @@ public final class WonOrderService {
    */
   public WonOrderService(ClientNetworkFacade networkFacade) {
     this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+    this.paymentService = new PaymentService(networkFacade);
   }
 
   /**
    * Tải danh sách đơn hàng đã thắng của người dùng hiện tại.
-   *
-   * <p>Source hiện tại chưa có API riêng cho đơn hàng, nên client dùng danh sách auction đã kết
-   * thúc/đã thanh toán rồi lọc theo {@code currentLeaderId}.
    *
    * @return future chứa danh sách đơn hàng đã thắng đã format để hiển thị
    */
@@ -68,6 +70,34 @@ public final class WonOrderService {
               .sorted(orderComparator())
               .toList();
         });
+  }
+
+  /**
+   * Thanh toán đơn hàng đã thắng.
+   *
+   * @param auctionId mã phiên đấu giá cần thanh toán
+   * @return future chứa kết quả thanh toán đã format
+   */
+  public CompletableFuture<PaymentResultViewModel> payForOrder(String auctionId) {
+    if (isBlank(auctionId)) {
+      return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá cần thanh toán.");
+    }
+
+    return paymentService.requestPayment(auctionId.trim());
+  }
+
+  /**
+   * Xác nhận người dùng đã nhận hàng.
+   *
+   * @param auctionId mã phiên đấu giá cần xác nhận
+   * @return future chứa kết quả xác nhận từ server
+   */
+  public CompletableFuture<ConfirmItemReceivedResultDTO> confirmItemReceived(String auctionId) {
+    if (isBlank(auctionId)) {
+      return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá cần xác nhận.");
+    }
+
+    return paymentService.confirmItemReceived(auctionId.trim());
   }
 
   private CompletableFuture<List<AuctionDTOs.AuctionDTO>> getAuctionsByStatus(String status) {
@@ -127,13 +157,32 @@ public final class WonOrderService {
 
   private Comparator<WonOrderViewModel> orderComparator() {
     return (left, right) -> {
-      int reportableCompare = Boolean.compare(right.reportable(), left.reportable());
-      if (reportableCompare != 0) {
-        return reportableCompare;
+      int priorityCompare = Integer.compare(orderPriority(left), orderPriority(right));
+      if (priorityCompare != 0) {
+        return priorityCompare;
       }
 
       return left.itemName().compareToIgnoreCase(right.itemName());
     };
+  }
+
+  private int orderPriority(WonOrderViewModel order) {
+    if (order == null) {
+      return 99;
+    }
+    if (order.canPay()) {
+      return 1;
+    }
+    if (order.canConfirmReceipt()) {
+      return 2;
+    }
+    if (order.canSubmitReport()) {
+      return 3;
+    }
+    if (order.completed()) {
+      return 4;
+    }
+    return 10;
   }
 
   private String currentUserId() {
@@ -146,5 +195,9 @@ public final class WonOrderService {
 
   private String safe(String value) {
     return value == null ? "" : value.trim();
+  }
+
+  private boolean isBlank(String value) {
+    return value == null || value.isBlank();
   }
 }

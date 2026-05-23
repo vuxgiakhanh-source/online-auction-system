@@ -58,6 +58,8 @@ public final class PacketExpectations {
         put(map, PacketType.WITHDRAW, PacketType.WITHDRAW_SUCCESS, PacketType.WITHDRAW_FAILED);
         successOnly(map, PacketType.GET_WALLET_BALANCE, PacketType.GET_WALLET_BALANCE_SUCCESS);
         put(map, PacketType.PAYMENT_REQUEST, PacketType.PAYMENT_SUCCESS, PacketType.PAYMENT_FAILED);
+        put(map, PacketType.CONFIRM_ITEM_RECEIVED,
+            PacketType.CONFIRM_ITEM_RECEIVED_SUCCESS, PacketType.CONFIRM_ITEM_RECEIVED_FAILED);
         put(map, PacketType.SECOND_CHANCE_ACCEPT,
                 PacketType.SECOND_CHANCE_ACCEPT_SUCCESS, PacketType.SECOND_CHANCE_ACCEPT_FAILED);
         successOnly(map, PacketType.SECOND_CHANCE_DECLINE, PacketType.SECOND_CHANCE_DECLINE_SUCCESS);

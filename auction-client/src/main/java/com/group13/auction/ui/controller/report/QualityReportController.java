@@ -69,7 +69,12 @@ public final class QualityReportController {
         }
 
         renderSelectedOrder(selectedOrder);
-        showStatus("Hãy mô tả vấn đề và chọn ảnh bằng chứng trước khi gửi báo cáo.");
+
+        if (selectedOrder.canSubmitReport()) {
+            showStatus("Hãy mô tả vấn đề và chọn ảnh bằng chứng trước khi gửi báo cáo.");
+        } else {
+            showStatus("Vui lòng xác nhận đã nhận hàng trước khi gửi báo cáo.");
+        }
     }
 
     @FXML
@@ -131,8 +136,8 @@ public final class QualityReportController {
             showStatus("Vui lòng chọn đơn hàng cần báo cáo.");
             return;
         }
-        if (!selectedOrder.reportable()) {
-            showStatus("Chỉ có thể gửi báo cáo cho đơn hàng đã thanh toán.");
+        if (!selectedOrder.canSubmitReport()) {
+            showStatus("Vui lòng xác nhận đã nhận hàng trước khi gửi báo cáo.");
             return;
         }
 
@@ -166,7 +171,7 @@ public final class QualityReportController {
         winningPriceLabel.setText(order.winningPriceText());
         orderStatusLabel.setText(order.statusText());
         auctionIdLabel.setText(order.auctionId());
-        submitButton.setDisable(!order.reportable());
+        submitButton.setDisable(!order.canSubmitReport());
     }
 
     private void renderMissingOrderState() {
@@ -249,7 +254,7 @@ public final class QualityReportController {
             clearImagesButton.setDisable(busy || selectedImagePaths.isEmpty());
         }
         if (submitButton != null) {
-            submitButton.setDisable(busy || selectedOrder == null || !selectedOrder.reportable());
+            submitButton.setDisable(busy || selectedOrder == null || !selectedOrder.canSubmitReport());
         }
         if (clearButton != null) {
             clearButton.setDisable(busy || selectedOrder == null);
