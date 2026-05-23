@@ -40,10 +40,13 @@ public final class WonOrderViewModelMapper {
     boolean finished = AUCTION_STATUS_FINISHED.equals(normalizedAuctionStatus);
     boolean paid = AUCTION_STATUS_PAID.equals(normalizedAuctionStatus);
 
+    boolean expired = PAYMENT_STATUS_EXPIRED.equals(normalizedPaymentStatus);
+
     boolean pendingPayment =
-        finished
+        !expired
+            && (finished
             || PAYMENT_STATUS_PENDING.equals(normalizedPaymentStatus)
-            || (paid && normalizedPaymentStatus.isBlank());
+            || (paid && normalizedPaymentStatus.isBlank()));
 
     boolean canPay = pendingPayment;
     boolean canConfirmReceipt =
@@ -114,6 +117,10 @@ public final class WonOrderViewModelMapper {
   }
 
   private static String statusText(String auctionStatus, String paymentStatus) {
+    if (PAYMENT_STATUS_EXPIRED.equals(paymentStatus)) {
+      return "Đã hết hạn";
+    }
+
     if (AUCTION_STATUS_FINISHED.equals(auctionStatus)
         || PAYMENT_STATUS_PENDING.equals(paymentStatus)) {
       return "Chờ thanh toán";
@@ -134,10 +141,6 @@ public final class WonOrderViewModelMapper {
       return "Đã hoàn tất";
     }
 
-    if (PAYMENT_STATUS_EXPIRED.equals(paymentStatus)) {
-      return "Đã hết hạn";
-    }
-
     if (AUCTION_STATUS_PAID.equals(auctionStatus)) {
       return "Đã thanh toán";
     }
@@ -146,6 +149,10 @@ public final class WonOrderViewModelMapper {
   }
 
   private static String actionHintText(String auctionStatus, String paymentStatus) {
+    if (PAYMENT_STATUS_EXPIRED.equals(paymentStatus)) {
+      return "Đơn hàng đã hết hạn xử lý.";
+    }
+
     if (AUCTION_STATUS_FINISHED.equals(auctionStatus)
         || PAYMENT_STATUS_PENDING.equals(paymentStatus)) {
       return "Hoàn tất thanh toán để tiếp tục xử lý đơn hàng.";
@@ -164,10 +171,6 @@ public final class WonOrderViewModelMapper {
     if (AUCTION_STATUS_PAID.equals(auctionStatus)
         && PAYMENT_STATUS_COMPLETED.equals(paymentStatus)) {
       return "Đơn hàng đã hoàn tất.";
-    }
-
-    if (PAYMENT_STATUS_EXPIRED.equals(paymentStatus)) {
-      return "Đơn hàng đã hết hạn xử lý.";
     }
 
     return "";

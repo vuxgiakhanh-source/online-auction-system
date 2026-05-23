@@ -32,7 +32,7 @@
             <VBox spacing="6.0">
                 <Label text="Đơn hàng của tôi" styleClass="page-title"/>
                 <Label
-                        text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
+                        text="Theo dõi các phiên đấu giá bạn đã thắng, thanh toán đơn hàng và gửi báo cáo khi cần."
                         styleClass="page-subtitle"
                         wrapText="true"/>
             </VBox>
