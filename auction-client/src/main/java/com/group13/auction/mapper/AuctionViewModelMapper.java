@@ -83,6 +83,7 @@ public final class AuctionViewModelMapper {
             DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
             DateTimeUtil.formatDateTime(effectiveEndTime),
             remainingTimeText(effectiveEndTime),
+            auction == null ? null : auction.getStartTime(),
             effectiveEndTime,
             imageUrls(item),
             canJoinOrWatch(auction),

@@ -1,5 +1,6 @@
 package com.group13.auction.viewmodel.auction;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +24,8 @@ public final class AuctionDetailViewModel {
     private final String startTimeText;
     private final String endTimeText;
     private final String remainingTimeText;
+    /** Thời điểm bắt đầu phiên dưới dạng raw — dùng để ước lượng mốc 2/3 thời gian. */
+    private final LocalDateTime rawStartTime;
     /** Thời điểm kết thúc phiên dưới dạng raw — dùng cho countdown timer. Null nếu chưa xác định. */
     private final LocalDateTime rawEndTime;
     private final List<String> imageUrls;
@@ -49,6 +52,7 @@ public final class AuctionDetailViewModel {
         String startTimeText,
         String endTimeText,
         String remainingTimeText,
+        LocalDateTime rawStartTime,
         LocalDateTime rawEndTime,
         List<String> imageUrls,
         boolean joinable,
@@ -71,6 +75,7 @@ public final class AuctionDetailViewModel {
         this.startTimeText = startTimeText;
         this.endTimeText = endTimeText;
         this.remainingTimeText = remainingTimeText;
+        this.rawStartTime = rawStartTime;
         this.rawEndTime = rawEndTime;
         this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
         this.joinable = joinable;
@@ -146,6 +151,11 @@ public final class AuctionDetailViewModel {
         return remainingTimeText;
     }
 
+    /** Thời điểm bắt đầu raw — dùng để ước lượng mốc 2/3 thời gian phiên. */
+    public LocalDateTime rawStartTime() {
+        return rawStartTime;
+    }
+
     /** Thời điểm kết thúc raw — dùng cho countdown timer trong LiveBiddingController. */
     public LocalDateTime rawEndTime() {
         return rawEndTime;
@@ -181,6 +191,35 @@ public final class AuctionDetailViewModel {
 
     public boolean paid() {
         return "PAID".equalsIgnoreCase(rawStatus);
+    }
+
+    /**
+     * Ước lượng phiên đã đi qua ít nhất 2/3 thời gian hay chưa.
+     *
+     * <p>Server vẫn là nơi xử lý nghiệp vụ cuối cùng. Hàm này chỉ phục vụ copy cảnh báo trước khi
+     * user xác nhận hủy tham gia.
+     *
+     * @return true nếu thời điểm hiện tại đã qua mốc 2/3 khoảng thời gian từ start đến end
+     */
+    public boolean pastTwoThirdsElapsed() {
+        if (rawStartTime == null || rawEndTime == null || !rawEndTime.isAfter(rawStartTime)) {
+            return false;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (!now.isAfter(rawStartTime)) {
+            return false;
+        }
+
+        if (!now.isBefore(rawEndTime)) {
+            return true;
+        }
+
+        long totalMillis = Duration.between(rawStartTime, rawEndTime).toMillis();
+        long elapsedMillis = Duration.between(rawStartTime, now).toMillis();
+
+        return totalMillis > 0 && elapsedMillis * 3 >= totalMillis * 2;
     }
 
     /**
