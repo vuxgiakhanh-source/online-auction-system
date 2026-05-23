@@ -246,8 +246,8 @@ public class AuthHandler implements PacketHandler {
         if (user instanceof com.group13.auction.model.user.SystemAdmin) {
             return "ADMIN_MASTER";
         }
-        if (user instanceof com.group13.auction.model.user.Admin) {
-            return "ADMIN_STAFF";
+        if (user instanceof com.group13.auction.model.user.Admin admin) {
+            return admin.isMaster() ? "ADMIN_MASTER" : "ADMIN_STAFF";
         }
         return "NORMAL_USER";
     }

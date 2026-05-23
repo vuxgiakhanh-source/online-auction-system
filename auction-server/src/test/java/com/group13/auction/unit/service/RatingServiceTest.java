@@ -986,7 +986,7 @@ class RatingServiceTest {
             assertEquals(AccountStatus.ACTIVE, user.getAccountStatus());
         }
 
-        // --- Restore DAO calls: updateRating, updateAccountStatus, updateHasEverBeenRestored ---
+        // --- Restore DAO calls: updateRating, updateAccountStatus, incrementTimesRestored ---
 
         @Test
         @DisplayName("restore thành công → 3 DAO methods được gọi đúng 1 lần mỗi loại")

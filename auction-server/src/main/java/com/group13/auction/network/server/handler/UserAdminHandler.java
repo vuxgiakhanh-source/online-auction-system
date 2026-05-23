@@ -684,7 +684,7 @@ public class UserAdminHandler implements PacketHandler {
                 dto.setRead(n.isRead());
                 dto.setCreatedAt(n.getCreatedAt());
                 dto.setRelatedAuctionId(n.getAuctionId());
-                dto.setType("SYSTEM"); // default type — chưa có cột type trong DB
+                dto.setType(n.getNotificationType());
                 dtos.add(dto);
             }
 

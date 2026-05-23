@@ -233,7 +233,7 @@ public final class TestFixture {
                 0L,
                 EnumSet.of(User.UserRole.BIDDER),
                 true,   // hasEverBeenPenalized
-                false,
+                0,
                 null);
     }
 

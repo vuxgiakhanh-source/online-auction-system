@@ -110,7 +110,7 @@ public class ServerMain {
         AccountService accountService = new AccountService(
             ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
             auctionWinnerDAO, notificationDAO);
-        UserService    userService    = new UserService(userDAO);
+        UserService    userService    = new UserService(userDAO, adminDAO);
 
         BidService bidService = new BidService(
             auctionService, ratingService, walletService,

@@ -7,8 +7,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 public class AdminDAO {
+
+    /** Bản ghi admin đọc từ bảng {@code admins} (dùng cho đăng nhập). */
+    public record AdminRow(
+            String id,
+            String username,
+            String passwordHash,
+            String email,
+            String level,
+            LocalDateTime createdAt) {}
     private static final Logger log = LoggerFactory.getLogger(AdminDAO.class);
 
     public AdminDAO() {
@@ -29,6 +41,36 @@ public class AdminDAO {
         } catch (SQLException e) {
             log.error("Failed to check admin existence: username={}", username, e);
             return false;
+        }
+    }
+
+    /**
+     * Tìm admin theo username — dùng khi đăng nhập (bảng {@code admins}, không phải {@code users}).
+     */
+    public Optional<AdminRow> findByUsername(String username) {
+        String sql = """
+                SELECT id, username, password_hash, email, level, created_at
+                FROM admins WHERE username = ? LIMIT 1
+                """;
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                Timestamp created = rs.getTimestamp("created_at");
+                return Optional.of(new AdminRow(
+                        rs.getString("id"),
+                        rs.getString("username"),
+                        rs.getString("password_hash"),
+                        rs.getString("email"),
+                        rs.getString("level"),
+                        created != null ? created.toLocalDateTime() : LocalDateTime.now()));
+            }
+        } catch (SQLException e) {
+            log.error("Failed to find admin by username: username={}", username, e);
+            return Optional.empty();
         }
     }
 

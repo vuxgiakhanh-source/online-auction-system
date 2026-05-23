@@ -78,7 +78,7 @@ class DAOIntegrationIT {
             .withDatabaseName("omnibid_test")
             .withUsername("test_user")
             .withPassword("test_pass")
-            .withInitScript("integration/schema.sql"); // đặt trong src/test/resources/integration/schema.sql
+            .withInitScript("database/schema.sql"); // đặt trong src/test/resources/database/schema.sql
 
     // =========================================================================
     // DAO instances — khởi tạo sau khi container đã up
