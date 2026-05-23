@@ -1,6 +1,8 @@
 package com.group13.auction.mapper;
 
+import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
+import com.group13.auction.viewmodel.admin.AccountBanViewModel;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.profile.UserProfileViewModel;
@@ -96,7 +98,8 @@ public final class UserViewModelMapper {
      */
     public static UserModerationViewModel toModerationViewModel(UserDTO dto) {
         if (dto == null) {
-            return new UserModerationViewModel("--", "--", "--", "--", "--", false);
+            return new UserModerationViewModel(
+                    "--", "--", "--", "--", "--", false, "--", "--", "--");
         }
 
         List<String> roles = safeRoles(dto.getRoles());
@@ -108,7 +111,32 @@ public final class UserViewModelMapper {
                 fallback(dto.getEmail()),
                 rolesText(roles),
                 status,
-                isBanned(dto));
+                isBanned(dto),
+                banReasonText(dto.getActiveBanReason()),
+                fallback(dto.getBannedByUsername()),
+                DateTimeUtil.formatDateTime(dto.getBannedAt()));
+    }
+
+    public static List<AccountBanViewModel> toAccountBanViewModels(AdminDTOs.AccountBanDTO[] bans) {
+        if (bans == null) {
+            return List.of();
+        }
+        return Arrays.stream(bans)
+                .map(UserViewModelMapper::toAccountBanViewModel)
+                .toList();
+    }
+
+    public static AccountBanViewModel toAccountBanViewModel(AdminDTOs.AccountBanDTO dto) {
+        if (dto == null) {
+            return new AccountBanViewModel("--", "--", "--", "--", "--", "--");
+        }
+        return new AccountBanViewModel(
+                fallback(dto.getUserId()),
+                fallback(dto.getUsername()),
+                fallback(dto.getEmail()),
+                banReasonText(dto.getReason()),
+                fallback(dto.getBannedByUsername()),
+                DateTimeUtil.formatDateTime(dto.getBannedAt()));
     }
 
     /**
@@ -261,6 +289,21 @@ public final class UserViewModelMapper {
             return "Bidder";
         }
         return "User";
+    }
+
+    private static String banReasonText(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return "--";
+        }
+        return switch (reason.toUpperCase(Locale.ROOT)) {
+            case "FRAUD" -> "Gian lận";
+            case "LOW_RATING" -> "Rating thấp";
+            case "POLICY_VIOLATION" -> "Vi phạm chính sách";
+            case "SELLER_REFUND_DEFAULT" -> "Seller không hoàn tiền";
+            case "SYSTEM_AUTO" -> "Hệ thống tự khóa";
+            case "OTHER" -> "Khác";
+            default -> reason;
+        };
     }
 
     private static String accountStatusText(String status) {

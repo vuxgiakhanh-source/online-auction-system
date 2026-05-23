@@ -134,6 +134,15 @@ public enum PacketType {
     /** Server trả về danh sách user. Payload: {@code List<UserDTO>}. */
     ADMIN_GET_ALL_USERS_SUCCESS,
 
+    /** Admin yêu cầu danh sách tài khoản đang bị khóa. Payload: rỗng. */
+    ADMIN_GET_ACCOUNT_BANS,
+
+    /** Server trả danh sách khóa active. Payload: {@code AccountBanDTO[]}. */
+    ADMIN_GET_ACCOUNT_BANS_SUCCESS,
+
+    /** Server từ chối lấy danh sách khóa. Payload: {@code ErrorDTO}. */
+    ADMIN_GET_ACCOUNT_BANS_FAILED,
+
     /** SystemAdmin tạo tài khoản Admin STAFF mới. Payload: {@code CreateStaffAdminDTO}. */
     ADMIN_CREATE_STAFF,
 

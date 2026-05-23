@@ -48,7 +48,31 @@ CREATE TABLE IF NOT EXISTS admins (
     created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Password resets
+-- 4. Account bans (admin / system lock audit)
+CREATE TABLE IF NOT EXISTS account_bans (
+    id                      VARCHAR(36)  PRIMARY KEY,
+    user_id                 VARCHAR(36)  NOT NULL,
+    admin_id                VARCHAR(36)  NULL,
+    banned_by_username      VARCHAR(50)  NOT NULL,
+    reason                  ENUM(
+        'FRAUD',
+        'LOW_RATING',
+        'POLICY_VIOLATION',
+        'SELLER_REFUND_DEFAULT',
+        'OTHER',
+        'SYSTEM_AUTO'
+    ) NOT NULL,
+    note                    TEXT         NULL,
+    banned_at               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    unbanned_at             TIMESTAMP    NULL,
+    unbanned_by_admin_id    VARCHAR(36)  NULL,
+    unbanned_by_username    VARCHAR(50)  NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE SET NULL,
+    FOREIGN KEY (unbanned_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
+);
+
+-- 5. Password resets
 CREATE TABLE IF NOT EXISTS password_resets (
     id         INT          AUTO_INCREMENT PRIMARY KEY,
     email      VARCHAR(100) NOT NULL,
@@ -241,5 +265,8 @@ CREATE INDEX idx_notifications_user_id    ON notifications(user_id);
 CREATE INDEX idx_notifications_user_read  ON notifications(user_id, is_read);
 
 CREATE INDEX idx_quality_reports_status ON quality_reports(status);
+
+CREATE INDEX idx_account_bans_user_active ON account_bans(user_id, unbanned_at);
+CREATE INDEX idx_account_bans_banned_at   ON account_bans(banned_at);
 
 SET FOREIGN_KEY_CHECKS = 1;

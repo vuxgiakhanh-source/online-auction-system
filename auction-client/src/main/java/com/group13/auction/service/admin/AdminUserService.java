@@ -8,6 +8,7 @@ import com.group13.auction.mapper.UserViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.service.auction.AuctionServiceSupport;
+import com.group13.auction.viewmodel.admin.AccountBanViewModel;
 import com.group13.auction.viewmodel.admin.SellerApprovalViewModel;
 import com.group13.auction.viewmodel.admin.StaffAdminViewModel;
 import com.group13.auction.viewmodel.admin.UserModerationViewModel;
@@ -57,6 +58,26 @@ public final class AdminUserService {
                         UserDTO[].class,
                         "Không tải được danh sách người dùng.")
                 .thenApply(UserViewModelMapper::toModerationViewModels);
+    }
+
+    /**
+     * Lấy danh sách tài khoản đang bị khóa (active) từ bảng {@code account_bans}.
+     *
+     * @return future chứa danh sách bản ghi khóa
+     */
+    public CompletableFuture<List<AccountBanViewModel>> getAccountBans() {
+        if (!currentUserIsAdmin()) {
+            return AuctionServiceSupport.failedFuture("Tài khoản hiện tại không có quyền Admin.");
+        }
+
+        return AuctionServiceSupport
+                .sendRequest(
+                        networkFacade,
+                        ClientRequestFactory.adminGetAccountBans(),
+                        PacketType.ADMIN_GET_ACCOUNT_BANS_SUCCESS,
+                        AdminDTOs.AccountBanDTO[].class,
+                        "Không tải được danh sách tài khoản bị khóa.")
+                .thenApply(UserViewModelMapper::toAccountBanViewModels);
     }
 
     /**

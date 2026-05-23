@@ -38,6 +38,12 @@ public class UserDTO {
     /** Loại tài khoản admin: null nếu là NormalUser, "MASTER" hoặc "STAFF" nếu là Admin. */
     private String adminType;
 
+    /** Lý do khóa active (nếu {@code accountStatus == BANNED}). */
+    private String activeBanReason;
+    private String bannedByUsername;
+    private LocalDateTime bannedAt;
+    private String activeBanNote;
+
     public UserDTO() {}
 
     // ── Getters / Setters ──────────────────────────────────────────────────────
@@ -85,4 +91,16 @@ public class UserDTO {
 
     public String getAdminType() { return adminType; }
     public void setAdminType(String adminType) { this.adminType = adminType; }
+
+    public String getActiveBanReason() { return activeBanReason; }
+    public void setActiveBanReason(String activeBanReason) { this.activeBanReason = activeBanReason; }
+
+    public String getBannedByUsername() { return bannedByUsername; }
+    public void setBannedByUsername(String bannedByUsername) { this.bannedByUsername = bannedByUsername; }
+
+    public LocalDateTime getBannedAt() { return bannedAt; }
+    public void setBannedAt(LocalDateTime bannedAt) { this.bannedAt = bannedAt; }
+
+    public String getActiveBanNote() { return activeBanNote; }
+    public void setActiveBanNote(String activeBanNote) { this.activeBanNote = activeBanNote; }
 }

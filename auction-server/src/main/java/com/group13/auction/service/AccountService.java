@@ -40,6 +40,7 @@ public class AccountService implements IAccountService {
   private final AuctionDAO       auctionDAO;
   private final AuctionWinnerDAO auctionWinnerDAO;
   private final NotificationDAO  notificationDAO;
+  private final AccountBanDAO    accountBanDAO;
 
   public AccountService(
       IRatingService ratingService,
@@ -49,7 +50,7 @@ public class AccountService implements IAccountService {
       AuctionDAO auctionDAO,
       AuctionWinnerDAO auctionWinnerDAO) {
     this(ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
-        auctionWinnerDAO, new NotificationDAO());
+        auctionWinnerDAO, new NotificationDAO(), new AccountBanDAO());
   }
 
   public AccountService(
@@ -60,6 +61,19 @@ public class AccountService implements IAccountService {
       AuctionDAO auctionDAO,
       AuctionWinnerDAO auctionWinnerDAO,
       NotificationDAO notificationDAO) {
+    this(ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
+        auctionWinnerDAO, notificationDAO, new AccountBanDAO());
+  }
+
+  public AccountService(
+      IRatingService ratingService,
+      UserDAO userDAO,
+      SellerDAO sellerDAO,
+      AdminDAO adminDAO,
+      AuctionDAO auctionDAO,
+      AuctionWinnerDAO auctionWinnerDAO,
+      NotificationDAO notificationDAO,
+      AccountBanDAO accountBanDAO) {
     this.ratingService    = ratingService;
     this.adminFactory     = new AdminFactory();
     this.userDAO          = userDAO;
@@ -68,6 +82,7 @@ public class AccountService implements IAccountService {
     this.auctionDAO       = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
     this.notificationDAO  = notificationDAO;
+    this.accountBanDAO    = accountBanDAO;
     this.walletService    = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
   }
 
@@ -98,9 +113,54 @@ public class AccountService implements IAccountService {
 
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
 
+    accountBanDAO.insertBan(
+        target.getId(),
+        admin.getId(),
+        admin.getUsername(),
+        reason.name(),
+        null);
+
     saveNotification(target.getId(), null,
         "Tài khoản bị khoá",
         String.format("Tài khoản của bạn đã bị khoá bởi quản trị viên. Lý do: %s.", reason));
+  }
+
+  /**
+   * Mở khóa tài khoản — chỉ Admin gọi; đóng bản ghi {@code account_bans} active.
+   */
+  public void unbanUser(Admin admin, User target) {
+    if (admin == null || target == null) {
+      throw new IllegalArgumentException("Admin và target không được null");
+    }
+    target.setAccountStatus(AccountStatus.ACTIVE);
+    userDAO.updateAccountStatus(target.getId(), AccountStatus.ACTIVE.name());
+    accountBanDAO.closeActiveBans(target.getId(), admin.getId(), admin.getUsername());
+
+    String entry = String.format("[ACCOUNT] %s unban %s",
+        admin.getUsername(), target.getUsername());
+    admin.addActionLog(entry);
+    log.info("Unban user: admin={} target={}", admin.getUsername(), target.getUsername());
+
+    saveNotification(target.getId(), null,
+        "Tài khoản được mở khóa",
+        "Tài khoản của bạn đã được quản trị viên mở khóa.");
+  }
+
+  /** Ghi nhận khóa tự động bởi hệ thống (không có admin). */
+  public void recordSystemBan(User target, Admin.BanReason reason) {
+    if (target == null || reason == null) {
+      return;
+    }
+    accountBanDAO.insertBan(
+        target.getId(),
+        null,
+        "SYSTEM",
+        reason.name(),
+        null);
+  }
+
+  public AccountBanDAO accountBanDAO() {
+    return accountBanDAO;
   }
 
   // ── Admin STAFF ───────────────────────────────────────────────────────────
