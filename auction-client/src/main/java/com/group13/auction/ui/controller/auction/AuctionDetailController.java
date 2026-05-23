@@ -1,5 +1,7 @@
 package com.group13.auction.ui.controller.auction;
 
+import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
@@ -34,6 +36,7 @@ public final class AuctionDetailController {
 
   private String auctionId;
   private boolean currentAuctionJoinable;
+  private boolean currentUserLeftAuction;
   private boolean paymentAllowed;
   private AuctionDetailViewModel currentDetail;
 
@@ -147,6 +150,11 @@ public final class AuctionDetailController {
    */
   @FXML
   public void handleJoinLive() {
+    if (joinedAuctionState.hasLeft(auctionId)) {
+      AlertUtil.showWarning("Bạn đã hủy tham gia phiên đấu giá này và không thể tham gia lại.");
+      return;
+    }
+
     if (joinedAuctionState.hasJoined(auctionId)) {
       openLiveBidding();
       return;
@@ -334,11 +342,19 @@ public final class AuctionDetailController {
     remainingTimeLabel.setText(detail.remainingTimeText());
 
     boolean joinedByCurrentUser = joinedAuctionState.hasJoined(detail.auctionId());
+    currentUserLeftAuction = joinedAuctionState.hasLeft(detail.auctionId());
     currentAuctionJoinable = detail.joinable();
-    joinLiveButton.setText(joinedByCurrentUser ? "Tiếp tục đặt giá" : "Tham gia đặt giá");
-    joinLiveButton.setDisable(!currentAuctionJoinable);
+
+    if (currentUserLeftAuction) {
+      joinLiveButton.setText("Đã hủy tham gia");
+      joinLiveButton.setDisable(true);
+    } else {
+      joinLiveButton.setText(joinedByCurrentUser ? "Tiếp tục đặt giá" : "Tham gia đặt giá");
+      joinLiveButton.setDisable(!currentAuctionJoinable);
+    }
+
     watchLiveButton.setDisable(!currentAuctionJoinable);
-    setCancelJoinButtonVisible(joinedByCurrentUser && currentAuctionJoinable);
+    setCancelJoinButtonVisible(joinedByCurrentUser && currentAuctionJoinable && !currentUserLeftAuction);
 
     updatePaymentControls(detail);
   }
@@ -348,14 +364,15 @@ public final class AuctionDetailController {
 
     watchAuctionService
         .leaveAuction(auctionId)
-        .thenRun(
-            () ->
+        .thenAccept(
+            response ->
                 FxThreadUtil.runOnFxThread(
                     () -> {
-                      joinedAuctionState.forgetJoined(auctionId);
+                      joinedAuctionState.markLeft(auctionId);
+                      currentUserLeftAuction = true;
                       setCancelJoinButtonVisible(false);
                       setLoading(false, "Đã hủy tham gia phiên đấu giá.");
-                      AlertUtil.showInfo("Bạn đã hủy tham gia phiên đấu giá.");
+                      AlertUtil.showInfo(buildCancelJoinSuccessMessage(response));
                       loadAuctionDetail();
                     }))
         .exceptionally(
@@ -373,21 +390,60 @@ public final class AuctionDetailController {
     if (isCurrentUserLeading(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
           + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
-          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc theo quy định.\n\n"
+          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy tín.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Bạn có chắc muốn tiếp tục không?";
+    }
+
+    if (detail != null && detail.pastTwoThirdsElapsed()) {
+      return "Hủy tham gia phiên đấu giá?\n\n"
+          + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
+          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy tín.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 
     if (hasCurrentLeader(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-          + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu phiên này.\n"
+          + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu và phiên chưa đi qua 2/3 thời gian.\n"
           + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ thống.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 
     return "Hủy tham gia phiên đấu giá?\n\n"
         + "Hiện phiên chưa có người dẫn đầu rõ ràng.\n"
-        + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được xử lý theo trạng thái phiên tại thời điểm hủy.\n\n"
+        + "Tiền cọc sẽ được xử lý theo trạng thái phiên tại thời điểm server xác nhận hủy.\n\n"
         + "Bạn có chắc muốn tiếp tục không?";
+  }
+
+  private String buildCancelJoinSuccessMessage(AuctionDTOs.LeaveAuctionResponseDTO response) {
+    if (response == null) {
+      return "Bạn đã hủy tham gia phiên đấu giá.";
+    }
+
+    if (response.isDepositForfeited()) {
+      String message =
+          "Bạn đã hủy tham gia phiên đấu giá.\n"
+              + "Hệ thống đã phạt tiền cọc: "
+              + CurrencyUtil.formatVnd(response.getForfeitedAmount())
+              + ".\n";
+
+      if (response.isRatingPenalized()) {
+        message += "Điểm uy tín của bạn có thể đã bị trừ theo quy định.\n";
+      }
+
+      return message
+          + "Số dư khả dụng mới: "
+          + CurrencyUtil.formatVnd(response.getNewAvailableBalance())
+          + ".";
+    }
+
+    return "Bạn đã hủy tham gia phiên đấu giá.\n"
+        + "Tiền cọc đã được hoàn lại.\n"
+        + "Số dư khả dụng mới: "
+        + CurrencyUtil.formatVnd(response.getNewAvailableBalance())
+        + ".";
   }
 
   private boolean isCurrentUserLeading(AuctionDetailViewModel detail) {
@@ -497,7 +553,7 @@ public final class AuctionDetailController {
     loadingIndicator.setVisible(loading);
     loadingIndicator.setManaged(loading);
 
-    joinLiveButton.setDisable(loading || !currentAuctionJoinable);
+    joinLiveButton.setDisable(loading || !currentAuctionJoinable || currentUserLeftAuction);
     watchLiveButton.setDisable(loading || !currentAuctionJoinable);
     paymentButton.setDisable(loading || !paymentAllowed);
 

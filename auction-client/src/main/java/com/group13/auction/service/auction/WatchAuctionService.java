@@ -9,7 +9,7 @@ import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-/** Service xử lý tham gia, theo dõi và rời phiên đấu giá realtime. */
+/** Service xử lý tham gia, theo dõi và hủy tham gia phiên đấu giá realtime. */
 public final class WatchAuctionService {
 
     private final ClientNetworkFacade networkFacade;
@@ -19,12 +19,21 @@ public final class WatchAuctionService {
         this(ClientNetworkFacade.getDefault());
     }
 
-    /** Tạo service với dependency truyền vào để dễ test. */
+    /**
+     * Tạo service với dependency truyền vào để dễ test.
+     *
+     * @param networkFacade facade giao tiếp network phía client
+     */
     public WatchAuctionService(ClientNetworkFacade networkFacade) {
         this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
     }
 
-    /** Watch phiên đấu giá để nhận realtime update mà chưa cần đặt cọc/join. */
+    /**
+     * Theo dõi phiên đấu giá để nhận realtime update mà chưa cần đặt cọc/join.
+     *
+     * @param auctionId id phiên đấu giá
+     * @return thông tin chi tiết phiên phục vụ màn live bidding
+     */
     public CompletableFuture<AuctionDetailViewModel> watchAuction(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
             return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
@@ -41,62 +50,72 @@ public final class WatchAuctionService {
     }
 
     /**
-     * Join phiên đấu giá để có thể đặt giá. Server sẽ xử lý tiền cọc và rule nghiệp vụ.
+     * Tham gia phiên đấu giá để có thể đặt giá.
      *
-     * <p>Guard chống join trùng ở client: nếu {@link JoinedAuctionState} đã ghi nhận user
-     * đang tham gia phiên này thì trả về lỗi ngay, không gửi request lên server.
-     * Điều này tránh việc bấm nút JOIN liên tiếp gây khóa cọc nhiều lần.
+     * <p>Server sẽ xử lý tiền cọc và các rule nghiệp vụ. Client chỉ giữ cache cục bộ để tránh gửi
+     * request join trùng trong cùng phiên chạy app.
      *
-     * <p>Sau khi server xác nhận thành công, trạng thái được đánh dấu vào
-     * {@link JoinedAuctionState} để các lần kiểm tra sau biết user đã join.
+     * @param auctionId id phiên đấu giá
+     * @return response join từ server, gồm thông tin cọc và số dư khả dụng mới
      */
     public CompletableFuture<AuctionDTOs.JoinAuctionResponseDTO> joinAuction(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
             return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
         }
 
-        // Guard: không gửi join khi client đã ghi nhận user đang tham gia phiên này.
-        // Trả về null thành công im lặng — UI coi như "đã join rồi", không hiện lỗi,
-        // không gửi request thừa lên server (tránh khóa cọc nhiều lần).
-        if (JoinedAuctionState.getInstance().hasJoined(auctionId)) {
+        JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
+
+        if (joinedAuctionState.hasLeft(auctionId)) {
+            return AuctionServiceSupport.failedFuture(
+                "Bạn đã hủy tham gia phiên đấu giá này và không thể tham gia lại.");
+        }
+
+        if (joinedAuctionState.hasJoined(auctionId)) {
             return CompletableFuture.completedFuture(null);
         }
 
-        return AuctionServiceSupport.sendRequest(
+        return AuctionServiceSupport
+            .sendRequest(
                 networkFacade,
                 ClientRequestFactory.joinAuction(auctionId),
                 PacketType.JOIN_AUCTION_SUCCESS,
                 AuctionDTOs.JoinAuctionResponseDTO.class,
                 "Không tham gia được phiên đấu giá.")
-            .whenComplete((response, throwable) -> {
-                if (throwable == null) {
-                    // Server xác nhận join thành công — đánh dấu để chặn join lại
-                    JoinedAuctionState.getInstance().markJoined(auctionId);
-                }
-            });
+            .whenComplete(
+                (response, throwable) -> {
+                    if (throwable == null) {
+                        joinedAuctionState.markJoined(auctionId);
+                    }
+                });
     }
 
     /**
-     * Rời phiên đấu giá realtime hiện tại.
+     * Hủy tham gia phiên đấu giá.
      *
-     * <p>Sau khi server xác nhận thành công, trạng thái join cục bộ được xóa khỏi
-     * {@link JoinedAuctionState} để user có thể join lại phiên này nếu muốn.
+     * <p>Server hiện xử lý {@code LEAVE_AUCTION} như hành động hủy tham gia thật, không phải chỉ rời
+     * màn live. Response có thể chứa thông tin cọc bị phạt, rating bị trừ và số dư khả dụng mới để
+     * client hiển thị kết quả chính xác cho user.
+     *
+     * @param auctionId id phiên đấu giá
+     * @return response hủy tham gia từ server
      */
-    public CompletableFuture<Void> leaveAuction(String auctionId) {
+    public CompletableFuture<AuctionDTOs.LeaveAuctionResponseDTO> leaveAuction(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
-            return CompletableFuture.completedFuture(null);
+            return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
         }
 
-        return AuctionServiceSupport.sendVoidRequest(
+        return AuctionServiceSupport
+            .sendRequest(
                 networkFacade,
                 ClientRequestFactory.leaveAuction(auctionId),
                 PacketType.LEAVE_AUCTION_SUCCESS,
-                "Không rời được phiên đấu giá.")
-            .whenComplete((ignored, throwable) -> {
-                if (throwable == null) {
-                    // Server xác nhận leave thành công — xóa trạng thái để cho phép join lại
-                    JoinedAuctionState.getInstance().forgetJoined(auctionId);
-                }
-            });
+                AuctionDTOs.LeaveAuctionResponseDTO.class,
+                "Không hủy được tham gia phiên đấu giá.")
+            .whenComplete(
+                (response, throwable) -> {
+                    if (throwable == null) {
+                        JoinedAuctionState.getInstance().markLeft(auctionId);
+                    }
+                });
     }
 }
