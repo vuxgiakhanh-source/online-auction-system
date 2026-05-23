@@ -85,7 +85,7 @@ public final class QualityReportController {
             .getExtensionFilters()
             .add(
                 new FileChooser.ExtensionFilter(
-                    "Image files", "*.png", "*.jpg", "*.jpeg", "*.webp"));
+                    "Ảnh (*.png, *.jpg, *.jpeg, *.webp)", "*.png", "*.jpg", "*.jpeg", "*.webp"));
 
         List<File> selectedFiles = fileChooser.showOpenMultipleDialog(null);
         if (selectedFiles == null || selectedFiles.isEmpty()) {
