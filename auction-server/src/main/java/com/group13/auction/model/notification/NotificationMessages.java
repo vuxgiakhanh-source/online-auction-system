@@ -267,4 +267,26 @@ public final class NotificationMessages {
     public static String username(NormalUser user) {
         return user != null && user.getUsername() != null ? user.getUsername() : "Người dùng";
     }
+
+    // ── Leave auction ─────────────────────────────────────────────────────────
+
+    public static String leaveAuctionTitle() {
+        return "Bạn đã thoát phiên đấu giá";
+    }
+
+    public static String leaveAuctionForfeitBody(Auction auction, long forfeitedAmount,
+                                                 boolean ratingPenalized) {
+        String ratingLine = ratingPenalized
+            ? " Điểm uy tín có thể đã bị trừ theo quy định."
+            : "";
+        return String.format(
+            "Bạn đã rời phiên \"%s\" (mã %s). Tiền cọc không được hoàn lại: %s.%s",
+            itemName(auction), auction.getId(), formatVnd(forfeitedAmount), ratingLine);
+    }
+
+    public static String leaveAuctionRefundBody(Auction auction) {
+        return String.format(
+            "Bạn đã rời phiên \"%s\" (mã %s). Tiền cọc đã được hoàn lại theo quy định.",
+            itemName(auction), auction.getId());
+    }
 }

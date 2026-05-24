@@ -380,8 +380,7 @@ public class AutoBidProcessor {
                 AutoBidStrategy strategy = new AutoBidStrategy(winner.getMaxBid());
                 bidService.placeBid(autoBidder, auction, nextBid, strategy);
 
-                // Broadcast & notify
-                sendAutoBidTriggeredNotify(winner, auction, nextBid);
+                // Broadcast only — autobid không gửi TRIGGERED notify (chỉ EXHAUSTED khi hết maxBid).
                 sessionManager.broadcastToAuctionAsync(auctionId,
                     Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid, 0L)));
                 sessionManager.broadcastToAuctionAsync(auctionId,
@@ -535,20 +534,6 @@ public class AutoBidProcessor {
     // =========================================================================
     // Notifications
     // =========================================================================
-
-    private void sendAutoBidTriggeredNotify(
-        AutoBidRegistry.AutoBidEntry entry, Auction auction, long bidAmount) {
-        BidDTOs.AutoBidTriggeredDTO dto = new BidDTOs.AutoBidTriggeredDTO();
-        dto.setAuctionId(auction.getId());
-        dto.setBidAmount(bidAmount);
-        dto.setNewCurrentPrice(auction.getCurrentPrice());
-        dto.setRemainingMaxBid(entry.getMaxBid() - bidAmount);
-        dto.setNowLeading(auction.getCurrentLeader() != null
-            && auction.getCurrentLeader().getId().equals(entry.getUserId()));
-        dto.setTimestamp(LocalDateTime.now());
-        sessionManager.sendToUser(entry.getUserId(),
-            Packet.of(PacketType.AUTO_BID_TRIGGERED_NOTIFY, dto));
-    }
 
     private void notifyExhaustedBidders(Auction auction) {
         String       auctionId = auction.getId();

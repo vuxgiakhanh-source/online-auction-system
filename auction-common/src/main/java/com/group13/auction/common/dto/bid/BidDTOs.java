@@ -176,6 +176,31 @@ public final class BidDTOs {
     }
 
     /**
+     * Payload của OUTBID_NOTIFY.
+     * Push riêng tới bidder bid thủ công khi bị người khác vượt giá.
+     */
+    public static class OutbidNotifyDTO {
+        private String auctionId;
+        private String auctionItemName;
+        private long newCurrentPrice;
+        private long previousPrice;
+        private String newBidderUsername;
+
+        public OutbidNotifyDTO() {}
+
+        public String getAuctionId() { return auctionId; }
+        public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
+        public String getAuctionItemName() { return auctionItemName; }
+        public void setAuctionItemName(String auctionItemName) { this.auctionItemName = auctionItemName; }
+        public long getNewCurrentPrice() { return newCurrentPrice; }
+        public void setNewCurrentPrice(long newCurrentPrice) { this.newCurrentPrice = newCurrentPrice; }
+        public long getPreviousPrice() { return previousPrice; }
+        public void setPreviousPrice(long previousPrice) { this.previousPrice = previousPrice; }
+        public String getNewBidderUsername() { return newBidderUsername; }
+        public void setNewBidderUsername(String newBidderUsername) { this.newBidderUsername = newBidderUsername; }
+    }
+
+    /**
      * Payload của AUTO_BID_EXHAUSTED_NOTIFY.
      * Push khi auto-bid bị đối thủ vượt và maxBid đã cạn kiệt.
      */

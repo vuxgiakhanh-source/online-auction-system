@@ -333,33 +333,6 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   @Override
-  public void onAutoBidTriggered(BidDTOs.AutoBidTriggeredDTO notify) {
-    if (!isCurrentAuction(notify == null ? null : notify.getAuctionId())) {
-      return;
-    }
-
-    FxThreadUtil.runOnFxThread(
-        () -> {
-          currentPriceRaw = notify.getNewCurrentPrice();
-          currentPriceLabel.setText(CurrencyUtil.formatVnd(notify.getNewCurrentPrice()));
-          updateMinimumBidHint();
-
-          setAutoBidStatusText(
-              "Auto-bid vừa đặt "
-                  + CurrencyUtil.formatVnd(notify.getBidAmount())
-                  + ". Còn lại trong maxBid: "
-                  + CurrencyUtil.formatVnd(notify.getRemainingMaxBid())
-                  + ".");
-
-          if (notify.isNowLeading()) {
-            leaderLabel.setText("Người dẫn đầu: Bạn");
-          }
-
-          setMessage("Auto-bid đã tự đặt giá thay bạn.");
-        });
-  }
-
-  @Override
   public void onAutoBidExhausted(BidDTOs.AutoBidExhaustedDTO notify) {
     if (!isCurrentAuction(notify == null ? null : notify.getAuctionId())) {
       return;

@@ -166,9 +166,27 @@ public class ServerBroadcastNotifier {
         };
     }
 
+    /** Lưu thông báo inbox khi người dùng chủ động rời phiên. */
+    public void notifyUserLeftAuction(NormalUser user, Auction auction,
+                                      boolean depositForfeited, long forfeitedAmount,
+                                      boolean ratingPenalized) {
+        if (user == null || auction == null) {
+            return;
+        }
+        String body = depositForfeited
+            ? NotificationMessages.leaveAuctionForfeitBody(auction, forfeitedAmount, ratingPenalized)
+            : NotificationMessages.leaveAuctionRefundBody(auction);
+        persistNotification(
+            user.getId(),
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.leaveAuctionTitle(),
+            body);
+    }
+
     // ── Bid events ────────────────────────────────────────────────────────────
 
-    /** Chỉ gửi cho người vừa bị vượt giá (leader trước khi có bid mới). */
+    /** Chỉ gửi cho bidder bid thủ công vừa bị vượt giá (không áp dụng khi đang bật auto-bid). */
     public void notifyOutbid(NormalUser previousLeader, Auction auction,
                              NormalUser newBidder, long newAmount, long previousAmount) {
         if (previousLeader == null || auction == null || newBidder == null) {
@@ -177,6 +195,15 @@ public class ServerBroadcastNotifier {
         if (previousLeader.getId().equals(newBidder.getId())) {
             return;
         }
+
+        // Bidder đang bật auto-bid: hệ thống tự counter hoặc gửi EXHAUSTED — không báo outbid.
+        if (com.group13.auction.strategy.AutoBidRegistry.getInstance()
+                .get(previousLeader.getId(), auction.getId()) != null) {
+            log.debug("Skip outbid notify — user has active auto-bid: auctionId={}, userId={}",
+                auction.getId(), previousLeader.getId());
+            return;
+        }
+
         persistNotification(
             previousLeader.getId(),
             auction.getId(),
@@ -184,6 +211,16 @@ public class ServerBroadcastNotifier {
             NotificationMessages.outbidTitle(),
             NotificationMessages.outbidBody(
                 auction, NotificationMessages.username(newBidder), newAmount, previousAmount));
+
+        BidDTOs.OutbidNotifyDTO dto = new BidDTOs.OutbidNotifyDTO();
+        dto.setAuctionId(auction.getId());
+        dto.setAuctionItemName(NotificationMessages.itemName(auction));
+        dto.setNewCurrentPrice(newAmount);
+        dto.setPreviousPrice(previousAmount);
+        dto.setNewBidderUsername(NotificationMessages.username(newBidder));
+        sessionManager.sendToUser(previousLeader.getId(),
+            Packet.of(PacketType.OUTBID_NOTIFY, dto));
+
         log.info("Outbid notification: auctionId={}, outbidUser={}, newBidder={}, amount={}",
             auction.getId(), previousLeader.getUsername(), newBidder.getUsername(), newAmount);
     }

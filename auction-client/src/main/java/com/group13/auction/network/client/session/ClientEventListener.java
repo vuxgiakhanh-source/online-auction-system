@@ -112,15 +112,24 @@ public interface ClientEventListener {
     /** Server từ chối watch (WATCH_AUCTION_FAILED). */
     default void onWatchAuctionFailed(ErrorDTO error) {}
     default void onLeaveAuctionSuccess() {}
+
     /**
-     * Gọi khi rời phiên và có phạt cọc / rating.
-     * Dùng kiểu nguyên thủy để tránh dependency compile-time vào LeaveAuctionResponseDTO.
+     * Gọi sau khi rời phiên thành công (có đủ thông tin cọc / số dư).
      *
-     * @param depositForfeited  true nếu cọc bị tịch thu
-     * @param forfeitedAmount   số tiền cọc bị mất (0 nếu không bị phạt)
-     * @param ratingPenalized   true nếu rating bị trừ
+     * @param auctionId mã phiên
+     * @param depositForfeited true nếu cọc không được hoàn lại
+     * @param forfeitedAmount số tiền cọc bị giữ (0 nếu hoàn cọc)
+     * @param ratingPenalized true nếu rating bị trừ
      * @param newAvailableBalance số dư khả dụng sau khi rời
      */
+    default void onLeaveAuctionCompleted(String auctionId, boolean depositForfeited,
+                                       long forfeitedAmount, boolean ratingPenalized,
+                                       long newAvailableBalance) {}
+
+    /**
+     * @deprecated dùng {@link #onLeaveAuctionCompleted}
+     */
+    @Deprecated
     default void onLeaveAuctionPenalty(boolean depositForfeited, long forfeitedAmount,
                                        boolean ratingPenalized, long newAvailableBalance) {}
 
@@ -139,6 +148,8 @@ public interface ClientEventListener {
     default void onPlaceBidSuccess(BidDTOs.BidResultDTO result) {}
     default void onPlaceBidFailed(ErrorDTO error) {}
     default void onBidUpdate(BidDTOs.BidUpdateDTO update) {}
+    /** Server báo bidder bid thủ công vừa bị vượt giá (OUTBID_NOTIFY). */
+    default void onOutbidNotify(BidDTOs.OutbidNotifyDTO notify) {}
     default void onBidReserveNotMet(BidDTOs.BidUpdateDTO update) {}
     default void onBidHistoryReceived(BidDTOs.BidHistoryResponseDTO history) {}
     default void onBidHistoryFailed(ErrorDTO err) {}

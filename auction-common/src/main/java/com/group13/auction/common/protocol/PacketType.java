@@ -381,6 +381,13 @@ public enum PacketType {
     BID_UPDATE,
 
     /**
+     * Server push riêng cho bidder bid thủ công khi bị vượt giá.
+     * Không gửi nếu bidder đang bật auto-bid (auto-bid dùng {@link #AUTO_BID_EXHAUSTED_NOTIFY}).
+     * Payload: {@code OutbidNotifyDTO}.
+     */
+    OUTBID_NOTIFY,
+
+    /**
      * Server broadcast khi so nguoi dang xem phien thay doi (join / watch / leave / disconnect).
      * Payload: {@code ViewerCountUpdateDTO}.
      */

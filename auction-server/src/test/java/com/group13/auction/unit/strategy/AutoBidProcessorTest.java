@@ -809,12 +809,12 @@ class AutoBidProcessorTest {
     // =========================================================================
 
     @Nested
-    @DisplayName("Notification: AUTO_BID_TRIGGERED_NOTIFY gửi đúng người")
+    @DisplayName("Notification: autobid counter broadcast, không gửi TRIGGERED notify")
     class NotificationCorrectness {
 
         @Test
-        @DisplayName("sau khi counter thành công, sendToUser được gọi đúng userId")
-        void process_successfulCounter_triggeredNotifySentToCorrectUser() {
+        @DisplayName("sau khi counter thành công, không gửi AUTO_BID_TRIGGERED_NOTIFY riêng cho user")
+        void process_successfulCounter_noTriggeredNotifySent() {
             // Arrange
             registry.register(bidderA.getId(), runningAuction.getId(),
                     STARTING_PRICE + INCREMENT_LOW * 3);
@@ -823,8 +823,10 @@ class AutoBidProcessorTest {
             // Act
             sut.process(runningAuction, seller.getId());
 
-            // Assert
-            verify(sessionManager, atLeastOnce()).sendToUser(eq(bidderA.getId()), any());
+            // Assert — chỉ broadcast BID_UPDATE, không push TRIGGERED tới user
+            verify(sessionManager, never()).sendToUser(eq(bidderA.getId()),
+                argThat(packet -> packet != null
+                    && packet.getType() == com.group13.auction.common.protocol.PacketType.AUTO_BID_TRIGGERED_NOTIFY));
         }
 
         @Test

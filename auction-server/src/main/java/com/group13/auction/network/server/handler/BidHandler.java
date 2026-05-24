@@ -16,6 +16,7 @@ import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
@@ -273,6 +274,8 @@ public class BidHandler implements PacketHandler {
             response.setForfeitedAmount(result.forfeitedAmount);
             response.setRatingPenalized(result.ratingPenalized);
             response.setNewAvailableBalance(result.newAvailableBalance);
+            ServerBroadcastNotifier.getInstance().notifyUserLeftAuction(
+                bidder, auction, result.depositForfeited, result.forfeitedAmount, result.ratingPenalized);
             session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, response, requestId));
         } else {
             log.info("Leave auction handled (non-normal user): auctionId={}, username={}, requestId={}",

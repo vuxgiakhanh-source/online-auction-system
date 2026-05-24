@@ -123,6 +123,10 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 var update = PacketCodec.fromElement(payload, BidDTOs.BidUpdateDTO.class);
                 listeners.forEach(l -> l.onBidUpdate(update));
             }
+            case OUTBID_NOTIFY -> {
+                var notify = PacketCodec.fromElement(payload, BidDTOs.OutbidNotifyDTO.class);
+                listeners.forEach(l -> l.onOutbidNotify(notify));
+            }
             case BID_RESERVE_NOT_MET_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, BidDTOs.BidUpdateDTO.class);
                 listeners.forEach(l -> l.onBidReserveNotMet(update));
@@ -322,23 +326,21 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAutoBidRegistered(dto)); // tái dùng
             }
             case LEAVE_AUCTION_SUCCESS -> {
-                // FIX: Parse penalty info trực tiếp từ JsonObject — không dùng LeaveAuctionResponseDTO.class
-                // để tránh lỗi compile "cannot find symbol" khi auction-client build trước auction-common.
                 listeners.forEach(l -> l.onLeaveAuctionSuccess());
                 if (payload != null && !payload.isJsonNull() && payload.isJsonObject()) {
                     com.google.gson.JsonObject resp = payload.getAsJsonObject();
+                    String auctionId = resp.has("auctionId")
+                        ? resp.get("auctionId").getAsString() : null;
                     boolean forfeited = resp.has("depositForfeited")
                         && resp.get("depositForfeited").getAsBoolean();
-                    if (forfeited) {
-                        long amount    = resp.has("forfeitedAmount")
-                            ? resp.get("forfeitedAmount").getAsLong() : 0L;
-                        boolean penalized = resp.has("ratingPenalized")
-                            && resp.get("ratingPenalized").getAsBoolean();
-                        long balance   = resp.has("newAvailableBalance")
-                            ? resp.get("newAvailableBalance").getAsLong() : 0L;
-                        listeners.forEach(l ->
-                            l.onLeaveAuctionPenalty(true, amount, penalized, balance));
-                    }
+                    long amount = resp.has("forfeitedAmount")
+                        ? resp.get("forfeitedAmount").getAsLong() : 0L;
+                    boolean penalized = resp.has("ratingPenalized")
+                        && resp.get("ratingPenalized").getAsBoolean();
+                    long balance = resp.has("newAvailableBalance")
+                        ? resp.get("newAvailableBalance").getAsLong() : 0L;
+                    listeners.forEach(l ->
+                        l.onLeaveAuctionCompleted(auctionId, forfeited, amount, penalized, balance));
                 }
             }
             // VIEWER_COUNT_UPDATE removed — viewCount giờ là tổng lượt truy cập, không còn realtime broadcast
