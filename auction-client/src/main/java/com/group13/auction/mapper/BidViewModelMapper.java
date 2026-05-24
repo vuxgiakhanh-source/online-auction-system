@@ -24,7 +24,7 @@ public final class BidViewModelMapper {
                 update.getAuctionId(),
                 CurrencyUtil.formatVnd(update.getNewCurrentPrice()),
                 leaderText(update.getLeaderUsername()),
-                update.isReserveMet() ? "Đã đạt giá sàn" : "Chưa đạt giá sàn",
+                reserveStatusText(update.isReserveMet()),
                 DateTimeUtil.formatDateTime(update.getTimestamp()),
                 DateTimeUtil.formatDateTime(update.getNewEndTime()),
                 update.getNewCurrentPrice(),
@@ -41,7 +41,7 @@ public final class BidViewModelMapper {
                 result.getAuctionId(),
                 CurrencyUtil.formatVnd(result.getCurrentPrice()),
                 "Bạn vừa đặt giá: " + CurrencyUtil.formatVnd(result.getAmount()),
-                result.isReserveMet() ? "Đã đạt giá sàn" : "Chưa đạt giá sàn",
+                reserveStatusText(result.isReserveMet()),
                 DateTimeUtil.formatDateTime(result.getTimestamp()),
                 "--",
                 result.getCurrentPrice(),
@@ -76,7 +76,14 @@ public final class BidViewModelMapper {
     }
 
     private static LiveBidViewModel emptyLiveBidViewModel() {
-        return new LiveBidViewModel("", "--", "Người dẫn đầu: --", "--", "--", "--", 0L, false);
+        return new LiveBidViewModel(
+            "", "--", "Người dẫn đầu: --", "Trạng thái giá sàn: --", "--", "--", 0L, false);
+    }
+
+    private static String reserveStatusText(boolean reserveMet) {
+        return reserveMet
+            ? "Trạng thái giá sàn: Đã đạt"
+            : "Trạng thái giá sàn: Chưa đạt";
     }
 
     private static String leaderText(String username) {

@@ -121,7 +121,7 @@
                                styleClass="auction-info-value"/>
 
                         <Label fx:id="reserveLabel"
-                               text="Giá sàn: --"
+                               text="Trạng thái giá sàn: --"
                                wrapText="true"
                                styleClass="auction-muted-text"/>
 
