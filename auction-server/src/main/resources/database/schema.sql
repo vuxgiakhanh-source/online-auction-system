@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS bid_transactions (
 CREATE TABLE IF NOT EXISTS user_auction_activity (
     user_id       VARCHAR(36) NOT NULL,
     auction_id    VARCHAR(36) NOT NULL,
-    activity_type ENUM('WATCHING', 'JOINED') NOT NULL,
+    activity_type ENUM('WATCHING', 'JOINED', 'LEFT') NOT NULL,
     created_at    TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, auction_id),
     FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,

@@ -40,6 +40,17 @@ public final class SearchDTOs {
     private int    size    = 20;
     private String sortBy  = "createdAt";
     private String sortDir = "DESC";
+    /**
+     * Phạm vi lọc theo hoạt động của user hiện tại:
+     * <ul>
+     *   <li>{@code ALL}      — tìm kiếm toàn bộ (mặc định).</li>
+     *   <li>{@code OWNED}    — chỉ phiên do user hiện tại tạo.</li>
+     *   <li>{@code JOINED}   — chỉ phiên user đã tham gia đặt cọc.</li>
+     *   <li>{@code WATCHING} — chỉ phiên user đang theo dõi.</li>
+     * </ul>
+     * Null hoặc trống tương đương {@code ALL}.
+     */
+    private String scopeFilter;
 
     public ItemSearchRequestDTO() {}
 
@@ -57,6 +68,9 @@ public final class SearchDTOs {
 
     public String getSortDir()              { return sortDir;  }
     public void setSortDir(String sortDir)  { this.sortDir = sortDir; }
+
+    public String getScopeFilter()          { return scopeFilter; }
+    public void setScopeFilter(String scopeFilter) { this.scopeFilter = scopeFilter; }
   }
 
   // ══════════════════════════════════════════════════════════════════════════

@@ -199,22 +199,52 @@ public class AuctionHandler implements PacketHandler {
                 ? PacketCodec.fromElement(payload, AuctionDTOs.AuctionListRequestDTO.class)
                 : new AuctionDTOs.AuctionListRequestDTO();
 
-            List<Auction> auctions;
-            if (req.getStatusFilter() != null && !req.getStatusFilter().isEmpty()) {
-                Auction.AuctionStatus status = Auction.AuctionStatus.valueOf(req.getStatusFilter());
-                auctions = AuctionManager.getInstance().getAuctionsByStatus(status);
-            } else {
-                auctions = AuctionManager.getInstance().getAllAuctions();
+            String scope = req.getScopeFilter() != null
+                ? req.getScopeFilter().trim().toUpperCase() : "ALL";
+
+            // Resolve user hiện tại — cần cho OWNED / JOINED / WATCHING
+            com.group13.auction.model.user.User currentUser = session.getCachedUser();
+            if (currentUser == null && session.isAuthenticated()) {
+                currentUser = AuctionManager.getInstance().findUserByUsername(session.getUsername());
             }
 
-            List<AuctionDTOs.AuctionDTO> dtos = auctions.stream()
-                .map(DTOMapper::toAuctionDTO)
-                .collect(Collectors.toList());
+            final com.group13.auction.model.user.User resolvedUser = currentUser;
+
+            List<AuctionDTOs.AuctionDTO> dtos;
+
+            if ("ALL".equals(scope) || resolvedUser == null) {
+                // Đường cũ: lọc theo statusFilter, trả toàn bộ từ memory
+                List<Auction> auctions;
+                if (req.getStatusFilter() != null && !req.getStatusFilter().isEmpty()) {
+                    Auction.AuctionStatus status = Auction.AuctionStatus.valueOf(req.getStatusFilter());
+                    auctions = AuctionManager.getInstance().getAuctionsByStatus(status);
+                } else {
+                    auctions = AuctionManager.getInstance().getAllAuctions();
+                }
+                dtos = auctions.stream()
+                    .map(a -> DTOMapper.toAuctionDTO(a, resolvedUser))
+                    .collect(Collectors.toList());
+            } else {
+                // Scope lọc có user — query DB trực tiếp với phân trang
+                int page     = Math.max(0, req.getPage());
+                int pageSize = (req.getPageSize() <= 0 || req.getPageSize() > 100)
+                    ? 20 : req.getPageSize();
+
+                String userId   = resolvedUser.getId();
+                String sellerId = userId; // OWNED dùng chính userId làm sellerId
+
+                List<Auction> auctions = auctionDAO.findByScope(
+                    userId, sellerId, scope, req.getStatusFilter(), page, pageSize);
+
+                dtos = auctions.stream()
+                    .map(a -> DTOMapper.toAuctionDTO(a, resolvedUser))
+                    .collect(Collectors.toList());
+            }
 
             session.send(Packet.of(PacketType.GET_AUCTION_LIST_SUCCESS,
                 new AuctionDTOs.AuctionListDTO(dtos, dtos.size()), requestId));
-            log.debug("Auction list returned: username={}, count={}, requestId={}",
-                session.getUsername(), dtos.size(), requestId);
+            log.debug("Auction list returned: username={}, scope={}, count={}, requestId={}",
+                session.getUsername(), scope, dtos.size(), requestId);
         } catch (Exception e) {
             log.error("Get auction list failed: username={}, requestId={}",
                 session.getUsername(), requestId, e);
@@ -384,21 +414,46 @@ public class AuctionHandler implements PacketHandler {
             String keyword = req.getKeyword().trim();
             int    page    = Math.max(0, req.getPage());
             int    size    = (req.getSize() <= 0 || req.getSize() > 100) ? 20 : req.getSize();
+            String scope   = req.getScopeFilter() != null
+                ? req.getScopeFilter().trim().toUpperCase() : "ALL";
 
-            List<Auction> auctions = auctionDAO.searchByItemName(
-                keyword, page, size, req.getSortBy(), req.getSortDir());
-            long totalElements = auctionDAO.countByItemName(keyword);
+            // Resolve user hiện tại — cần cho OWNED / JOINED / WATCHING
+            com.group13.auction.model.user.User currentUser = session.getCachedUser();
+            if (currentUser == null && session.isAuthenticated()) {
+                currentUser = AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            }
 
+            String userId   = currentUser != null ? currentUser.getId() : null;
+            String sellerId = userId;
+
+            List<Auction> auctions;
+            long totalElements;
+
+            if ("ALL".equals(scope) || userId == null) {
+                // Đường cũ: chỉ lọc theo keyword
+                auctions       = auctionDAO.searchByItemName(keyword, page, size,
+                    req.getSortBy(), req.getSortDir());
+                totalElements  = auctionDAO.countByItemName(keyword);
+            } else {
+                // Lọc kết hợp keyword + scope
+                auctions       = auctionDAO.searchByItemNameAndScope(
+                    keyword, userId, sellerId, scope, page, size,
+                    req.getSortBy(), req.getSortDir());
+                totalElements  = auctionDAO.countByItemNameAndScope(
+                    keyword, userId, sellerId, scope);
+            }
+
+            final com.group13.auction.model.user.User resolvedUser = currentUser;
             List<AuctionDTOs.AuctionDTO> dtos = auctions.stream()
-                .map(DTOMapper::toAuctionDTO)
+                .map(a -> DTOMapper.toAuctionDTO(a, resolvedUser))
                 .collect(Collectors.toList());
 
             SearchDTOs.ItemSearchResponseDTO response = new SearchDTOs.ItemSearchResponseDTO(
                 dtos, totalElements, page, size, keyword);
 
             session.send(Packet.of(PacketType.SEARCH_ITEMS_SUCCESS, response, requestId));
-            log.info("Search items: username={}, keyword='{}', page={}, size={}, found={}, total={}",
-                session.getUsername(), keyword, page, size, dtos.size(), totalElements);
+            log.info("Search items: username={}, keyword='{}', scope={}, page={}, size={}, found={}, total={}",
+                session.getUsername(), keyword, scope, page, size, dtos.size(), totalElements);
 
         } catch (IllegalArgumentException e) {
             session.send(Packet.of(PacketType.SEARCH_ITEMS_FAILED,
