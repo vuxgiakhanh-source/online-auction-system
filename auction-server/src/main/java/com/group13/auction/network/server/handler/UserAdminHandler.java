@@ -549,6 +549,9 @@ public class UserAdminHandler implements PacketHandler {
         } catch (IllegalArgumentException e) {
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
                 ErrorDTO.of(ErrorDTO.VALIDATION_ERROR, e.getMessage(), requestId), requestId));
+        } catch (IllegalStateException e) {
+            session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,
+                ErrorDTO.of("DUPLICATE_REPORT", e.getMessage(), requestId), requestId));
         } catch (Exception e) {
             log.error("Submit quality report failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_FAILED,

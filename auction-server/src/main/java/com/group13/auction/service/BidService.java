@@ -20,6 +20,7 @@ import com.group13.auction.service.iservice.IBidService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.BidStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,19 +87,22 @@ public class BidService implements IBidService {
     public final long    forfeitedAmount;
     public final boolean ratingPenalized;
     public final long    newAvailableBalance;
+    /** Giá trước khi leader rời phiên — dùng để tính priceChange trong broadcast. */
+    public final long    previousPrice;
 
     LeaveResult(boolean leaderChanged, boolean depositForfeited, long forfeitedAmount,
-                boolean ratingPenalized, long newAvailableBalance) {
+                boolean ratingPenalized, long newAvailableBalance, long previousPrice) {
       this.leaderChanged       = leaderChanged;
       this.depositForfeited    = depositForfeited;
       this.forfeitedAmount     = forfeitedAmount;
       this.ratingPenalized     = ratingPenalized;
       this.newAvailableBalance = newAvailableBalance;
+      this.previousPrice       = previousPrice;
     }
 
     /** Shorthand khi user không phải NormalUser hoặc auction null. */
     static LeaveResult noOp() {
-      return new LeaveResult(false, false, 0L, false, 0L);
+      return new LeaveResult(false, false, 0L, false, 0L, 0L);
     }
   }
 
@@ -357,6 +361,7 @@ public class BidService implements IBidService {
     boolean depositForfeited = false;
     long    forfeitedAmount  = 0L;
     boolean ratingPenalized  = false;
+    long    previousPrice    = 0L;
 
     if (user instanceof NormalUser && auction != null) {
       NormalUser bidder = (NormalUser) user;
@@ -385,6 +390,7 @@ public class BidService implements IBidService {
         }
 
         if (isCurrentLeader) {
+          previousPrice = auction.getCurrentPrice(); // capture trước khi reset
           BidTransaction nextBid =
               bidTransactionDAO.findHighestValidBidExcept(auctionId, bidder.getId());
 
@@ -396,9 +402,13 @@ public class BidService implements IBidService {
             log.info("Leader rolled back to next bidder: auctionId={}, newLeader={}, newPrice={}",
                 auctionId, nextUser.getUsername(), nextPrice);
           } else {
-            auction.resetLeader(0L, null);
-            bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, 0L);
-            log.info("Leader rolled back to empty (no other bids): auctionId={}", auctionId);
+            // FIX: khi không còn ai bid, giá về startingPrice chứ KHÔNG về 0.
+            // Nếu về 0 → AutoBidProcessor tính nextBid từ 0 → autobid bắn với giá rất thấp.
+            long fallbackPrice = auction.getItem().getStartingPrice();
+            auction.resetLeader(fallbackPrice, null);
+            bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, fallbackPrice);
+            log.info("Leader rolled back to empty (no other bids), price reset to startingPrice: auctionId={}, startingPrice={}",
+                auctionId, fallbackPrice);
           }
           leaderChanged = true;
         }
@@ -441,13 +451,19 @@ public class BidService implements IBidService {
       user.removeJoinedAuction(auctionId);
       user.addLeftAuction(auctionId);
       userDAO.markUserLeftAuction(user.getId(), auctionId);
+      // FIX: cancel autobid của người rời phiên — tránh entry zombie trong registry
+      // khiến process() tính candidate sai (người đã rời không được bid nữa)
+      boolean autoBidCancelled = AutoBidRegistry.getInstance().cancel(user.getId(), auctionId);
+      if (autoBidCancelled) {
+        log.info("Auto-bid cancelled on leave: userId={}, auctionId={}", user.getId(), auctionId);
+      }
     }
     log.info("User left auction: userId={}, auctionId={}, leaderChanged={}",
         user.getId(), auctionId, leaderChanged);
 
     long newBalance = (user instanceof NormalUser)
         ? ((NormalUser) user).getAvailableBalance() : 0L;
-    return new LeaveResult(leaderChanged, depositForfeited, forfeitedAmount, ratingPenalized, newBalance);
+    return new LeaveResult(leaderChanged, depositForfeited, forfeitedAmount, ratingPenalized, newBalance, previousPrice);
   }
 
   /**

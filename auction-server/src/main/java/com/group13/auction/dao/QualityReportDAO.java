@@ -20,12 +20,12 @@ public class QualityReportDAO {
      */
     public java.util.List<com.group13.auction.model.bid.QualityReport> findPending() {
         String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, " +
-                "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, " +
-                "u.username as reporter_username, u.password_hash, u.email, u.rating, " +
-                "u.balance, u.locked_balance, u.status as user_status " +
-                "FROM quality_reports qr " +
-                "LEFT JOIN users u ON qr.reporter_id = u.id " +
-                "WHERE qr.status = 'PENDING' ORDER BY qr.created_at ASC";
+            "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, " +
+            "u.username as reporter_username, u.password_hash, u.email, u.rating, " +
+            "u.balance, u.locked_balance, u.status as user_status " +
+            "FROM quality_reports qr " +
+            "LEFT JOIN users u ON qr.reporter_id = u.id " +
+            "WHERE qr.status = 'PENDING' ORDER BY qr.created_at ASC";
 
         java.util.List<com.group13.auction.model.bid.QualityReport> result = new java.util.ArrayList<>();
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -46,26 +46,26 @@ public class QualityReportDAO {
                 java.time.LocalDateTime createdAt = createdTs != null ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
                 java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                        java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+                    java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
 
                 com.group13.auction.model.user.NormalUser reporter =
-                        com.group13.auction.model.user.NormalUser.reconstitute(
-                                reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
-                                parseStatus(userStatus), rating, balance, locked, roles, false, 0, null);
+                    com.group13.auction.model.user.NormalUser.reconstitute(
+                        reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
+                        parseStatus(userStatus), rating, balance, locked, roles, false, 0, null);
 
                 String imageUrlsJson = rs.getString("image_urls");
                 java.util.List<String> imageUrls = parseJsonList(imageUrlsJson);
 
                 String statusStr = rs.getString("status");
                 com.group13.auction.model.bid.QualityReport.ReportStatus status =
-                        com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
+                    com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
 
                 com.group13.auction.model.bid.QualityReport report =
-                        com.group13.auction.model.bid.QualityReport.reconstitute(
-                                rs.getString("id"), createdAt, createdAt,
-                                reporter, rs.getString("auction_id"),
-                                rs.getString("description"), imageUrls,
-                                status, null, rs.getBoolean("refund_completed"));
+                    com.group13.auction.model.bid.QualityReport.reconstitute(
+                        rs.getString("id"), createdAt, createdAt,
+                        reporter, rs.getString("auction_id"),
+                        rs.getString("description"), imageUrls,
+                        status, null, rs.getBoolean("refund_completed"));
                 result.add(report);
             }
         } catch (java.sql.SQLException e) {
@@ -92,6 +92,29 @@ public class QualityReportDAO {
     }
 
     /**
+     * Kiểm tra reporter đã từng gửi báo cáo cho phiên này chưa
+     * (không phân biệt trạng thái — chỉ được gửi 1 lần duy nhất).
+     *
+     * @param auctionId  ID phiên đấu giá
+     * @param reporterId ID người báo cáo
+     * @return true nếu đã tồn tại ít nhất 1 report
+     */
+    public boolean existsByAuctionAndReporter(String auctionId, String reporterId) {
+        String sql = "SELECT 1 FROM quality_reports WHERE auction_id = ? AND reporter_id = ? LIMIT 1";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, auctionId);
+            pstmt.setString(2, reporterId);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi existsByAuctionAndReporter: auctionId={}, reporterId={}", auctionId, reporterId, e);
+            return false;
+        }
+    }
+
+    /**
      * Lưu báo cáo chất lượng mới vào Database.
      * Bao gồm description và image_urls (bắt buộc NOT NULL trong schema).
      */
@@ -101,12 +124,12 @@ public class QualityReportDAO {
      */
     public com.group13.auction.model.bid.QualityReport findById(String reportId) {
         String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, "
-                + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
-                + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
-                + "u.balance, u.locked_balance, u.status as user_status "
-                + "FROM quality_reports qr "
-                + "LEFT JOIN users u ON qr.reporter_id = u.id "
-                + "WHERE qr.id = ?";
+            + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
+            + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
+            + "u.balance, u.locked_balance, u.status as user_status "
+            + "FROM quality_reports qr "
+            + "LEFT JOIN users u ON qr.reporter_id = u.id "
+            + "WHERE qr.id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -125,27 +148,27 @@ public class QualityReportDAO {
 
                     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
                     java.time.LocalDateTime createdAt = createdTs != null
-                            ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+                        ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
                     java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+                        java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
 
                     com.group13.auction.model.user.NormalUser reporter =
-                            com.group13.auction.model.user.NormalUser.reconstitute(
-                                    rId, createdAt, createdAt, rUsername, pwHash, email,
-                                    parseStatus(userStatus), rating, balance, locked,
-                                    roles, false, 0, null);
+                        com.group13.auction.model.user.NormalUser.reconstitute(
+                            rId, createdAt, createdAt, rUsername, pwHash, email,
+                            parseStatus(userStatus), rating, balance, locked,
+                            roles, false, 0, null);
 
                     java.util.List<String> imageUrls = parseJsonList(rs.getString("image_urls"));
                     String statusStr = rs.getString("status");
                     com.group13.auction.model.bid.QualityReport.ReportStatus status =
-                            com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
+                        com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
 
                     return com.group13.auction.model.bid.QualityReport.reconstitute(
-                            rs.getString("id"), createdAt, createdAt,
-                            reporter, rs.getString("auction_id"),
-                            rs.getString("description"), imageUrls,
-                            status, null, rs.getBoolean("refund_completed"));
+                        rs.getString("id"), createdAt, createdAt,
+                        reporter, rs.getString("auction_id"),
+                        rs.getString("description"), imageUrls,
+                        status, null, rs.getBoolean("refund_completed"));
                 }
             }
         } catch (java.sql.SQLException e) {
@@ -156,8 +179,8 @@ public class QualityReportDAO {
 
     public boolean saveReport(QualityReport report) {
         String sql = "INSERT INTO quality_reports "
-                + "(id, auction_id, reporter_id, description, image_urls, status, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            + "(id, auction_id, reporter_id, description, image_urls, status, created_at) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
