@@ -61,6 +61,8 @@ public class UserAdminHandler implements PacketHandler {
         PacketType.GET_USER_RATINGS,
         // Quality report
         PacketType.SUBMIT_QUALITY_REPORT,
+        PacketType.GET_MY_QUALITY_REPORTS,
+        PacketType.GET_SELLER_QUALITY_REPORTS,
         PacketType.ADMIN_GET_QUALITY_REPORTS,
         PacketType.ADMIN_APPROVE_QUALITY_REPORT,
         PacketType.ADMIN_REJECT_QUALITY_REPORT,
@@ -126,7 +128,9 @@ public class UserAdminHandler implements PacketHandler {
             case RATE_BIDDER                 -> handleRateBidder(session, payload, requestId);
             case GET_USER_RATINGS            -> handleGetUserRatings(session, payload, requestId);
             case SUBMIT_QUALITY_REPORT       -> handleSubmitReport(session, payload, requestId);
-            case ADMIN_GET_QUALITY_REPORTS   -> handleAdminGetReports(session, requestId);
+            case GET_MY_QUALITY_REPORTS      -> handleGetMyQualityReports(session, requestId);
+            case GET_SELLER_QUALITY_REPORTS -> handleGetSellerQualityReports(session, requestId);
+            case ADMIN_GET_QUALITY_REPORTS   -> handleAdminGetReports(session, payload, requestId);
             case ADMIN_APPROVE_QUALITY_REPORT -> handleAdminApproveReport(session, payload, requestId);
             case ADMIN_REJECT_QUALITY_REPORT  -> handleAdminRejectReport(session, payload, requestId);
             case GET_NOTIFICATIONS           -> handleGetNotifications(session, requestId);
@@ -526,15 +530,7 @@ public class UserAdminHandler implements PacketHandler {
                 reporter, req.getAuctionId(), req.getDescription(), req.getEvidenceUrls());
             QualityReport saved  = qualityReportService.submitReport(report);
 
-            ReportDTOs.QualityReportDTO dto = new ReportDTOs.QualityReportDTO();
-            dto.setReportId(saved.getId());
-            dto.setAuctionId(saved.getAuctionId());
-            dto.setReporterId(reporter.getId());
-            dto.setReporterUsername(reporter.getUsername());
-            dto.setDescription(saved.getDescription());
-            dto.setEvidenceUrls(saved.getImageUrls());
-            dto.setStatus(saved.getStatus().name());
-            dto.setCreatedAt(saved.getCreatedAt());
+            ReportDTOs.QualityReportDTO dto = toQualityReportDto(saved);
             session.send(Packet.of(PacketType.SUBMIT_QUALITY_REPORT_SUCCESS, dto, requestId));
 
             Auction auction = AuctionManager.getInstance().findAuctionById(req.getAuctionId());
@@ -559,36 +555,110 @@ public class UserAdminHandler implements PacketHandler {
         }
     }
 
-    private void handleAdminGetReports(ClientSession session, String requestId) {
+    private void handleGetMyQualityReports(ClientSession session, String requestId) {
+        try {
+            NormalUser reporter = requireNormalUser(session, requestId);
+            if (reporter == null) {
+                return;
+            }
+
+            List<ReportDTOs.QualityReportDTO> dtos =
+                qualityReportDAO.findByReporterId(reporter.getId()).stream()
+                    .map(this::toQualityReportDto)
+                    .collect(Collectors.toList());
+
+            session.send(Packet.of(PacketType.GET_MY_QUALITY_REPORTS_SUCCESS, dtos, requestId));
+        } catch (Exception e) {
+            log.error("Get my quality reports failed: requestId={}", requestId, e);
+            session.send(Packet.of(PacketType.GET_MY_QUALITY_REPORTS_FAILED,
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+        }
+    }
+
+    private void handleGetSellerQualityReports(ClientSession session, String requestId) {
+        try {
+            NormalUser seller = requireNormalUser(session, requestId);
+            if (seller == null) {
+                return;
+            }
+            if (!seller.getRoles().contains(User.UserRole.SELLER)) {
+                session.send(Packet.of(PacketType.GET_SELLER_QUALITY_REPORTS_FAILED,
+                    ErrorDTO.of(ErrorDTO.UNAUTHORIZED,
+                        "Chỉ Seller mới xem được báo cáo chất lượng của kênh bán.", requestId),
+                    requestId));
+                return;
+            }
+
+            List<ReportDTOs.QualityReportDTO> dtos =
+                qualityReportDAO.findBySellerId(seller.getId()).stream()
+                    .map(this::toQualityReportDto)
+                    .collect(Collectors.toList());
+
+            session.send(Packet.of(PacketType.GET_SELLER_QUALITY_REPORTS_SUCCESS, dtos, requestId));
+        } catch (Exception e) {
+            log.error("Get seller quality reports failed: requestId={}", requestId, e);
+            session.send(Packet.of(PacketType.GET_SELLER_QUALITY_REPORTS_FAILED,
+                ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
+        }
+    }
+
+    private void handleAdminGetReports(ClientSession session, JsonElement payload, String requestId) {
         if (!session.isAdmin()) {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                 ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
         try {
-            List<QualityReport> reports = qualityReportDAO.findPending();
-            List<ReportDTOs.QualityReportDTO> dtos = new ArrayList<>();
-            for (QualityReport r : reports) {
-                ReportDTOs.QualityReportDTO dto = new ReportDTOs.QualityReportDTO();
-                dto.setReportId(r.getId());
-                dto.setAuctionId(r.getAuctionId());
-                if (r.getReporter() != null) {
-                    dto.setReporterId(r.getReporter().getId());
-                    dto.setReporterUsername(r.getReporter().getUsername());
+            String statusFilter = "PENDING";
+            if (payload != null && !payload.isJsonNull()) {
+                String requested = PacketCodec.fromElement(payload, String.class);
+                if (requested != null && !requested.isBlank()) {
+                    statusFilter = requested.trim();
                 }
-                dto.setDescription(r.getDescription());
-                dto.setEvidenceUrls(r.getImageUrls());
-                dto.setStatus(r.getStatus().name());
-                dto.setCreatedAt(r.getCreatedAt());
-                dto.setRefundCompleted(r.isRefundCompleted());
-                dtos.add(dto);
             }
+
+            List<ReportDTOs.QualityReportDTO> dtos =
+                qualityReportDAO.findByStatus(statusFilter).stream()
+                    .map(this::toQualityReportDto)
+                    .collect(Collectors.toList());
+
             session.send(Packet.of(PacketType.ADMIN_GET_QUALITY_REPORTS_SUCCESS, dtos, requestId));
         } catch (Exception e) {
             log.error("Admin get quality reports failed: requestId={}", requestId, e);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                 ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId), requestId));
         }
+    }
+
+    private ReportDTOs.QualityReportDTO toQualityReportDto(QualityReport report) {
+        ReportDTOs.QualityReportDTO dto = new ReportDTOs.QualityReportDTO();
+        if (report == null) {
+            return dto;
+        }
+
+        dto.setReportId(report.getId());
+        dto.setAuctionId(report.getAuctionId());
+        if (report.getReporter() != null) {
+            dto.setReporterId(report.getReporter().getId());
+            dto.setReporterUsername(report.getReporter().getUsername());
+        }
+        dto.setDescription(report.getDescription());
+        dto.setEvidenceUrls(report.getImageUrls());
+        dto.setStatus(report.getStatus().name());
+        dto.setCreatedAt(report.getCreatedAt());
+        dto.setRefundCompleted(report.isRefundCompleted());
+
+        Auction auction = AuctionManager.getInstance().findAuctionById(report.getAuctionId());
+        if (auction != null && auction.getItem() != null) {
+            dto.setAuctionItemName(auction.getItem().getName());
+            NormalUser seller = auction.getItem().getSeller();
+            if (seller != null) {
+                dto.setSellerId(seller.getId());
+                dto.setSellerUsername(seller.getUsername());
+            }
+        }
+
+        return dto;
     }
 
     private void handleAdminApproveReport(ClientSession session, JsonElement payload, String requestId) {

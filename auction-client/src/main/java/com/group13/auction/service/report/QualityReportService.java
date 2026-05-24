@@ -107,23 +107,68 @@ public final class QualityReportService {
     }
 
     /**
-     * Lấy danh sách báo cáo chất lượng cho Admin review.
-     *
-     * @return future chứa danh sách report review view model
+     * Lấy danh sách báo cáo chất lượng do Bidder hiện tại gửi.
      */
-    public CompletableFuture<List<QualityReportReviewViewModel>> getQualityReportsForAdmin() {
-        if (!currentUserIsAdmin()) {
-            return AuctionServiceSupport.failedFuture("Tài khoản hiện tại không có quyền Admin.");
+    public CompletableFuture<List<QualityReportViewModel>> getMyQualityReports() {
+        return AuctionServiceSupport
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.getMyQualityReports(),
+                PacketType.GET_MY_QUALITY_REPORTS_SUCCESS,
+                ReportDTOs.QualityReportDTO[].class,
+                "Không tải được báo cáo chất lượng của bạn.")
+            .thenApply(reports -> ReportViewModelMapper.toViewModels(Arrays.asList(reports)));
+    }
+
+    /**
+     * Lấy danh sách báo cáo chất lượng liên quan kênh Seller hiện tại.
+     */
+    public CompletableFuture<List<QualityReportViewModel>> getSellerQualityReports() {
+        if (!currentUserIsSeller()) {
+            return AuctionServiceSupport.failedFuture("Tài khoản hiện tại chưa có quyền Seller.");
         }
 
         return AuctionServiceSupport
             .sendRequest(
                 networkFacade,
-                ClientRequestFactory.adminGetQualityReports(),
+                ClientRequestFactory.getSellerQualityReports(),
+                PacketType.GET_SELLER_QUALITY_REPORTS_SUCCESS,
+                ReportDTOs.QualityReportDTO[].class,
+                "Không tải được báo cáo chất lượng của kênh Seller.")
+            .thenApply(reports -> ReportViewModelMapper.toViewModels(Arrays.asList(reports)));
+    }
+
+    /**
+     * Lấy danh sách báo cáo chất lượng cho Admin review.
+     *
+     * @return future chứa danh sách report review view model
+     */
+    /**
+     * Lấy danh sách báo cáo chất lượng cho Admin, có thể lọc theo trạng thái.
+     *
+     * @param statusFilter {@code PENDING}, {@code APPROVED}, {@code REJECTED} hoặc {@code ALL}
+     */
+    public CompletableFuture<List<QualityReportReviewViewModel>> getQualityReportsForAdmin(
+            String statusFilter) {
+        if (!currentUserIsAdmin()) {
+            return AuctionServiceSupport.failedFuture("Tài khoản hiện tại không có quyền Admin.");
+        }
+
+        String filter = normalizeAdminStatusFilter(statusFilter);
+
+        return AuctionServiceSupport
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.adminGetQualityReports(filter),
                 PacketType.ADMIN_GET_QUALITY_REPORTS_SUCCESS,
                 ReportDTOs.QualityReportDTO[].class,
                 "Không tải được danh sách báo cáo chất lượng.")
             .thenApply(reports -> ReportViewModelMapper.toReviewViewModels(Arrays.asList(reports)));
+    }
+
+    /** Giữ API cũ — mặc định lọc {@code PENDING}. */
+    public CompletableFuture<List<QualityReportReviewViewModel>> getQualityReportsForAdmin() {
+        return getQualityReportsForAdmin("PENDING");
     }
 
     /**
@@ -257,7 +302,26 @@ public final class QualityReportService {
             .orElse(false);
     }
 
+    private boolean currentUserIsSeller() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(session -> session.isSeller())
+            .orElse(false);
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String normalizeAdminStatusFilter(String statusFilter) {
+        if (isBlank(statusFilter)) {
+            return "PENDING";
+        }
+
+        return switch (statusFilter.trim().toUpperCase()) {
+            case "PENDING", "APPROVED", "REJECTED", "ALL" -> statusFilter.trim().toUpperCase();
+            default -> "PENDING";
+        };
     }
 }

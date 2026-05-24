@@ -124,9 +124,9 @@
         </HBox>
 
         <!-- Action panel -->
-        <HBox spacing="20.0">
+        <HBox spacing="20.0" alignment="TOP_LEFT">
             <VBox spacing="14.0"
-                  prefWidth="540.0"
+                  prefWidth="360.0"
                   prefHeight="230.0"
                   styleClass="seller-action-card">
                 <ImageView fitHeight="46.0" preserveRatio="true">
@@ -149,7 +149,7 @@
             </VBox>
 
             <VBox spacing="14.0"
-                  prefWidth="540.0"
+                  prefWidth="360.0"
                   prefHeight="230.0"
                   styleClass="seller-action-card">
                 <ImageView fitHeight="46.0" preserveRatio="true">
@@ -169,6 +169,29 @@
                         onAction="#handleOpenSellerAuctionList"
                         styleClass="seller-secondary-button"
                         text="Mở danh sách"/>
+            </VBox>
+
+            <VBox spacing="14.0"
+                  prefWidth="360.0"
+                  prefHeight="230.0"
+                  styleClass="seller-action-card">
+                <ImageView fitHeight="46.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-report.png"/>
+                </ImageView>
+
+                <Label text="Báo cáo chất lượng"
+                       styleClass="seller-card-title"/>
+
+                <Label text="Theo dõi báo cáo người mua gửi về sản phẩm trong phiên của bạn."
+                       wrapText="true"
+                       styleClass="seller-muted-text"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleOpenQualityReports"
+                        styleClass="seller-secondary-button"
+                        text="Xem báo cáo"/>
             </VBox>
         </HBox>
 

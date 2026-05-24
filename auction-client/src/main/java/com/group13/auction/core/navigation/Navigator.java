@@ -1,6 +1,7 @@
 package com.group13.auction.core.navigation;
 
 import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.state.ScreenStateKeys;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -199,6 +200,22 @@ public final class Navigator {
     /** Chuyển tới màn gửi báo cáo chất lượng. */
     public void goToQualityReport() {
         goTo(Route.QUALITY_REPORT);
+    }
+
+    /** Chuyển tới danh sách báo cáo chất lượng của Bidder. */
+    public void goToMyQualityReports() {
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .put(ScreenStateKeys.QUALITY_REPORT_LIST_SCOPE, "my");
+        goTo(Route.MY_QUALITY_REPORTS);
+    }
+
+    /** Chuyển tới danh sách báo cáo chất lượng của Seller. */
+    public void goToSellerQualityReports() {
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .put(ScreenStateKeys.QUALITY_REPORT_LIST_SCOPE, "seller");
+        goTo(Route.SELLER_QUALITY_REPORTS);
     }
 
     /** Chuyển tới màn chatbot OMNI. */

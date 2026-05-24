@@ -73,6 +73,12 @@ public final class MainLayoutController {
         Navigator.getInstance().goToMyOrders();
     }
 
+    /** Mở danh sách báo cáo chất lượng do Bidder gửi. */
+    @FXML
+    public void handleOpenMyQualityReports() {
+        Navigator.getInstance().goToMyQualityReports();
+    }
+
     /** Mở Admin Dashboard nếu tài khoản hiện tại có quyền Admin. */
     @FXML
     public void handleOpenAdminDashboard() {

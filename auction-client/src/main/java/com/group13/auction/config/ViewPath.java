@@ -52,6 +52,9 @@ public final class ViewPath {
     public static final String QUALITY_REPORT_VIEW =
         "/com/group13/auction/view/report/quality-report-view.fxml";
 
+    public static final String QUALITY_REPORT_LIST_VIEW =
+        "/com/group13/auction/view/report/quality-report-list-view.fxml";
+
     public static final String CHATBOT_VIEW =
         "/com/group13/auction/view/chatbot/chatbot-view.fxml";
 

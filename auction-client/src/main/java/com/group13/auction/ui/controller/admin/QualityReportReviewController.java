@@ -14,6 +14,9 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 /**
@@ -25,6 +28,14 @@ import javafx.scene.control.cell.PropertyValueFactory;
 public final class QualityReportReviewController {
 
     private final QualityReportService qualityReportService = new QualityReportService();
+
+    private final ToggleGroup statusFilterGroup = new ToggleGroup();
+    private String currentStatusFilter = "PENDING";
+
+    @FXML private ToggleButton pendingFilterButton;
+    @FXML private ToggleButton approvedFilterButton;
+    @FXML private ToggleButton rejectedFilterButton;
+    @FXML private ToggleButton allFilterButton;
 
     @FXML private TableView<QualityReportReviewViewModel> reportTable;
     @FXML private TableColumn<QualityReportReviewViewModel, String> reportIdColumn;
@@ -49,11 +60,28 @@ public final class QualityReportReviewController {
     /** Khởi tạo bảng review báo cáo chất lượng và tải dữ liệu lần đầu. */
     @FXML
     private void initialize() {
+        configureStatusFilters();
         configureTable();
         configureSelectionBinding();
         setBusy(false);
         setReviewButtonsDisabled(true);
         showEmptyState("Chưa có báo cáo chất lượng.");
+        loadReports();
+    }
+
+    @FXML
+    private void handleFilterChange() {
+        Toggle selected = statusFilterGroup.getSelectedToggle();
+        if (selected == null) {
+            return;
+        }
+
+        String nextFilter = resolveStatusFilter(selected);
+        if (nextFilter.equals(currentStatusFilter)) {
+            return;
+        }
+
+        currentStatusFilter = nextFilter;
         loadReports();
     }
 
@@ -115,8 +143,36 @@ public final class QualityReportReviewController {
         showEmptyState("");
 
         qualityReportService
-                .getQualityReportsForAdmin()
+                .getQualityReportsForAdmin(currentStatusFilter)
                 .whenComplete((reports, throwable) -> handleReportsResult(reports, throwable));
+    }
+
+    private void configureStatusFilters() {
+        bindFilterButton(pendingFilterButton, "PENDING");
+        bindFilterButton(approvedFilterButton, "APPROVED");
+        bindFilterButton(rejectedFilterButton, "REJECTED");
+        bindFilterButton(allFilterButton, "ALL");
+
+        if (pendingFilterButton != null) {
+            pendingFilterButton.setSelected(true);
+        }
+    }
+
+    private void bindFilterButton(ToggleButton button, String filterValue) {
+        if (button == null) {
+            return;
+        }
+
+        button.setToggleGroup(statusFilterGroup);
+        button.setUserData(filterValue);
+    }
+
+    private String resolveStatusFilter(Toggle selectedToggle) {
+        Object value = selectedToggle == null ? null : selectedToggle.getUserData();
+        if (value instanceof String filter && !filter.isBlank()) {
+            return filter;
+        }
+        return "PENDING";
     }
 
     private void configureTable() {
@@ -175,7 +231,7 @@ public final class QualityReportReviewController {
 
                     if (safeReports.isEmpty()) {
                         showStatus("Đã tải danh sách báo cáo chất lượng.");
-                        showEmptyState("Không có báo cáo chất lượng nào.");
+                        showEmptyState(emptyMessageForFilter(currentStatusFilter));
                         clearDetail();
                     } else {
                         showStatus("Tải danh sách báo cáo chất lượng thành công.");
@@ -241,6 +297,21 @@ public final class QualityReportReviewController {
         }
     }
 
+    private void setFilterButtonsDisabled(boolean disabled) {
+        if (pendingFilterButton != null) {
+            pendingFilterButton.setDisable(disabled);
+        }
+        if (approvedFilterButton != null) {
+            approvedFilterButton.setDisable(disabled);
+        }
+        if (rejectedFilterButton != null) {
+            rejectedFilterButton.setDisable(disabled);
+        }
+        if (allFilterButton != null) {
+            allFilterButton.setDisable(disabled);
+        }
+    }
+
     private void setReviewButtonsDisabled(boolean disabled) {
         if (approveButton != null) {
             approveButton.setDisable(disabled);
@@ -275,6 +346,7 @@ public final class QualityReportReviewController {
         if (backButton != null) {
             backButton.setDisable(busy);
         }
+        setFilterButtonsDisabled(busy);
 
         if (busy) {
             setReviewButtonsDisabled(true);
@@ -309,5 +381,14 @@ public final class QualityReportReviewController {
             return throwable.getCause();
         }
         return throwable;
+    }
+
+    private String emptyMessageForFilter(String filter) {
+        return switch (filter) {
+            case "APPROVED" -> "Không có báo cáo đã duyệt.";
+            case "REJECTED" -> "Không có báo cáo đã từ chối.";
+            case "ALL" -> "Không có báo cáo chất lượng nào.";
+            default -> "Không có báo cáo đang chờ duyệt.";
+        };
     }
 }

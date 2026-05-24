@@ -12,6 +12,8 @@ public class QualityReportViewModel {
     private final String description;
     private final String status;
     private final String createdAtText;
+    private final String reporterUsername;
+    private final String sellerUsername;
 
     /**
      * Tạo dữ liệu hiển thị cho một báo cáo chất lượng.
@@ -32,6 +34,22 @@ public class QualityReportViewModel {
             String description,
             String status,
             String createdAtText) {
+        this(reportId, auctionId, title, reason, description, status, createdAtText, "--", "--");
+    }
+
+    /**
+     * Tạo dữ liệu hiển thị đầy đủ cho danh sách báo cáo.
+     */
+    public QualityReportViewModel(
+            String reportId,
+            String auctionId,
+            String title,
+            String reason,
+            String description,
+            String status,
+            String createdAtText,
+            String reporterUsername,
+            String sellerUsername) {
         this.reportId = reportId;
         this.auctionId = auctionId;
         this.title = title;
@@ -39,6 +57,8 @@ public class QualityReportViewModel {
         this.description = description;
         this.status = status;
         this.createdAtText = createdAtText;
+        this.reporterUsername = reporterUsername;
+        this.sellerUsername = sellerUsername;
     }
 
     public String getReportId() {
@@ -67,5 +87,13 @@ public class QualityReportViewModel {
 
     public String getCreatedAtText() {
         return createdAtText;
+    }
+
+    public String getReporterUsername() {
+        return reporterUsername;
+    }
+
+    public String getSellerUsername() {
+        return sellerUsername;
     }
 }
