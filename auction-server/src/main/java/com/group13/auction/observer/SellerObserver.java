@@ -75,8 +75,7 @@ public class SellerObserver implements AuctionObserver {
         notifier.notify(seller.getUsername(), "AUCTION_CANCELED", "Phiên đấu giá đã bị hủy.");
         break;
       case SECOND_CHANCE_OFFERED:
-        notifier.notify(seller.getUsername(), "SECOND_CHANCE_OFFERED",
-                "Winner không thanh toán - hệ thống đang chào cơ hội mua thứ cấp cho người đặt giá tiếp theo.");
+        // Inbox seller đã được gửi qua ServerBroadcastNotifier.notifySecondChanceOffered — tránh trùng.
         break;
       case SELLER_CANCEL_REQUEST_ACCEPTED:
         notifier.notify(seller.getUsername(), "SELLER_CANCEL_REQUEST_ACCEPTED",

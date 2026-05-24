@@ -107,7 +107,6 @@ public final class ClientNotificationService implements ClientEventListener {
         if (offer == null) {
             return;
         }
-
         FxThreadUtil.runOnFxThread(
                 () ->
                         AlertUtil.showInfo(
@@ -132,7 +131,7 @@ public final class ClientNotificationService implements ClientEventListener {
         FxThreadUtil.runOnFxThread(
                 () ->
                         AlertUtil.showWarning(
-                                "Một Second Chance Offer đã hết hạn.\n"
+                                "Second Chance Offer của bạn đã hết hạn.\n"
                                         + "Mã phiên đấu giá: "
                                         + fallback(auctionId)));
     }
