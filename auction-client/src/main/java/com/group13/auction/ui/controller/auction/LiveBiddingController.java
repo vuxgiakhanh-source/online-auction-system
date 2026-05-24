@@ -21,12 +21,10 @@ import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.auction.BidHistoryPointViewModel;
 import com.group13.auction.viewmodel.auction.LiveBidViewModel;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletionException;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -38,12 +36,15 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 
-/**
- * Controller cho màn đấu giá trực tiếp và realtime bid chart.
- */
+/** Controller cho màn đấu giá trực tiếp và realtime bid chart. */
 public final class LiveBiddingController implements ClientEventListener {
 
   private static final int MAX_CHART_POINTS = 40;
+  private static final long TIER_LOW = 1_000_000L;
+  private static final long TIER_MID = 10_000_000L;
+  private static final long INCREMENT_LOW = 50_000L;
+  private static final long INCREMENT_MID = 200_000L;
+  private static final long INCREMENT_HIGH = 500_000L;
 
   private final ClientNetworkFacade networkFacade = ClientNetworkFacade.getDefault();
   private final WatchAuctionService watchAuctionService = new WatchAuctionService();
@@ -55,77 +56,37 @@ public final class LiveBiddingController implements ClientEventListener {
 
   private String auctionId;
   private boolean bidAllowed;
+  private long currentPriceRaw;
+  private volatile boolean pendingBidRequest;
+  private volatile boolean pendingAutoBidRequest;
 
-  /**
-   * Thời điểm kết thúc phiên — cập nhật khi nhận AUCTION_EXTENDED. Dùng cho countdown.
-   */
+  /** Thời điểm kết thúc phiên — cập nhật khi nhận AUCTION_EXTENDED. Dùng cho countdown. */
   private LocalDateTime auctionEndTime;
 
-  /**
-   * Timeline đếm ngược hiển thị thời gian còn lại. Hủy khi rời màn hoặc phiên kết thúc.
-   */
+  /** Timeline đếm ngược hiển thị thời gian còn lại. Hủy khi rời màn hoặc phiên kết thúc. */
   private Timeline countdownTimer;
 
-  @FXML
-  private Label titleLabel;
+  @FXML private Label titleLabel;
+  @FXML private Label statusLabel;
+  @FXML private Label currentPriceLabel;
+  @FXML private Label leaderLabel;
+  @FXML private Label reserveLabel;
+  @FXML private Label endTimeLabel;
+  @FXML private Label countdownLabel;
+  @FXML private Label messageLabel;
+  @FXML private TextField bidAmountField;
+  @FXML private Label minimumBidHintLabel;
+  @FXML private Button placeBidButton;
+  @FXML private Label autoBidStatusLabel;
+  @FXML private TextField autoBidMaxField;
+  @FXML private Button registerAutoBidButton;
+  @FXML private Button updateAutoBidButton;
+  @FXML private Button cancelAutoBidButton;
+  @FXML private ProgressIndicator loadingIndicator;
+  @FXML private LineChart<String, Number> bidLineChart;
+  @FXML private ListView<String> bidHistoryListView;
 
-  @FXML
-  private Label statusLabel;
-
-  @FXML
-  private Label currentPriceLabel;
-
-  @FXML
-  private Label leaderLabel;
-
-  @FXML
-  private Label reserveLabel;
-
-  @FXML
-  private Label endTimeLabel;
-
-  /**
-   * Nhãn đếm ngược realtime — hiển thị "mm:ss" hoặc "HH:mm:ss" còn lại.
-   */
-  @FXML
-  private Label countdownLabel;
-
-  @FXML
-  private Label messageLabel;
-
-  @FXML
-  private TextField bidAmountField;
-
-  @FXML
-  private Button placeBidButton;
-
-  @FXML
-  private Label autoBidStatusLabel;
-
-  @FXML
-  private TextField autoBidMaxField;
-
-  @FXML
-  private Button registerAutoBidButton;
-
-  @FXML
-  private Button updateAutoBidButton;
-
-  @FXML
-  private Button cancelAutoBidButton;
-
-  @FXML
-  private ProgressIndicator loadingIndicator;
-
-  @FXML
-  private LineChart<String, Number> bidLineChart;
-
-  @FXML
-  private ListView<String> bidHistoryListView;
-
-  /**
-   * Đăng ký realtime listener, watch auction và tải lịch sử bid ban đầu.
-   */
+  /** Đăng ký realtime listener, watch auction và tải lịch sử bid ban đầu. */
   @FXML
   public void initialize() {
     priceSeries.setName("Giá cao nhất");
@@ -154,9 +115,7 @@ public final class LiveBiddingController implements ClientEventListener {
     loadBidHistory();
   }
 
-  /**
-   * Quay lại màn chi tiết và hủy listener realtime của controller hiện tại.
-   */
+  /** Quay lại màn chi tiết và hủy listener realtime của controller hiện tại. */
   @FXML
   public void handleBackToDetail() {
     stopCountdownTimer();
@@ -167,9 +126,7 @@ public final class LiveBiddingController implements ClientEventListener {
     Navigator.getInstance().goToAuctionDetail();
   }
 
-  /**
-   * Gửi yêu cầu đặt giá.
-   */
+  /** Gửi yêu cầu đặt giá. */
   @FXML
   public void handlePlaceBid() {
     if (!bidAllowed) {
@@ -177,6 +134,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
+    pendingBidRequest = true;
     setLoading(true, "Đang gửi giá đặt...");
 
     bidService
@@ -185,6 +143,7 @@ public final class LiveBiddingController implements ClientEventListener {
             liveBid ->
                 FxThreadUtil.runOnFxThread(
                     () -> {
+                      pendingBidRequest = false;
                       renderLiveBid(liveBid);
                       bidAmountField.clear();
                       setLoading(false, "Đặt giá thành công. Đang chờ realtime update...");
@@ -193,6 +152,7 @@ public final class LiveBiddingController implements ClientEventListener {
             throwable -> {
               FxThreadUtil.runOnFxThread(
                   () -> {
+                    pendingBidRequest = false;
                     setLoading(false, "Đặt giá thất bại.");
                     AlertUtil.showError(extractMessage(throwable));
                     bidAmountField.requestFocus();
@@ -201,9 +161,7 @@ public final class LiveBiddingController implements ClientEventListener {
             });
   }
 
-  /**
-   * Đăng ký Auto-Bid cho phiên hiện tại.
-   */
+  /** Đăng ký Auto-Bid cho phiên hiện tại. */
   @FXML
   public void handleRegisterAutoBid() {
     if (!bidAllowed) {
@@ -211,6 +169,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
+    pendingAutoBidRequest = true;
     setAutoBidLoading(true, "Đang đăng ký auto-bid...");
 
     autoBidService
@@ -218,11 +177,15 @@ public final class LiveBiddingController implements ClientEventListener {
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
-                    () -> renderAutoBidRegistration(registration, "Đã bật auto-bid.")))
+                    () -> {
+                      pendingAutoBidRequest = false;
+                      renderAutoBidRegistration(registration, "Đã bật auto-bid.");
+                    }))
         .exceptionally(
             throwable -> {
               FxThreadUtil.runOnFxThread(
                   () -> {
+                    pendingAutoBidRequest = false;
                     setAutoBidLoading(false, "Đăng ký auto-bid thất bại.");
                     AlertUtil.showError(extractMessage(throwable));
                     autoBidMaxField.requestFocus();
@@ -231,9 +194,7 @@ public final class LiveBiddingController implements ClientEventListener {
             });
   }
 
-  /**
-   * Cập nhật maxBid cho Auto-Bid đang hoạt động.
-   */
+  /** Cập nhật maxBid cho Auto-Bid đang hoạt động. */
   @FXML
   public void handleUpdateAutoBid() {
     if (!bidAllowed) {
@@ -241,6 +202,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
+    pendingAutoBidRequest = true;
     setAutoBidLoading(true, "Đang cập nhật auto-bid...");
 
     autoBidService
@@ -248,11 +210,15 @@ public final class LiveBiddingController implements ClientEventListener {
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
-                    () -> renderAutoBidRegistration(registration, "Đã cập nhật auto-bid.")))
+                    () -> {
+                      pendingAutoBidRequest = false;
+                      renderAutoBidRegistration(registration, "Đã cập nhật auto-bid.");
+                    }))
         .exceptionally(
             throwable -> {
               FxThreadUtil.runOnFxThread(
                   () -> {
+                    pendingAutoBidRequest = false;
                     setAutoBidLoading(false, "Cập nhật auto-bid thất bại.");
                     AlertUtil.showError(extractMessage(throwable));
                     autoBidMaxField.requestFocus();
@@ -261,9 +227,7 @@ public final class LiveBiddingController implements ClientEventListener {
             });
   }
 
-  /**
-   * Hủy Auto-Bid của user trong phiên hiện tại.
-   */
+  /** Hủy Auto-Bid của user trong phiên hiện tại. */
   @FXML
   public void handleCancelAutoBid() {
     if (!bidAllowed) {
@@ -271,6 +235,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
+    pendingAutoBidRequest = true;
     setAutoBidLoading(true, "Đang hủy auto-bid...");
 
     autoBidService
@@ -278,11 +243,15 @@ public final class LiveBiddingController implements ClientEventListener {
         .thenRun(
             () ->
                 FxThreadUtil.runOnFxThread(
-                    () -> renderAutoBidInactive("Đã hủy auto-bid.")))
+                    () -> {
+                      pendingAutoBidRequest = false;
+                      renderAutoBidInactive("Đã hủy auto-bid.");
+                    }))
         .exceptionally(
             throwable -> {
               FxThreadUtil.runOnFxThread(
                   () -> {
+                    pendingAutoBidRequest = false;
                     setAutoBidLoading(false, "Hủy auto-bid thất bại.");
                     AlertUtil.showError(extractMessage(throwable));
                   });
@@ -290,9 +259,7 @@ public final class LiveBiddingController implements ClientEventListener {
             });
   }
 
-  /**
-   * Tải lại lịch sử bid và biểu đồ.
-   */
+  /** Tải lại lịch sử bid và biểu đồ. */
   @FXML
   public void handleRefreshHistory() {
     loadBidHistory();
@@ -300,6 +267,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAutoBidRegistered(BidDTOs.AutoBidRegistrationDTO registration) {
+    if (pendingAutoBidRequest) {
+      return;
+    }
+
     if (!isCurrentAuction(registration == null ? null : registration.getAuctionId())) {
       return;
     }
@@ -310,6 +281,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onUpdateAutoBidSuccess(BidDTOs.AutoBidRegistrationDTO registration) {
+    if (pendingAutoBidRequest) {
+      return;
+    }
+
     if (!isCurrentAuction(registration == null ? null : registration.getAuctionId())) {
       return;
     }
@@ -320,6 +295,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAutoBidFailed(ErrorDTO error) {
+    if (pendingAutoBidRequest) {
+      return;
+    }
+
     FxThreadUtil.runOnFxThread(
         () -> {
           setAutoBidLoading(false, "Auto-bid thất bại.");
@@ -329,6 +308,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onUpdateAutoBidFailed(ErrorDTO error) {
+    if (pendingAutoBidRequest) {
+      return;
+    }
+
     FxThreadUtil.runOnFxThread(
         () -> {
           setAutoBidLoading(false, "Cập nhật auto-bid thất bại.");
@@ -338,6 +321,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onCancelAutoBidSuccess(String incomingAuctionId) {
+    if (pendingAutoBidRequest) {
+      return;
+    }
+
     if (!isCurrentAuction(incomingAuctionId)) {
       return;
     }
@@ -353,7 +340,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
     FxThreadUtil.runOnFxThread(
         () -> {
+          currentPriceRaw = notify.getNewCurrentPrice();
           currentPriceLabel.setText(CurrencyUtil.formatVnd(notify.getNewCurrentPrice()));
+          updateMinimumBidHint();
+
           setAutoBidStatusText(
               "Auto-bid vừa đặt "
                   + CurrencyUtil.formatVnd(notify.getBidAmount())
@@ -395,8 +385,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    FxThreadUtil.runOnFxThread(
-        () -> renderLiveBid(BidViewModelMapper.toLiveBidViewModel(update)));
+    FxThreadUtil.runOnFxThread(() -> renderBidUpdate(update));
   }
 
   @Override
@@ -405,8 +394,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    FxThreadUtil.runOnFxThread(
-        () -> renderLiveBid(BidViewModelMapper.toLiveBidViewModel(update)));
+    FxThreadUtil.runOnFxThread(() -> renderBidUpdate(update));
   }
 
   @Override
@@ -428,8 +416,8 @@ public final class LiveBiddingController implements ClientEventListener {
     FxThreadUtil.runOnFxThread(
         () -> {
           endTimeLabel.setText(DateTimeUtil.formatDateTime(dto.getNewEndTime()));
-          // Cập nhật auctionEndTime để countdown tính lại từ mốc mới.
           auctionEndTime = dto.getNewEndTime();
+          startCountdownTimer();
           setMessage("Phiên được gia hạn thêm " + dto.getExtendedBySeconds() + " giây.");
         });
   }
@@ -441,18 +429,49 @@ public final class LiveBiddingController implements ClientEventListener {
     }
 
     FxThreadUtil.runOnFxThread(
-        () -> {
-          stopCountdownTimer();
-          if (countdownLabel != null) countdownLabel.setText("00:00");
-          statusLabel.setText("Đã kết thúc");
-          bidAllowed = false;
-          placeBidButton.setDisable(true);
-          syncAutoBidButtons(false);
-          setMessage(
-              update.getMessage() == null
-                  ? "Phiên đấu giá đã kết thúc."
-                  : update.getMessage());
-        });
+        () -> renderAuctionClosed(update, "Đã kết thúc", "Phiên đấu giá đã kết thúc."));
+  }
+
+  @Override
+  public void onAuctionNoWinner(AuctionDTOs.AuctionUpdateDTO update) {
+    if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () ->
+            renderAuctionClosed(
+                update,
+                "Không có người thắng",
+                "Phiên đấu giá đã kết thúc mà chưa có người thắng."));
+  }
+
+  @Override
+  public void onAuctionReserveNotMet(AuctionDTOs.AuctionUpdateDTO update) {
+    if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () ->
+            renderAuctionClosed(
+                update,
+                "Chưa đạt giá sàn",
+                "Phiên đấu giá đã kết thúc nhưng chưa đạt giá sàn."));
+  }
+
+  @Override
+  public void onAuctionUpcomingEnd(AuctionDTOs.AuctionUpcomingEndDTO dto) {
+    if (!isCurrentAuction(dto == null ? null : dto.getAuctionId())) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () ->
+            setMessage(
+                "Phiên sắp kết thúc trong "
+                    + Math.max(0L, dto.getRemainingSeconds())
+                    + " giây. Bid cuối có thể kích hoạt gia hạn."));
   }
 
   @Override
@@ -464,7 +483,9 @@ public final class LiveBiddingController implements ClientEventListener {
     FxThreadUtil.runOnFxThread(
         () -> {
           stopCountdownTimer();
-          if (countdownLabel != null) countdownLabel.setText("--:--");
+          if (countdownLabel != null) {
+            countdownLabel.setText("--:--");
+          }
           statusLabel.setText("Đã hủy");
           bidAllowed = false;
           placeBidButton.setDisable(true);
@@ -478,6 +499,10 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onPlaceBidFailed(ErrorDTO error) {
+    if (pendingBidRequest) {
+      return;
+    }
+
     FxThreadUtil.runOnFxThread(
         () -> {
           setLoading(false, "Đặt giá thất bại.");
@@ -555,11 +580,12 @@ public final class LiveBiddingController implements ClientEventListener {
     titleLabel.setText(detail.itemName());
     statusLabel.setText(detail.statusText());
     currentPriceLabel.setText(detail.currentPriceText());
+    currentPriceRaw = Math.round(detail.currentPrice());
+    updateMinimumBidHint();
     leaderLabel.setText(detail.leaderText());
     reserveLabel.setText(detail.reservePriceText());
     endTimeLabel.setText(detail.endTimeText());
 
-    // Khởi động countdown timer dùng rawEndTime từ ViewModel.
     auctionEndTime = detail.rawEndTime();
     startCountdownTimer();
 
@@ -574,8 +600,60 @@ public final class LiveBiddingController implements ClientEventListener {
     }
   }
 
+  private void renderBidUpdate(BidDTOs.BidUpdateDTO update) {
+    if (update == null) {
+      return;
+    }
+
+    renderLiveBid(BidViewModelMapper.toLiveBidViewModel(update));
+
+    if (update.getNewEndTime() != null) {
+      auctionEndTime = update.getNewEndTime();
+      endTimeLabel.setText(DateTimeUtil.formatDateTime(update.getNewEndTime()));
+      startCountdownTimer();
+    }
+  }
+
+  private void renderAuctionClosed(
+      AuctionDTOs.AuctionUpdateDTO update, String statusText, String fallbackMessage) {
+    stopCountdownTimer();
+
+    if (countdownLabel != null) {
+      countdownLabel.setText("00:00");
+    }
+
+    if (statusLabel != null) {
+      statusLabel.setText(statusText);
+    }
+
+    if (update != null && update.getFinalPrice() > 0) {
+      long finalPrice = Math.round(update.getFinalPrice());
+      currentPriceRaw = finalPrice;
+      currentPriceLabel.setText(CurrencyUtil.formatVnd(finalPrice));
+      updateMinimumBidHint();
+    }
+
+    if (update != null
+        && update.getWinnerUsername() != null
+        && !update.getWinnerUsername().isBlank()) {
+      leaderLabel.setText("Người thắng: " + update.getWinnerUsername());
+    }
+
+    bidAllowed = false;
+    placeBidButton.setDisable(true);
+    syncAutoBidButtons(false);
+
+    String message =
+        update == null || update.getMessage() == null || update.getMessage().isBlank()
+            ? fallbackMessage
+            : update.getMessage();
+    setMessage(message);
+  }
+
   private void renderLiveBid(LiveBidViewModel liveBid) {
     currentPriceLabel.setText(liveBid.currentPriceText());
+    currentPriceRaw = liveBid.currentPrice();
+    updateMinimumBidHint();
     leaderLabel.setText(liveBid.leaderText());
     reserveLabel.setText(liveBid.reserveText());
 
@@ -616,7 +694,9 @@ public final class LiveBiddingController implements ClientEventListener {
                 + " • "
                 + point.priceText());
 
+    currentPriceRaw = point.price();
     currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
+    updateMinimumBidHint();
   }
 
   private void renderAutoBidRegistration(
@@ -649,8 +729,8 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   /**
-   * Khởi động countdown timer tick mỗi giây trên JavaFX thread.
-   * Nếu timer cũ đang chạy, dừng trước khi tạo mới (tránh leak khi renderAuctionDetail gọi lại).
+   * Khởi động countdown timer tick mỗi giây trên JavaFX thread. Nếu timer cũ đang chạy, dừng trước
+   * khi tạo mới.
    */
   private void startCountdownTimer() {
     stopCountdownTimer();
@@ -659,19 +739,15 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    countdownTimer = new Timeline(
-        new KeyFrame(javafx.util.Duration.seconds(1), event -> tickCountdown()));
+    countdownTimer =
+        new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), event -> tickCountdown()));
     countdownTimer.setCycleCount(Timeline.INDEFINITE);
     countdownTimer.play();
 
-    // Tick ngay lập tức để tránh hiển thị trống 1 giây đầu.
     tickCountdown();
   }
 
-  /**
-   * Tính thời gian còn lại và cập nhật countdownLabel.
-   * Format: "HH:mm:ss" khi > 1 giờ, "mm:ss" khi ≤ 1 giờ, "00:00" khi hết giờ.
-   */
+  /** Tính thời gian còn lại và cập nhật countdownLabel. */
   private void tickCountdown() {
     if (auctionEndTime == null || countdownLabel == null) {
       return;
@@ -690,13 +766,13 @@ public final class LiveBiddingController implements ClientEventListener {
     long minutes = (totalSeconds % 3600) / 60;
     long seconds = totalSeconds % 60;
 
-    String text = hours > 0
-        ? String.format("%02d:%02d:%02d", hours, minutes, seconds)
-        : String.format("%02d:%02d", minutes, seconds);
+    String text =
+        hours > 0
+            ? String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            : String.format("%02d:%02d", minutes, seconds);
 
     countdownLabel.setText(text);
 
-    // Cảnh báo thị giác: đổi style khi còn ≤ 60 giây.
     if (totalSeconds <= 60) {
       countdownLabel.setStyle("-fx-text-fill: #e53e3e; -fx-font-weight: bold;");
     } else {
@@ -704,9 +780,7 @@ public final class LiveBiddingController implements ClientEventListener {
     }
   }
 
-  /**
-   * Dừng và hủy countdown timer. An toàn khi gọi nhiều lần.
-   */
+  /** Dừng và hủy countdown timer. An toàn khi gọi nhiều lần. */
   private void stopCountdownTimer() {
     if (countdownTimer != null) {
       countdownTimer.stop();
@@ -716,6 +790,31 @@ public final class LiveBiddingController implements ClientEventListener {
 
   private void cleanupRealtimeListener() {
     networkFacade.removeListener(this);
+  }
+
+  private void updateMinimumBidHint() {
+    if (minimumBidHintLabel == null) {
+      return;
+    }
+
+    long increment = calculateMinimumIncrement(currentPriceRaw);
+    long minimumBidAmount = currentPriceRaw + increment;
+
+    minimumBidHintLabel.setText(
+        "Bước giá tối thiểu: "
+            + CurrencyUtil.formatVnd(increment)
+            + " • Giá đặt thấp nhất: "
+            + CurrencyUtil.formatVnd(minimumBidAmount));
+  }
+
+  private long calculateMinimumIncrement(long currentPrice) {
+    if (currentPrice < TIER_LOW) {
+      return INCREMENT_LOW;
+    }
+    if (currentPrice <= TIER_MID) {
+      return INCREMENT_MID;
+    }
+    return INCREMENT_HIGH;
   }
 
   private void setLoading(boolean loading, String message) {

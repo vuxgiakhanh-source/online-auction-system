@@ -40,7 +40,6 @@
                 <Insets top="24.0" right="42.0" bottom="22.0" left="42.0"/>
             </padding>
 
-            <!-- Header -->
             <HBox alignment="CENTER_LEFT" spacing="16.0">
                 <Button mnemonicParsing="false"
                         onAction="#handleBackToDetail"
@@ -73,7 +72,6 @@
                         text="Tải lại lịch sử"/>
             </HBox>
 
-            <!-- Live title -->
             <HBox alignment="CENTER_LEFT" spacing="14.0" styleClass="auction-detail-hero">
                 <VBox spacing="6.0">
                     <Label fx:id="titleLabel"
@@ -101,13 +99,17 @@
                     <Label fx:id="currentPriceLabel"
                            text="--"
                            styleClass="auction-current-price"/>
+
+                    <Label text="Còn lại"
+                           styleClass="auction-muted-text"/>
+
+                    <Label fx:id="countdownLabel"
+                           text="--:--"
+                           styleClass="auction-status-badge"/>
                 </VBox>
             </HBox>
 
-            <!-- Main live area -->
             <HBox spacing="18.0" VBox.vgrow="ALWAYS">
-
-                <!-- Left: bidding + history -->
                 <VBox spacing="14.0" prefWidth="380.0">
                     <VBox spacing="10.0" styleClass="auction-info-box">
                         <Label text="Thông tin realtime"
@@ -134,8 +136,13 @@
                                styleClass="auction-section-title"/>
 
                         <TextField fx:id="bidAmountField"
-                                   promptText="Nhập giá muốn đặt, ví dụ 1500000"
+                                   promptText="Nhập giá muốn đặt"
                                    styleClass="auction-input"/>
+
+                        <Label fx:id="minimumBidHintLabel"
+                               text="Bước giá tối thiểu: --"
+                               wrapText="true"
+                               styleClass="auction-muted-text"/>
 
                         <Button fx:id="placeBidButton"
                                 mnemonicParsing="false"
@@ -154,7 +161,7 @@
                                styleClass="auction-muted-text"/>
 
                         <TextField fx:id="autoBidMaxField"
-                                   promptText="Giá tối đa, ví dụ 2000000"
+                                   promptText="Giá tối đa cho auto-bid, tối thiểu 1000"
                                    styleClass="auction-input"/>
 
                         <Label text="Bước giá sẽ do hệ thống tự tính theo giá hiện tại của phiên."
@@ -192,7 +199,6 @@
                     </VBox>
                 </VBox>
 
-                <!-- Right: chart -->
                 <VBox spacing="12.0" HBox.hgrow="ALWAYS" styleClass="auction-info-box">
                     <Label text="Biểu đồ giá realtime"
                            styleClass="auction-section-title"/>
@@ -216,7 +222,6 @@
                 </VBox>
             </HBox>
 
-            <!-- Chatbot launcher + signature -->
             <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
                 <Region HBox.hgrow="ALWAYS"/>
 

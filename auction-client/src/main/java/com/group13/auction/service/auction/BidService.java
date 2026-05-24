@@ -12,6 +12,9 @@ import java.util.concurrent.CompletableFuture;
 /** Service gửi yêu cầu đặt giá từ client xuống server. */
 public final class BidService {
 
+    private static final long MIN_BID_AMOUNT = 1_000L;
+    private static final long MAX_BID_AMOUNT = 100_000_000_000L;
+
     private final ClientNetworkFacade networkFacade;
 
     /** Tạo service dùng network facade mặc định của app. */
@@ -30,29 +33,34 @@ public final class BidService {
             return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
         }
 
-        Long amount = parsePositiveLong(amountText);
+        Long amount = parseBidAmount(amountText);
         if (amount == null) {
-            return AuctionServiceSupport.failedFuture("Giá đặt phải là số nguyên lớn hơn 0.");
+            return AuctionServiceSupport.failedFuture("Giá đặt phải là số nguyên hợp lệ.");
+        }
+        if (amount < MIN_BID_AMOUNT) {
+            return AuctionServiceSupport.failedFuture("Giá đặt tối thiểu là 1.000 ₫.");
+        }
+        if (amount > MAX_BID_AMOUNT) {
+            return AuctionServiceSupport.failedFuture("Giá đặt vượt quá giới hạn cho phép.");
         }
 
         return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.placeBid(auctionId, amount),
-                        PacketType.PLACE_BID_SUCCESS,
-                        BidDTOs.BidResultDTO.class,
-                        "Không đặt giá được.")
-                .thenApply(BidViewModelMapper::toLiveBidViewModel);
+            .sendRequest(
+                networkFacade,
+                ClientRequestFactory.placeBid(auctionId, amount),
+                PacketType.PLACE_BID_SUCCESS,
+                BidDTOs.BidResultDTO.class,
+                "Không đặt giá được.")
+            .thenApply(BidViewModelMapper::toLiveBidViewModel);
     }
 
-    private Long parsePositiveLong(String amountText) {
+    private Long parseBidAmount(String amountText) {
         if (amountText == null || amountText.isBlank()) {
             return null;
         }
 
         try {
-            long amount = Long.parseLong(amountText.trim().replace(".", "").replace(",", ""));
-            return amount > 0 ? amount : null;
+            return Long.parseLong(amountText.trim().replaceAll("[\\s,.]", ""));
         } catch (NumberFormatException exception) {
             return null;
         }
