@@ -46,7 +46,32 @@ public final class WatchAuctionService {
                 PacketType.WATCH_AUCTION_SUCCESS,
                 AuctionDTOs.AuctionDTO.class,
                 "Không theo dõi được phiên đấu giá.")
-            .thenApply(AuctionViewModelMapper::toDetailViewModel);
+            .thenApply(
+                dto -> {
+                    seedJoinedStateFromDto(dto);
+                    return AuctionViewModelMapper.toDetailViewModel(dto);
+                });
+    }
+
+    /**
+     * Đồng bộ trạng thái đã tham gia/đã rời từ response WATCH_AUCTION_SUCCESS.
+     *
+     * <p>Server đã gửi hai field này theo user hiện tại. Nếu không seed lại ở đây, màn live có thể
+     * chỉ vào được chế độ theo dõi dù user đã từng join phiên trong phiên đăng nhập trước.
+     */
+    private static void seedJoinedStateFromDto(AuctionDTOs.AuctionDTO dto) {
+        if (dto == null || dto.getId() == null || dto.getId().isBlank()) {
+            return;
+        }
+
+        JoinedAuctionState state = JoinedAuctionState.getInstance();
+        String id = dto.getId();
+
+        if (Boolean.TRUE.equals(dto.getLeftByCurrentUser())) {
+            state.markLeft(id);
+        } else if (Boolean.TRUE.equals(dto.getJoinedByCurrentUser())) {
+            state.markJoined(id);
+        }
     }
 
     /**
