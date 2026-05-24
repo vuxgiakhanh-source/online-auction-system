@@ -234,8 +234,14 @@ public class AuctionHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId), requestId));
                 return;
             }
+            // Resolve user từ session cache để set joinedByCurrentUser / leftByCurrentUser.
+            // Dùng getCachedUser() — không hit DB, không fail nếu session là anonymous.
+            com.group13.auction.model.user.User requestingUser = session.getCachedUser();
+            if (requestingUser == null && session.isAuthenticated()) {
+                requestingUser = AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            }
             session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_SUCCESS,
-                DTOMapper.toAuctionDTO(auction), requestId));
+                DTOMapper.toAuctionDTO(auction, requestingUser), requestId));
         } catch (Exception e) {
             log.error("Get auction detail failed: username={}, requestId={}",
                 session.getUsername(), requestId, e);
