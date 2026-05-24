@@ -236,18 +236,34 @@ public class BidHandler implements PacketHandler {
                 auctionId, session.getUsername(), bidder.getId(), result.leaderChanged, requestId);
 
             if (result.leaderChanged && auction != null) {
+                // FIX BUG PRICE-ON-LEAVE:
+                // Dùng result.previousPrice (giá của leader vừa rời) làm previousPrice,
+                // và auction.getCurrentPrice() (giá của người đứng thứ 2) làm newCurrentPrice.
+                // Trước đây cả 2 đều dùng auction.getCurrentPrice() → priceChange = 0,
+                // client không hiển thị giá trị đã giảm đúng cách.
+                long newPrice = auction.getCurrentPrice(); // = giá của bidder thứ 2
                 com.group13.auction.common.dto.bid.BidDTOs.BidUpdateDTO update =
                     com.group13.auction.network.server.util.DTOMapper.toBidUpdateDTO(
-                        auction, auction.getCurrentPrice(), auction.getCurrentPrice());
+                        auction, newPrice, result.previousPrice);
                 update.setLeaderId(
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getId() : null);
                 update.setLeaderUsername(
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "Chưa có");
                 sessionManager.broadcastToAuction(auctionId, Packet.of(PacketType.BID_UPDATE, update));
-                log.info("Leader-change broadcast sent: auctionId={}, newLeader={}, newPrice={}",
+                log.info("Leader-change broadcast sent: auctionId={} newLeader={} newPrice={} previousPrice={}",
                     auctionId,
                     auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "none",
-                    auction.getCurrentPrice());
+                    newPrice, result.previousPrice);
+
+                // FIX AUTO-BID AFTER LEAVE:
+                // Khi leader rời phiên, giá drop về bidder thứ 2. Các auto-bidder khác
+                // cần được kích hoạt để counter bidder thứ 2 (nếu họ có đủ budget).
+                // triggeredByUserId = bidder.getId() (người vừa rời) để process() biết ai là
+                // "nguồn" trigger — dùng trong logging; logic bên trong dùng currentLeader để
+                // xác định ai cần counter.
+                final NormalUser leavingBidder = bidder;
+                final Auction    triggerAuction = auction;
+                autoBidProcessor.submit(triggerAuction, leavingBidder.getId());
             }
 
             // Build response từ LeaveResult — không tính lại bất kỳ điều kiện nào
@@ -397,7 +413,7 @@ public class BidHandler implements PacketHandler {
                 DTOMapper.toBidChartPoint(req.getAuctionId(), confirmedAmount, bidder.getUsername(), false)));
 
         // AutoBid ngoài lock — tự acquire lock nội bộ cho từng bid trong chain
-        autoBidProcessor.process(auction, bidder.getId());
+        autoBidProcessor.submit(auction, bidder.getId());
     }
 
 
@@ -449,29 +465,47 @@ public class BidHandler implements PacketHandler {
             autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
             log.info("Auto-bid registered: auctionId={}, bidderId={}, username={}, maxBid={}, firstBid={}",
                 req.getAuctionId(), bidder.getId(), bidder.getUsername(), req.getMaxBid(), nextBid);
-            try {
-                bidService.placeBid(bidder, auction, nextBid, strategy);
-            } catch (Exception ex) {
-                autoBidRegistry.cancel(bidder.getId(), req.getAuctionId());
-                throw ex;
+
+            // FIX SELF-OUTBID BUG:
+            // Nếu user ĐANG là leader hiện tại → KHÔNG đặt bid lần đầu vì sẽ
+            // tự bid cao hơn giá của chính mình. Chỉ đăng ký vào registry,
+            // auto-bid sẽ kích hoạt khi người khác counter-bid.
+            // Nếu user CHƯA phải leader → đặt bid ngay để vào cuộc.
+            boolean isAlreadyLeader = auction.getCurrentLeader() != null
+                && auction.getCurrentLeader().getId().equals(bidder.getId());
+
+            if (isAlreadyLeader) {
+                log.info("Auto-bid registered without initial bid (user is already leader): " +
+                        "auctionId={} bidderId={} currentPrice={}",
+                    req.getAuctionId(), bidder.getId(), auction.getCurrentPrice());
+            } else {
+                try {
+                    bidService.placeBid(bidder, auction, nextBid, strategy);
+                } catch (Exception ex) {
+                    autoBidRegistry.cancel(bidder.getId(), req.getAuctionId());
+                    throw ex;
+                }
             }
 
             BidDTOs.AutoBidRegistrationDTO reg = new BidDTOs.AutoBidRegistrationDTO();
             reg.setAuctionId(req.getAuctionId());
             reg.setMaxBid(req.getMaxBid());
-            reg.setCurrentSystemBid(nextBid);
+            // Nếu là leader thì currentSystemBid = giá hiện tại (không thay đổi)
+            reg.setCurrentSystemBid(isAlreadyLeader ? auction.getCurrentPrice() : nextBid);
             reg.setActive(true);
             reg.setRegisteredAt(LocalDateTime.now());
             session.send(Packet.of(PacketType.REGISTER_AUTO_BID_SUCCESS, reg, requestId));
 
-            BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
-            sessionManager.broadcastToAuction(req.getAuctionId(),
-                Packet.of(PacketType.BID_UPDATE, update));
+            if (!isAlreadyLeader) {
+                BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
+                sessionManager.broadcastToAuction(req.getAuctionId(),
+                    Packet.of(PacketType.BID_UPDATE, update));
 
-            BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
-                req.getAuctionId(), nextBid, bidder.getUsername(), true);
-            sessionManager.broadcastToAuction(req.getAuctionId(),
-                Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+                BidDTOs.BidChartPointDTO chartPoint = DTOMapper.toBidChartPoint(
+                    req.getAuctionId(), nextBid, bidder.getUsername(), true);
+                sessionManager.broadcastToAuction(req.getAuctionId(),
+                    Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+            }
 
         } catch (AuctionBusinessException e) {
             log.warn("Register auto-bid rejected by business rule: auctionId={}, username={}, requestId={}, reason={}",
@@ -488,7 +522,7 @@ public class BidHandler implements PacketHandler {
         }
         // FIX DEADLOCK: process ngoài lock
         if (registerAutoBidAuction != null && registerAutoBidBidderId != null) {
-            autoBidProcessor.process(registerAutoBidAuction, registerAutoBidBidderId);
+            autoBidProcessor.submit(registerAutoBidAuction, registerAutoBidBidderId);
         }
     }
 
@@ -569,7 +603,7 @@ public class BidHandler implements PacketHandler {
         }
         // FIX DEADLOCK: process ngoài lock
         if (updateAutoBidAuction != null && updateAutoBidBidderId != null) {
-            autoBidProcessor.process(updateAutoBidAuction, updateAutoBidBidderId);
+            autoBidProcessor.submit(updateAutoBidAuction, updateAutoBidBidderId);
         }
     }
 
