@@ -5,13 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/auction/AuctionDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/search/SearchDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-common/src/main/java/com/group13/auction/common/dto/search/SearchDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/dao/AuctionDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/handler/AuctionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/main/resources/database/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/resources/database/schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/security/AuctionHandlerSecurityTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/security/BidHandlerWebSocketSecurityTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/BidWebSocketIntegrationIT.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketResponseAssert.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketRouterDispatchTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/SessionManagerBroadcastTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/UserAdminHandlerDispatchTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -247,7 +251,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ServerMain">
+  <component name="RunManager" selected="Application.TestLauncher">
     <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
       <module name="auction-client" />
@@ -338,9 +342,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ServerMain" />
-        <item itemvalue="Application.Launcher" />
         <item itemvalue="Application.TestLauncher" />
+        <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.ChatbotProviderTest" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
       </list>
@@ -398,7 +402,7 @@
       <workItem from="1779442222574" duration="573000" />
       <workItem from="1779598283677" duration="7052000" />
       <workItem from="1779628486499" duration="784000" />
-      <workItem from="1779638754173" duration="312000" />
+      <workItem from="1779638754173" duration="1529000" />
     </task>
     <servers />
   </component>
