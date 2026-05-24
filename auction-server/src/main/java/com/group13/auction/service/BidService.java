@@ -12,6 +12,7 @@ import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.bid.BidTransaction.BidResult;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
 import com.group13.auction.service.iservice.IAuctionService;
@@ -218,6 +219,9 @@ public class BidService implements IBidService {
     boolean reserveMet;
     boolean extendedForAntiSniping = false;
 
+    NormalUser previousLeader = auction.getCurrentLeader();
+    long previousPrice = auction.getCurrentPrice();
+
     lock.lock();
     try {
       if (!auction.isAcceptingBids()) {
@@ -262,6 +266,11 @@ public class BidService implements IBidService {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_PLACED, bidder, amount);
     } else {
       auctionService.notify(auction, AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET, bidder, amount);
+    }
+
+    if (previousLeader != null && !previousLeader.getId().equals(bidder.getId())) {
+      ServerBroadcastNotifier.getInstance().notifyOutbid(
+          previousLeader, auction, bidder, amount, previousPrice);
     }
 
     if (extendedForAntiSniping) {

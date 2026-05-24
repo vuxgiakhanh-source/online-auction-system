@@ -1,6 +1,7 @@
 package com.group13.auction.unit.model;
 
 import com.group13.auction.model.notification.Notification;
+import com.group13.auction.model.notification.NotificationTypes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,16 +22,26 @@ class NotificationTest {
     class CreateTest {
 
         @Test
-        @DisplayName("create() — id không null, isRead=false")
+        @DisplayName("create() — id không null, isRead=false, type SYSTEM")
         void create_defaultState() {
-            Notification n = Notification.create("user-1", "auction-1", "Bạn bị vượt giá", "Giá hiện tại đã cao hơn max bid của bạn.");
+            Notification n = Notification.create("user-1", "auction-1",
+                "Bạn bị vượt giá", "Giá hiện tại đã cao hơn max bid của bạn.");
             assertThat(n.getId()).isNotNull().isNotEmpty();
             assertThat(n.getUserId()).isEqualTo("user-1");
             assertThat(n.getAuctionId()).isEqualTo("auction-1");
             assertThat(n.getTitle()).isEqualTo("Bạn bị vượt giá");
             assertThat(n.getBody()).isEqualTo("Giá hiện tại đã cao hơn max bid của bạn.");
+            assertThat(n.getNotificationType()).isEqualTo(NotificationTypes.SYSTEM);
             assertThat(n.isRead()).isFalse();
             assertThat(n.getCreatedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("create() với type SecondChanceOffer")
+        void create_secondChanceType() {
+            Notification n = Notification.create(
+                "user-1", "auction-1", NotificationTypes.SECOND_CHANCE_OFFER, "SC", "Body");
+            assertThat(n.getNotificationType()).isEqualTo(NotificationTypes.SECOND_CHANCE_OFFER);
         }
 
         @Test
@@ -46,10 +57,11 @@ class NotificationTest {
         void reconstitute_preservesFields() {
             LocalDateTime ts = LocalDateTime.of(2025, 1, 1, 10, 0);
             Notification n = Notification.reconstitute("id-42", ts, ts,
-                    "u2", "a2", "hello", "world", true);
+                "u2", "a2", NotificationTypes.SECOND_CHANCE_OFFER, "hello", "world", true);
             assertThat(n.getId()).isEqualTo("id-42");
             assertThat(n.getUserId()).isEqualTo("u2");
             assertThat(n.getAuctionId()).isEqualTo("a2");
+            assertThat(n.getNotificationType()).isEqualTo(NotificationTypes.SECOND_CHANCE_OFFER);
             assertThat(n.getTitle()).isEqualTo("hello");
             assertThat(n.getBody()).isEqualTo("world");
             assertThat(n.isRead()).isTrue();

@@ -279,7 +279,13 @@ cd online-auction-system
 #### 2. Tạo Database
 
 ```bash
-mysql -u root -p < auction-server/src/main/resources/database/database.sql
+# Docker (khuyến nghị): schema + seed tự chạy khi volume DB mới
+docker compose up db -d
+
+# MySQL local (không Docker):
+mysql -u root -p -e "DROP DATABASE IF EXISTS auction_db; CREATE DATABASE auction_db;"
+mysql -u root -p auction_db < auction-server/src/main/resources/database/schema.sql
+mysql -u root -p auction_db < auction-server/src/main/resources/database/seed.sql
 ```
 > Add ảnh chụp MySQL Workbench hoặc terminal sau khi import thành công.
 

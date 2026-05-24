@@ -316,13 +316,6 @@ public class PaymentHandler implements PacketHandler {
 
                 session.send(Packet.of(PacketType.PAYMENT_SUCCESS, result, requestId));
 
-                // Notify Seller
-                if (auction.getItem().getSeller() != null) {
-                    String sellerId = auction.getItem().getSeller().getId();
-                    sessionManager.sendToUser(sellerId,
-                        Packet.of(PacketType.PAYMENT_COMPLETED_NOTIFY, result));
-                }
-
                 // Push AuctionUpdateDTO cho tất cả watcher
                 AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
                 sessionManager.broadcastToAuction(req.getAuctionId(),

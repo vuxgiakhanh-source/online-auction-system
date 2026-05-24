@@ -9,6 +9,7 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.iservice.IAuctionService;
@@ -24,8 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,6 +65,11 @@ public class AuctionTimerService implements IAuctionTimerService {
      */
     private int releaseScanCount = 0;
     private static final int RELEASE_SCAN_INTERVAL = 60;
+    private static final long UPCOMING_END_10_MIN_SECONDS = 600;
+    private static final long UPCOMING_END_5_MIN_SECONDS = 300;
+
+    /** Tránh gửi trùng cảnh báo sắp hết giờ cho cùng một mốc endTime. */
+    private final Set<String> upcomingEndNotifiedKeys = ConcurrentHashMap.newKeySet();
 
     private AuctionTimerService() {}
 
@@ -121,6 +130,7 @@ public class AuctionTimerService implements IAuctionTimerService {
         try {
             LocalDateTime now = LocalDateTime.now();
             startPendingAuctions(now);
+            notifyUpcomingAuctionEnds(now);
             closeExpiredAuctions(now);
             expirePendingWinnerPayments();
             expirePendingSecondChanceOffers(now);
@@ -230,6 +240,40 @@ public class AuctionTimerService implements IAuctionTimerService {
             } finally {
                 MDC.remove("auctionId");
                 lockRegistry.unlock(auction.getId());
+            }
+        }
+    }
+
+    /**
+     * Nhắc người đã JOINED khi phiên RUNNING còn ~10 phút và ~5 phút trước khi kết thúc.
+     */
+    private void notifyUpcomingAuctionEnds(LocalDateTime now) {
+        List<Auction> runningAuctions = AuctionManager.getInstance()
+            .getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+
+        for (Auction auction : runningAuctions) {
+            if (auction.getEndTime() == null || !auction.getEndTime().isAfter(now)) {
+                continue;
+            }
+            long secondsLeft = Duration.between(now, auction.getEndTime()).getSeconds();
+            if (secondsLeft > UPCOMING_END_10_MIN_SECONDS) {
+                continue;
+            }
+
+            String endKey = auction.getEndTime().toString();
+            if (secondsLeft <= UPCOMING_END_10_MIN_SECONDS) {
+                String key10 = auction.getId() + ":10:" + endKey;
+                if (upcomingEndNotifiedKeys.add(key10)) {
+                    int minutesLabel = secondsLeft <= UPCOMING_END_5_MIN_SECONDS ? 5 : 10;
+                    ServerBroadcastNotifier.getInstance()
+                        .notifyAuctionUpcomingEnd(auction, minutesLabel);
+                }
+            }
+            if (secondsLeft <= UPCOMING_END_5_MIN_SECONDS) {
+                String key5 = auction.getId() + ":5:" + endKey;
+                if (upcomingEndNotifiedKeys.add(key5)) {
+                    ServerBroadcastNotifier.getInstance().notifyAuctionUpcomingEnd(auction, 5);
+                }
             }
         }
     }

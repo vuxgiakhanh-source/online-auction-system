@@ -33,7 +33,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
             .withDatabaseName("omnibid_test")
             .withUsername("test_user")
             .withPassword("test_pass")
-            .withInitScript("integration/schema.sql");
+            .withInitScript("database/schema.sql");
 
     private UserDAO          userDAO;
     private ItemDAO          itemDAO;
