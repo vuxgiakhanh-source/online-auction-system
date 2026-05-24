@@ -2,6 +2,7 @@ package com.group13.auction.ui.controller.auction;
 
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.auction.AuctionQueryService;
 import com.group13.auction.ui.util.AlertUtil;
@@ -17,21 +18,38 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.scene.image.ImageView;
 
 /** Controller cho màn danh sách phiên đấu giá. */
 public final class AuctionListController {
 
     private static final int DEFAULT_PAGE = 0;
     private static final int DEFAULT_PAGE_SIZE = 30;
+
+    private static final String STATUS_ALL_LABEL = "Tất cả";
+
+    private static final String SCOPE_ALL_LABEL = "Tất cả phiên";
+    private static final String SCOPE_MY_AUCTIONS_LABEL = "Phiên của tôi";
+
     private static final String SORT_BY_START_TIME_LABEL = "Thời gian bắt đầu";
     private static final String SORT_BY_ACCESS_COUNT_LABEL = "Lượt truy cập";
     private static final String SORT_BY_CURRENT_PRICE_LABEL = "Giá hiện tại";
 
     private final AuctionQueryService auctionQueryService = new AuctionQueryService();
+
+    @FXML
+    private TextField productSearchField;
+
+    @FXML
+    private HBox scopeFilterGroup;
+
+    @FXML
+    private ComboBox<String> scopeFilterComboBox;
 
     @FXML
     private ComboBox<String> statusFilterComboBox;
@@ -48,10 +66,11 @@ public final class AuctionListController {
     @FXML
     private ProgressIndicator loadingIndicator;
 
-    /** Khởi tạo combobox và tải danh sách phiên đấu giá. */
+    /** Khởi tạo bộ lọc, ô tìm kiếm và tải danh sách phiên đấu giá. */
     @FXML
     public void initialize() {
         setupFilters();
+        setupSearchField();
         loadAuctions();
     }
 
@@ -67,16 +86,18 @@ public final class AuctionListController {
         loadAuctions();
     }
 
-    /** Áp dụng filter/sort đang chọn. */
+    /** Áp dụng filter/sort/tìm kiếm đang chọn. */
     @FXML
     public void handleApplyFilter() {
         loadAuctions();
     }
 
     private void setupFilters() {
+        setupScopeFilter();
+
         statusFilterComboBox
-                .getItems()
-                .setAll("Tất cả", "OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED");
+            .getItems()
+            .setAll(STATUS_ALL_LABEL, "OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED");
         statusFilterComboBox.getSelectionModel().selectFirst();
 
         sortByComboBox
@@ -88,26 +109,50 @@ public final class AuctionListController {
         sortByComboBox.getSelectionModel().selectFirst();
     }
 
+    private void setupScopeFilter() {
+        scopeFilterComboBox.getItems().setAll(SCOPE_ALL_LABEL, SCOPE_MY_AUCTIONS_LABEL);
+        scopeFilterComboBox.getSelectionModel().selectFirst();
+
+        boolean seller = isCurrentUserSeller();
+        scopeFilterGroup.setVisible(seller);
+        scopeFilterGroup.setManaged(seller);
+
+        if (!seller) {
+            scopeFilterComboBox.getSelectionModel().select(SCOPE_ALL_LABEL);
+        }
+    }
+
+    private void setupSearchField() {
+        productSearchField.setOnAction(event -> handleApplyFilter());
+    }
+
     private void loadAuctions() {
         setLoading(true, "Đang tải danh sách phiên đấu giá...");
         auctionCardContainer.getChildren().clear();
 
         auctionQueryService
-                .getAuctionCards(selectedStatusFilter(), selectedSortBy(), DEFAULT_PAGE, DEFAULT_PAGE_SIZE)
-                .thenAccept(cards -> FxThreadUtil.runOnFxThread(() -> renderAuctionCards(cards)))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không tải được danh sách phiên đấu giá.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .getAuctionCards(
+                selectedKeyword(),
+                selectedStatusFilter(),
+                selectedMineOnlyFilter(),
+                currentUserId(),
+                selectedSortBy(),
+                DEFAULT_PAGE,
+                DEFAULT_PAGE_SIZE)
+            .thenAccept(cards -> FxThreadUtil.runOnFxThread(() -> renderAuctionCards(cards)))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không tải được danh sách phiên đấu giá.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void renderAuctionCards(List<AuctionCardViewModel> cards) {
-        setLoading(false, "Tìm thấy " + cards.size() + " phiên đấu giá.");
+        setLoading(false, buildResultMessage(cards.size()));
         auctionCardContainer.getChildren().clear();
 
         if (cards.isEmpty()) {
@@ -140,7 +185,7 @@ public final class AuctionListController {
         titleBox.getChildren().addAll(titleLabel, metaLabel);
 
         Region spacer = new Region();
-        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Label statusBadge = new Label(card.statusText());
         statusBadge.getStyleClass().add("auction-status-badge");
@@ -149,12 +194,12 @@ public final class AuctionListController {
 
         HBox priceRow = new HBox(18.0);
         priceRow
-                .getChildren()
-                .addAll(
-                        createMetric("Giá hiện tại", card.currentPriceText()),
-                        createMetric("Giá khởi điểm", card.startingPriceText()),
-                        createMetric("Còn lại", card.remainingTimeText()),
-                        createMetric("Lượt truy cập", card.viewerCountText()));
+            .getChildren()
+            .addAll(
+                createMetric("Giá hiện tại", card.currentPriceText()),
+                createMetric("Giá khởi điểm", card.startingPriceText()),
+                createMetric("Còn lại", card.remainingTimeText()),
+                createMetric("Lượt truy cập", card.viewerCountText()));
 
         HBox actionRow = new HBox(10.0);
 
@@ -215,28 +260,54 @@ public final class AuctionListController {
     }
 
     private Label createEmptyState() {
-        Label emptyLabel = new Label("Chưa có phiên đấu giá phù hợp với bộ lọc hiện tại.");
+        Label emptyLabel = new Label("Không có phiên đấu giá phù hợp với bộ lọc hiện tại.");
         emptyLabel.getStyleClass().add("auction-empty-state");
         return emptyLabel;
     }
 
     private void openAuctionDetail(String auctionId) {
         AppContext.getInstance()
-                .getScreenStateStore()
-                .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
+            .getScreenStateStore()
+            .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
         Navigator.getInstance().goToAuctionDetail();
     }
 
     private void openLiveBidding(String auctionId) {
         AppContext.getInstance()
-                .getScreenStateStore()
-                .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
+            .getScreenStateStore()
+            .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
         Navigator.getInstance().goToLiveBidding();
+    }
+
+    private String selectedKeyword() {
+        String keyword = productSearchField.getText();
+        return keyword == null || keyword.isBlank() ? null : keyword.trim();
+    }
+
+    private boolean selectedMineOnlyFilter() {
+        return isCurrentUserSeller()
+            && SCOPE_MY_AUCTIONS_LABEL.equals(scopeFilterComboBox.getValue());
+    }
+
+    private String currentUserId() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(UserSession::getUserId)
+            .orElse(null);
+    }
+
+    private boolean isCurrentUserSeller() {
+        return AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(UserSession::isSeller)
+            .orElse(false);
     }
 
     private String selectedStatusFilter() {
         String value = statusFilterComboBox.getValue();
-        return value == null || "Tất cả".equals(value) ? null : value;
+        return value == null || STATUS_ALL_LABEL.equals(value) ? null : value;
     }
 
     private String selectedSortBy() {
@@ -248,6 +319,23 @@ public final class AuctionListController {
             return "CURRENT_PRICE";
         }
         return "START_TIME";
+    }
+
+    private String buildResultMessage(int count) {
+        String keyword = selectedKeyword();
+        String scopeSuffix = selectedMineOnlyFilter() ? " trong phiên của tôi" : "";
+
+        if (keyword == null) {
+            return "Tìm thấy " + count + " phiên đấu giá" + scopeSuffix + ".";
+        }
+
+        return "Tìm thấy "
+            + count
+            + " phiên đấu giá"
+            + scopeSuffix
+            + " cho \""
+            + keyword
+            + "\".";
     }
 
     private void setLoading(boolean loading, String message) {
