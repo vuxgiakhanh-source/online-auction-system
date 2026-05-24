@@ -5,6 +5,47 @@ public final class AdminDTOs {
 
     private AdminDTOs() {}
 
+    /** Một bản ghi khóa tài khoản (active hoặc lịch sử). */
+    public static class AccountBanDTO {
+        private String id;
+        private String userId;
+        private String username;
+        private String email;
+        private String bannedByUsername;
+        private String reason;
+        private String note;
+        private java.time.LocalDateTime bannedAt;
+        private java.time.LocalDateTime unbannedAt;
+        private String unbannedByUsername;
+
+        public AccountBanDTO() {}
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getBannedByUsername() { return bannedByUsername; }
+        public void setBannedByUsername(String bannedByUsername) {
+            this.bannedByUsername = bannedByUsername;
+        }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
+        public java.time.LocalDateTime getBannedAt() { return bannedAt; }
+        public void setBannedAt(java.time.LocalDateTime bannedAt) { this.bannedAt = bannedAt; }
+        public java.time.LocalDateTime getUnbannedAt() { return unbannedAt; }
+        public void setUnbannedAt(java.time.LocalDateTime unbannedAt) { this.unbannedAt = unbannedAt; }
+        public String getUnbannedByUsername() { return unbannedByUsername; }
+        public void setUnbannedByUsername(String unbannedByUsername) {
+            this.unbannedByUsername = unbannedByUsername;
+        }
+    }
+
     /** Payload của ADMIN_BAN_USER. */
     public static class AdminBanUserDTO {
         private String userId;

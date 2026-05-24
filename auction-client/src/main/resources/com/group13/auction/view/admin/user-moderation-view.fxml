@@ -87,7 +87,10 @@
                         <TableColumn fx:id="usernameColumn" text="Tên đăng nhập" prefWidth="170.0"/>
                         <TableColumn fx:id="emailColumn" text="Email" prefWidth="250.0"/>
                         <TableColumn fx:id="roleColumn" text="Vai trò" prefWidth="190.0"/>
-                        <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="150.0"/>
+                        <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="120.0"/>
+                        <TableColumn fx:id="banReasonColumn" text="Lý do khóa" prefWidth="150.0"/>
+                        <TableColumn fx:id="bannedByColumn" text="Khóa bởi" prefWidth="120.0"/>
+                        <TableColumn fx:id="bannedAtColumn" text="Thời điểm khóa" prefWidth="160.0"/>
                     </columns>
                 </TableView>
 
@@ -96,6 +99,23 @@
                         text="Chưa có dữ liệu người dùng."
                         styleClass="empty-state-label"/>
             </StackPane>
+        </VBox>
+
+        <VBox spacing="12.0" styleClass="table-panel">
+            <Label text="Tài khoản đang bị khóa" styleClass="section-title"/>
+            <Label
+                    text="Dữ liệu từ bảng account_bans (chỉ bản ghi chưa mở khóa)."
+                    styleClass="muted-label"/>
+            <TableView fx:id="banTable" prefHeight="180.0" styleClass="data-table">
+                <columns>
+                    <TableColumn fx:id="banUserIdColumn" text="Mã user" prefWidth="160.0"/>
+                    <TableColumn fx:id="banUsernameColumn" text="Tên đăng nhập" prefWidth="140.0"/>
+                    <TableColumn fx:id="banEmailColumn" text="Email" prefWidth="200.0"/>
+                    <TableColumn fx:id="banTableReasonColumn" text="Lý do" prefWidth="150.0"/>
+                    <TableColumn fx:id="banTableByColumn" text="Khóa bởi" prefWidth="120.0"/>
+                    <TableColumn fx:id="banTableAtColumn" text="Thời điểm" prefWidth="160.0"/>
+                </columns>
+            </TableView>
         </VBox>
 
         <HBox alignment="CENTER_LEFT" spacing="12.0">

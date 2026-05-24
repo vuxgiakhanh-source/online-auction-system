@@ -1,5 +1,6 @@
 package com.group13.auction.unit.service;
 
+import com.group13.auction.dao.AdminDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.exception.AuthenticationException;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,11 +42,14 @@ class UserServiceTest {
     @Mock
     private UserDAO userDAO;
 
+    @Mock
+    private AdminDAO adminDAO;
+
     private UserService sut;
 
     @BeforeEach
     void setUp() {
-        sut = new UserService(userDAO);
+        sut = new UserService(userDAO, adminDAO);
         // Đảm bảo AuctionManager không chứa user nào trước mỗi test
         // để UserService.login() không tìm thấy trong memory và luôn đi qua findUserCoreByUsername()
         clearAuctionManagerUsers();
@@ -94,6 +99,7 @@ class UserServiceTest {
     @DisplayName("login - missing username throws USER_NOT_FOUND")
     void login_usernameNotFound_throwsUserNotFound() {
         when(userDAO.findUserCoreByUsername("unknown")).thenReturn(null);
+        when(adminDAO.findByUsername("unknown")).thenReturn(Optional.empty());
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("unknown", "anyPassword"),
@@ -192,6 +198,7 @@ class UserServiceTest {
     @DisplayName("login - USER_NOT_FOUND is checked before password")
     void login_checkOrder_notFoundBeforePassword() {
         when(userDAO.findUserCoreByUsername("ghost")).thenReturn(null);
+        when(adminDAO.findByUsername("ghost")).thenReturn(Optional.empty());
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("ghost", "anyPass"),
@@ -219,6 +226,7 @@ class UserServiceTest {
     @DisplayName("login - AuthenticationException has descriptive message")
     void login_exceptionContainsDescriptiveMessage() {
         when(userDAO.findUserCoreByUsername("nobody")).thenReturn(null);
+        when(adminDAO.findByUsername("nobody")).thenReturn(Optional.empty());
 
         AuthenticationException ex = catchThrowableOfType(
                 () -> sut.login("nobody", "pass"),

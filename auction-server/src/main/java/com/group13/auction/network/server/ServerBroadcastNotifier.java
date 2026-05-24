@@ -11,7 +11,11 @@ import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.auction.SecondChanceOffer;
+import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.notification.Notification;
+import com.group13.auction.model.notification.NotificationMessages;
+import com.group13.auction.model.notification.NotificationTypes;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.network.server.session.SessionManager;
@@ -45,11 +49,18 @@ public class ServerBroadcastNotifier {
     public static ServerBroadcastNotifier getInstance() { return INSTANCE; }
 
     private void persistNotification(String userId, String auctionId, String title, String body) {
+        persistNotification(userId, auctionId, NotificationTypes.SYSTEM, title, body);
+    }
+
+    private void persistNotification(String userId, String auctionId, String notificationType,
+                                     String title, String body) {
         try {
-            Notification notification = Notification.create(userId, auctionId, title, body);
+            Notification notification = Notification.create(
+                userId, auctionId, notificationType, title, body);
             notificationDAO.save(notification);
         } catch (Exception e) {
-            log.warn("Không thể lưu notification: userId={}, title={}", userId, title, e);
+            log.warn("Không thể lưu notification: userId={}, type={}, title={}",
+                userId, notificationType, title, e);
         }
     }
 
@@ -65,12 +76,17 @@ public class ServerBroadcastNotifier {
      */
     public void notifyJoinedParticipants(String auctionId, String title, String body,
                                          String excludeUserId) {
+        notifyJoinedParticipants(auctionId, NotificationTypes.SYSTEM, title, body, excludeUserId);
+    }
+
+    public void notifyJoinedParticipants(String auctionId, String notificationType,
+                                         String title, String body, String excludeUserId) {
         if (auctionId == null || title == null || body == null) return;
         var joinedUserIds = userDAO.findJoinedUserIdsByAuctionId(auctionId);
         int sent = 0;
         for (String userId : joinedUserIds) {
             if (excludeUserId != null && excludeUserId.equals(userId)) continue;
-            persistNotification(userId, auctionId, title, body);
+            persistNotification(userId, auctionId, notificationType, title, body);
             sent++;
         }
         if (sent > 0) {
@@ -88,7 +104,12 @@ public class ServerBroadcastNotifier {
         if (type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
             || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST
             || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED
-            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED) {
+            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
+            || type == AuctionEvent.AuctionEventType.BID_PLACED
+            || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
+            || type == AuctionEvent.AuctionEventType.AUCTION_ENDED
+            || type == AuctionEvent.AuctionEventType.PAYMENT_COMPLETED
+            || type == AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED) {
             return;
         }
         String auctionId = event.getAuction().getId();
@@ -147,6 +168,26 @@ public class ServerBroadcastNotifier {
 
     // ── Bid events ────────────────────────────────────────────────────────────
 
+    /** Chỉ gửi cho người vừa bị vượt giá (leader trước khi có bid mới). */
+    public void notifyOutbid(NormalUser previousLeader, Auction auction,
+                             NormalUser newBidder, long newAmount, long previousAmount) {
+        if (previousLeader == null || auction == null || newBidder == null) {
+            return;
+        }
+        if (previousLeader.getId().equals(newBidder.getId())) {
+            return;
+        }
+        persistNotification(
+            previousLeader.getId(),
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.outbidTitle(),
+            NotificationMessages.outbidBody(
+                auction, NotificationMessages.username(newBidder), newAmount, previousAmount));
+        log.info("Outbid notification: auctionId={}, outbidUser={}, newBidder={}, amount={}",
+            auction.getId(), previousLeader.getUsername(), newBidder.getUsername(), newAmount);
+    }
+
     public void notifyBidUpdate(Auction auction, long bidAmount,
                                 String bidderUsername, boolean isAutoBid) {
         log.info("Broadcast BID_UPDATE: auctionId={}, bidder={}, amount={}, autoBid={}",
@@ -201,13 +242,56 @@ public class ServerBroadcastNotifier {
         AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
         sessionManager.broadcastToAuction(auction.getId(),
             Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
-        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
-            persistNotification(auction.getItem().getSeller().getId(), auction.getId(),
-                "Phiên đấu giá đã kết thúc", "Phiên đấu giá của bạn đã kết thúc với winner hợp lệ.");
+        notifyAuctionOutcome(auction);
+    }
+
+    /**
+     * Thông báo won/lost cho người tham gia và seller sau khi phiên có winner hợp lệ.
+     */
+    public void notifyAuctionOutcome(Auction auction) {
+        if (auction == null || auction.getCurrentLeader() == null) {
+            return;
         }
-        if (auction.getCurrentLeader() != null) {
-            persistNotification(auction.getCurrentLeader().getId(), auction.getId(),
-                "Bạn đã thắng phiên đấu giá", "Chúc mừng bạn đã trở thành người thắng cuộc.");
+        NormalUser winner = auction.getCurrentLeader();
+        long finalPrice = auction.getCurrentPrice();
+        long depositPaid = auction.getWinner() != null
+            ? auction.getWinner().getDepositPaid()
+            : auction.getItem().getStartingPrice() * 3 / 10;
+
+        persistNotification(
+            winner.getId(),
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.auctionWonTitle(),
+            NotificationMessages.auctionWonBody(auction, finalPrice, depositPaid));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            NormalUser seller = auction.getItem().getSeller();
+            persistNotification(
+                seller.getId(),
+                auction.getId(),
+                NotificationTypes.AUCTION,
+                NotificationMessages.auctionEndedSellerTitle(),
+                NotificationMessages.auctionEndedSellerBody(
+                    auction, NotificationMessages.username(winner), finalPrice));
+        }
+
+        String winnerId = winner.getId();
+        String sellerId = auction.getItem() != null && auction.getItem().getSeller() != null
+            ? auction.getItem().getSeller().getId()
+            : null;
+        var joinedUserIds = userDAO.findJoinedUserIdsByAuctionId(auction.getId());
+        for (String userId : joinedUserIds) {
+            if (winnerId.equals(userId) || (sellerId != null && sellerId.equals(userId))) {
+                continue;
+            }
+            persistNotification(
+                userId,
+                auction.getId(),
+                NotificationTypes.AUCTION,
+                NotificationMessages.auctionLostTitle(),
+                NotificationMessages.auctionLostBody(
+                    auction, NotificationMessages.username(winner), finalPrice));
         }
     }
 
@@ -251,12 +335,23 @@ public class ServerBroadcastNotifier {
             Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, dto));
     }
 
-    public void notifyAuctionUpcomingEnd(String auctionId, long remainingSeconds) {
+    public void notifyAuctionUpcomingEnd(Auction auction, int minutesLeft) {
+        if (auction == null) {
+            return;
+        }
+        long remainingSeconds = minutesLeft * 60L;
         AuctionDTOs.AuctionUpcomingEndDTO dto = new AuctionDTOs.AuctionUpcomingEndDTO();
-        dto.setAuctionId(auctionId);
+        dto.setAuctionId(auction.getId());
         dto.setRemainingSeconds(remainingSeconds);
-        sessionManager.broadcastToAuction(auctionId,
+        sessionManager.broadcastToAuction(auction.getId(),
             Packet.of(PacketType.AUCTION_UPCOMING_END_NOTIFY, dto));
+
+        notifyJoinedParticipants(
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.auctionEndingSoonTitle(minutesLeft),
+            NotificationMessages.auctionEndingSoonBody(auction, minutesLeft),
+            null);
     }
 
     // ── Payment ───────────────────────────────────────────────────────────────
@@ -285,6 +380,45 @@ public class ServerBroadcastNotifier {
             Packet.of(PacketType.SECOND_CHANCE_OFFER_NOTIFY, offer));
     }
 
+    /**
+     * Second Chance chỉ gửi inbox + realtime cho seller và runner-up (không broadcast cho mọi người JOINED).
+     */
+    public void notifySecondChanceOffered(Auction auction, NormalUser runnerUp,
+                                          SecondChanceOffer offer) {
+        if (auction == null || runnerUp == null || offer == null) {
+            return;
+        }
+
+        String auctionId = auction.getId();
+        long offerPrice = offer.getOfferPrice();
+
+        long depositRequired = offer.getDepositPaid();
+        persistNotification(
+            runnerUp.getId(),
+            auctionId,
+            NotificationTypes.SECOND_CHANCE_OFFER,
+            NotificationMessages.scoReceivedTitle(),
+            NotificationMessages.scoReceivedBody(
+                auction, offerPrice, depositRequired, offer.getDeadline()));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            NormalUser seller = auction.getItem().getSeller();
+            persistNotification(
+                seller.getId(),
+                auctionId,
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                NotificationMessages.scoSentToSellerTitle(),
+                NotificationMessages.scoSentToSellerBody(
+                    auction, NotificationMessages.username(runnerUp), offerPrice, offer.getDeadline()));
+        }
+
+        PaymentDTOs.SecondChanceOfferDTO dto = DTOMapper.toSecondChanceOfferDTO(auction, offer);
+        notifySecondChanceOffer(runnerUp.getId(), dto);
+
+        log.info("Second Chance Offer notified: auctionId={}, runnerUp={}, sellerOnly+runnerUp inbox",
+            auctionId, runnerUp.getUsername());
+    }
+
     public void notifyPaymentCompleted(String sellerId,
                                        PaymentDTOs.PaymentResultDTO result) {
         sessionManager.sendToUser(sellerId,
@@ -297,9 +431,30 @@ public class ServerBroadcastNotifier {
             Packet.of(PacketType.PAYMENT_EXPIRED_NOTIFY, expired));
     }
 
-    public void notifySecondChanceExpired(String runnerUpUserId, String auctionId) {
-        sessionManager.sendToUser(runnerUpUserId,
-            Packet.of(PacketType.SECOND_CHANCE_EXPIRED_NOTIFY, auctionId));
+    public void notifySecondChanceExpired(Auction auction, SecondChanceOffer offer) {
+        if (auction == null || offer == null || offer.getRunnerUp() == null) {
+            return;
+        }
+        NormalUser runnerUp = offer.getRunnerUp();
+        sessionManager.sendToUser(runnerUp.getId(),
+            Packet.of(PacketType.SECOND_CHANCE_EXPIRED_NOTIFY, auction.getId()));
+
+        persistNotification(
+            runnerUp.getId(),
+            auction.getId(),
+            NotificationTypes.SECOND_CHANCE_OFFER,
+            NotificationMessages.scoExpiredTitle(),
+            NotificationMessages.scoExpiredRunnerUpBody(auction, offer.getOfferPrice()));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            persistNotification(
+                auction.getItem().getSeller().getId(),
+                auction.getId(),
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                NotificationMessages.scoExpiredTitle(),
+                NotificationMessages.scoExpiredSellerBody(
+                    auction, NotificationMessages.username(runnerUp)));
+        }
     }
 
     /**
@@ -316,13 +471,149 @@ public class ServerBroadcastNotifier {
         sessionManager.broadcastToAuction(auction.getId(),
             Packet.of(PacketType.SECOND_CHANCE_ACCEPTED_UPDATE, update));
 
-        // Notify seller riêng: có winner mới đang chờ thanh toán
+        long offerPrice = auction.getWinner() != null
+            ? auction.getWinner().getFinalPrice()
+            : auction.getCurrentPrice();
+        if (auction.getItem() != null && auction.getItem().getSeller() != null
+            && auction.getWinner() != null && auction.getWinner().getWinner() != null) {
+            NormalUser runnerUp = auction.getWinner().getWinner();
+            persistNotification(
+                auction.getItem().getSeller().getId(),
+                auction.getId(),
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                NotificationMessages.scoAcceptedSellerTitle(),
+                NotificationMessages.scoAcceptedSellerBody(
+                    auction, NotificationMessages.username(runnerUp), offerPrice));
+            persistNotification(
+                runnerUp.getId(),
+                auction.getId(),
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                NotificationMessages.scoAcceptedRunnerUpTitle(),
+                NotificationMessages.scoAcceptedRunnerUpBody(auction, offerPrice));
+        }
+    }
+
+    public void notifySecondChanceDeclined(Auction auction, SecondChanceOffer offer) {
+        if (auction == null || offer == null || offer.getRunnerUp() == null) {
+            return;
+        }
+        NormalUser runnerUp = offer.getRunnerUp();
+        persistNotification(
+            runnerUp.getId(),
+            auction.getId(),
+            NotificationTypes.SECOND_CHANCE_OFFER,
+            NotificationMessages.scoDeclinedRunnerUpTitle(),
+            NotificationMessages.scoDeclinedRunnerUpBody(auction));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            persistNotification(
+                auction.getItem().getSeller().getId(),
+                auction.getId(),
+                NotificationTypes.SECOND_CHANCE_OFFER,
+                NotificationMessages.scoDeclinedSellerTitle(),
+                NotificationMessages.scoDeclinedSellerBody(
+                    auction, NotificationMessages.username(runnerUp)));
+        }
+    }
+
+    public void notifyPaymentSuccess(Auction auction, PaymentDTOs.PaymentResultDTO result) {
+        if (auction == null || auction.getWinner() == null) {
+            return;
+        }
+        AuctionWinner aw = auction.getWinner();
+        NormalUser winner = aw.getWinner();
+        if (winner == null) {
+            return;
+        }
+        long finalPrice = result != null && result.getFinalPrice() > 0
+            ? result.getFinalPrice()
+            : aw.getFinalPrice();
+
+        persistNotification(
+            winner.getId(),
+            auction.getId(),
+            NotificationTypes.PAYMENT,
+            NotificationMessages.paymentSuccessWinnerTitle(),
+            NotificationMessages.paymentSuccessWinnerBody(auction, finalPrice, aw.getDepositPaid()));
+
         if (auction.getItem() != null && auction.getItem().getSeller() != null) {
             String sellerId = auction.getItem().getSeller().getId();
-            persistNotification(sellerId, auction.getId(),
-                "Người mua mới chấp nhận Second Chance",
-                "Runner-up đã chấp nhận mua phiên của bạn. Đang chờ thanh toán.");
+            persistNotification(
+                sellerId,
+                auction.getId(),
+                NotificationTypes.PAYMENT,
+                NotificationMessages.paymentSuccessSellerTitle(),
+                NotificationMessages.paymentSuccessSellerBody(
+                    auction, NotificationMessages.username(winner), finalPrice));
+            if (result != null) {
+                notifyPaymentCompleted(sellerId, result);
+            }
         }
+    }
+
+    public void notifyPaymentFailed(Auction auction) {
+        if (auction == null || auction.getWinner() == null) {
+            return;
+        }
+        AuctionWinner aw = auction.getWinner();
+        NormalUser winner = aw.getWinner();
+        if (winner == null) {
+            return;
+        }
+        persistNotification(
+            winner.getId(),
+            auction.getId(),
+            NotificationTypes.PAYMENT,
+            NotificationMessages.paymentFailedTitle(),
+            NotificationMessages.paymentFailedWinnerBody(auction, aw.getDepositPaid()));
+
+        PaymentDTOs.PaymentExpiredDTO expired = new PaymentDTOs.PaymentExpiredDTO();
+        expired.setAuctionId(auction.getId());
+        expired.setDepositForfeited(aw.getDepositPaid());
+        notifyPaymentExpired(winner.getId(), expired);
+    }
+
+    public void notifyItemReceived(Auction auction) {
+        if (auction == null || auction.getWinner() == null) {
+            return;
+        }
+        NormalUser winner = auction.getWinner().getWinner();
+        if (winner == null) {
+            return;
+        }
+        persistNotification(
+            winner.getId(),
+            auction.getId(),
+            NotificationTypes.ORDER,
+            NotificationMessages.itemReceivedWinnerTitle(),
+            NotificationMessages.itemReceivedWinnerBody(auction));
+
+        if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+            persistNotification(
+                auction.getItem().getSeller().getId(),
+                auction.getId(),
+                NotificationTypes.ORDER,
+                NotificationMessages.itemReceivedSellerTitle(),
+                NotificationMessages.itemReceivedSellerBody(
+                    auction, NotificationMessages.username(winner)));
+        }
+    }
+
+    /**
+     * Tin nhắn từ seller tới buyer (gọi khi có tính năng nhắn tin).
+     */
+    public void notifyNewMessageFromSeller(Auction auction, NormalUser buyer,
+                                           NormalUser seller, String messageText) {
+        if (auction == null || buyer == null || seller == null) {
+            return;
+        }
+        persistNotification(
+            buyer.getId(),
+            auction.getId(),
+            NotificationTypes.MESSAGE,
+            NotificationMessages.sellerMessageTitle(NotificationMessages.username(seller)),
+            NotificationMessages.sellerMessageBody(
+                auction, NotificationMessages.username(seller), messageText));
     }
 
     // ── Account ───────────────────────────────────────────────────────────────

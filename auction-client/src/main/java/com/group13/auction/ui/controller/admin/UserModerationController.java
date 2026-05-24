@@ -2,6 +2,7 @@ package com.group13.auction.ui.controller.admin;
 
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.admin.AdminUserService;
+import com.group13.auction.viewmodel.admin.AccountBanViewModel;
 import com.group13.auction.viewmodel.admin.UserModerationViewModel;
 import java.util.List;
 import java.util.concurrent.CompletionException;
@@ -32,6 +33,17 @@ public final class UserModerationController {
     @FXML private TableColumn<UserModerationViewModel, String> emailColumn;
     @FXML private TableColumn<UserModerationViewModel, String> roleColumn;
     @FXML private TableColumn<UserModerationViewModel, String> statusColumn;
+    @FXML private TableColumn<UserModerationViewModel, String> banReasonColumn;
+    @FXML private TableColumn<UserModerationViewModel, String> bannedByColumn;
+    @FXML private TableColumn<UserModerationViewModel, String> bannedAtColumn;
+
+    @FXML private TableView<AccountBanViewModel> banTable;
+    @FXML private TableColumn<AccountBanViewModel, String> banUserIdColumn;
+    @FXML private TableColumn<AccountBanViewModel, String> banUsernameColumn;
+    @FXML private TableColumn<AccountBanViewModel, String> banEmailColumn;
+    @FXML private TableColumn<AccountBanViewModel, String> banTableReasonColumn;
+    @FXML private TableColumn<AccountBanViewModel, String> banTableByColumn;
+    @FXML private TableColumn<AccountBanViewModel, String> banTableAtColumn;
 
     @FXML private ChoiceBox<String> banReasonChoiceBox;
 
@@ -48,17 +60,20 @@ public final class UserModerationController {
     @FXML
     private void initialize() {
         configureTable();
+        configureBanTable();
         configureBanReasons();
         configureSelectionBinding();
         setBusy(false);
         setActionButtonsDisabled(true);
         showEmptyState("Chưa có dữ liệu người dùng.");
         loadUsers();
+        loadAccountBans();
     }
 
     @FXML
     private void handleRefresh() {
         loadUsers();
+        loadAccountBans();
     }
 
     @FXML
@@ -109,6 +124,23 @@ public final class UserModerationController {
                 .whenComplete((users, throwable) -> handleUsersResult(users, throwable));
     }
 
+    private void loadAccountBans() {
+        adminUserService
+                .getAccountBans()
+                .whenComplete((bans, throwable) -> Platform.runLater(() -> {
+                    if (throwable != null) {
+                        if (banTable != null) {
+                            banTable.setItems(FXCollections.observableArrayList());
+                        }
+                        return;
+                    }
+                    List<AccountBanViewModel> safe = bans == null ? List.of() : bans;
+                    if (banTable != null) {
+                        banTable.setItems(FXCollections.observableArrayList(safe));
+                    }
+                }));
+    }
+
     private void configureTable() {
         if (userIdColumn != null) {
             userIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
@@ -124,6 +156,36 @@ public final class UserModerationController {
         }
         if (statusColumn != null) {
             statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+        }
+        if (banReasonColumn != null) {
+            banReasonColumn.setCellValueFactory(new PropertyValueFactory<>("banReason"));
+        }
+        if (bannedByColumn != null) {
+            bannedByColumn.setCellValueFactory(new PropertyValueFactory<>("bannedBy"));
+        }
+        if (bannedAtColumn != null) {
+            bannedAtColumn.setCellValueFactory(new PropertyValueFactory<>("bannedAt"));
+        }
+    }
+
+    private void configureBanTable() {
+        if (banUserIdColumn != null) {
+            banUserIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
+        }
+        if (banUsernameColumn != null) {
+            banUsernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
+        }
+        if (banEmailColumn != null) {
+            banEmailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
+        }
+        if (banTableReasonColumn != null) {
+            banTableReasonColumn.setCellValueFactory(new PropertyValueFactory<>("reason"));
+        }
+        if (banTableByColumn != null) {
+            banTableByColumn.setCellValueFactory(new PropertyValueFactory<>("bannedBy"));
+        }
+        if (banTableAtColumn != null) {
+            banTableAtColumn.setCellValueFactory(new PropertyValueFactory<>("bannedAt"));
         }
     }
 
@@ -189,6 +251,7 @@ public final class UserModerationController {
 
                     showStatus("Cập nhật trạng thái người dùng thành công.");
                     loadUsers();
+                    loadAccountBans();
                 });
     }
 

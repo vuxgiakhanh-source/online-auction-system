@@ -51,6 +51,7 @@ public class UserAdminHandler implements PacketHandler {
         PacketType.ADMIN_BAN_USER,
         PacketType.ADMIN_UNBAN_USER,
         PacketType.ADMIN_GET_ALL_USERS,
+        PacketType.ADMIN_GET_ACCOUNT_BANS,
         PacketType.ADMIN_CREATE_STAFF,
         PacketType.ADMIN_GET_ALL_STAFF,
         PacketType.ADMIN_APPROVE_SELLER_ROLE,
@@ -117,6 +118,7 @@ public class UserAdminHandler implements PacketHandler {
             case ADMIN_BAN_USER              -> handleBanUser(session, payload, requestId);
             case ADMIN_UNBAN_USER            -> handleUnbanUser(session, payload, requestId);
             case ADMIN_GET_ALL_USERS         -> handleGetAllUsers(session, requestId);
+            case ADMIN_GET_ACCOUNT_BANS      -> handleGetAccountBans(session, requestId);
             case ADMIN_CREATE_STAFF          -> handleCreateStaff(session, payload, requestId);
             case ADMIN_GET_ALL_STAFF         -> handleGetAllStaff(session, requestId);
             case ADMIN_APPROVE_SELLER_ROLE   -> handleAdminApproveSellerRole(session, payload, requestId);
@@ -208,13 +210,16 @@ public class UserAdminHandler implements PacketHandler {
                 return;
             }
             Admin admin = (Admin) AuctionManager.getInstance().findUserByUsername(session.getUsername());
-            accountService.banUser(admin, target, Admin.BanReason.valueOf(req.getReason()));
+            accountService.banUser(admin, target, Admin.parseBanReason(req.getReason()));
 
             com.group13.auction.network.server.session.ClientSession targetSession =
                 sessionManager.getByUserId(req.getUserId());
             if (targetSession != null) targetSession.invalidateCachedUser();
 
-            session.send(Packet.of(PacketType.ADMIN_BAN_USER_SUCCESS, DTOMapper.toUserDTO(target, false), requestId));
+            UserDTO bannedDto = DTOMapper.toUserDTO(target, false);
+            accountService.accountBanDAO().findActiveByUserId(target.getId())
+                .ifPresent(row -> DTOMapper.applyActiveBan(bannedDto, row));
+            session.send(Packet.of(PacketType.ADMIN_BAN_USER_SUCCESS, bannedDto, requestId));
 
             RatingDTOs.AccountBannedDTO bannedDTO = new RatingDTOs.AccountBannedDTO();
             bannedDTO.setReason(req.getReason());
@@ -241,8 +246,13 @@ public class UserAdminHandler implements PacketHandler {
                     ErrorDTO.of(ErrorDTO.USER_NOT_FOUND, "User không tồn tại.", requestId), requestId));
                 return;
             }
-            target.setAccountStatus(User.AccountStatus.ACTIVE);
-            userDAO.updateAccountStatus(target.getId(), User.AccountStatus.ACTIVE.name());
+            Admin admin = (Admin) AuctionManager.getInstance().findUserByUsername(session.getUsername());
+            accountService.unbanUser(admin, target);
+
+            com.group13.auction.network.server.session.ClientSession targetSession =
+                sessionManager.getByUserId(userId);
+            if (targetSession != null) targetSession.invalidateCachedUser();
+
             session.send(Packet.of(PacketType.ADMIN_UNBAN_USER_SUCCESS,
                 DTOMapper.toUserDTO(target, false), requestId));
         } catch (Exception e) {
@@ -257,9 +267,27 @@ public class UserAdminHandler implements PacketHandler {
                 ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
             return;
         }
+        var activeBans = accountService.accountBanDAO().findAllActiveByUserIds();
         List<UserDTO> dtos = AuctionManager.getInstance().getAllUsers().stream()
-            .map(u -> DTOMapper.toUserDTO(u, false)).collect(Collectors.toList());
+            .map(u -> {
+                UserDTO dto = DTOMapper.toUserDTO(u, false);
+                DTOMapper.applyActiveBan(dto, activeBans.get(u.getId()));
+                return dto;
+            })
+            .collect(Collectors.toList());
         session.send(Packet.of(PacketType.ADMIN_GET_ALL_USERS_SUCCESS, dtos, requestId));
+    }
+
+    private void handleGetAccountBans(ClientSession session, String requestId) {
+        if (!session.isAdmin()) {
+            session.send(Packet.of(PacketType.ADMIN_GET_ACCOUNT_BANS_FAILED,
+                ErrorDTO.of(ErrorDTO.UNAUTHORIZED, "Không có quyền.", requestId), requestId));
+            return;
+        }
+        List<AdminDTOs.AccountBanDTO> dtos = accountService.accountBanDAO().findAllActive().stream()
+            .map(DTOMapper::toAccountBanDTO)
+            .collect(Collectors.toList());
+        session.send(Packet.of(PacketType.ADMIN_GET_ACCOUNT_BANS_SUCCESS, dtos, requestId));
     }
 
     private void handleCreateStaff(ClientSession session, JsonElement payload, String requestId) {
@@ -684,7 +712,7 @@ public class UserAdminHandler implements PacketHandler {
                 dto.setRead(n.isRead());
                 dto.setCreatedAt(n.getCreatedAt());
                 dto.setRelatedAuctionId(n.getAuctionId());
-                dto.setType("SYSTEM"); // default type — chưa có cột type trong DB
+                dto.setType(n.getNotificationType());
                 dtos.add(dto);
             }
 

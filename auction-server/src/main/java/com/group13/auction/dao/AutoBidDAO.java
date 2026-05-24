@@ -15,7 +15,7 @@ import java.util.List;
  * DAO persist AutoBid entries xuống DB.
  * Giải quyết vấn đề: auto-bid registry chỉ in-memory → mất khi server restart.
  *
- * <p>Schema (cần thêm vào database.sql):
+ * <p>Schema: {@code database/schema.sql} (bảng auto_bids).
  * <pre>
  * CREATE TABLE auto_bids (
  *   user_id     VARCHAR(36) NOT NULL,

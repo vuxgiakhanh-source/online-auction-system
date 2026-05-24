@@ -86,11 +86,18 @@
                         <Label styleClass="notification-muted-text"
                                textAlignment="CENTER"
                                wrapText="true"
-                               text="Client chỉ hiển thị Second Chance Offer nhận được từ realtime event của server."/>
+                               text="Offer đang chờ từ realtime; lịch sử thông báo SCO hiển thị bên dưới."/>
                     </VBox>
 
                     <ListView fx:id="secondChanceListView"
                               prefHeight="142.0"
+                              visible="false"
+                              managed="false"/>
+
+                    <Label styleClass="notification-field-title" text="Lịch sử thông báo Second Chance"/>
+
+                    <ListView fx:id="secondChanceInboxListView"
+                              prefHeight="120.0"
                               visible="false"
                               managed="false"/>
                 </VBox>

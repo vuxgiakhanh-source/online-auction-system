@@ -37,10 +37,35 @@ public class Admin extends User {
    * Lý do ban tài khoản.
    */
   public enum BanReason {
+    /** Gian lận / hành vi gian lận. */
+    FRAUD,
     /** Rating xuống dưới ngưỡng tối thiểu. */
     LOW_RATING,
+    /** Vi phạm chính sách nền tảng. */
+    POLICY_VIOLATION,
     /** Seller không thanh toán thủ tục hoàn tiền cho winner. */
-    SELLER_REFUND_DEFAULT
+    SELLER_REFUND_DEFAULT,
+    /** Lý do khác (ghi chú tùy chọn). */
+    OTHER,
+    /** Hệ thống tự động khóa (auto-ban). */
+    SYSTEM_AUTO;
+
+    /** Parse lý do ban từ client; không hợp lệ → {@link #OTHER}. */
+    public static BanReason parse(String raw) {
+      if (raw == null || raw.isBlank()) {
+        return OTHER;
+      }
+      try {
+        return valueOf(raw.trim().toUpperCase());
+      } catch (IllegalArgumentException e) {
+        return OTHER;
+      }
+    }
+  }
+
+  /** @see BanReason#parse(String) */
+  public static BanReason parseBanReason(String raw) {
+    return BanReason.parse(raw);
   }
 
   /**

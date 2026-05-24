@@ -482,7 +482,7 @@ class PaymentServiceTest {
             // Assert
             verify(auctionService).notify(
                     eq(auction), eq(AuctionEventType.SECOND_CHANCE_OFFERED),
-                    isNull(), eq(0L));
+                    eq(runnerUp), eq(runnerUpBid.getAmount()), anyString());
         }
 
         @Test

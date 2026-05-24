@@ -26,8 +26,9 @@ services:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
-      # Tự động khởi tạo schema + seed data cho máy mới chạy lần đầu
-      - ./auction-server/src/main/resources/database/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
+      # Schema + seed (canonical: database/schema.sql, database/seed.sql)
+      - ./auction-server/src/main/resources/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./auction-server/src/main/resources/database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
       test:
         [

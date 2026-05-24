@@ -81,7 +81,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
             .withDatabaseName("omnibid_test")
             .withUsername("test_user")
             .withPassword("test_pass")
-            .withInitScript("integration/schema.sql");
+            .withInitScript("database/schema.sql");
 
     // ── DAOs ─────────────────────────────────────────────────────────────────
     private UserDAO userDAO;
