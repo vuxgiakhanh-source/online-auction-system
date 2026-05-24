@@ -99,6 +99,15 @@ public class QualityReportService implements IQualityReportService {
             }
         }
 
+        // Gate: chỉ được gửi 1 báo cáo cho mỗi phiên — không phân biệt trạng thái
+        if (qualityReportDAO.existsByAuctionAndReporter(
+            report.getAuctionId(), report.getReporter().getId())) {
+            log.warn("Quality report rejected — duplicate: auctionId={}, reporterId={}",
+                report.getAuctionId(), report.getReporter().getId());
+            throw new IllegalStateException(
+                "Bạn đã gửi báo cáo chất lượng cho phiên đấu giá này. Mỗi phiên chỉ được gửi 1 lần.");
+        }
+
         qualityReportDAO.saveReport(report);
 
         log.info("Quality report submitted: reportId={}, auctionId={}, reporterId={}, username={}",
