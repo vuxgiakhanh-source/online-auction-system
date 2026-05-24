@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 public final class AuctionQueryService {
 
     private static final String SORT_BY_CURRENT_PRICE = "CURRENT_PRICE";
+    private static final String DEFAULT_SCOPE_FILTER = "ALL";
 
     private final ClientNetworkFacade networkFacade;
 
@@ -32,24 +33,25 @@ public final class AuctionQueryService {
     /**
      * Lấy danh sách phiên đấu giá.
      *
-     * <p>Client chỉ gửi filter/sort/page xuống server. Việc lọc dữ liệu thật vẫn do server xử lý.
+     * <p>Client gửi filter/sort/page xuống server. Việc lọc dữ liệu thật vẫn do server xử lý.
      */
     public CompletableFuture<List<AuctionCardViewModel>> getAuctionCards(
         String statusFilter, String sortBy, int page, int pageSize) {
-        return getAuctionCards(null, statusFilter, false, null, sortBy, page, pageSize);
+        return getAuctionCards(null, statusFilter, DEFAULT_SCOPE_FILTER, sortBy, page, pageSize);
     }
 
     /**
      * Lấy danh sách phiên đấu giá theo keyword, trạng thái và phạm vi hiển thị.
      *
-     * <p>Khi {@code keyword} rỗng, service dùng API danh sách auction hiện có. Khi có keyword,
-     * service dùng API {@code SEARCH_ITEMS}; vì search DTO chưa hỗ trợ status/mine filter, client
-     * lọc thêm trạng thái và seller hiện tại sau khi server trả kết quả.
+     * <p>Khi {@code keyword} rỗng, service dùng API danh sách auction. Khi có keyword, service
+     * dùng API {@code SEARCH_ITEMS}. Server hiện đã hỗ trợ {@code scopeFilter} cho cả hai luồng,
+     * nên client chỉ cần gửi scope tương ứng với lựa chọn trên UI. Riêng trạng thái khi đang search
+     * vẫn được lọc thêm ở client vì {@code ItemSearchRequestDTO} chưa có {@code statusFilter}.
      *
      * @param keyword từ khóa tìm kiếm theo tên sản phẩm
      * @param statusFilter trạng thái phiên cần lọc, null nghĩa là tất cả
-     * @param onlyMine true nếu chỉ lấy phiên của seller hiện tại
-     * @param currentUserId id user hiện tại, dùng khi {@code onlyMine} là true
+     * @param scopeFilter phạm vi phiên cần lấy: {@code ALL}, {@code OWNED}, {@code JOINED},
+     *     {@code WATCHING}
      * @param sortBy khóa sắp xếp của màn danh sách auction
      * @param page trang bắt đầu từ 0
      * @param pageSize số item mỗi trang
@@ -58,21 +60,20 @@ public final class AuctionQueryService {
     public CompletableFuture<List<AuctionCardViewModel>> getAuctionCards(
         String keyword,
         String statusFilter,
-        boolean onlyMine,
-        String currentUserId,
+        String scopeFilter,
         String sortBy,
         int page,
         int pageSize) {
         String normalizedKeyword = blankToNull(keyword);
+        String normalizedScopeFilter = normalizeScopeFilter(scopeFilter);
 
         CompletableFuture<List<AuctionDTOs.AuctionDTO>> auctionFuture =
             normalizedKeyword == null
-                ? fetchAuctionDtos(statusFilter, sortBy, page, pageSize)
-                : searchAuctionDtos(normalizedKeyword, sortBy, page, pageSize);
+                ? fetchAuctionDtos(statusFilter, normalizedScopeFilter, sortBy, page, pageSize)
+                : searchAuctionDtos(normalizedKeyword, normalizedScopeFilter, sortBy, page, pageSize);
 
         return auctionFuture
             .thenApply(auctions -> filterByStatus(auctions, normalizedKeyword, statusFilter))
-            .thenApply(auctions -> filterBySeller(auctions, onlyMine, currentUserId))
             .thenApply(AuctionViewModelMapper::toCardViewModels);
     }
 
@@ -117,9 +118,10 @@ public final class AuctionQueryService {
     }
 
     private CompletableFuture<List<AuctionDTOs.AuctionDTO>> fetchAuctionDtos(
-        String statusFilter, String sortBy, int page, int pageSize) {
+        String statusFilter, String scopeFilter, String sortBy, int page, int pageSize) {
         AuctionDTOs.AuctionListRequestDTO request = new AuctionDTOs.AuctionListRequestDTO();
         request.setStatusFilter(blankToNull(statusFilter));
+        request.setScopeFilter(normalizeScopeFilter(scopeFilter));
         request.setSortBy(blankToNull(sortBy));
         request.setPage(Math.max(0, page));
         request.setPageSize(normalizePageSize(pageSize));
@@ -136,13 +138,14 @@ public final class AuctionQueryService {
     }
 
     private CompletableFuture<List<AuctionDTOs.AuctionDTO>> searchAuctionDtos(
-        String keyword, String sortBy, int page, int pageSize) {
+        String keyword, String scopeFilter, String sortBy, int page, int pageSize) {
         SearchDTOs.ItemSearchRequestDTO request = new SearchDTOs.ItemSearchRequestDTO();
         request.setKeyword(keyword);
         request.setPage(Math.max(0, page));
         request.setSize(normalizePageSize(pageSize));
         request.setSortBy(toSearchSortBy(sortBy));
         request.setSortDir("DESC");
+        request.setScopeFilter(normalizeScopeFilter(scopeFilter));
 
         return AuctionServiceSupport
             .sendRequest(
@@ -167,27 +170,6 @@ public final class AuctionQueryService {
             .toList();
     }
 
-    private List<AuctionDTOs.AuctionDTO> filterBySeller(
-        List<AuctionDTOs.AuctionDTO> auctions, boolean onlyMine, String currentUserId) {
-        String normalizedUserId = blankToNull(currentUserId);
-        if (!onlyMine || normalizedUserId == null) {
-            return auctions;
-        }
-
-        return auctions.stream()
-            .filter(auction -> isOwnedBySeller(auction, normalizedUserId))
-            .toList();
-    }
-
-    private boolean isOwnedBySeller(AuctionDTOs.AuctionDTO auction, String sellerId) {
-        if (auction == null || auction.getItem() == null) {
-            return false;
-        }
-
-        String auctionSellerId = blankToNull(auction.getItem().getSellerId());
-        return sellerId.equals(auctionSellerId);
-    }
-
     private List<AuctionDTOs.AuctionDTO> safeAuctions(List<AuctionDTOs.AuctionDTO> auctions) {
         return auctions == null ? List.of() : auctions;
     }
@@ -198,6 +180,11 @@ public final class AuctionQueryService {
 
     private String toSearchSortBy(String sortBy) {
         return SORT_BY_CURRENT_PRICE.equals(sortBy) ? "currentPrice" : "createdAt";
+    }
+
+    private String normalizeScopeFilter(String scopeFilter) {
+        String normalizedScope = blankToNull(scopeFilter);
+        return normalizedScope == null ? DEFAULT_SCOPE_FILTER : normalizedScope;
     }
 
     private String blankToNull(String value) {

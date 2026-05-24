@@ -97,7 +97,7 @@
                            styleClass="auction-filter-label"/>
 
                     <ComboBox fx:id="scopeFilterComboBox"
-                              prefWidth="150.0"
+                              prefWidth="190.0"
                               styleClass="auction-combo-box"/>
                 </HBox>
 
