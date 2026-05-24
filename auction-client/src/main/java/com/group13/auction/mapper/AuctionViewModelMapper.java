@@ -77,7 +77,7 @@ public final class AuctionViewModelMapper {
             currentLeaderUsername,
             CurrencyUtil.formatVnd(currentPrice),
             CurrencyUtil.formatVnd(item == null ? 0 : item.getStartingPrice()),
-            CurrencyUtil.formatVnd(auction == null ? 0 : auction.getReservePrice()),
+            reserveStatusText(auction),
             leaderText(auction),
             viewerCountText(auction == null ? 0 : auction.getViewerCount()),
             DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
@@ -205,6 +205,16 @@ public final class AuctionViewModelMapper {
             case "VEHICLE" -> "Phương tiện";
             default -> item.getCategory();
         };
+    }
+
+    private static String reserveStatusText(AuctionDTOs.AuctionDTO auction) {
+        if (auction == null) {
+            return "Trạng thái giá sàn: --";
+        }
+
+        return auction.isReserveMet()
+            ? "Trạng thái giá sàn: Đã đạt"
+            : "Trạng thái giá sàn: Chưa đạt";
     }
 
     private static String sellerText(AuctionDTOs.ItemDTO item) {

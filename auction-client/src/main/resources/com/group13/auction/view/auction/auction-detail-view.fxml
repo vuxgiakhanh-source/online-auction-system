@@ -149,7 +149,7 @@
                     <VBox GridPane.columnIndex="2"
                           GridPane.rowIndex="0"
                           styleClass="auction-info-box">
-                        <Label text="Giá sàn" styleClass="auction-muted-text"/>
+                        <Label text="Trạng thái giá sàn" styleClass="auction-muted-text"/>
                         <Label fx:id="reservePriceLabel" text="--" styleClass="auction-info-value"/>
                     </VBox>
 
