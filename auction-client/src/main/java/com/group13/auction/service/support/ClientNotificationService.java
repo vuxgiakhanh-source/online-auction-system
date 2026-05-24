@@ -1,6 +1,7 @@
 package com.group13.auction.service.support;
 
 import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.session.ClientEventListener;
@@ -56,6 +57,52 @@ public final class ClientNotificationService implements ClientEventListener {
     }
 
     @Override
+    public void onOutbidNotify(BidDTOs.OutbidNotifyDTO notify) {
+        if (notify == null) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () ->
+                        AlertUtil.showWarning(
+                                "Bạn vừa bị vượt giá!\n\n"
+                                        + "Sản phẩm: "
+                                        + fallback(notify.getAuctionItemName())
+                                        + "\n"
+                                        + "Người vượt: "
+                                        + fallback(notify.getNewBidderUsername())
+                                        + "\n"
+                                        + "Giá mới: "
+                                        + CurrencyUtil.formatVnd(notify.getNewCurrentPrice())
+                                        + "\n"
+                                        + "Giá của bạn: "
+                                        + CurrencyUtil.formatVnd(notify.getPreviousPrice())));
+    }
+
+    @Override
+    public void onAutoBidExhausted(BidDTOs.AutoBidExhaustedDTO notify) {
+        if (notify == null) {
+            return;
+        }
+
+        FxThreadUtil.runOnFxThread(
+                () ->
+                        AlertUtil.showWarning(
+                                "Auto-bid đã hết hiệu lực (vượt quá max bid).\n\n"
+                                        + "Mã phiên: "
+                                        + fallback(notify.getAuctionId())
+                                        + "\n"
+                                        + "Max bid của bạn: "
+                                        + CurrencyUtil.formatVnd(notify.getMaxBid())
+                                        + "\n"
+                                        + "Giá hiện tại: "
+                                        + CurrencyUtil.formatVnd(notify.getCurrentPrice())
+                                        + "\n"
+                                        + "Người dẫn đầu: "
+                                        + fallback(notify.getLeadingBidderUsername())));
+    }
+
+    @Override
     public void onSecondChanceOffer(PaymentDTOs.SecondChanceOfferDTO offer) {
         if (offer == null) {
             return;
@@ -92,22 +139,40 @@ public final class ClientNotificationService implements ClientEventListener {
 
     @Override
     public void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {
-        if (update == null) {
-            return;
+        // Không hiển thị popup khi phiên kết thúc — UI màn hình đấu giá tự cập nhật trạng thái.
+    }
+
+    @Override
+    public void onLeaveAuctionCompleted(String auctionId, boolean depositForfeited,
+                                      long forfeitedAmount, boolean ratingPenalized,
+                                      long newAvailableBalance) {
+        StringBuilder message =
+                new StringBuilder("Bạn đã thoát phiên đấu giá.\n\nMã phiên: ")
+                        .append(fallback(auctionId))
+                        .append("\n");
+
+        if (depositForfeited) {
+            message.append("Tiền cọc không được hoàn lại: ")
+                    .append(CurrencyUtil.formatVnd(forfeitedAmount))
+                    .append(".\n");
+            if (ratingPenalized) {
+                message.append("Điểm uy tín của bạn có thể đã bị trừ theo quy định.\n");
+            }
+            FxThreadUtil.runOnFxThread(
+                    () ->
+                            AlertUtil.showWarning(
+                                    message.append("Số dư khả dụng mới: ")
+                                            .append(CurrencyUtil.formatVnd(newAvailableBalance))
+                                            .toString()));
+        } else {
+            message.append("Tiền cọc đã được hoàn lại.\n");
+            FxThreadUtil.runOnFxThread(
+                    () ->
+                            AlertUtil.showInfo(
+                                    message.append("Số dư khả dụng mới: ")
+                                            .append(CurrencyUtil.formatVnd(newAvailableBalance))
+                                            .toString()));
         }
-
-        String message = "Phiên đấu giá đã kết thúc";
-        if (update.getWinnerUsername() != null && !update.getWinnerUsername().isBlank()) {
-            message = "Chúc mừng! Phiên đấu giá đã kết thúc. Winner: " + update.getWinnerUsername();
-        } else if (update.getCancelReason() != null && !update.getCancelReason().isBlank()) {
-            message = "Phiên đấu giá đã kết thúc: " + update.getCancelReason();
-        }
-
-        String finalMessage = message
-                + "\n\nMã phiên: " + fallback(update.getAuctionId())
-                + (update.getFinalPrice() > 0 ? "\nGiá chốt: " + CurrencyUtil.formatVnd(update.getFinalPrice()) : "");
-
-        FxThreadUtil.runOnFxThread(() -> AlertUtil.showInfo(finalMessage));
     }
 
     @Override

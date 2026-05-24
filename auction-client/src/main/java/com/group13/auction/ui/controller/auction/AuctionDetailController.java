@@ -383,7 +383,6 @@ public final class AuctionDetailController {
                       currentUserLeftAuction = true;
                       setCancelJoinButtonVisible(false);
                       setLoading(false, "Đã hủy tham gia phiên đấu giá.");
-                      AlertUtil.showInfo(buildCancelJoinSuccessMessage(response));
                       loadAuctionDetail();
                     }))
         .exceptionally(
@@ -426,35 +425,6 @@ public final class AuctionDetailController {
         + "Hiện phiên chưa có người dẫn đầu rõ ràng.\n"
         + "Tiền cọc sẽ được xử lý theo trạng thái phiên tại thời điểm server xác nhận hủy.\n\n"
         + "Bạn có chắc muốn tiếp tục không?";
-  }
-
-  private String buildCancelJoinSuccessMessage(AuctionDTOs.LeaveAuctionResponseDTO response) {
-    if (response == null) {
-      return "Bạn đã hủy tham gia phiên đấu giá.";
-    }
-
-    if (response.isDepositForfeited()) {
-      String message =
-          "Bạn đã hủy tham gia phiên đấu giá.\n"
-              + "Hệ thống đã phạt tiền cọc: "
-              + CurrencyUtil.formatVnd(response.getForfeitedAmount())
-              + ".\n";
-
-      if (response.isRatingPenalized()) {
-        message += "Điểm uy tín của bạn có thể đã bị trừ theo quy định.\n";
-      }
-
-      return message
-          + "Số dư khả dụng mới: "
-          + CurrencyUtil.formatVnd(response.getNewAvailableBalance())
-          + ".";
-    }
-
-    return "Bạn đã hủy tham gia phiên đấu giá.\n"
-        + "Tiền cọc đã được hoàn lại.\n"
-        + "Số dư khả dụng mới: "
-        + CurrencyUtil.formatVnd(response.getNewAvailableBalance())
-        + ".";
   }
 
   private boolean isCurrentUserLeading(AuctionDetailViewModel detail) {
