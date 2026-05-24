@@ -322,7 +322,219 @@ public class AuctionDAO {
         return ids;
     }
 
-    // ── SEARCH ────────────────────────────────────────────────────────────────
+    // ── SCOPE-AWARE LIST ──────────────────────────────────────────────────────
+
+    /**
+     * Lấy danh sách auction theo scopeFilter + statusFilter.
+     *
+     * <ul>
+     *   <li>{@code OWNED}    — lọc theo seller_id = sellerId (dùng sellerId param).</li>
+     *   <li>{@code JOINED}   — lọc auction_id thuộc user_auction_activity JOINED của userId.</li>
+     *   <li>{@code WATCHING} — lọc auction_id thuộc user_auction_activity WATCHING của userId.</li>
+     *   <li>Mặc định ({@code ALL} / null) — không lọc thêm theo user.</li>
+     * </ul>
+     *
+     * @param userId       id user hiện tại (dùng cho JOINED / WATCHING)
+     * @param sellerId     id seller hiện tại (dùng cho OWNED)
+     * @param scopeFilter  ALL | OWNED | JOINED | WATCHING (null = ALL)
+     * @param statusFilter trạng thái auction (null = tất cả)
+     * @param page         trang bắt đầu từ 0
+     * @param size         số bản ghi mỗi trang
+     * @return danh sách Auction khớp
+     */
+    public java.util.List<com.group13.auction.model.auction.Auction> findByScope(
+        String userId, String sellerId,
+        String scopeFilter, String statusFilter,
+        int page, int size) {
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT a.id FROM auctions a JOIN items i ON a.item_id = i.id ");
+
+        String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
+        switch (scope) {
+            case "JOINED", "WATCHING" ->
+                sql.append("JOIN user_auction_activity uaa ")
+                    .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
+                    .append(scope).append("' ");
+            default -> {} // ALL — không join thêm
+        }
+
+        sql.append("WHERE 1=1 ");
+        if ("OWNED".equals(scope)) {
+            sql.append("AND i.seller_id = ? ");
+        }
+        if (statusFilter != null && !statusFilter.isEmpty()) {
+            sql.append("AND a.status = ? ");
+        }
+        sql.append("ORDER BY a.created_at DESC LIMIT ? OFFSET ?");
+
+        java.util.List<com.group13.auction.model.auction.Auction> result = new java.util.ArrayList<>();
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if ("JOINED".equals(scope) || "WATCHING".equals(scope)) pstmt.setString(idx++, userId);
+            if ("OWNED".equals(scope))  pstmt.setString(idx++, sellerId);
+            if (statusFilter != null && !statusFilter.isEmpty()) pstmt.setString(idx++, statusFilter);
+            pstmt.setInt(idx++, size);
+            pstmt.setInt(idx,   page * size);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    com.group13.auction.model.auction.Auction a = findAuctionById(rs.getString("id"));
+                    if (a != null) result.add(a);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi lấy danh sách auction theo scope: scope={}, userId={}", scope, userId, e);
+        }
+        return result;
+    }
+
+    /**
+     * Đếm số auction theo scopeFilter + statusFilter (dùng để tính totalPages).
+     */
+    public long countByScope(
+        String userId, String sellerId,
+        String scopeFilter, String statusFilter) {
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) FROM auctions a JOIN items i ON a.item_id = i.id ");
+
+        String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
+        switch (scope) {
+            case "JOINED", "WATCHING" ->
+                sql.append("JOIN user_auction_activity uaa ")
+                    .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
+                    .append(scope).append("' ");
+            default -> {}
+        }
+
+        sql.append("WHERE 1=1 ");
+        if ("OWNED".equals(scope)) sql.append("AND i.seller_id = ? ");
+        if (statusFilter != null && !statusFilter.isEmpty()) sql.append("AND a.status = ? ");
+
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if ("JOINED".equals(scope) || "WATCHING".equals(scope)) pstmt.setString(idx++, userId);
+            if ("OWNED".equals(scope))  pstmt.setString(idx++, sellerId);
+            if (statusFilter != null && !statusFilter.isEmpty()) pstmt.setString(idx++, statusFilter);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi đếm auction theo scope: scope={}, userId={}", scope, userId, e);
+        }
+        return 0L;
+    }
+
+    // ── SCOPE-AWARE SEARCH ────────────────────────────────────────────────────
+
+    /**
+     * Tìm kiếm phiên đấu giá theo keyword + scopeFilter.
+     * Kết hợp LIKE tên sản phẩm với lọc theo user activity.
+     *
+     * @param keyword      từ khóa tìm kiếm
+     * @param userId       id user hiện tại
+     * @param sellerId     id seller hiện tại (dùng cho OWNED)
+     * @param scopeFilter  ALL | OWNED | JOINED | WATCHING
+     * @param page         trang
+     * @param size         kích thước trang
+     * @param sortBy       cột sắp xếp
+     * @param sortDir      ASC | DESC
+     * @return danh sách Auction khớp
+     */
+    public java.util.List<com.group13.auction.model.auction.Auction> searchByItemNameAndScope(
+        String keyword, String userId, String sellerId,
+        String scopeFilter, int page, int size,
+        String sortBy, String sortDir) {
+
+        String scope       = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
+        String orderClause = buildOrderClause(sortBy, sortDir);
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT a.id FROM auctions a JOIN items i ON a.item_id = i.id ");
+
+        switch (scope) {
+            case "JOINED", "WATCHING" ->
+                sql.append("JOIN user_auction_activity uaa ")
+                    .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
+                    .append(scope).append("' ");
+            default -> {}
+        }
+
+        sql.append("WHERE LOWER(i.name) LIKE LOWER(?) ");
+        if ("OWNED".equals(scope)) sql.append("AND i.seller_id = ? ");
+        sql.append("ORDER BY ").append(orderClause).append(" LIMIT ? OFFSET ?");
+
+        java.util.List<com.group13.auction.model.auction.Auction> result = new java.util.ArrayList<>();
+        String likeKeyword = "%" + keyword.trim() + "%";
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if ("JOINED".equals(scope) || "WATCHING".equals(scope)) pstmt.setString(idx++, userId);
+            pstmt.setString(idx++, likeKeyword);
+            if ("OWNED".equals(scope)) pstmt.setString(idx++, sellerId);
+            pstmt.setInt(idx++, size);
+            pstmt.setInt(idx,   page * size);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    com.group13.auction.model.auction.Auction a = findAuctionById(rs.getString("id"));
+                    if (a != null) result.add(a);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi tìm kiếm auction theo scope: scope={}, keyword={}", scope, keyword, e);
+        }
+        return result;
+    }
+
+    /**
+     * Đếm tổng số kết quả tìm kiếm theo keyword + scopeFilter.
+     */
+    public long countByItemNameAndScope(
+        String keyword, String userId, String sellerId, String scopeFilter) {
+
+        String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) FROM auctions a JOIN items i ON a.item_id = i.id ");
+
+        switch (scope) {
+            case "JOINED", "WATCHING" ->
+                sql.append("JOIN user_auction_activity uaa ")
+                    .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
+                    .append(scope).append("' ");
+            default -> {}
+        }
+
+        sql.append("WHERE LOWER(i.name) LIKE LOWER(?) ");
+        if ("OWNED".equals(scope)) sql.append("AND i.seller_id = ? ");
+
+        String likeKeyword = "%" + keyword.trim() + "%";
+        try (java.sql.Connection conn = DatabaseConnection.getInstance().getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if ("JOINED".equals(scope) || "WATCHING".equals(scope)) pstmt.setString(idx++, userId);
+            pstmt.setString(idx++, likeKeyword);
+            if ("OWNED".equals(scope)) pstmt.setString(idx++, sellerId);
+
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi đếm auction theo scope+keyword: scope={}, keyword={}", scope, keyword, e);
+        }
+        return 0L;
+    }
+
+
 
     /**
      * Tìm phiên đấu giá theo tên sản phẩm (LIKE, không phân biệt hoa thường).

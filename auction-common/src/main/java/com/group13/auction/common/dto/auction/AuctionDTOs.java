@@ -226,6 +226,17 @@ public final class AuctionDTOs {
         private String sortBy;
         private int page;
         private int pageSize;
+        /**
+         * Phạm vi lọc theo hoạt động của user hiện tại:
+         * <ul>
+         *   <li>{@code ALL}      — tất cả phiên (mặc định, không lọc thêm).</li>
+         *   <li>{@code OWNED}    — phiên do user hiện tại tạo (seller).</li>
+         *   <li>{@code JOINED}   — phiên user đã tham gia đặt cọc.</li>
+         *   <li>{@code WATCHING} — phiên user đang theo dõi.</li>
+         * </ul>
+         * Null hoặc trống tương đương {@code ALL}.
+         */
+        private String scopeFilter;
 
         public AuctionListRequestDTO() {
             this.page     = 0;
@@ -240,6 +251,8 @@ public final class AuctionDTOs {
         public void setPage(int page)                      { this.page = page; }
         public int getPageSize()                           { return pageSize; }
         public void setPageSize(int pageSize)              { this.pageSize = pageSize; }
+        public String getScopeFilter()                     { return scopeFilter; }
+        public void setScopeFilter(String scopeFilter)     { this.scopeFilter = scopeFilter; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
