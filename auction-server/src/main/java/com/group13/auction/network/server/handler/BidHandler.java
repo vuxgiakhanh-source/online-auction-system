@@ -168,7 +168,7 @@ public class BidHandler implements PacketHandler {
             long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
             AuctionDTOs.JoinAuctionResponseDTO response = new AuctionDTOs.JoinAuctionResponseDTO();
 
-            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction); // viewerCount từ auction.getViewerCount()
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction, bidder); // viewerCount từ auction.getViewerCount()
             response.setAuction(auctionDto);
             response.setDepositAmount(depositAmount);
             response.setNewAvailableBalance(bidder.getAvailableBalance());
@@ -207,7 +207,7 @@ public class BidHandler implements PacketHandler {
 
             // viewerCount đã được increment bên trong bidService.watchAuction()
             // với guard !alreadyWatching — không increment lại ở đây tránh duplicate.
-            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction);
+            AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction, user);
             session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS, auctionDto, requestId));
 
         } catch (Exception e) {

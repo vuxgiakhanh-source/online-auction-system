@@ -67,6 +67,17 @@ public class AutoBidProcessor {
     private static final ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicLong>
         lastAutoBidNanoByAuction = new ConcurrentHashMap<>();
 
+    /**
+     * Per-user rate limiter cho auto-bid: mỗi user chỉ được phép 1 auto-bid / giây.
+     * Key: userId, Value: nanoTime của lần auto-bid cuối cùng của user đó.
+     * Dùng AtomicLong để getAndSet() atomic — tránh race condition tương tự lastAutoBidNanoByAuction.
+     */
+    private static final ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicLong>
+        lastAutoBidNanoByUser = new ConcurrentHashMap<>();
+
+    /** Khoảng cách tối thiểu giữa 2 auto-bid của cùng 1 user: 1 giây. */
+    private static final long USER_AUTO_BID_MIN_NANOS = 1_000_000_000L; // 1s
+
     public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
         this.bidService     = bidService;
         this.sessionManager = sessionManager;
@@ -130,6 +141,13 @@ public class AutoBidProcessor {
             }
 
             try {
+                // Rate limiting (per-user): mỗi user chỉ được 1 auto-bid / giây
+                if (!tryConsumeUserAutoBidToken(winner.getUserId())) {
+                    log.debug("auto-bid skipped — user rate limit (1/s): userId={} auctionId={}",
+                        winner.getUserId(), auctionId);
+                    continue;
+                }
+
                 // Rate limiting: enforce minimum interval between auto-bids in same auction
                 enforceAutoBidInterval(auctionId);
 
@@ -186,6 +204,16 @@ public class AutoBidProcessor {
     }
 
     /**
+     * Dọn dẹp per-user rate limit tracker khi user disconnect hoặc auction kết thúc.
+     * Gọi tùy chọn — nếu không gọi, entry sẽ tồn tại trong memory nhưng không gây lỗi.
+     *
+     * @param userId ID của user cần xóa tracker
+     */
+    public static void clearUserActivity(String userId) {
+        lastAutoBidNanoByUser.remove(userId);
+    }
+
+    /**
      * Đảm bảo khoảng cách tối thiểu giữa hai auto-bid liên tiếp trên cùng một phiên.
      * FIX: dùng AtomicLong.getAndSet() thay vì ConcurrentHashMap.put(Long).
      * Cũ: hai thread đồng thời gọi put() đều thấy last=null → cả hai skip delay.
@@ -209,6 +237,39 @@ public class AutoBidProcessor {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    /**
+     * Per-user bid limiter: kiểm tra xem user có được phép auto-bid ngay bây giờ không.
+     *
+     * <p>Thuật toán: non-blocking token check dùng AtomicLong.compareAndSet().
+     * Nếu user đã bid trong vòng {@code USER_AUTO_BID_MIN_NANOS} (1 giây) → từ chối (trả về false).
+     * Nếu được phép → cập nhật timestamp và trả về true.
+     *
+     * <p>Không sleep — trả về false ngay để vòng lặp process() tiếp tục với candidate khác,
+     * tránh block toàn bộ chain vì một user đang trong cooldown.
+     *
+     * @param userId ID của user muốn auto-bid
+     * @return {@code true} nếu được phép, {@code false} nếu còn trong cooldown 1 giây
+     */
+    private static boolean tryConsumeUserAutoBidToken(String userId) {
+        long now = System.nanoTime();
+        java.util.concurrent.atomic.AtomicLong tracker =
+            lastAutoBidNanoByUser.computeIfAbsent(
+                userId, k -> new java.util.concurrent.atomic.AtomicLong(0L));
+
+        while (true) {
+            long last = tracker.get();
+            if (last != 0L && (now - last) < USER_AUTO_BID_MIN_NANOS) {
+                return false; // còn trong cooldown — từ chối ngay, không sleep
+            }
+            // CAS: chỉ update nếu giá trị chưa bị thread khác thay đổi
+            if (tracker.compareAndSet(last, now)) {
+                return true;
+            }
+            // CAS thất bại → thread khác vừa cập nhật → đọc lại now và thử lại
+            now = System.nanoTime();
         }
     }
 

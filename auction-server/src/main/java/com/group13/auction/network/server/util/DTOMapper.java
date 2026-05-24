@@ -122,6 +122,27 @@ public final class DTOMapper {
     }
 
     /**
+     * Map Auction → AuctionDTO với trạng thái join/left của user cụ thể.
+     *
+     * <p>Dùng khi handler biết user đang request (JOIN, WATCH, GET_DETAIL) để client
+     * có thể khôi phục đúng trạng thái tham gia sau khi tắt/mở lại app mà không cần
+     * gửi JOIN rồi bị reject bằng {@code ALREADY_LEFT_AUCTION}.
+     *
+     * @param auction phiên đấu giá
+     * @param user    user đang request; nếu null thì fallback về {@link #toAuctionDTO(Auction)}
+     * @return AuctionDTO với {@code joinedByCurrentUser} và {@code leftByCurrentUser} được set
+     */
+    public static AuctionDTOs.AuctionDTO toAuctionDTO(Auction auction,
+                                                      com.group13.auction.model.user.User user) {
+        AuctionDTOs.AuctionDTO dto = toAuctionDTO(auction);
+        if (user != null) {
+            dto.setJoinedByCurrentUser(user.hasJoined(auction.getId()));
+            dto.setLeftByCurrentUser(user.hasLeft(auction.getId()));
+        }
+        return dto;
+    }
+
+    /**
      * Map Item domain → ItemDTO.
      * imageUrls được map luôn — list rỗng nếu item không có ảnh.
      */
@@ -182,7 +203,7 @@ public final class DTOMapper {
     }
 
     public static PaymentDTOs.SecondChanceOfferDTO toSecondChanceOfferDTO(
-            Auction auction, SecondChanceOffer offer) {
+        Auction auction, SecondChanceOffer offer) {
         PaymentDTOs.SecondChanceOfferDTO dto = new PaymentDTOs.SecondChanceOfferDTO();
         dto.setOfferId(offer.getId());
         dto.setAuctionId(offer.getAuctionId());

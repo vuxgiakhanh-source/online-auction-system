@@ -88,6 +88,22 @@ public final class AuctionDTOs {
         /** Hạn gửi report (3 ngày sau bấm nhận hàng). Null nếu chưa xác nhận nhận hàng. */
         private LocalDateTime reportDeadline;
 
+        /**
+         * User hiện tại đã JOIN phiên này chưa (đặt cọc thành công, được quyền bid).
+         * Server điền dựa trên {@code user.hasJoined(auctionId)}.
+         * Null nếu request không gắn với user cụ thể (ví dụ: anonymous watch, broadcast list).
+         * Client dùng để khôi phục trạng thái join sau khi tắt/mở lại app.
+         */
+        private Boolean joinedByCurrentUser;
+
+        /**
+         * User hiện tại đã rời phiên này chưa (LEAVE_AUCTION, không thể join lại).
+         * Server điền dựa trên {@code user.hasLeft(auctionId)}.
+         * Null nếu request không gắn với user cụ thể.
+         * Client dùng để ẩn nút "Tham gia đặt giá" và không cần gửi JOIN rồi bị reject.
+         */
+        private Boolean leftByCurrentUser;
+
         public AuctionDTO() {}
 
         public String getId()                                              { return id; }
@@ -124,6 +140,10 @@ public final class AuctionDTOs {
         public void setConfirmReceiptDeadline(LocalDateTime d)             { this.confirmReceiptDeadline = d; }
         public LocalDateTime getReportDeadline()                           { return reportDeadline; }
         public void setReportDeadline(LocalDateTime reportDeadline)        { this.reportDeadline = reportDeadline; }
+        public Boolean getJoinedByCurrentUser()                            { return joinedByCurrentUser; }
+        public void setJoinedByCurrentUser(Boolean joinedByCurrentUser)    { this.joinedByCurrentUser = joinedByCurrentUser; }
+        public Boolean getLeftByCurrentUser()                              { return leftByCurrentUser; }
+        public void setLeftByCurrentUser(Boolean leftByCurrentUser)        { this.leftByCurrentUser = leftByCurrentUser; }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
