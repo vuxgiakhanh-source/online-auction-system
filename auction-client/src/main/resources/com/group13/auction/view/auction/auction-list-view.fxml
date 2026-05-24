@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -71,28 +72,53 @@
                    styleClass="auction-page-subtitle"/>
         </VBox>
 
-        <!-- Filter bar -->
-        <HBox alignment="CENTER_LEFT"
-              spacing="14.0"
-              styleClass="auction-filter-bar">
-            <Label text="Trạng thái"
-                   styleClass="auction-filter-label"/>
+            <!-- Filter bar -->
+            <HBox alignment="CENTER_LEFT"
+                  spacing="14.0"
+                  styleClass="auction-filter-bar">
+                <HBox alignment="CENTER_LEFT"
+                      prefWidth="260.0"
+                      spacing="8.0"
+                      styleClass="auction-search-box">
+                    <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                        <Image url="@../../assets/icons/accent/icon-search.png"/>
+                    </ImageView>
 
-            <ComboBox fx:id="statusFilterComboBox"
-                      prefWidth="180.0"
-                      styleClass="auction-combo-box"/>
+                    <TextField fx:id="productSearchField"
+                               promptText="Tìm tên sản phẩm..."
+                               HBox.hgrow="ALWAYS"
+                               styleClass="auction-search-field"/>
+                </HBox>
 
-            <Label text="Sắp xếp"
-                   styleClass="auction-filter-label"/>
+                <HBox fx:id="scopeFilterGroup"
+                      alignment="CENTER_LEFT"
+                      spacing="8.0">
+                    <Label text="Phạm vi"
+                           styleClass="auction-filter-label"/>
 
-            <ComboBox fx:id="sortByComboBox"
-                      prefWidth="190.0"
-                      styleClass="auction-combo-box"/>
+                    <ComboBox fx:id="scopeFilterComboBox"
+                              prefWidth="150.0"
+                              styleClass="auction-combo-box"/>
+                </HBox>
 
-            <Button mnemonicParsing="false"
-                    onAction="#handleApplyFilter"
-                    styleClass="auction-primary-button"
-                    text="Áp dụng"/>
+                <Label text="Trạng thái"
+                       styleClass="auction-filter-label"/>
+
+                <ComboBox fx:id="statusFilterComboBox"
+                          prefWidth="180.0"
+                          styleClass="auction-combo-box"/>
+
+                <Label text="Sắp xếp"
+                       styleClass="auction-filter-label"/>
+
+                <ComboBox fx:id="sortByComboBox"
+                          prefWidth="190.0"
+                          styleClass="auction-combo-box"/>
+
+                <Button mnemonicParsing="false"
+                        onAction="#handleApplyFilter"
+                        styleClass="auction-primary-button"
+                        text="Áp dụng"/>
 
             <Region HBox.hgrow="ALWAYS"/>
 

@@ -67,6 +67,8 @@ public final class PacketExpectations {
         put(map, PacketType.CREATE_AUCTION,
                 PacketType.CREATE_AUCTION_SUCCESS, PacketType.CREATE_AUCTION_FAILED);
         successOnly(map, PacketType.GET_AUCTION_LIST, PacketType.GET_AUCTION_LIST_SUCCESS);
+        put(map, PacketType.SEARCH_ITEMS,
+            PacketType.SEARCH_ITEMS_SUCCESS, PacketType.SEARCH_ITEMS_FAILED);
         put(map, PacketType.GET_AUCTION_DETAIL,
                 PacketType.GET_AUCTION_DETAIL_SUCCESS, PacketType.GET_AUCTION_DETAIL_FAILED);
         put(map, PacketType.UPDATE_AUCTION,

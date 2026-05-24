@@ -8,6 +8,7 @@ import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.dto.rating.RatingDTOs;
 import com.group13.auction.common.dto.report.ReportDTOs;
+import com.group13.auction.common.dto.search.SearchDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 
@@ -95,6 +96,11 @@ public final class ClientRequestFactory {
     public static Packet<AuctionDTOs.AuctionListRequestDTO> getAuctionList(
         AuctionDTOs.AuctionListRequestDTO request) {
         return Packet.of(PacketType.GET_AUCTION_LIST, request);
+    }
+
+    public static Packet<SearchDTOs.ItemSearchRequestDTO> searchItems(
+        SearchDTOs.ItemSearchRequestDTO request) {
+        return Packet.of(PacketType.SEARCH_ITEMS, request);
     }
 
     public static Packet<Void> getAuctionList() {
