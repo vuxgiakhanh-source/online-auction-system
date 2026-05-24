@@ -567,8 +567,8 @@ public enum PacketType {
      *  Payload: {@code ErrorDTO}. */
     SUBMIT_QUALITY_REPORT_FAILED,
 
-    /** Admin yêu cầu danh sách tất cả báo cáo chất lượng đang chờ duyệt.
-     *  Payload: rỗng. */
+    /** Admin yêu cầu danh sách báo cáo chất lượng theo bộ lọc trạng thái.
+     *  Payload: {@code String} — {@code PENDING} | {@code APPROVED} | {@code REJECTED} | {@code ALL}. */
     ADMIN_GET_QUALITY_REPORTS,
 
     /** Server trả về danh sách báo cáo. Payload: {@code List<QualityReportDTO>}. */
@@ -591,6 +591,24 @@ public enum PacketType {
 
     /** Server xác nhận đã reject báo cáo. Payload: rỗng. */
     ADMIN_REJECT_QUALITY_REPORT_SUCCESS,
+
+    /** Bidder xem các báo cáo chất lượng do mình gửi. Payload: rỗng. */
+    GET_MY_QUALITY_REPORTS,
+
+    /** Server trả về danh sách báo cáo của Bidder. Payload: {@code List<QualityReportDTO>}. */
+    GET_MY_QUALITY_REPORTS_SUCCESS,
+
+    /** Server từ chối yêu cầu xem báo cáo của Bidder. Payload: {@code ErrorDTO}. */
+    GET_MY_QUALITY_REPORTS_FAILED,
+
+    /** Seller xem các báo cáo chất lượng liên quan phiên của mình. Payload: rỗng. */
+    GET_SELLER_QUALITY_REPORTS,
+
+    /** Server trả về danh sách báo cáo của Seller. Payload: {@code List<QualityReportDTO>}. */
+    GET_SELLER_QUALITY_REPORTS_SUCCESS,
+
+    /** Server từ chối yêu cầu xem báo cáo của Seller. Payload: {@code ErrorDTO}. */
+    GET_SELLER_QUALITY_REPORTS_FAILED,
 
     /**
      * Server push thông báo cho Winner khi báo cáo được duyệt và tiền đã được hoàn.

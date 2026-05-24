@@ -202,10 +202,16 @@
 
                     <Region VBox.vgrow="ALWAYS"/>
 
-                    <Button mnemonicParsing="false"
-                            onAction="#handleOpenMyOrders"
-                            styleClass="main-card-button"
-                            text="Mở đơn hàng"/>
+                    <HBox spacing="10.0">
+                        <Button mnemonicParsing="false"
+                                onAction="#handleOpenMyOrders"
+                                styleClass="main-card-button"
+                                text="Mở đơn hàng"/>
+                        <Button mnemonicParsing="false"
+                                onAction="#handleOpenMyQualityReports"
+                                styleClass="main-card-button"
+                                text="Báo cáo của tôi"/>
+                    </HBox>
                 </VBox>
 
                 <VBox fx:id="adminDashboardCard"

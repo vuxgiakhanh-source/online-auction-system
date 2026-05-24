@@ -21,7 +21,7 @@ public final class ReportViewModelMapper {
      */
     public static QualityReportViewModel toViewModel(ReportDTOs.QualityReportDTO dto) {
         if (dto == null) {
-            return new QualityReportViewModel("--", "--", "--", "--", "--", "--", "--");
+            return new QualityReportViewModel("--", "--", "--", "--", "--", "--", "--", "--", "--");
         }
 
         return new QualityReportViewModel(
@@ -31,7 +31,20 @@ public final class ReportViewModelMapper {
                 statusText(dto.getStatus()),
                 fallback(dto.getDescription()),
                 statusText(dto.getStatus()),
-                DateTimeUtil.formatDateTime(dto.getCreatedAt()));
+                DateTimeUtil.formatDateTime(dto.getCreatedAt()),
+                fallback(dto.getReporterUsername()),
+                fallback(dto.getSellerUsername()));
+    }
+
+    /**
+     * Chuyển danh sách report DTO sang view model phía người dùng.
+     */
+    public static List<QualityReportViewModel> toViewModels(List<ReportDTOs.QualityReportDTO> reports) {
+        if (reports == null) {
+            return List.of();
+        }
+
+        return reports.stream().map(ReportViewModelMapper::toViewModel).toList();
     }
 
     /**

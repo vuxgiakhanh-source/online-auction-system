@@ -47,6 +47,11 @@ public final class MyOrdersController {
   }
 
   @FXML
+  private void handleOpenMyQualityReports() {
+    Navigator.getInstance().goToMyQualityReports();
+  }
+
+  @FXML
   private void handleBackToMain() {
     Navigator.getInstance().goToMainLayout();
   }

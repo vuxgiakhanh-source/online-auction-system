@@ -7,6 +7,9 @@ public final class ScreenStateKeys {
     public static final String SELECTED_SELLER_AUCTION_ROW = "selectedSellerAuctionRow";
     public static final String SELECTED_WON_ORDER = "selectedWonOrder";
 
+    /** Phạm vi danh sách báo cáo: {@code my} (Bidder) hoặc {@code seller}. */
+    public static final String QUALITY_REPORT_LIST_SCOPE = "qualityReportListScope";
+
     private ScreenStateKeys() {
         // Utility class.
     }

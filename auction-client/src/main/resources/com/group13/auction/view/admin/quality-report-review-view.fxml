@@ -8,6 +8,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -51,6 +52,26 @@
 
         <HBox spacing="18.0" VBox.vgrow="ALWAYS">
             <VBox spacing="12.0" styleClass="table-panel" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="filter-row">
+                    <ToggleButton fx:id="pendingFilterButton"
+                                  text="Chờ duyệt"
+                                  styleClass="filter-toggle"
+                                  selected="true"
+                                  onAction="#handleFilterChange"/>
+                    <ToggleButton fx:id="approvedFilterButton"
+                                  text="Đã duyệt"
+                                  styleClass="filter-toggle"
+                                  onAction="#handleFilterChange"/>
+                    <ToggleButton fx:id="rejectedFilterButton"
+                                  text="Đã từ chối"
+                                  styleClass="filter-toggle"
+                                  onAction="#handleFilterChange"/>
+                    <ToggleButton fx:id="allFilterButton"
+                                  text="Tất cả"
+                                  styleClass="filter-toggle"
+                                  onAction="#handleFilterChange"/>
+                </HBox>
+
                 <HBox alignment="CENTER_LEFT" spacing="12.0">
                     <VBox spacing="4.0">
                         <Label text="Danh sách báo cáo" styleClass="section-title"/>

@@ -40,6 +40,11 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button
+                    text="Báo cáo của tôi"
+                    styleClass="secondary-button"
+                    onAction="#handleOpenMyQualityReports"/>
+
+            <Button
                     fx:id="refreshButton"
                     text="Tải lại"
                     styleClass="secondary-button"

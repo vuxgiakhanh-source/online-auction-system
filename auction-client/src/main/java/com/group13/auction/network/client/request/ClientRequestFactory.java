@@ -229,8 +229,16 @@ public final class ClientRequestFactory {
         return Packet.of(PacketType.SUBMIT_QUALITY_REPORT, request);
     }
 
-    public static Packet<Void> adminGetQualityReports() {
-        return Packet.of(PacketType.ADMIN_GET_QUALITY_REPORTS);
+    public static Packet<Void> getMyQualityReports() {
+        return Packet.of(PacketType.GET_MY_QUALITY_REPORTS);
+    }
+
+    public static Packet<Void> getSellerQualityReports() {
+        return Packet.of(PacketType.GET_SELLER_QUALITY_REPORTS);
+    }
+
+    public static Packet<String> adminGetQualityReports(String statusFilter) {
+        return Packet.of(PacketType.ADMIN_GET_QUALITY_REPORTS, statusFilter);
     }
 
     public static Packet<String> adminApproveQualityReport(String reportId) {

@@ -14,64 +14,147 @@ public class QualityReportDAO {
 
     public QualityReportDAO() {}
 
+    private static final String REPORT_SELECT_SQL =
+        "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, "
+            + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
+            + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
+            + "u.balance, u.locked_balance, u.status as user_status "
+            + "FROM quality_reports qr "
+            + "LEFT JOIN users u ON qr.reporter_id = u.id ";
+
     /**
      * Lấy tất cả report đang ở trạng thái PENDING để admin xem xét.
-     * Chỉ load core data của reporter (không gọi findNormalUserById để tránh N+1 query).
      */
-    public java.util.List<com.group13.auction.model.bid.QualityReport> findPending() {
-        String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, " +
-            "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, " +
-            "u.username as reporter_username, u.password_hash, u.email, u.rating, " +
-            "u.balance, u.locked_balance, u.status as user_status " +
-            "FROM quality_reports qr " +
-            "LEFT JOIN users u ON qr.reporter_id = u.id " +
-            "WHERE qr.status = 'PENDING' ORDER BY qr.created_at ASC";
+    public java.util.List<QualityReport> findPending() {
+        return findByStatus("PENDING");
+    }
 
-        java.util.List<com.group13.auction.model.bid.QualityReport> result = new java.util.ArrayList<>();
+    /** Lấy toàn bộ báo cáo, mới nhất trước. */
+    public java.util.List<QualityReport> findAll() {
+        return queryReportsWithoutParameter(REPORT_SELECT_SQL + "ORDER BY qr.created_at DESC");
+    }
+
+    /**
+     * Lọc báo cáo theo trạng thái. Giá trị {@code ALL} trả về toàn bộ.
+     */
+    public java.util.List<QualityReport> findByStatus(String status) {
+        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status.trim())) {
+            return findAll();
+        }
+
+        String normalized = status.trim().toUpperCase();
+        if (!normalized.equals("PENDING") && !normalized.equals("APPROVED") && !normalized.equals("REJECTED")) {
+            log.warn("findByStatus ignored unknown filter: {}", status);
+            return findAll();
+        }
+
+        return queryReports(
+            REPORT_SELECT_SQL + "WHERE qr.status = ? ORDER BY qr.created_at DESC", normalized);
+    }
+
+    /**
+     * Lấy tất cả báo cáo do một Bidder gửi, mới nhất trước.
+     */
+    public java.util.List<QualityReport> findByReporterId(String reporterId) {
+        if (reporterId == null || reporterId.isBlank()) {
+            return java.util.List.of();
+        }
+
+        String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, "
+            + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
+            + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
+            + "u.balance, u.locked_balance, u.status as user_status "
+            + "FROM quality_reports qr "
+            + "LEFT JOIN users u ON qr.reporter_id = u.id "
+            + "WHERE qr.reporter_id = ? ORDER BY qr.created_at DESC";
+
+        return queryReports(sql, reporterId);
+    }
+
+    /**
+     * Lấy tất cả báo cáo liên quan phiên do Seller sở hữu, mới nhất trước.
+     */
+    public java.util.List<QualityReport> findBySellerId(String sellerId) {
+        if (sellerId == null || sellerId.isBlank()) {
+            return java.util.List.of();
+        }
+
+        String sql = "SELECT qr.id, qr.auction_id, qr.reporter_id, qr.description, "
+            + "qr.image_urls, qr.status, qr.refund_completed, qr.created_at, "
+            + "u.username as reporter_username, u.password_hash, u.email, u.rating, "
+            + "u.balance, u.locked_balance, u.status as user_status "
+            + "FROM quality_reports qr "
+            + "LEFT JOIN users u ON qr.reporter_id = u.id "
+            + "INNER JOIN auctions a ON qr.auction_id = a.id "
+            + "INNER JOIN items i ON a.item_id = i.id "
+            + "WHERE i.seller_id = ? ORDER BY qr.created_at DESC";
+
+        return queryReports(sql, sellerId);
+    }
+
+    private java.util.List<QualityReport> queryReports(String sql, String parameter) {
+        java.util.List<QualityReport> result = new java.util.ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, parameter);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(mapReportRow(rs));
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            log.error("Lỗi query quality reports: sql={}", sql, e);
+        }
+        return result;
+    }
+
+    private java.util.List<QualityReport> queryReportsWithoutParameter(String sql) {
+        java.util.List<QualityReport> result = new java.util.ArrayList<>();
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              java.sql.ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                String reporterId       = rs.getString("reporter_id");
-                String reporterUsername = rs.getString("reporter_username");
-                String pwHash           = rs.getString("password_hash");
-                String email            = rs.getString("email");
-                double rating           = rs.getDouble("rating");
-                long   balance          = rs.getLong("balance");
-                long   locked           = rs.getLong("locked_balance");
-                String userStatus       = rs.getString("user_status");
-
-                java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
-                java.time.LocalDateTime createdAt = createdTs != null ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
-
-                java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
-                    java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
-
-                com.group13.auction.model.user.NormalUser reporter =
-                    com.group13.auction.model.user.NormalUser.reconstitute(
-                        reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
-                        parseStatus(userStatus), rating, balance, locked, roles, false, 0, null);
-
-                String imageUrlsJson = rs.getString("image_urls");
-                java.util.List<String> imageUrls = parseJsonList(imageUrlsJson);
-
-                String statusStr = rs.getString("status");
-                com.group13.auction.model.bid.QualityReport.ReportStatus status =
-                    com.group13.auction.model.bid.QualityReport.ReportStatus.valueOf(statusStr);
-
-                com.group13.auction.model.bid.QualityReport report =
-                    com.group13.auction.model.bid.QualityReport.reconstitute(
-                        rs.getString("id"), createdAt, createdAt,
-                        reporter, rs.getString("auction_id"),
-                        rs.getString("description"), imageUrls,
-                        status, null, rs.getBoolean("refund_completed"));
-                result.add(report);
+                result.add(mapReportRow(rs));
             }
         } catch (java.sql.SQLException e) {
-            log.error("Lỗi findPending quality reports", e);
+            log.error("Lỗi query quality reports: sql={}", sql, e);
         }
         return result;
+    }
+
+    private QualityReport mapReportRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+        String reporterId = rs.getString("reporter_id");
+        String reporterUsername = rs.getString("reporter_username");
+        String pwHash = rs.getString("password_hash");
+        String email = rs.getString("email");
+        double rating = rs.getDouble("rating");
+        long balance = rs.getLong("balance");
+        long locked = rs.getLong("locked_balance");
+        String userStatus = rs.getString("user_status");
+
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.time.LocalDateTime createdAt =
+            createdTs != null ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+        java.util.Set<com.group13.auction.model.user.User.UserRole> roles =
+            java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER);
+
+        com.group13.auction.model.user.NormalUser reporter =
+            com.group13.auction.model.user.NormalUser.reconstitute(
+                reporterId, createdAt, createdAt, reporterUsername, pwHash, email,
+                parseStatus(userStatus), rating, balance, locked, roles, false, 0, null);
+
+        java.util.List<String> imageUrls = parseJsonList(rs.getString("image_urls"));
+        String statusStr = rs.getString("status");
+        QualityReport.ReportStatus status = QualityReport.ReportStatus.valueOf(statusStr);
+
+        return QualityReport.reconstitute(
+            rs.getString("id"), createdAt, createdAt,
+            reporter, rs.getString("auction_id"),
+            rs.getString("description"), imageUrls,
+            status, null, rs.getBoolean("refund_completed"));
     }
 
     private com.group13.auction.model.user.User.AccountStatus parseStatus(String s) {

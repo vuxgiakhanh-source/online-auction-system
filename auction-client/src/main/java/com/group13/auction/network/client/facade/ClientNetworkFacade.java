@@ -383,8 +383,8 @@ public final class ClientNetworkFacade {
         send(ClientRequestFactory.submitQualityReport(request));
     }
 
-    public void adminGetQualityReports() {
-        send(ClientRequestFactory.adminGetQualityReports());
+    public void adminGetQualityReports(String statusFilter) {
+        send(ClientRequestFactory.adminGetQualityReports(statusFilter));
     }
 
     public void adminApproveQualityReport(String reportId) {

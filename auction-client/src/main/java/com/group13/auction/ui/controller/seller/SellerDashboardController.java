@@ -65,6 +65,18 @@ public final class SellerDashboardController {
         Navigator.getInstance().goToCreateAuction();
     }
 
+    /** Mở danh sách báo cáo chất lượng liên quan kênh Seller. */
+    @FXML
+    public void handleOpenQualityReports() {
+        AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .filter(UserSession::isSeller)
+            .ifPresentOrElse(
+                session -> Navigator.getInstance().goToSellerQualityReports(),
+                () -> AlertUtil.showError("Tài khoản hiện tại chưa có quyền Seller."));
+    }
+
     private void renderSellerInfo() {
         UserSession session = AppContext.getInstance().getSessionManager().requireSession();
         sellerNameLabel.setText("Xin chào Seller, " + session.getUsername() + "!");

@@ -111,6 +111,10 @@ public final class PacketExpectations {
 
         put(map, PacketType.SUBMIT_QUALITY_REPORT,
                 PacketType.SUBMIT_QUALITY_REPORT_SUCCESS, PacketType.SUBMIT_QUALITY_REPORT_FAILED);
+        put(map, PacketType.GET_MY_QUALITY_REPORTS,
+                PacketType.GET_MY_QUALITY_REPORTS_SUCCESS, PacketType.GET_MY_QUALITY_REPORTS_FAILED);
+        put(map, PacketType.GET_SELLER_QUALITY_REPORTS,
+                PacketType.GET_SELLER_QUALITY_REPORTS_SUCCESS, PacketType.GET_SELLER_QUALITY_REPORTS_FAILED);
         successOnly(map, PacketType.ADMIN_GET_QUALITY_REPORTS,
                 PacketType.ADMIN_GET_QUALITY_REPORTS_SUCCESS);
         put(map, PacketType.ADMIN_APPROVE_QUALITY_REPORT,
