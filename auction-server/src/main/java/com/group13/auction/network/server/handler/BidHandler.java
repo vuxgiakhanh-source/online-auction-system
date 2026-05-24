@@ -276,6 +276,18 @@ public class BidHandler implements PacketHandler {
             response.setNewAvailableBalance(result.newAvailableBalance);
             ServerBroadcastNotifier.getInstance().notifyUserLeftAuction(
                 bidder, auction, result.depositForfeited, result.forfeitedAmount, result.ratingPenalized);
+
+            if (result.extendedForAntiSniping && auction.getEndTime() != null) {
+                AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
+                extDto.setAuctionId(auctionId);
+                extDto.setNewEndTime(auction.getEndTime());
+                extDto.setExtendedBySeconds(60);
+                sessionManager.broadcastToAuctionAsync(auctionId,
+                    Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto));
+                log.info("Anti-sniping on leader leave — extension broadcast: auctionId={}, requestId={}",
+                    auctionId, requestId);
+            }
+
             session.send(Packet.of(PacketType.LEAVE_AUCTION_SUCCESS, response, requestId));
         } else {
             log.info("Leave auction handled (non-normal user): auctionId={}, username={}, requestId={}",
