@@ -89,20 +89,24 @@ public class BidService implements IBidService {
     public final long    newAvailableBalance;
     /** Giá trước khi leader rời phiên — dùng để tính priceChange trong broadcast. */
     public final long    previousPrice;
+    /** true nếu leader rời trong cửa sổ anti-sniping và phiên được gia hạn. */
+    public final boolean extendedForAntiSniping;
 
     LeaveResult(boolean leaderChanged, boolean depositForfeited, long forfeitedAmount,
-                boolean ratingPenalized, long newAvailableBalance, long previousPrice) {
-      this.leaderChanged       = leaderChanged;
-      this.depositForfeited    = depositForfeited;
-      this.forfeitedAmount     = forfeitedAmount;
-      this.ratingPenalized     = ratingPenalized;
-      this.newAvailableBalance = newAvailableBalance;
-      this.previousPrice       = previousPrice;
+                boolean ratingPenalized, long newAvailableBalance, boolean extendedForAntiSniping,
+                long previousPrice) {
+      this.leaderChanged            = leaderChanged;
+      this.depositForfeited         = depositForfeited;
+      this.forfeitedAmount          = forfeitedAmount;
+      this.ratingPenalized          = ratingPenalized;
+      this.newAvailableBalance      = newAvailableBalance;
+      this.extendedForAntiSniping   = extendedForAntiSniping;
+      this.previousPrice            = previousPrice;
     }
 
     /** Shorthand khi user không phải NormalUser hoặc auction null. */
     static LeaveResult noOp() {
-      return new LeaveResult(false, false, 0L, false, 0L, 0L);
+      return new LeaveResult(false, false, 0L, false, 0L, false, 0L);
     }
   }
 
@@ -244,13 +248,8 @@ public class BidService implements IBidService {
       auction.updateBid(amount, bidder);
       reserveMet = auction.isReserveMet();
 
-      LocalDateTime currentEnd = auction.getEndTime();
-      if (currentEnd != null) {
-        long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
-        if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
-          auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
-          extendedForAntiSniping = true;
-        }
+      if (applyAntiSnipingExtension(auction)) {
+        extendedForAntiSniping = true;
       }
 
       BidResult result = reserveMet ? BidResult.ACCEPTED : BidResult.ACCEPTED_RESERVE_NOT_MET;
@@ -347,6 +346,9 @@ public class BidService implements IBidService {
    * </ul>
    * Nếu không: hoàn toàn bộ cọc, không phạt rating.
    *
+   * <p><b>Anti-sniping:</b> Nếu người dẫn đầu rời phiên khi còn ≤ 30 giây (phiên RUNNING),
+   * gia hạn thêm 60 giây — cùng quy tắc với {@link #placeBid}.
+   *
    * <p><b>FIX race condition isPastTwoThirdsTime:</b>
    * {@code isPastTwoThirds} và {@code isCurrentLeader} được tính TRONG lock auction,
    * sau đó trả về qua {@link LeaveResult} để BidHandler dùng trực tiếp —
@@ -357,11 +359,12 @@ public class BidService implements IBidService {
   @Override
   public LeaveResult leaveAuction(User user, Auction auction) {
     String auctionId = auction != null ? auction.getId() : null;
-    boolean leaderChanged    = false;
-    boolean depositForfeited = false;
-    long    forfeitedAmount  = 0L;
-    boolean ratingPenalized  = false;
-    long    previousPrice    = 0L;
+    boolean leaderChanged            = false;
+    boolean depositForfeited         = false;
+    long    forfeitedAmount          = 0L;
+    boolean ratingPenalized          = false;
+    long    previousPrice            = 0L;
+    boolean extendedForAntiSniping   = false;
 
     if (user instanceof NormalUser && auction != null) {
       NormalUser bidder = (NormalUser) user;
@@ -411,6 +414,11 @@ public class BidService implements IBidService {
                 auctionId, fallbackPrice);
           }
           leaderChanged = true;
+          if (applyAntiSnipingExtension(auction)) {
+            extendedForAntiSniping = true;
+            log.info("Anti-sniping on leader leave: auctionId={}, leaderId={}, newEndTime={}",
+                auctionId, bidder.getId(), auction.getEndTime());
+          }
         }
 
         // Capture penalty info trước khi unlock — giá trị này nhất quán với state trong lock
@@ -461,9 +469,41 @@ public class BidService implements IBidService {
     log.info("User left auction: userId={}, auctionId={}, leaderChanged={}",
         user.getId(), auctionId, leaderChanged);
 
+    if (extendedForAntiSniping && auction != null && user instanceof NormalUser) {
+      NormalUser leavingLeader = (NormalUser) user;
+      auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+      auctionService.notify(auction, AuctionEvent.AuctionEventType.AUCTION_EXTENDED, leavingLeader,
+          auction.getCurrentPrice(),
+          String.format(
+              "Phiên được gia hạn thêm %ds (anti-sniping — người dẫn đầu rời phiên).",
+              ANTI_SNIPING_EXTENSION_SECONDS));
+    }
+
     long newBalance = (user instanceof NormalUser)
         ? ((NormalUser) user).getAvailableBalance() : 0L;
-    return new LeaveResult(leaderChanged, depositForfeited, forfeitedAmount, ratingPenalized, newBalance, previousPrice);
+    return new LeaveResult(leaderChanged, depositForfeited, forfeitedAmount, ratingPenalized,
+        newBalance, extendedForAntiSniping, previousPrice);
+  }
+
+  /**
+   * Gia hạn phiên nếu còn trong cửa sổ anti-sniping (dùng chung cho bid và leader rời phiên).
+   *
+   * @return true nếu đã gia hạn
+   */
+  private boolean applyAntiSnipingExtension(Auction auction) {
+    if (!auction.isAcceptingBids()) {
+      return false;
+    }
+    LocalDateTime currentEnd = auction.getEndTime();
+    if (currentEnd == null) {
+      return false;
+    }
+    long secondsLeft = Duration.between(LocalDateTime.now(), currentEnd).getSeconds();
+    if (secondsLeft >= 0 && secondsLeft <= ANTI_SNIPING_WINDOW_SECONDS) {
+      auction.extendEndTime(Duration.ofSeconds(ANTI_SNIPING_EXTENSION_SECONDS));
+      return true;
+    }
+    return false;
   }
 
   /**

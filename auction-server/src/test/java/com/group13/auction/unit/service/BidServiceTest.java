@@ -725,6 +725,119 @@ class BidServiceTest {
     }
 
     // =========================================================================
+    // leaveAuction — anti-sniping khi leader rời gần cuối phiên
+    // =========================================================================
+
+    @Nested
+    @DisplayName("leaveAuction — anti-sniping (leader rời)")
+    class LeaveLeaderAntiSniping {
+
+        private NormalUser leader;
+        private NormalUser runnerUp;
+
+        @BeforeEach
+        void setUpLeaders() {
+            leader = TestFixture.bidderWithBalance("leaderUser", 10_000_000L);
+            runnerUp = TestFixture.bidderWithBalance("runnerUpUser", 10_000_000L);
+        }
+
+        private Auction snipingAuctionWithLeader() {
+            Auction auction = Auction.reconstitute(
+                    java.util.UUID.randomUUID().toString(),
+                    LocalDateTime.now().minusMinutes(10),
+                    LocalDateTime.now(),
+                    runningAuction.getItem(),
+                    LocalDateTime.now().minusMinutes(10),
+                    LocalDateTime.now().plusSeconds(20),
+                    STARTING_PRICE,
+                    Auction.AuctionStatus.RUNNING,
+                    STARTING_PRICE * 2);
+            auction.updateBid(STARTING_PRICE + 500_000L, leader);
+            leader.addJoinedAuction(auction.getId());
+            return auction;
+        }
+
+        @Test
+        @DisplayName("leader rời trong 30s cuối → gia hạn thêm 60s")
+        void leaderLeave_withinSnipingWindow_extendsEndTime() {
+            Auction auction = snipingAuctionWithLeader();
+            LocalDateTime endBefore = auction.getEndTime();
+
+            when(bidTransactionDAO.cancelBidsByBidder(auction.getId(), leader.getId())).thenReturn(1);
+            when(bidTransactionDAO.findHighestValidBidExcept(auction.getId(), leader.getId()))
+                    .thenReturn(BidTransaction.create(
+                            runnerUp, auction.getId(), STARTING_PRICE + 300_000L, BidResult.ACCEPTED));
+
+            bidService.leaveAuction(leader, auction);
+
+            assertThat(auction.getEndTime()).isEqualTo(endBefore.plusSeconds(60));
+        }
+
+        @Test
+        @DisplayName("leader rời trong 30s cuối → persist endTime + notify AUCTION_EXTENDED")
+        void leaderLeave_withinSnipingWindow_persistsAndNotifies() {
+            Auction auction = snipingAuctionWithLeader();
+
+            when(bidTransactionDAO.cancelBidsByBidder(any(), any())).thenReturn(1);
+            when(bidTransactionDAO.findHighestValidBidExcept(any(), eq(leader.getId())))
+                    .thenReturn(BidTransaction.create(
+                            runnerUp, auction.getId(), STARTING_PRICE + 300_000L, BidResult.ACCEPTED));
+
+            bidService.leaveAuction(leader, auction);
+
+            verify(auctionDAO).updateEndTime(eq(auction.getId()), any(LocalDateTime.class));
+            verify(auctionService).notify(
+                    eq(auction),
+                    eq(AuctionEvent.AuctionEventType.AUCTION_EXTENDED),
+                    eq(leader),
+                    anyLong(),
+                    contains("người dẫn đầu rời phiên"));
+        }
+
+        @Test
+        @DisplayName("không phải leader rời trong 30s cuối → không gia hạn")
+        void nonLeaderLeave_withinSnipingWindow_doesNotExtend() {
+            Auction auction = snipingAuctionWithLeader();
+            runnerUp.addJoinedAuction(auction.getId());
+            LocalDateTime endBefore = auction.getEndTime();
+
+            when(bidTransactionDAO.cancelBidsByBidder(auction.getId(), runnerUp.getId())).thenReturn(0);
+
+            bidService.leaveAuction(runnerUp, auction);
+
+            assertThat(auction.getEndTime()).isEqualTo(endBefore);
+            verify(auctionDAO, never()).updateEndTime(any(), any());
+        }
+
+        @Test
+        @DisplayName("leader rời khi còn > 30s → không gia hạn")
+        void leaderLeave_outsideSnipingWindow_doesNotExtend() {
+            Auction auction = Auction.reconstitute(
+                    java.util.UUID.randomUUID().toString(),
+                    LocalDateTime.now().minusMinutes(10),
+                    LocalDateTime.now(),
+                    runningAuction.getItem(),
+                    LocalDateTime.now().minusMinutes(10),
+                    LocalDateTime.now().plusMinutes(5),
+                    STARTING_PRICE,
+                    Auction.AuctionStatus.RUNNING,
+                    STARTING_PRICE * 2);
+            auction.updateBid(STARTING_PRICE + 500_000L, leader);
+            leader.addJoinedAuction(auction.getId());
+            LocalDateTime endBefore = auction.getEndTime();
+
+            when(bidTransactionDAO.cancelBidsByBidder(any(), any())).thenReturn(1);
+            when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
+                    .thenReturn(null);
+
+            bidService.leaveAuction(leader, auction);
+
+            assertThat(auction.getEndTime()).isEqualTo(endBefore);
+            verify(auctionDAO, never()).updateEndTime(any(), any());
+        }
+    }
+
+    // =========================================================================
     // placeBid — mock BidStrategy (kiểm tra strategy được gọi đúng)
     // =========================================================================
 
