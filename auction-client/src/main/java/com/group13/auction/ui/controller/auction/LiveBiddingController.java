@@ -773,8 +773,21 @@ public final class LiveBiddingController implements ClientEventListener {
 
     countdownLabel.setText(text);
 
-    if (totalSeconds <= 60) {
-      countdownLabel.setStyle("-fx-text-fill: #e53e3e; -fx-font-weight: bold;");
+    if (totalSeconds <= 30) {
+      countdownLabel.setStyle(
+          "-fx-text-fill: #fb7185;"
+              + "-fx-font-weight: 800;"
+              + "-fx-effect: dropshadow(gaussian, rgba(251, 113, 133, 0.45), 12, 0.35, 0, 0);");
+    } else if (totalSeconds <= 60) {
+      countdownLabel.setStyle(
+          "-fx-text-fill: #fbbf24;"
+              + "-fx-font-weight: 800;"
+              + "-fx-effect: dropshadow(gaussian, rgba(251, 191, 36, 0.35), 10, 0.3, 0, 0);");
+    } else if (totalSeconds <= 300) {
+      countdownLabel.setStyle(
+          "-fx-text-fill: #7dd3fc;"
+              + "-fx-font-weight: 700;"
+              + "-fx-effect: dropshadow(gaussian, rgba(125, 211, 252, 0.25), 8, 0.25, 0, 0);");
     } else {
       countdownLabel.setStyle("");
     }
