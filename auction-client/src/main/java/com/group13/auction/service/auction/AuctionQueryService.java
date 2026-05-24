@@ -89,7 +89,31 @@ public final class AuctionQueryService {
                 PacketType.GET_AUCTION_DETAIL_SUCCESS,
                 AuctionDTOs.AuctionDTO.class,
                 "Không tải được chi tiết phiên đấu giá.")
-            .thenApply(AuctionViewModelMapper::toDetailViewModel);
+            .thenApply(
+                dto -> {
+                    seedJoinedStateFromDto(dto);
+                    return AuctionViewModelMapper.toDetailViewModel(dto);
+                });
+    }
+
+    /**
+     * Đồng bộ trạng thái tham gia/rời phiên từ dữ liệu server trả về.
+     *
+     * <p>Chỉ cập nhật khi server có field rõ ràng, tránh ghi đè state local bằng null.
+     */
+    private static void seedJoinedStateFromDto(AuctionDTOs.AuctionDTO dto) {
+        if (dto == null || dto.getId() == null) {
+            return;
+        }
+
+        JoinedAuctionState state = JoinedAuctionState.getInstance();
+        String id = dto.getId();
+
+        if (Boolean.TRUE.equals(dto.getLeftByCurrentUser())) {
+            state.markLeft(id);
+        } else if (Boolean.TRUE.equals(dto.getJoinedByCurrentUser())) {
+            state.markJoined(id);
+        }
     }
 
     private CompletableFuture<List<AuctionDTOs.AuctionDTO>> fetchAuctionDtos(

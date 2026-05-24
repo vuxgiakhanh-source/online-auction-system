@@ -175,8 +175,19 @@ public final class AuctionDetailController {
             throwable -> {
               FxThreadUtil.runOnFxThread(
                   () -> {
+                    String message = extractMessage(throwable);
+
+                    if (message.contains("ALREADY_LEFT_AUCTION") || message.contains("đã rời")) {
+                      joinedAuctionState.markLeft(auctionId);
+                      setLoading(false, "Bạn đã hủy tham gia phiên đấu giá này.");
+                      AlertUtil.showWarning(
+                          "Bạn đã từng hủy tham gia phiên này và không thể tham gia lại.");
+                      loadAuctionDetail();
+                      return;
+                    }
+
                     setLoading(false, "Không tham gia được phiên đấu giá.");
-                    AlertUtil.showError(extractMessage(throwable));
+                    AlertUtil.showError(message);
                   });
               return null;
             });
