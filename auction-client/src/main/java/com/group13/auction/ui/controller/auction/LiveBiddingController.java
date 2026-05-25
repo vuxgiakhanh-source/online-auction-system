@@ -15,6 +15,7 @@ import com.group13.auction.service.auction.BidService;
 import com.group13.auction.service.auction.JoinedAuctionState;
 import com.group13.auction.service.auction.WatchAuctionService;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.ContentPreviewDialog;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
@@ -23,17 +24,26 @@ import com.group13.auction.viewmodel.auction.BidHistoryPointViewModel;
 import com.group13.auction.viewmodel.auction.LiveBidViewModel;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
 /** Controller cho màn đấu giá trực tiếp và realtime bid chart. */
@@ -53,6 +63,8 @@ public final class LiveBiddingController implements ClientEventListener {
   private final BidHistoryService bidHistoryService = new BidHistoryService();
   private final AutoBidService autoBidService = new AutoBidService();
   private final XYChart.Series<String, Number> priceSeries = new XYChart.Series<>();
+  private final ObservableList<BidHistoryPointViewModel> historyPoints =
+      FXCollections.observableArrayList();
 
   private String auctionId;
   private boolean bidAllowed;
@@ -263,6 +275,30 @@ public final class LiveBiddingController implements ClientEventListener {
   @FXML
   public void handleRefreshHistory() {
     loadBidHistory();
+  }
+
+  /** Mở biểu đồ giá realtime ở kích thước lớn. */
+  @FXML
+  public void handleOpenChartPreview() {
+    if (historyPoints.isEmpty()) {
+      AlertUtil.showWarning("Chưa có dữ liệu biểu đồ để xem chi tiết.");
+      return;
+    }
+
+    ContentPreviewDialog.show(
+        bidLineChart, "Biểu đồ giá realtime", createExpandedBidLineChart());
+  }
+
+  /** Mở lịch sử bid ở dạng bảng lớn. */
+  @FXML
+  public void handleOpenBidHistoryPreview() {
+    if (historyPoints.isEmpty()) {
+      AlertUtil.showWarning("Chưa có lịch sử bid để xem chi tiết.");
+      return;
+    }
+
+    ContentPreviewDialog.show(
+        bidHistoryListView, "Lịch sử bid", createExpandedBidHistoryTable());
   }
 
   @Override
@@ -640,8 +676,9 @@ public final class LiveBiddingController implements ClientEventListener {
   private void renderBidHistory(List<BidHistoryPointViewModel> points) {
     priceSeries.getData().clear();
     bidHistoryListView.getItems().clear();
+    historyPoints.clear();
 
-    if (points.isEmpty()) {
+    if (points == null || points.isEmpty()) {
       setMessage("Phiên này chưa có lịch sử đặt giá.");
       return;
     }
@@ -651,6 +688,11 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   private void appendHistoryPoint(BidHistoryPointViewModel point) {
+    if (point == null) {
+      return;
+    }
+
+    historyPoints.add(point);
     priceSeries.getData().add(new XYChart.Data<>(point.timestampText(), point.price()));
 
     if (priceSeries.getData().size() > MAX_CHART_POINTS) {
@@ -670,6 +712,71 @@ public final class LiveBiddingController implements ClientEventListener {
     currentPriceRaw = point.price();
     currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
     updateMinimumBidHint();
+  }
+
+
+  private LineChart<String, Number> createExpandedBidLineChart() {
+    CategoryAxis xAxis = new CategoryAxis();
+    xAxis.setLabel("Thời gian");
+
+    NumberAxis yAxis = new NumberAxis();
+    yAxis.setLabel("Giá");
+
+    LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+    chart.setAnimated(false);
+    chart.setLegendVisible(false);
+    chart.setCreateSymbols(true);
+    chart.setPrefSize(960, 560);
+    chart.setMinSize(820, 440);
+    chart.getStyleClass().addAll("auction-line-chart", "live-preview-chart");
+
+    XYChart.Series<String, Number> series = new XYChart.Series<>();
+    series.setName("Giá cao nhất");
+    historyPoints.forEach(
+        point -> series.getData().add(new XYChart.Data<>(point.timestampText(), point.price())));
+    chart.getData().add(series);
+
+    return chart;
+  }
+
+  private TableView<BidHistoryPointViewModel> createExpandedBidHistoryTable() {
+    TableView<BidHistoryPointViewModel> table = new TableView<>();
+    table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    table.setPrefSize(960, 560);
+    table.setMinSize(760, 420);
+    table.getStyleClass().add("live-preview-table");
+
+    TableColumn<BidHistoryPointViewModel, String> timeColumn = new TableColumn<>("Thời gian");
+    timeColumn.setPrefWidth(210);
+    timeColumn.setCellValueFactory(
+        cellData -> new ReadOnlyStringWrapper(cellData.getValue().timestampText()));
+
+    TableColumn<BidHistoryPointViewModel, String> bidderColumn = new TableColumn<>("Bidder");
+    bidderColumn.setPrefWidth(260);
+    bidderColumn.setCellValueFactory(
+        cellData -> new ReadOnlyStringWrapper(cellData.getValue().bidderUsername()));
+
+    TableColumn<BidHistoryPointViewModel, String> amountColumn = new TableColumn<>("Giá đặt");
+    amountColumn.setPrefWidth(220);
+    amountColumn.setCellValueFactory(
+        cellData -> new ReadOnlyStringWrapper(cellData.getValue().priceText()));
+
+    TableColumn<BidHistoryPointViewModel, String> sourceColumn = new TableColumn<>("Nguồn");
+    sourceColumn.setPrefWidth(160);
+    sourceColumn.setCellValueFactory(
+        cellData ->
+            new ReadOnlyStringWrapper(cellData.getValue().autoBid() ? "Auto-Bid" : "Manual"));
+
+    table.getColumns().add(timeColumn);
+    table.getColumns().add(bidderColumn);
+    table.getColumns().add(amountColumn);
+    table.getColumns().add(sourceColumn);
+
+    List<BidHistoryPointViewModel> latestFirst = new ArrayList<>(historyPoints);
+    Collections.reverse(latestFirst);
+    table.setItems(FXCollections.observableArrayList(latestFirst));
+
+    return table;
   }
 
   private void renderAutoBidRegistration(
