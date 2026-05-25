@@ -66,7 +66,7 @@
                         styleClass="main-header-button"
                         text="Hồ sơ"/>
 
-                <StackPane alignment="TOP_RIGHT" styleClass="notification-button-stack">
+                <StackPane styleClass="notification-button-stack">
                     <Button mnemonicParsing="false"
                             onAction="#handleOpenNotificationCenter"
                             styleClass="main-header-button"
@@ -74,7 +74,9 @@
 
                     <Label fx:id="notificationBadgeLabel"
                            mouseTransparent="true"
+                           managed="false"
                            visible="false"
+                           StackPane.alignment="TOP_RIGHT"
                            styleClass="notification-badge-label"
                            text="0"/>
                 </StackPane>
