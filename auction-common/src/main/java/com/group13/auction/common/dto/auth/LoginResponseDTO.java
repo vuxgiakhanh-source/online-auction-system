@@ -16,6 +16,11 @@ public class LoginResponseDTO {
     /** Thông tin đầy đủ của user sau khi đăng nhập. */
     private UserDTO user;
 
+    /**
+     * true khi tài khoản BANNED/SUSPENDED — client chỉ nên gọi API ví sau login.
+     */
+    private boolean restrictedMode;
+
     public LoginResponseDTO() {}
 
     public LoginResponseDTO(String token, UserDTO user) {
@@ -23,9 +28,18 @@ public class LoginResponseDTO {
         this.user = user;
     }
 
+    public LoginResponseDTO(String token, UserDTO user, boolean restrictedMode) {
+        this.token = token;
+        this.user = user;
+        this.restrictedMode = restrictedMode;
+    }
+
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
 
     public UserDTO getUser() { return user; }
     public void setUser(UserDTO user) { this.user = user; }
+
+    public boolean isRestrictedMode() { return restrictedMode; }
+    public void setRestrictedMode(boolean restrictedMode) { this.restrictedMode = restrictedMode; }
 }

@@ -110,8 +110,8 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("login - BANNED account throws ACCOUNT_BANNED before password check")
-    void login_bannedAccount_throwsBanned_beforePasswordCheck() {
+    @DisplayName("login - BANNED account with wrong password throws WRONG_PASSWORD")
+    void login_bannedAccount_wrongPassword_throwsWrongPassword() {
         NormalUser bannedUser = normalBidder("banned01", "actualPass", AccountStatus.BANNED, 0.0);
         when(userDAO.findUserCoreByUsername("banned01")).thenReturn(bannedUser);
 
@@ -120,36 +120,45 @@ class UserServiceTest {
                 AuthenticationException.class
         );
 
-        assertThat(ex.getReason()).isEqualTo(Reason.ACCOUNT_BANNED);
+        assertThat(ex.getReason()).isEqualTo(Reason.WRONG_PASSWORD);
     }
 
     @Test
-    @DisplayName("login - SUSPENDED account throws ACCOUNT_SUSPENDED")
-    void login_suspendedAccount_throwsSuspended() {
+    @DisplayName("login - BANNED account with correct password succeeds (restricted login)")
+    void login_bannedAccount_correctPassword_succeeds() {
+        NormalUser bannedUser = normalBidder("banned01", "actualPass", AccountStatus.BANNED, 0.0);
+        when(userDAO.findUserCoreByUsername("banned01")).thenReturn(bannedUser);
+
+        User result = sut.login("banned01", "actualPass");
+
+        assertThat(result).isSameAs(bannedUser);
+        assertThat(result.getAccountStatus()).isEqualTo(AccountStatus.BANNED);
+    }
+
+    @Test
+    @DisplayName("login - SUSPENDED account with correct password succeeds")
+    void login_suspendedAccount_correctPassword_succeeds() {
         NormalUser suspendedUser = normalBidder("susp01", "pass123", AccountStatus.SUSPENDED, 1.0);
         when(userDAO.findUserCoreByUsername("susp01")).thenReturn(suspendedUser);
 
-        AuthenticationException ex = catchThrowableOfType(
-                () -> sut.login("susp01", "pass123"),
-                AuthenticationException.class
-        );
+        User result = sut.login("susp01", "pass123");
 
-        assertThat(ex.getReason()).isEqualTo(Reason.ACCOUNT_SUSPENDED);
+        assertThat(result).isSameAs(suspendedUser);
+        assertThat(result.getAccountStatus()).isEqualTo(AccountStatus.SUSPENDED);
     }
 
     @Test
-    @DisplayName("login - SUSPENDED account does not reach password failure")
-    void login_suspended_doesNotReachPasswordCheck() {
-        String rawPassword = "correctPass";
-        NormalUser suspendedUser = normalBidder("susp02", rawPassword, AccountStatus.SUSPENDED, 1.0);
+    @DisplayName("login - SUSPENDED account with wrong password throws WRONG_PASSWORD")
+    void login_suspended_wrongPassword_throwsWrongPassword() {
+        NormalUser suspendedUser = normalBidder("susp02", "correctPass", AccountStatus.SUSPENDED, 1.0);
         when(userDAO.findUserCoreByUsername("susp02")).thenReturn(suspendedUser);
 
         AuthenticationException ex = catchThrowableOfType(
-                () -> sut.login("susp02", rawPassword),
+                () -> sut.login("susp02", "wrongPass"),
                 AuthenticationException.class
         );
 
-        assertThat(ex.getReason()).isEqualTo(Reason.ACCOUNT_SUSPENDED);
+        assertThat(ex.getReason()).isEqualTo(Reason.WRONG_PASSWORD);
     }
 
     @Test
@@ -209,8 +218,8 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("login - BANNED is checked before wrong password")
-    void login_checkOrder_bannedBeforePassword() {
+    @DisplayName("login - BANNED with wrong password yields WRONG_PASSWORD not ACCOUNT_BANNED")
+    void login_checkOrder_bannedStillChecksPassword() {
         NormalUser bannedUser = normalBidder("banned02", "realPass", AccountStatus.BANNED, 0.0);
         when(userDAO.findUserCoreByUsername("banned02")).thenReturn(bannedUser);
 
@@ -219,7 +228,7 @@ class UserServiceTest {
                 AuthenticationException.class
         );
 
-        assertThat(ex.getReason()).isEqualTo(Reason.ACCOUNT_BANNED);
+        assertThat(ex.getReason()).isEqualTo(Reason.WRONG_PASSWORD);
     }
 
     @Test

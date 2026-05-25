@@ -47,6 +47,8 @@ public class ErrorDTO {
     public static final String ALREADY_JOINED          = "ALREADY_JOINED";
     public static final String ACCOUNT_BANNED          = "ACCOUNT_BANNED";
     public static final String ACCOUNT_SUSPENDED       = "ACCOUNT_SUSPENDED";
+    /** Tài khoản BANNED/SUSPENDED — chỉ được dùng dịch vụ ví sau khi đăng nhập. */
+    public static final String ACCOUNT_RESTRICTED        = "ACCOUNT_RESTRICTED";
     public static final String SELLER_CANNOT_BID_OWN  = "SELLER_CANNOT_BID_OWN";
     public static final String USER_NOT_FOUND          = "USER_NOT_FOUND";
     public static final String INVALID_AMOUNT          = "INVALID_AMOUNT";

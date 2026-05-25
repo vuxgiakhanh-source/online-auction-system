@@ -100,7 +100,7 @@ public class WalletService implements IWalletService {
      */
     @Override
     public void deposit(NormalUser user, long amount) {
-        if (!ratingService.isEligible(user)) {
+        if (!ratingService.isWalletOperationAllowed(user)) {
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
         if (amount <= 0) {
@@ -125,7 +125,7 @@ public class WalletService implements IWalletService {
      */
     @Override
     public void withdraw(NormalUser user, long amount) {
-        if (!ratingService.isEligible(user)) {
+        if (!ratingService.isWalletOperationAllowed(user)) {
             throw new IllegalStateException("Tài khoản không đủ điều kiện thực hiện giao dịch.");
         }
         if (amount <= 0) {

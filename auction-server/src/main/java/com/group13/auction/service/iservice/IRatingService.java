@@ -20,6 +20,11 @@ public interface IRatingService {
   boolean isEligible(User user);
 
   /**
+   * Cho phép nạp/rút/xem ví: ACTIVE đủ điều kiện hoặc BANNED/SUSPENDED (restricted login).
+   */
+  boolean isWalletOperationAllowed(User user);
+
+  /**
    * Kiểm tra Seller đủ điều kiện tạo auction (isEligible + rating >= 2.0).
    *
    * @param seller seller cần kiểm tra

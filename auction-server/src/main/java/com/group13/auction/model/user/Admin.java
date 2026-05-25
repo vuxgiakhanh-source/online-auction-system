@@ -81,7 +81,9 @@ public class Admin extends User {
     /** Lỗi hệ thống. */
     SYSTEM_ERROR,
     /** Item gian lận hoặc hàng giả. (Chưa xây dựng logic) */
-    FRAUDULENT_ITEM
+    FRAUDULENT_ITEM,
+    /** Seller bị ban / suspend — hệ thống hủy phiên đang mở. */
+    SELLER_SANCTIONED
   }
 
   private final String adminLevel;

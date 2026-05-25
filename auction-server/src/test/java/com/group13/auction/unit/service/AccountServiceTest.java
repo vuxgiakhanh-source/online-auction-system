@@ -95,6 +95,14 @@ class AccountServiceTest {
     @DisplayName("deposit()")
     class Deposit {
 
+        private void allowWallet(NormalUser user) {
+            when(ratingService.isWalletOperationAllowed(user)).thenReturn(true);
+        }
+
+        private void denyWallet(NormalUser user) {
+            when(ratingService.isWalletOperationAllowed(user)).thenReturn(false);
+        }
+
         // --- Happy path ---
 
         @Test
@@ -102,7 +110,7 @@ class AccountServiceTest {
         void validDeposit_balanceIncreases() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderAA1", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.deposit(user, 300_000L);
@@ -116,7 +124,7 @@ class AccountServiceTest {
         void validDeposit_persistsToDAO() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderBB2", 0L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.deposit(user, 1_000_000L);
@@ -130,7 +138,7 @@ class AccountServiceTest {
         void multipleDeposits_balanceAccumulates() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderCC3", 0L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.deposit(user, 500_000L);
@@ -147,7 +155,7 @@ class AccountServiceTest {
         void zeroAmount_throwsIllegalArgumentException() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderDD4", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
             long balanceBefore = user.getBalance();
 
             // Act & Assert
@@ -160,7 +168,7 @@ class AccountServiceTest {
         void negativeAmount_throwsIllegalArgumentException() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderEE5", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
             long balanceBefore = user.getBalance();
 
             // Act & Assert
@@ -173,7 +181,7 @@ class AccountServiceTest {
         void invalidAmount_noDaoPersist() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderFF6", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             assertThrows(IllegalArgumentException.class, () -> sut.deposit(user, 0L));
@@ -185,36 +193,35 @@ class AccountServiceTest {
         // --- Ineligible account ---
 
         @Test
-        @DisplayName("user SUSPENDED (ineligible) → IllegalStateException")
-        void suspendedUser_throwsIllegalStateException() {
-            // Arrange
+        @DisplayName("user SUSPENDED (restricted) → deposit vẫn được phép")
+        void suspendedUser_canDeposit() {
             NormalUser user = TestFixture.suspendedBidder("bidderGG7");
-            when(ratingService.isEligible(user)).thenReturn(false);
+            allowWallet(user);
 
-            // Act & Assert
-            assertThrows(IllegalStateException.class, () -> sut.deposit(user, 500_000L));
+            sut.deposit(user, 500_000L);
+
+            assertEquals(500_000L, user.getBalance());
+            verify(userDAO).addBalance(user.getId(), 500_000L);
         }
 
         @Test
-        @DisplayName("user BANNED (ineligible) → IllegalStateException, không persist")
-        void bannedUser_throwsIllegalStateException_noPersist() {
-            // Arrange
+        @DisplayName("user BANNED (restricted) → deposit vẫn được phép")
+        void bannedUser_canDeposit() {
             NormalUser user = TestFixture.bannedBidder("bidderHH8");
-            when(ratingService.isEligible(user)).thenReturn(false);
+            allowWallet(user);
 
-            // Act & Assert
-            assertThrows(IllegalStateException.class, () -> sut.deposit(user, 500_000L));
-            verify(userDAO, never()).addBalance(anyString(), anyLong());
+            sut.deposit(user, 500_000L);
+
+            assertEquals(500_000L, user.getBalance());
+            verify(userDAO).addBalance(user.getId(), 500_000L);
         }
 
         @Test
-        @DisplayName("ineligible check trước amount check → SUSPENDED + zero amount vẫn throw IllegalStateException")
-        void ineligibleCheckedBeforeAmount() {
-            // Arrange — đảm bảo isEligible check xảy ra TRƯỚC amount check
-            NormalUser user = TestFixture.suspendedBidder("bidderII9");
-            when(ratingService.isEligible(user)).thenReturn(false);
+        @DisplayName("wallet denied + zero amount → IllegalStateException trước amount check")
+        void walletDeniedCheckedBeforeAmount() {
+            NormalUser user = TestFixture.bidderWithBalance("bidderII9", 0L);
+            denyWallet(user);
 
-            // Act & Assert — phải là IllegalStateException (ineligible), không phải IllegalArgumentException (amount)
             assertThrows(IllegalStateException.class, () -> sut.deposit(user, 0L));
         }
     }
@@ -227,6 +234,14 @@ class AccountServiceTest {
     @DisplayName("withdraw()")
     class Withdraw {
 
+        private void allowWallet(NormalUser user) {
+            when(ratingService.isWalletOperationAllowed(user)).thenReturn(true);
+        }
+
+        private void denyWallet(NormalUser user) {
+            when(ratingService.isWalletOperationAllowed(user)).thenReturn(false);
+        }
+
         // --- Happy path ---
 
         @Test
@@ -234,7 +249,7 @@ class AccountServiceTest {
         void validWithdraw_balanceDecreases() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderJJ0", 1_000_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.withdraw(user, 400_000L);
@@ -248,7 +263,7 @@ class AccountServiceTest {
         void validWithdraw_persistsBalanceAndLockedDeposit() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderKK1", 1_000_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.withdraw(user, 400_000L);
@@ -262,7 +277,7 @@ class AccountServiceTest {
         void withdrawExactAvailableBalance_succeeds() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderLL2", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.withdraw(user, 500_000L);
@@ -277,7 +292,7 @@ class AccountServiceTest {
             // Arrange — balance = 1_000_000, lock 300_000 → available = 700_000
             NormalUser user = TestFixture.bidderWithBalance("bidderMM3", 1_000_000L);
             user.lockDeposit(300_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             sut.withdraw(user, 700_000L);
@@ -294,7 +309,7 @@ class AccountServiceTest {
         void insufficientBalance_throwsIllegalArgumentException() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderNN4", 200_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act & Assert
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, 300_000L));
@@ -305,7 +320,7 @@ class AccountServiceTest {
         void insufficientBalance_balanceUnchanged() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderOO5", 200_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, 300_000L));
@@ -319,7 +334,7 @@ class AccountServiceTest {
         void insufficientBalance_noPersist() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderPP6", 200_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, 300_000L));
@@ -334,7 +349,7 @@ class AccountServiceTest {
             // Arrange — balance = 1_000_000, lock 800_000 → available = 200_000
             NormalUser user = TestFixture.bidderWithBalance("bidderQQ7", 1_000_000L);
             user.lockDeposit(800_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act & Assert — cố rút 300_000 > 200_000 available
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, 300_000L));
@@ -347,7 +362,7 @@ class AccountServiceTest {
         void zeroAmount_throwsIllegalArgumentException() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderRR8", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act & Assert
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, 0L));
@@ -358,7 +373,7 @@ class AccountServiceTest {
         void negativeAmount_throwsIllegalArgumentException() {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderSS9", 500_000L);
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             // Act & Assert
             assertThrows(IllegalArgumentException.class, () -> sut.withdraw(user, -50_000L));
@@ -367,28 +382,25 @@ class AccountServiceTest {
         // --- Ineligible account ---
 
         @Test
-        @DisplayName("user ineligible → IllegalStateException trước khi kiểm tra amount")
-        void ineligibleUser_throwsIllegalStateException() {
-            // Arrange
-            NormalUser user = TestFixture.bannedBidder("bidderTT0");
-            when(ratingService.isEligible(user)).thenReturn(false);
+        @DisplayName("wallet denied → IllegalStateException trước khi kiểm tra amount")
+        void walletDenied_throwsIllegalStateException() {
+            NormalUser user = TestFixture.bidderWithBalance("bidderTT0", 500_000L);
+            denyWallet(user);
 
-            // Act & Assert
             assertThrows(IllegalStateException.class, () -> sut.withdraw(user, 100_000L));
         }
 
         @Test
-        @DisplayName("user BANNED withdraw → không persist DAO")
-        void bannedUserWithdraw_noPersist() {
-            // Arrange
+        @DisplayName("user BANNED (restricted) → withdraw vẫn được phép")
+        void bannedUser_canWithdraw() {
             NormalUser user = TestFixture.bannedBidder("bidderUU1");
-            when(ratingService.isEligible(user)).thenReturn(false);
+            user.setBalance(500_000L);
+            allowWallet(user);
 
-            // Act
-            assertThrows(IllegalStateException.class, () -> sut.withdraw(user, 100_000L));
+            sut.withdraw(user, 100_000L);
 
-            // Assert
-            verify(userDAO, never()).updateBalances(anyString(), anyLong(), anyLong());
+            assertEquals(400_000L, user.getBalance());
+            verify(userDAO).updateBalances(user.getId(), 400_000L, user.getLockedDeposit());
         }
 
         // --- persist correctness via ArgumentCaptor ---
@@ -399,7 +411,7 @@ class AccountServiceTest {
             // Arrange
             NormalUser user = TestFixture.bidderWithBalance("bidderVV2", 2_000_000L);
             user.lockDeposit(500_000L); // locked = 500_000, available = 1_500_000
-            when(ratingService.isEligible(user)).thenReturn(true);
+            allowWallet(user);
 
             ArgumentCaptor<String> idCaptor     = ArgumentCaptor.forClass(String.class);
             ArgumentCaptor<Long>   balCaptor    = ArgumentCaptor.forClass(Long.class);

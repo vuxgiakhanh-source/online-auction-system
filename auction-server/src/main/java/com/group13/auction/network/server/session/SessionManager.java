@@ -124,6 +124,11 @@ public class SessionManager {
      * @param role       role string
      */
     public void authenticate(WebSocket connection, String userId, String username, String role) {
+        authenticate(connection, userId, username, role, false);
+    }
+
+    public void authenticate(WebSocket connection, String userId, String username,
+                            String role, boolean restricted) {
         ClientSession session = byConnection.get(connection);
         if (session == null) return;
 
@@ -135,9 +140,10 @@ public class SessionManager {
             log.info("Replaced stale session: userId={}, username={}", userId, username);
         }
 
-        session.authenticate(userId, username, role);
+        session.authenticate(userId, username, role, restricted);
         byUserId.put(userId, session);
-        log.info("Session authenticated: userId={}, username={}, role={}", userId, username, role);
+        log.info("Session authenticated: userId={}, username={}, role={}, restricted={}",
+                userId, username, role, restricted);
     }
 
     /**

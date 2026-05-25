@@ -232,6 +232,9 @@ public class PaymentService implements IPaymentService {
   @Override
   public void expirePayment(Auction auction) {
     synchronized (auctionPaymentLock(auction)) {
+      if (auction.getStatus() == AuctionStatus.CANCELED) {
+        return;
+      }
       if (auction.getStatus() == AuctionStatus.PAID) {
         return;
       }
@@ -285,6 +288,9 @@ public class PaymentService implements IPaymentService {
   @Override
   public void expireSecondChanceOfferIfDue(Auction auction) {
     synchronized (auctionPaymentLock(auction)) {
+      if (auction.getStatus() == AuctionStatus.CANCELED) {
+        return;
+      }
       SecondChanceOffer offer = secondChanceOfferDAO.findPendingOfferByAuctionId(auction.getId());
       if (offer == null || !offer.isExpired()) {
         return;

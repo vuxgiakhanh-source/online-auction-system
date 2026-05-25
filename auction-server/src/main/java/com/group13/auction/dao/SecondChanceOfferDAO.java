@@ -123,6 +123,60 @@ public class SecondChanceOfferDAO {
     /**
      * Các phiên có offer PENDING đã quá hạn — dùng cho scheduler.
      */
+    /**
+     * Tất cả Second Chance Offer PENDING thuộc phiên của Seller (mọi trạng thái phiên).
+     */
+    public List<SecondChanceOffer> findPendingOffersBySellerId(String sellerId) {
+        List<SecondChanceOffer> offers = new ArrayList<>();
+        if (sellerId == null || sellerId.isBlank()) {
+            return offers;
+        }
+        String sql = "SELECT sco.id, sco.runner_up_id, sco.auction_id, sco.offer_price, sco.deposit_paid, "
+            + "sco.status, sco.deadline, sco.created_at "
+            + "FROM second_chance_offers sco "
+            + "INNER JOIN auctions a ON sco.auction_id = a.id "
+            + "INNER JOIN items i ON a.item_id = i.id "
+            + "WHERE i.seller_id = ? AND sco.status = 'PENDING'";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, sellerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    SecondChanceOffer offer = mapOfferRow(rs);
+                    if (offer != null) {
+                        offers.add(offer);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi tìm Second Chance Offer PENDING theo seller: sellerId={}", sellerId, e);
+        }
+        return offers;
+    }
+
+    private SecondChanceOffer mapOfferRow(ResultSet rs) throws SQLException {
+        String offerId = rs.getString("id");
+        String runnerUpId = rs.getString("runner_up_id");
+        String auctionId = rs.getString("auction_id");
+        long offerPrice = rs.getLong("offer_price");
+        long depositPaid = rs.getLong("deposit_paid");
+        Timestamp deadlineTs = rs.getTimestamp("deadline");
+        Timestamp createdTs = rs.getTimestamp("created_at");
+
+        LocalDateTime deadline = deadlineTs != null ? deadlineTs.toLocalDateTime()
+            : LocalDateTime.now().plusHours(24);
+        LocalDateTime createdAt = createdTs != null ? createdTs.toLocalDateTime() : LocalDateTime.now();
+
+        com.group13.auction.model.user.NormalUser runnerUp = userDAO.findNormalUserById(runnerUpId);
+        if (runnerUp == null) {
+            return null;
+        }
+
+        return SecondChanceOffer.reconstitute(
+            offerId, createdAt, createdAt, runnerUp, auctionId,
+            offerPrice, depositPaid, deadline, SecondChanceOffer.OfferStatus.PENDING);
+    }
+
     public List<String> findAuctionIdsWithExpiredPendingOffers(LocalDateTime asOf) {
         String sql = "SELECT DISTINCT auction_id FROM second_chance_offers "
             + "WHERE status = 'PENDING' AND deadline < ?";

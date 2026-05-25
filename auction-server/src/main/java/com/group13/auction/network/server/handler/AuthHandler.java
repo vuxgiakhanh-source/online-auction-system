@@ -202,23 +202,19 @@ public class AuthHandler implements PacketHandler {
                 return;
             }
 
-            // Kiểm tra tài khoản bị ban
-            if (user.getAccountStatus() == com.group13.auction.model.user.User.AccountStatus.BANNED) {
-                log.warn("Login rejected - account banned: userId={}, username={}, requestId={}", user.getId(), req.getUsername(), requestId);
-                session.send(Packet.of(PacketType.LOGIN_FAILED,
-                        ErrorDTO.of(ErrorDTO.ACCOUNT_BANNED,
-                                "Tài khoản đã bị khóa vĩnh viễn.", requestId), requestId));
-                return;
-            }
+            boolean restricted =
+                    user.getAccountStatus() == com.group13.auction.model.user.User.AccountStatus.BANNED
+                    || user.getAccountStatus() == com.group13.auction.model.user.User.AccountStatus.SUSPENDED;
 
             String token = UUID.randomUUID().toString();
             String role = resolveRole(user);
             UserDTO userDTO = DTOMapper.toUserDTO(user, true);
 
-            sessionManager.authenticate(session.getConnection(), user.getId(), user.getUsername(), role);
+            sessionManager.authenticate(session.getConnection(), user.getId(), user.getUsername(), role, restricted);
 
-            log.info("Login success: userId={}, username={}, role={}, requestId={}", user.getId(), user.getUsername(), role, requestId);
-            LoginResponseDTO response = new LoginResponseDTO(token, userDTO);
+            log.info("Login success: userId={}, username={}, role={}, restricted={}, requestId={}",
+                    user.getId(), user.getUsername(), role, restricted, requestId);
+            LoginResponseDTO response = new LoginResponseDTO(token, userDTO, restricted);
             session.send(Packet.of(PacketType.LOGIN_SUCCESS, response, requestId));
 
         } catch (com.group13.auction.exception.AuthenticationException e) {
