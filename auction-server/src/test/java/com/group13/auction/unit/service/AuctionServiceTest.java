@@ -2,6 +2,7 @@ package com.group13.auction.unit.service;
 
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.model.bid.FinancialTransaction;
 import com.group13.auction.manager.AuctionManager;
@@ -48,9 +49,16 @@ class AuctionServiceTest {
 
     // ── Mocks ─────────────────────────────────────────────────────────────────
 
-    @Mock private IRatingService ratingService;
-    @Mock private AuctionDAO     auctionDAO;
+    @Mock private IRatingService         ratingService;
+    @Mock private AuctionDAO             auctionDAO;
     @Mock private FinancialTransactionDAO financialTransactionDAO;
+    /**
+     * FIX: AuctionWinnerDAO phải được mock.
+     * closeAuction() TH2 gọi auctionWinnerDAO.saveWinner() trước khi transitionToClose().
+     * Nếu dùng real DAO (constructor 3-arg), saveWinner() cố kết nối DB → fail → throw
+     * RuntimeException → toàn bộ TH2 test crash ngay cả khi không có Docker.
+     */
+    @Mock private AuctionWinnerDAO        auctionWinnerDAO;
 
     // ── SUT ───────────────────────────────────────────────────────────────────
 
@@ -70,10 +78,12 @@ class AuctionServiceTest {
         resetSystemBankBalance();
         resetAuctionManager();
 
-        sut = new AuctionService(ratingService, auctionDAO, financialTransactionDAO);
+        sut = new AuctionService(ratingService, auctionDAO, financialTransactionDAO, auctionWinnerDAO);
         lenient().when(auctionDAO.createAuction(any())).thenReturn(true);
         lenient().when(financialTransactionDAO.saveTransaction(any(FinancialTransaction.class))).thenReturn(true);
         lenient().when(financialTransactionDAO.findLockedDepositAmount(anyString(), anyString())).thenReturn(0L);
+        // FIX: stub saveWinner → true để TH2 test không crash vì DAO thật gọi DB
+        lenient().when(auctionWinnerDAO.saveWinner(any())).thenReturn(true);
 
         seller = normalSeller("seller01");
         bidder = normalBidder("bidder01");
@@ -173,9 +183,9 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(bidder, item, start, end, 1_500_000L))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("role Seller");
+                sut.createAuction(bidder, item, start, end, 1_500_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("role Seller");
 
             // DAO không được gọi khi validation fail
             verifyNoInteractions(auctionDAO);
@@ -191,9 +201,9 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(seller, item, start, end, 1_500_000L))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("điều kiện");
+                sut.createAuction(seller, item, start, end, 1_500_000L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("điều kiện");
 
             verifyNoInteractions(auctionDAO);
         }
@@ -208,9 +218,9 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(seller, item, start, end, 1_500_000L))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("endTime");
+                sut.createAuction(seller, item, start, end, 1_500_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("endTime");
 
             verifyNoInteractions(auctionDAO);
         }
@@ -224,8 +234,8 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(seller, item, moment, moment, 1_500_000L))
-                    .isInstanceOf(IllegalArgumentException.class);
+                sut.createAuction(seller, item, moment, moment, 1_500_000L))
+                .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test
@@ -238,9 +248,9 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(seller, item, start, end, 0L))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("reservePrice");
+                sut.createAuction(seller, item, start, end, 0L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("reservePrice");
 
             verifyNoInteractions(auctionDAO);
         }
@@ -255,8 +265,8 @@ class AuctionServiceTest {
             int sizeBefore = seller.getAllAuctionIds().size();
 
             assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 1_500_000L))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Không thể lưu phiên");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Không thể lưu phiên");
 
             assertThat(seller.getAllAuctionIds()).hasSize(sizeBefore);
         }
@@ -271,8 +281,8 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.createAuction(seller, item, start, end, -500_000L))
-                    .isInstanceOf(IllegalArgumentException.class);
+                sut.createAuction(seller, item, start, end, -500_000L))
+                .isInstanceOf(IllegalArgumentException.class);
         }
     }
 
@@ -308,7 +318,7 @@ class AuctionServiceTest {
 
             // Assert
             verify(auctionDAO, times(1))
-                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.RUNNING.name());
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.RUNNING.name());
         }
 
         @Test
@@ -326,7 +336,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer).onAuctionEnded(captor.capture());
             assertThat(captor.getValue().getEventType())
-                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_STARTED);
+                .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_STARTED);
         }
 
         @Test
@@ -337,7 +347,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.startAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -349,7 +359,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.startAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -362,7 +372,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.startAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -405,7 +415,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer, atLeastOnce()).onAuctionEnded(captor.capture());
             boolean hasNoWinnerEvent = captor.getAllValues().stream()
-                    .anyMatch(e -> e.getEventType() == AuctionEvent.AuctionEventType.AUCTION_NO_WINNER);
+                .anyMatch(e -> e.getEventType() == AuctionEvent.AuctionEventType.AUCTION_NO_WINNER);
             assertThat(hasNoWinnerEvent).isTrue();
         }
 
@@ -420,7 +430,7 @@ class AuctionServiceTest {
 
             // Assert
             verify(auctionDAO, atLeastOnce())
-                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
 
         // ── Nhánh 2: có leader nhưng chưa đạt reserve → auto-cancel ──────────
@@ -457,7 +467,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer, atLeastOnce()).onAuctionEnded(captor.capture());
             boolean hasReserveNotMetEvent = captor.getAllValues().stream()
-                    .anyMatch(e -> e.getEventType() == AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED);
+                .anyMatch(e -> e.getEventType() == AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED);
             assertThat(hasReserveNotMetEvent).isTrue();
         }
 
@@ -529,7 +539,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer).onAuctionEnded(captor.capture());
             assertThat(captor.getValue().getEventType())
-                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_ENDED);
+                .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_ENDED);
             assertThat(captor.getValue().getBidder()).isEqualTo(bidder);
         }
 
@@ -547,7 +557,86 @@ class AuctionServiceTest {
             verify(auctionDAO, times(1)).updateAuctionResult(auction);
         }
 
-        // ── Invalid state ──────────────────────────────────────────────────────
+        // ── Nhánh 3 (thêm mới) ────────────────────────────────────────────────
+
+        @Test
+        @DisplayName("closeAuction — reserve met → saveWinner() được gọi đúng 1 lần trước khi FINISHED")
+        void reserveMet_savesWinnerToDatabase() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            auction.updateBid(2_500_000L, bidder);
+
+            // Act
+            sut.closeAuction(auction);
+
+            // Assert — FIX Bug 3: saveWinner phải được gọi trước updateAuctionResult
+            verify(auctionWinnerDAO, times(1)).saveWinner(any());
+        }
+
+        @Test
+        @DisplayName("closeAuction — saveWinner() fail → throw RuntimeException, auction KHÔNG transition sang FINISHED")
+        void reserveMet_saveWinnerFails_throwsAndDoesNotTransition() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            auction.updateBid(2_500_000L, bidder);
+            when(auctionWinnerDAO.saveWinner(any())).thenReturn(false); // DB fail
+
+            // Act & Assert
+            assertThatThrownBy(() -> sut.closeAuction(auction))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Không thể lưu AuctionWinner");
+
+            // Auction vẫn RUNNING — chưa transition
+            assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.RUNNING);
+        }
+
+        // ── Bug 3 fix: TH1 không được gọi updateAuctionResult ────────────────
+
+        @Test
+        @DisplayName("closeAuction — không có leader → updateAuctionResult() KHÔNG được gọi")
+        void noLeader_doesNotCallUpdateAuctionResult() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            assertThat(auction.getCurrentLeader()).isNull();
+
+            // Act
+            sut.closeAuction(auction);
+
+            // Assert — FIX Bug 3: chỉ TH2 mới gọi updateAuctionResult
+            // TH1.1 (no leader) chỉ gọi updateAuctionStatus qua cancelAuction()
+            verify(auctionDAO, never()).updateAuctionResult(any());
+        }
+
+        @Test
+        @DisplayName("closeAuction — reserve chưa đạt → updateAuctionResult() KHÔNG được gọi")
+        void reserveNotMet_doesNotCallUpdateAuctionResult() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            auction.updateBid(1_200_000L, bidder); // < reservePrice (2_000_000)
+            assertThat(auction.isReserveMet()).isFalse();
+
+            // Act
+            sut.closeAuction(auction);
+
+            // Assert — FIX Bug 3: TH1.2 (reserve not met) chỉ gọi updateAuctionStatus,
+            // KHÔNG gọi updateAuctionResult để tránh ghi sai winning_bidder_id vào DB
+            verify(auctionDAO, never()).updateAuctionResult(any());
+        }
+
+        @Test
+        @DisplayName("closeAuction — reserve chưa đạt → updateAuctionStatus(CANCELED) được gọi đúng 1 lần")
+        void reserveNotMet_persistsCanceledStatusOnce() {
+            // Arrange
+            Auction auction = runningAuction(seller, 1_000_000L);
+            auction.updateBid(1_200_000L, bidder);
+
+            // Act
+            sut.closeAuction(auction);
+
+            // Assert
+            verify(auctionDAO, times(1))
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
+        }
 
         @Test
         @DisplayName("closeAuction — phiên OPEN → IllegalStateException")
@@ -557,7 +646,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.closeAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -569,7 +658,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.closeAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -582,7 +671,7 @@ class AuctionServiceTest {
 
             // Act & Assert — không thể close 2 lần
             assertThatThrownBy(() -> sut.closeAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -631,7 +720,7 @@ class AuctionServiceTest {
 
             // Assert — FIX: chỉ 1 lần (bỏ lần gọi thừa thứ 2)
             verify(auctionDAO, times(1))
-                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
 
         @Test
@@ -649,7 +738,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer).onAuctionEnded(captor.capture());
             assertThat(captor.getValue().getEventType())
-                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
+                .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
         }
 
         @Test
@@ -664,7 +753,7 @@ class AuctionServiceTest {
 
             // Assert — SystemAdmin nhận ít nhất 1 log mới
             assertThat(SystemAdmin.getInstance().getActionLog())
-                    .hasSizeGreaterThan(logSizeBefore);
+                .hasSizeGreaterThan(logSizeBefore);
         }
 
         @Test
@@ -677,8 +766,8 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
-                    .isInstanceOf(IllegalStateException.class);
+                sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -692,8 +781,8 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
-                    .isInstanceOf(IllegalStateException.class);
+                sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
+                .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -711,16 +800,16 @@ class AuctionServiceTest {
         void setUpAdmin() {
             // Admin.create là protected — dùng reconstitute để tạo STAFF admin không qua DB
             staff = Admin.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    "staff01",
-                    User.hashPassword("password1"),
-                    "staff01@test.com",
-                    User.AccountStatus.ACTIVE,
-                    5.0,
-                    Admin.LEVEL_STAFF,
-                    null
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                "staff01",
+                User.hashPassword("password1"),
+                "staff01@test.com",
+                User.AccountStatus.ACTIVE,
+                5.0,
+                Admin.LEVEL_STAFF,
+                null
             );
         }
 
@@ -751,7 +840,7 @@ class AuctionServiceTest {
             // Assert
             assertThat(staff.getActionLog()).hasSizeGreaterThan(staffLogBefore);
             assertThat(SystemAdmin.getInstance().getActionLog())
-                    .hasSizeGreaterThan(systemLogBefore);
+                .hasSizeGreaterThan(systemLogBefore);
         }
 
         @Test
@@ -765,7 +854,7 @@ class AuctionServiceTest {
 
             // Assert
             verify(auctionDAO, times(1))
-                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
 
         @Test
@@ -777,9 +866,9 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.cancelAuction(sysAdmin, auction, Admin.CancelReason.SYSTEM_ERROR))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("SystemAdmin");
+                sut.cancelAuction(sysAdmin, auction, Admin.CancelReason.SYSTEM_ERROR))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("SystemAdmin");
         }
 
         @Test
@@ -797,7 +886,7 @@ class AuctionServiceTest {
             ArgumentCaptor<AuctionEvent> captor = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(observer).onAuctionEnded(captor.capture());
             assertThat(captor.getValue().getEventType())
-                    .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
+                .isEqualTo(AuctionEvent.AuctionEventType.AUCTION_CANCELED);
         }
 
         @Test
@@ -811,7 +900,7 @@ class AuctionServiceTest {
 
             // Assert
             verify(auctionDAO, times(1))
-                    .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
+                .updateAuctionStatus(auction.getId(), Auction.AuctionStatus.CANCELED.name());
         }
     }
 
@@ -902,7 +991,7 @@ class AuctionServiceTest {
 
             // Act & Assert — không throw exception
             assertThatCode(() -> sut.addObserver(auction.getId(), null))
-                    .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
         }
 
         @Test
@@ -913,7 +1002,7 @@ class AuctionServiceTest {
 
             // Act & Assert — không throw exception
             assertThatCode(() -> sut.addObserver(null, observer))
-                    .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
         }
 
         @Test
@@ -928,7 +1017,7 @@ class AuctionServiceTest {
 
             // Assert
             assertThatThrownBy(() -> observers.add(mock(AuctionObserver.class)))
-                    .isInstanceOf(UnsupportedOperationException.class);
+                .isInstanceOf(UnsupportedOperationException.class);
         }
 
         @Test
@@ -997,7 +1086,7 @@ class AuctionServiceTest {
 
             // Act & Assert — lần 2 không hợp lệ
             assertThatThrownBy(() -> sut.startAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -1009,7 +1098,7 @@ class AuctionServiceTest {
 
             // Act & Assert — lần 2 không hợp lệ
             assertThatThrownBy(() -> sut.closeAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -1021,8 +1110,8 @@ class AuctionServiceTest {
 
             // Act & Assert — lần 2 không throw (state machine cho phép idempotent cancel)
             assertThatCode(() ->
-                    sut.cancelAuction(auction, Admin.CancelReason.NO_WINNER))
-                    .doesNotThrowAnyException();
+                sut.cancelAuction(auction, Admin.CancelReason.NO_WINNER))
+                .doesNotThrowAnyException();
 
             // Status vẫn là CANCELED
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.CANCELED);
@@ -1038,7 +1127,7 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> sut.closeAuction(auction))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -1119,8 +1208,8 @@ class AuctionServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() ->
-                    sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
-                    .isInstanceOf(IllegalStateException.class);
+                sut.cancelAuction(auction, Admin.CancelReason.SYSTEM_ERROR))
+                .isInstanceOf(IllegalStateException.class);
 
             // DAO không được gọi khi business rule fail
             verifyNoInteractions(auctionDAO);
@@ -1134,38 +1223,38 @@ class AuctionServiceTest {
     /** Tạo NormalUser có role BIDDER. */
     private static NormalUser normalBidder(String username) {
         return NormalUser.reconstitute(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now(), LocalDateTime.now(),
-                username, User.hashPassword("password1"),
-                username + "@test.com",
-                User.AccountStatus.ACTIVE,
-                3.0, 5_000_000L, 0L,
-                EnumSet.of(User.UserRole.BIDDER),
-                false, 0, null
+            UUID.randomUUID().toString(),
+            LocalDateTime.now(), LocalDateTime.now(),
+            username, User.hashPassword("password1"),
+            username + "@test.com",
+            User.AccountStatus.ACTIVE,
+            3.0, 5_000_000L, 0L,
+            EnumSet.of(User.UserRole.BIDDER),
+            false, 0, null
         );
     }
 
     /** Tạo NormalUser có role BIDDER + SELLER. */
     private static NormalUser normalSeller(String username) {
         return NormalUser.reconstitute(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now(), LocalDateTime.now(),
-                username, User.hashPassword("password1"),
-                username + "@test.com",
-                User.AccountStatus.ACTIVE,
-                3.0, 10_000_000L, 0L,
-                EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
-                false, 0, null
+            UUID.randomUUID().toString(),
+            LocalDateTime.now(), LocalDateTime.now(),
+            username, User.hashPassword("password1"),
+            username + "@test.com",
+            User.AccountStatus.ACTIVE,
+            3.0, 10_000_000L, 0L,
+            EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
+            false, 0, null
         );
     }
 
     /** Tạo Art item. */
     private static Art art(String name, long startingPrice, NormalUser seller) {
         return Art.reconstitute(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now(), LocalDateTime.now(),
-                name, "Mô tả " + name, startingPrice, seller,
-                "Nghệ sĩ Test", 2020, "Sơn dầu"
+            UUID.randomUUID().toString(),
+            LocalDateTime.now(), LocalDateTime.now(),
+            name, "Mô tả " + name, startingPrice, seller,
+            "Nghệ sĩ Test", 2020, "Sơn dầu"
         );
     }
 
@@ -1173,10 +1262,10 @@ class AuctionServiceTest {
     private static Auction openAuction(NormalUser seller, long startingPrice) {
         Art item = art("Tranh Test", startingPrice, seller);
         return Auction.create(
-                item,
-                LocalDateTime.now().minusMinutes(1),
-                LocalDateTime.now().plusHours(1),
-                startingPrice * 2
+            item,
+            LocalDateTime.now().minusMinutes(1),
+            LocalDateTime.now().plusHours(1),
+            startingPrice * 2
         );
     }
 
@@ -1194,7 +1283,7 @@ class AuctionServiceTest {
         instanceField.setAccessible(true);
         if (instanceField.get(null) == null) {
             java.lang.reflect.Constructor<SystemAdmin> ctor =
-                    SystemAdmin.class.getDeclaredConstructor(String.class, String.class, String.class);
+                SystemAdmin.class.getDeclaredConstructor(String.class, String.class, String.class);
             ctor.setAccessible(true);
             SystemAdmin admin = ctor.newInstance("SYSTEM", "test-password", "system@test.com");
             instanceField.set(null, admin);

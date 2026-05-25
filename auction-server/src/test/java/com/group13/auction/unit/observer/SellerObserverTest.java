@@ -84,12 +84,12 @@ class SellerObserverTest {
 
     private static void assertContains(String actual, String fragment) {
         assertTrue(actual.contains(fragment),
-                "Expected output to contain: [" + fragment + "], but was:\n" + actual);
+            "Expected output to contain: [" + fragment + "], but was:\n" + actual);
     }
 
     private static void assertNotContains(String actual, String fragment) {
         assertFalse(actual.contains(fragment),
-                "Expected output NOT to contain: [" + fragment + "], but was:\n" + actual);
+            "Expected output NOT to contain: [" + fragment + "], but was:\n" + actual);
     }
 
     // =========================================================================
@@ -105,8 +105,8 @@ class SellerObserverTest {
         void bidPlaced_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 1_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 1_500_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -120,8 +120,8 @@ class SellerObserverTest {
         void bidPlaced_notificationContainsBidAmount() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 2_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 2_500_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -135,8 +135,8 @@ class SellerObserverTest {
         void bidPlaced_notificationContainsAuctionId() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 1_200_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 1_200_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -150,8 +150,8 @@ class SellerObserverTest {
         void bidPlaced_duplicateEvent_emittedTwice() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 1_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 1_500_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -159,10 +159,10 @@ class SellerObserverTest {
 
             // Assert — dedup là trách nhiệm của upstream, không phải model
             long lineCount = output().lines()
-                    .filter(l -> l.contains(seller.getUsername()) && l.contains(auction.getId()))
-                    .count();
+                .filter(l -> l.contains(seller.getUsername()) && l.contains(auction.getId()))
+                .count();
             assertEquals(2, lineCount,
-                    "duplicate BID_PLACED phải emit 2 lần — model không tự dedup");
+                "duplicate BID_PLACED phải emit 2 lần — model không tự dedup");
         }
 
         @Test
@@ -170,8 +170,8 @@ class SellerObserverTest {
         void bidPlaced_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 1_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 1_500_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -194,8 +194,8 @@ class SellerObserverTest {
         void reserveNotMet_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
-                    auction, winner, 800_000L);
+                AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
+                auction, winner, 800_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -209,8 +209,8 @@ class SellerObserverTest {
         void reserveNotMet_notificationContainsBidAmount() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
-                    auction, winner, 800_000L);
+                AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
+                auction, winner, 800_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -224,8 +224,8 @@ class SellerObserverTest {
         void reserveNotMet_notificationContainsReservePrice() {
             // Arrange — reservePrice = startingPrice * 2 = 2_000_000
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
-                    auction, winner, 800_000L);
+                AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
+                auction, winner, 800_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -239,8 +239,8 @@ class SellerObserverTest {
         void reserveNotMet_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
-                    auction, winner, 800_000L);
+                AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET,
+                auction, winner, 800_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -260,11 +260,11 @@ class SellerObserverTest {
 
         @ParameterizedTest(name = "event type {0} → default branch, im lặng")
         @EnumSource(value = AuctionEvent.AuctionEventType.class, names = {
-                "AUCTION_STARTED", "AUCTION_UPCOMING", "AUCTION_ENDED",
-                "AUCTION_NO_WINNER", "RESERVE_NOT_MET_CLOSED", "AUCTION_EXTENDED",
-                "PAYMENT_COMPLETED", "AUCTION_CANCELED", "SECOND_CHANCE_OFFERED",
-                "QUALITY_REPORT_APPROVED", "FRAUD_DETECTED",
-                "SELLER_CANCEL_REQUEST", "SELLER_CANCEL_REQUEST_ACCEPTED"
+            "AUCTION_STARTED", "AUCTION_UPCOMING", "AUCTION_ENDED",
+            "AUCTION_NO_WINNER", "RESERVE_NOT_MET_CLOSED", "AUCTION_EXTENDED",
+            "PAYMENT_COMPLETED", "AUCTION_CANCELED", "SECOND_CHANCE_OFFERED",
+            "QUALITY_REPORT_APPROVED", "FRAUD_DETECTED",
+            "SELLER_CANCEL_REQUEST", "SELLER_CANCEL_REQUEST_ACCEPTED"
         })
         @DisplayName("non-bid event type → không emit notification trong onBidPlaced")
         void nonBidEventType_noOutput(AuctionEvent.AuctionEventType type) {
@@ -276,7 +276,7 @@ class SellerObserverTest {
 
             // Assert
             assertTrue(output().isBlank(),
-                    "onBidPlaced phải im lặng với event type: " + type);
+                "onBidPlaced phải im lặng với event type: " + type);
             verifyNoInteractions(ratingService);
         }
     }
@@ -294,8 +294,8 @@ class SellerObserverTest {
         void auctionStarted_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_STARTED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_STARTED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -309,8 +309,8 @@ class SellerObserverTest {
         void auctionStarted_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_STARTED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_STARTED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -333,8 +333,8 @@ class SellerObserverTest {
         void auctionEnded_notificationContainsSellerAndWinner() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -350,8 +350,8 @@ class SellerObserverTest {
         void auctionEnded_notificationContainsWinningPrice() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED,
-                    auction, winner, 3_500_000L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED,
+                auction, winner, 3_500_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -365,15 +365,15 @@ class SellerObserverTest {
         void auctionEnded_nullWinner_silent() {
             // Arrange — getBidder() = null: branch `if (event.getBidder() != null)` = false
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
 
             // Assert — branch bị skip, không emit gì
             assertTrue(output().isBlank(),
-                    "AUCTION_ENDED với null bidder phải im lặng (seller chờ PAYMENT_COMPLETED)");
+                "AUCTION_ENDED với null bidder phải im lặng (seller chờ PAYMENT_COMPLETED)");
         }
 
         @Test
@@ -381,8 +381,8 @@ class SellerObserverTest {
         void auctionEnded_noRatingRewardYet() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -405,8 +405,8 @@ class SellerObserverTest {
         void noWinner_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -420,8 +420,8 @@ class SellerObserverTest {
         void noWinner_notificationMentionsCancellation() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -435,8 +435,8 @@ class SellerObserverTest {
         void noWinner_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_NO_WINNER,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -459,8 +459,8 @@ class SellerObserverTest {
         void reserveNotMetClosed_notificationContainsItemName() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
-                    auction, null, 1_200_000L);
+                AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
+                auction, null, 1_200_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -475,8 +475,8 @@ class SellerObserverTest {
             // Arrange
             long highestBid = 1_300_000L;
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
-                    auction, null, highestBid);
+                AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
+                auction, null, highestBid);
 
             // Act
             observer.onAuctionEnded(event);
@@ -490,8 +490,8 @@ class SellerObserverTest {
         void reserveNotMetClosed_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
-                    auction, null, 1_200_000L);
+                AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
+                auction, null, 1_200_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -505,8 +505,8 @@ class SellerObserverTest {
         void reserveNotMetClosed_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
-                    auction, null, 1_200_000L);
+                AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
+                auction, null, 1_200_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -529,8 +529,8 @@ class SellerObserverTest {
         void paymentCompleted_rewardSellerCalledOnce() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -544,8 +544,8 @@ class SellerObserverTest {
         void paymentCompleted_rewardSellerReceivesCorrectSeller() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -561,8 +561,8 @@ class SellerObserverTest {
         void paymentCompleted_sellerReceivesSuccessNotification() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -577,8 +577,8 @@ class SellerObserverTest {
             // Arrange
             long salePrice = 4_000_000L;
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, salePrice);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, salePrice);
 
             // Act
             observer.onAuctionEnded(event);
@@ -594,8 +594,8 @@ class SellerObserverTest {
         void paymentCompleted_repeatedEvent_rewardCalledTwice() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -610,8 +610,8 @@ class SellerObserverTest {
         void paymentCompleted_onlyRewardSellerCalled_noOtherRatingCalls() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -635,8 +635,8 @@ class SellerObserverTest {
         void auctionCanceled_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_CANCELED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_CANCELED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -650,8 +650,8 @@ class SellerObserverTest {
         void auctionCanceled_notificationMentionsCancellation() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_CANCELED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_CANCELED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -665,8 +665,8 @@ class SellerObserverTest {
         void auctionCanceled_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_CANCELED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_CANCELED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -685,18 +685,21 @@ class SellerObserverTest {
     class OnSecondChanceOffered {
 
         @Test
-        @DisplayName("SECOND_CHANCE_OFFERED: seller nhận notification second-chance")
+        @DisplayName("SECOND_CHANCE_OFFERED: SellerObserver không gửi trực tiếp (đã delegate sang ServerBroadcastNotifier)")
         void secondChanceOffered_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
-                    auction, otherBidder, 0L);
+                AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
+                auction, otherBidder, 0L);
 
-            // Act
+            // FIX: SellerObserver.onAuctionEnded(SECOND_CHANCE_OFFERED) là no-op (break).
+            // Notification được gửi qua ServerBroadcastNotifier.notifySecondChanceOffered()
+            // bên trong PaymentService để tránh trùng lặp.
+            // → Không có output từ SellerObserver, không cần verify username.
             observer.onAuctionEnded(event);
 
-            // Assert
-            assertContains(output(), seller.getUsername());
+            // Assert — không crash, không gọi ratingService
+            verifyNoInteractions(ratingService);
         }
 
         @Test
@@ -704,8 +707,8 @@ class SellerObserverTest {
         void secondChanceOffered_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
-                    auction, otherBidder, 0L);
+                AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED,
+                auction, otherBidder, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -728,8 +731,8 @@ class SellerObserverTest {
         void cancelRequestAccepted_notificationContainsSellerUsername() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -743,8 +746,8 @@ class SellerObserverTest {
         void cancelRequestAccepted_notificationMentionsApproval() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -758,8 +761,8 @@ class SellerObserverTest {
         void cancelRequestAccepted_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST_ACCEPTED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -782,15 +785,15 @@ class SellerObserverTest {
         void auctionUpcoming_silentNoCrash() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_UPCOMING,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_UPCOMING,
+                auction, null, 0L);
 
             // Act & Assert — không ném exception
             assertDoesNotThrow(() -> observer.onAuctionEnded(event));
 
             // Assert — branch TODO → không emit gì
             assertTrue(output().isBlank(),
-                    "AUCTION_UPCOMING phải im lặng (branch chưa implement)");
+                "AUCTION_UPCOMING phải im lặng (branch chưa implement)");
         }
 
         @Test
@@ -798,8 +801,8 @@ class SellerObserverTest {
         void auctionUpcoming_noRatingServiceInteraction() {
             // Arrange
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_UPCOMING,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_UPCOMING,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -819,10 +822,10 @@ class SellerObserverTest {
 
         @ParameterizedTest(name = "event type {0} → default branch, im lặng, không crash")
         @EnumSource(value = AuctionEvent.AuctionEventType.class, names = {
-                "BID_PLACED", "BID_RESERVE_NOT_MET",
-                "AUCTION_EXTENDED",
-                "QUALITY_REPORT_APPROVED", "FRAUD_DETECTED",
-                "SELLER_CANCEL_REQUEST"
+            "BID_PLACED", "BID_RESERVE_NOT_MET",
+            "AUCTION_EXTENDED",
+            "QUALITY_REPORT_APPROVED", "FRAUD_DETECTED",
+            "SELLER_CANCEL_REQUEST"
         })
         @DisplayName("event type không được handle → default branch, không emit, không crash")
         void unhandledEventType_silentNoException(AuctionEvent.AuctionEventType type) {
@@ -832,7 +835,7 @@ class SellerObserverTest {
             // Act & Assert
             assertDoesNotThrow(() -> observer.onAuctionEnded(event));
             assertTrue(output().isBlank(),
-                    "default branch phải im lặng với event type: " + type);
+                "default branch phải im lặng với event type: " + type);
             verifyNoInteractions(ratingService);
         }
     }
@@ -857,9 +860,9 @@ class SellerObserverTest {
             SellerObserver observerB = new SellerObserver(sellerB, rsB);
 
             AuctionEvent eventA = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED, auction, winner, 1_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED, auction, winner, 1_500_000L);
             AuctionEvent eventB = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED, auctionB, winner, 2_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED, auctionB, winner, 2_500_000L);
 
             // Act
             observerA.onBidPlaced(eventA);
@@ -886,8 +889,8 @@ class SellerObserverTest {
             SellerObserver observerB = new SellerObserver(sellerB, rsB);
 
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
-                    auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED,
+                auction, winner, 3_000_000L);
 
             // Act — chỉ observerA nhận event
             observer.onAuctionEnded(event);
@@ -906,8 +909,8 @@ class SellerObserverTest {
             double ratingBefore = seller.getRating();
 
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED,
-                    auction, winner, 1_500_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED,
+                auction, winner, 1_500_000L);
 
             // Act
             observer.onBidPlaced(event);
@@ -926,8 +929,8 @@ class SellerObserverTest {
             var statusBefore     = seller.getAccountStatus();
 
             AuctionEvent event = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_CANCELED,
-                    auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_CANCELED,
+                auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(event);
@@ -952,13 +955,13 @@ class SellerObserverTest {
         void successfulLifecycle_rewardSellerCalledExactlyOnce() {
             // Arrange
             AuctionEvent started = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
             AuctionEvent bidPlaced = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.BID_PLACED, auction, winner, 2_000_000L);
+                AuctionEvent.AuctionEventType.BID_PLACED, auction, winner, 2_000_000L);
             AuctionEvent ended = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED, auction, winner, 2_000_000L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED, auction, winner, 2_000_000L);
             AuctionEvent paymentDone = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED, auction, winner, 2_000_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED, auction, winner, 2_000_000L);
 
             // Act — lifecycle đầy đủ
             observer.onAuctionEnded(started);
@@ -976,9 +979,9 @@ class SellerObserverTest {
         void failedLifecycle_noWinner_noReward() {
             // Arrange
             AuctionEvent started = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
             AuctionEvent noWinner = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(started);
@@ -993,9 +996,9 @@ class SellerObserverTest {
         void canceledLifecycle_noReward() {
             // Arrange
             AuctionEvent started = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_STARTED, auction, null, 0L);
             AuctionEvent canceled = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L);
+                AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L);
 
             // Act
             observer.onAuctionEnded(started);
@@ -1010,8 +1013,8 @@ class SellerObserverTest {
         void reserveNotMetLifecycle_noReward() {
             // Arrange
             AuctionEvent reserveNotMet = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
-                    auction, null, 1_300_000L);
+                AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
+                auction, null, 1_300_000L);
 
             // Act
             observer.onAuctionEnded(reserveNotMet);
@@ -1025,11 +1028,11 @@ class SellerObserverTest {
         void secondChanceLifecycle_rewardSellerOnce() {
             // Arrange
             AuctionEvent ended = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.AUCTION_ENDED, auction, winner, 3_000_000L);
+                AuctionEvent.AuctionEventType.AUCTION_ENDED, auction, winner, 3_000_000L);
             AuctionEvent secondChance = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, auction, otherBidder, 0L);
+                AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED, auction, otherBidder, 0L);
             AuctionEvent paymentDone = new AuctionEvent(
-                    AuctionEvent.AuctionEventType.PAYMENT_COMPLETED, auction, otherBidder, 2_500_000L);
+                AuctionEvent.AuctionEventType.PAYMENT_COMPLETED, auction, otherBidder, 2_500_000L);
 
             // Act
             observer.onAuctionEnded(ended);

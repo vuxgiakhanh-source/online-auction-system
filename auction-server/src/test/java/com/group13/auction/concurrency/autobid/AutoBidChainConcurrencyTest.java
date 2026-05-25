@@ -54,7 +54,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
 
         when(mockRatingService.isEligible(any())).thenReturn(true);
         when(mockBidTransactionDAO.saveTransactionAndUpdatePrice(
-                any(), anyString(), anyLong(), anyString())).thenReturn(true);
+            any(), anyString(), anyLong(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
         when(mockAuctionDAO.updateEndTime(any(), any())).thenReturn(true);
         doNothing().when(mockWalletService).lockDeposit(any(), anyLong(), any());
@@ -62,7 +62,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         resetAuctionManagerUsers();
 
         bidService       = new BidService(mockAuctionService, mockRatingService,
-                mockWalletService, mockBidTransactionDAO, mockAuctionDAO, mockUserDAO);
+            mockWalletService, mockBidTransactionDAO, mockAuctionDAO, mockUserDAO);
         autoBidProcessor = new AutoBidProcessor(bidService, mockSessionManager);
         lockRegistry     = AuctionLockRegistry.getInstance();
         autoBidRegistry  = AutoBidRegistry.getInstance();
@@ -97,7 +97,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualBidAmount, new StandardBidStrategy());
-            autoBidProcessor.process(auction, manualBidder.getId());
+            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
@@ -105,14 +105,14 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         long expectedAutoPrice = manualBidAmount + BidIncrementCalculator.calculate(manualBidAmount);
 
         assertThat(auction.getCurrentPrice())
-                .as("Auto-bid phải counter lên manualBid + increment")
-                .isEqualTo(expectedAutoPrice);
+            .as("Auto-bid phải counter lên manualBid + increment")
+            .isEqualTo(expectedAutoPrice);
         assertThat(auction.getCurrentLeader())
-                .as("AutoBidder phải là leader sau counter")
-                .isSameAs(autoBidder);
+            .as("AutoBidder phải là leader sau counter")
+            .isSameAs(autoBidder);
         assertThat(auction.getCurrentPrice())
-                .as("Giá không được vượt maxBid")
-                .isLessThanOrEqualTo(maxBid);
+            .as("Giá không được vượt maxBid")
+            .isLessThanOrEqualTo(maxBid);
     }
 
     // ── D2 ────────────────────────────────────────────────────────────────────
@@ -136,20 +136,20 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualAmount, new StandardBidStrategy());
-            autoBidProcessor.process(auction, manualBidder.getId());
+            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
 
         assertThat(auction.getCurrentPrice())
-                .as("Giá phải là manualAmount vì auto-bid exhausted")
-                .isEqualTo(manualAmount);
+            .as("Giá phải là manualAmount vì auto-bid exhausted")
+            .isEqualTo(manualAmount);
         assertThat(auction.getCurrentLeader())
-                .as("Leader phải là manualBidder")
-                .isSameAs(manualBidder);
+            .as("Leader phải là manualBidder")
+            .isSameAs(manualBidder);
         assertThat(autoBidRegistry.hasActiveBid(autoBidder.getId(), auction.getId()))
-                .as("AutoBidder phải bị xóa khỏi registry khi maxBid cạn")
-                .isFalse();
+            .as("AutoBidder phải bị xóa khỏi registry khi maxBid cạn")
+            .isFalse();
     }
 
     // ── D3 ────────────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-            autoBidProcessor.process(auction, manualBidder.getId());
+            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
@@ -187,8 +187,8 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         long finalPrice = auction.getCurrentPrice();
 
         assertThat(finalPrice)
-                .as("Giá cuối phải <= maxBidB (người thắng)")
-                .isLessThanOrEqualTo(Math.max(maxBidA, maxBidB));
+            .as("Giá cuối phải <= maxBidB (người thắng)")
+            .isLessThanOrEqualTo(Math.max(maxBidA, maxBidB));
         assertThat(finalPrice).isGreaterThanOrEqualTo(manualBid);
 
         NormalUser leader = auction.getCurrentLeader();
@@ -196,8 +196,8 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
 
         long winnerMaxBid = leader.equals(autoBidderA) ? maxBidA : maxBidB;
         assertThat(finalPrice)
-                .as("Giá cuối không được vượt maxBid của người thắng: %d", winnerMaxBid)
-                .isLessThanOrEqualTo(winnerMaxBid);
+            .as("Giá cuối không được vượt maxBid của người thắng: %d", winnerMaxBid)
+            .isLessThanOrEqualTo(winnerMaxBid);
     }
 
     // ── D4 ────────────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
                     lock.lock();
                     try {
                         bidService.placeBid(mb, auction, bid, new StandardBidStrategy());
-                        autoBidProcessor.process(auction, mb.getId());
+                        autoBidProcessor.submit(auction, mb.getId());
                         snapshots.add(auction.getCurrentPrice());
                     } catch (Exception ignored) {
                     } finally {
@@ -253,13 +253,13 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
 
         for (int i = 1; i < snapshots.size(); i++) {
             assertThat(snapshots.get(i))
-                    .as("Giá tại snapshot[%d] >= snapshot[%d-1]", i, i)
-                    .isGreaterThanOrEqualTo(snapshots.get(i - 1));
+                .as("Giá tại snapshot[%d] >= snapshot[%d-1]", i, i)
+                .isGreaterThanOrEqualTo(snapshots.get(i - 1));
         }
 
         assertThat(auction.getCurrentPrice())
-                .as("Giá cuối không được vượt maxBid")
-                .isLessThanOrEqualTo(maxBid);
+            .as("Giá cuối không được vượt maxBid")
+            .isLessThanOrEqualTo(maxBid);
     }
 
     @Test
@@ -292,7 +292,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
                     gate.await();
                     try {
                         bidService.placeBid(mb, auction, bid, new StandardBidStrategy());
-                        autoBidProcessor.process(auction, mb.getId());
+                        autoBidProcessor.submit(auction, mb.getId());
                         snapshots.add(auction.getCurrentPrice());
                     } catch (Exception ignored) {
                     }
@@ -343,14 +343,14 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
             lock.lock();
             try {
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-                autoBidProcessor.process(auction, manualBidder.getId());
+                autoBidProcessor.submit(auction, manualBidder.getId());
             } finally {
                 lock.unlock();
             }
         }).doesNotThrowAnyException();
 
         assertThat(auction.getCurrentPrice())
-                .isGreaterThanOrEqualTo(manualBid)
-                .isLessThanOrEqualTo(sameMaxBid);
+            .isGreaterThanOrEqualTo(manualBid)
+            .isLessThanOrEqualTo(sameMaxBid);
     }
 }
