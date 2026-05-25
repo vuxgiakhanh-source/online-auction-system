@@ -260,13 +260,14 @@ online-auction-system/
 ## 💡 Hướng dẫn cài đặt
 
 ### Yêu cầu :
-| Công cụ      | Phiên bản                    | Kiểm tra          |
-|--------------|------------------------------|-------------------|
-| JDK          | 17 LTS (khuyên dùng Temurin) | `java -version`   |
-| Apache Maven | 3.8+                         | `mvn -version`    |
-| MySQL        | 8.0+                         | `mysql --version` |
+| Công cụ        | Phiên bản                    | Kiểm tra                 |
+|----------------|------------------------------|--------------------------|
+| JDK            | 17 LTS (khuyên dùng Temurin) | `java -version`          |
+| Apache Maven   | 3.9+                         | `mvn -version`           |
+| Docker Compose | Khuyến nghị                  | `docker compose version` |
+| MySQL          | 8.0+ nếu không dùng Docker   | `mysql --version`        |
 
-⚠️ **Quan trọng:** MySQL phải đang chạy trước khi khởi động server.
+⚠️ **Quan trọng:** server cần MySQL chạy trước. Cách đơn giản nhất là dùng Docker Compose để chạy MySQL.
 
 ### Các bước cài đặt 
 #### 1. Clone repository
@@ -278,63 +279,92 @@ cd online-auction-system
 
 #### 2. Tạo Database
 
-```bash
-# Docker (khuyến nghị): schema + seed tự chạy khi volume DB mới
-docker compose up db -d
+**Cách khuyến nghị: chạy MySQL bằng Docker**
 
-# MySQL local (không Docker):
+```bash
+docker compose up db -d
+```
+
+Compose sẽ chạy MySQL ở `localhost:3307` và tự import `schema.sql` + `seed.sql` khi volume DB mới được tạo.
+
+Tài khoản mặc định khớp với `data.properties`:
+- database: `auction_db`
+- username: `auction_user`
+- password: `auction_pass`
+
+**Nếu dùng MySQL local thay Docker**
+
+```bash
 mysql -u root -p -e "DROP DATABASE IF EXISTS auction_db; CREATE DATABASE auction_db;"
 mysql -u root -p auction_db < auction-server/src/main/resources/database/schema.sql
 mysql -u root -p auction_db < auction-server/src/main/resources/database/seed.sql
 ```
-> Add ảnh chụp MySQL Workbench hoặc terminal sau khi import thành công.
 
 #### 3. Cấu hình kết nối
 
-Chỉnh sửa file `auction-server/src/main/resources/data.properties`:
+Nếu dùng Docker ở bước 2 thì không cần sửa. File mặc định `auction-server/src/main/resources/data.properties` đã trỏ tới `localhost:3307`:
 
 ```properties
-db.url=jdbc:mysql://localhost:3306/auction_db
-db.username=root
-db.password=your_password
-server.port=8887
+db.url=jdbc:mysql://localhost:3307/auction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.username=auction_user
+db.password=auction_pass
 ```
 
-> 🔒 **Bảo mật:** Không commit file này kèm mật khẩu thật lên repository.
+Nếu dùng MySQL local ở `localhost:3306`, sửa lại:
+
+```properties
+db.url=jdbc:mysql://localhost:3306/auction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+db.username=root
+db.password=your_password
+```
+
+> 🔒 **Bảo mật:** Không commit mật khẩu thật lên repository.
 
 #### 4. Build toàn bộ project
 
 ```bash
-# Build và bỏ qua tests (nhanh hơn)
-mvn clean install -DskipTests
-
-# Build kèm chạy toàn bộ unit tests
-mvn clean install
+# Build nhanh để chạy app và install các module vào Maven local
+mvn clean install -DskipTests "-Dcheckstyle.skip"
 ```
+
+> `"-Dcheckstyle.skip"` được dùng vì repo hiện chưa kèm `google_checks.xml`. Trên PowerShell nên giữ dấu nháy cho các tham số `-D...` có dấu chấm.
 
 #### 5. Khởi động Server
 
 ```bash
-cd auction-server
-mvn spring-boot:run
+java -jar auction-server/target/auction-server-1.0-SNAPSHOT.jar
 ```
 
-Chờ xuất hiện thông báo: `[Server] Started on port 8887`
+Server mặc định chạy:
+- WebSocket: `ws://localhost:8080/auction`
+- Image upload HTTP server: `http://localhost:8081`
+
+Có thể đổi port bằng biến môi trường:
+
+```bash
+# PowerShell
+$env:SERVER_PORT="8080"
+$env:IMAGE_SERVER_PORT="8081"
+java -jar auction-server/target/auction-server-1.0-SNAPSHOT.jar
+```
 
 #### 6. Khởi động Client _(terminal mới)_
 
 ```bash
-cd auction-client
-mvn spring-boot:run
+mvn -f auction-client/pom.xml javafx:run
 ```
 
-> **Lưu ý:** Client mặc định kết nối đến `localhost:8887`. Nếu server chạy trên máy khác, cập nhật host trong file cấu hình của `auction-client`.
+> **Lưu ý:** Client mặc định kết nối đến `localhost:8080`. Nếu server chạy trên host/port khác:
+
+```bash
+mvn -f auction-client/pom.xml javafx:run "-Dauction.server.host=localhost" "-Dauction.server.port=8080"
+```
 
 ---
 
 ### Vị trí file JAR
 
-Sau khi build xong (`mvn clean install`), các file JAR nằm tại:
+Sau khi build xong (`mvn clean install -DskipTests "-Dcheckstyle.skip"`), các file JAR nằm tại:
 
 | Module     | Đường dẫn                                                                                    |
 |------------|----------------------------------------------------------------------------------------------|
@@ -345,23 +375,28 @@ Sau khi build xong (`mvn clean install`), các file JAR nằm tại:
 Chạy trực tiếp từ JAR (không cần Maven):
 
 ```bash
-# Bước 1 — Server trước (Spring Boot fat JAR)
+# Bước 1 — Server trước
 java -jar auction-server/target/auction-server-1.0-SNAPSHOT.jar
 
-# Bước 2 — Client sau (terminal mới, chờ Server log "Started on port 8887")
+# Bước 2 — Client sau (terminal mới)
 java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
 ```
+
+Nếu JAR client báo thiếu JavaFX runtime, chạy client bằng Maven (`mvn -f auction-client/pom.xml javafx:run`) là cách ổn định hơn vì Maven tự tải JavaFX dependencies.
 
 ---
 
 ### Troubleshooting
 
-| Lỗi                                 | Nguyên nhân           | Cách xử lý                                |
-|-------------------------------------|-----------------------|-------------------------------------------|
-| `Communications link failure`       | MySQL chưa chạy       | Khởi động MySQL service trước             |
-| `Address already in use: 8887`      | Port 8887 bị chiếm    | Đổi `server.port` trong `data.properties` |
-| `JavaFX runtime components missing` | Sai phiên bản Java    | Đảm bảo dùng JDK 17, không phải JRE       |
-| `BUILD FAILURE` khi `mvn install`   | Test fail do thiếu DB | Dùng `-DskipTests` hoặc setup DB trước    |
+| Lỗi                                 | Nguyên nhân                    | Cách xử lý |
+|-------------------------------------|--------------------------------|-------------|
+| `Communications link failure`       | MySQL chưa chạy hoặc sai port  | Chạy `docker compose up db -d`, kiểm tra `data.properties` trỏ `localhost:3307` |
+| `Access denied for user`            | Sai username/password DB       | Dùng `auction_user` / `auction_pass` với Docker, hoặc sửa `data.properties` theo MySQL local |
+| `Address already in use: 8080`      | Port WebSocket bị chiếm        | Đổi `SERVER_PORT` khi chạy server |
+| `Address already in use: 8081`      | Port image server bị chiếm     | Đổi `IMAGE_SERVER_PORT` khi chạy server |
+| `JavaFX runtime components missing` | Chạy client JAR thiếu JavaFX   | Chạy `mvn -f auction-client/pom.xml javafx:run` |
+| `BUILD FAILURE` do Checkstyle       | Thiếu `google_checks.xml`      | Build với `"-Dcheckstyle.skip"` |
+| `BUILD FAILURE` do tests            | Test cần DB/Docker             | Dùng `-DskipTests` để chạy app nhanh, hoặc setup Docker trước khi test |
 
 ---
 
@@ -406,12 +441,12 @@ cd auction-server && mvn test
 ## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section & Project Roadmap)
 
 ### 🧠 Đội ngũ
-|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |               Tiến độ                |    Trạng thái     |
-|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:------------------------------------:|:-----------------:|
-|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![50%](https://geps.dev/progress/80) | 🏗️ In Progress   |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![60%](https://geps.dev/progress/80) |  🏗️ In Progress  |
-|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![50%](https://geps.dev/progress/80) |  🏗️ In Progress  |
-|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![40%](https://geps.dev/progress/60) |  🏗️ In Progress  |
+|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |                Tiến độ                |   Trạng thái   |
+|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:-------------------------------------:|:--------------:|
+|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
+|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
+|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![100%](https://geps.dev/progress/60) |     ✅ DONE     |
 
 
 ### 📅 Tổng quan Timeline
@@ -434,15 +469,16 @@ Foundation    Core Logic        Advanced Features      Testing       Integration
 
 ## 📞 Liên hệ
 
-| Thành viên      | Trách nhiệm           | GitHub                                                          | Email                    |
-|-----------------|-----------------------|-----------------------------------------------------------------|--------------------------|
-| Hồ Huyền Chi    | Core Logic · OOP      | [@hchyy](https://github.com/hchyy)                              | chidinhhoi1709@gmail.com |
-| Vũ Gia Khánh    | Concurrency · Testing | [@vuxgiakhanh-source](https://github.com/vuxgiakhanh-source)    | vuxgiakhanh@gmail.com    |
-| Bạch Quốc Thịnh | Database · Backend    | [@thebrosaythree](https://github.com/thebrosaythree)            | iamven56@gmail.com       |
-| Trần Thảo Nhi   | Frontend              | [@bingbongg](https://github.com/bingbongg)                      | tthaonhi0127@gmail.com   |
+| Thành viên      | Trách nhiệm               | GitHub                                                          | Email                    |
+|-----------------|---------------------------|-----------------------------------------------------------------|--------------------------|
+| Hồ Huyền Chi    | Core Logic <br/> OOP      | [@hchyy](https://github.com/hchyy)                              | chidinhhoi1709@gmail.com |
+| Vũ Gia Khánh    | Concurrency <br/> Testing | [@vuxgiakhanh-source](https://github.com/vuxgiakhanh-source)    | vuxgiakhanh@gmail.com    |
+| Bạch Quốc Thịnh | Database <br/> Backend    | [@thebrosaythree](https://github.com/thebrosaythree)            | iamven56@gmail.com       |
+| Trần Thảo Nhi   | Frontend                  | [@bingbongg](https://github.com/bingbongg)                      | tthaonhi0127@gmail.com   |
 
 ---
 
 ## 📄 License
 
 __MIT © 2026 Group 13 - OmniBid__
+
