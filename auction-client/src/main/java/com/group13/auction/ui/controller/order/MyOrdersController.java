@@ -18,6 +18,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -174,12 +175,19 @@ public final class MyOrdersController {
   private VBox createMetric(String title, String value) {
     VBox metric = new VBox(4.0);
     metric.getStyleClass().add("order-metric-box");
+    metric.setMinWidth(0.0);
+    metric.setPrefWidth(190.0);
+    metric.setMaxWidth(Double.MAX_VALUE);
 
     Label titleLabel = new Label(title);
     titleLabel.getStyleClass().add("order-muted-text");
 
-    Label valueLabel = new Label(value);
+    String safeValue = value == null || value.isBlank() ? "--" : value;
+    Label valueLabel = new Label(safeValue);
     valueLabel.getStyleClass().add("order-metric-value");
+    valueLabel.setWrapText(true);
+    valueLabel.setMaxWidth(Double.MAX_VALUE);
+    valueLabel.setTooltip(new Tooltip(safeValue));
 
     metric.getChildren().addAll(titleLabel, valueLabel);
     return metric;

@@ -19,6 +19,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -217,12 +218,20 @@ public final class SellerAuctionListController {
     private VBox createMetric(String title, String value) {
         VBox metric = new VBox(4.0);
         metric.getStyleClass().add("seller-metric-box");
+        metric.setMinWidth(0.0);
+        metric.setPrefWidth(170.0);
+        metric.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(metric, Priority.ALWAYS);
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("seller-muted-text");
 
-        Label valueLabel = new Label(value);
+        String safeValue = value == null || value.isBlank() ? "--" : value;
+        Label valueLabel = new Label(safeValue);
         valueLabel.getStyleClass().add("seller-metric-value");
+        valueLabel.setWrapText(true);
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
+        valueLabel.setTooltip(new Tooltip(safeValue));
 
         metric.getChildren().addAll(titleLabel, valueLabel);
         return metric;

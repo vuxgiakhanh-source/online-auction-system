@@ -199,6 +199,7 @@
 
 .seller-metric-box {
     -fx-padding: 10 14 10 14;
+    -fx-min-width: 0;
 
     -fx-background-color: rgba(255, 255, 255, 0.075);
     -fx-background-radius: 18;
@@ -212,6 +213,24 @@
     -fx-font-size: 15px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
+}
+
+.seller-detail-value {
+    -fx-padding: 10 14 10 14;
+    -fx-min-width: 0;
+
+    -fx-background-color: rgba(255, 255, 255, 0.075);
+    -fx-background-radius: 16;
+
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .seller-empty-state {

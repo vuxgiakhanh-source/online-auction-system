@@ -19,6 +19,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -262,12 +263,20 @@ public final class AuctionListController {
     private VBox createMetric(String title, String value) {
         VBox metric = new VBox(3.0);
         metric.getStyleClass().add("auction-metric-box");
+        metric.setMinWidth(0.0);
+        metric.setPrefWidth(170.0);
+        metric.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(metric, Priority.ALWAYS);
 
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("auction-muted-text");
 
-        Label valueLabel = new Label(value);
+        String safeValue = value == null || value.isBlank() ? "--" : value;
+        Label valueLabel = new Label(safeValue);
         valueLabel.getStyleClass().add("auction-metric-value");
+        valueLabel.setWrapText(true);
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
+        valueLabel.setTooltip(new Tooltip(safeValue));
 
         metric.getChildren().addAll(titleLabel, valueLabel);
         return metric;
