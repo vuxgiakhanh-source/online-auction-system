@@ -3,13 +3,17 @@ package com.group13.auction.ui.controller.home;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
+import com.group13.auction.service.notification.NotificationService;
 import com.group13.auction.service.support.AudioManager;
 import com.group13.auction.service.payment.SecondChanceRealtimeService;
 import com.group13.auction.ui.util.AlertUtil;
+import com.group13.auction.ui.util.FxThreadUtil;
+import com.group13.auction.viewmodel.notification.NotificationItemViewModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import java.util.List;
 
 /** Controller cho dashboard chính sau khi người dùng đăng nhập hoặc đăng ký. */
 public final class MainLayoutController {
@@ -28,8 +32,12 @@ public final class MainLayoutController {
 
     @FXML private Button adminDashboardButton;
 
+    @FXML private Label notificationBadgeLabel;
+
     private final SecondChanceRealtimeService secondChanceRealtimeService =
             SecondChanceRealtimeService.getInstance();
+
+    private final NotificationService notificationService = new NotificationService();
 
     /** Hiển thị thông tin session hiện tại lên dashboard. */
     @FXML
@@ -37,10 +45,17 @@ public final class MainLayoutController {
         secondChanceRealtimeService.start();
         updateAudioButtons();
 
+        hideNotificationBadge();
+
         AppContext.getInstance()
-                .getSessionManager()
-                .getCurrentSession()
-                .ifPresentOrElse(this::renderSession, this::renderGuestState);
+            .getSessionManager()
+            .getCurrentSession()
+            .ifPresentOrElse(
+                session -> {
+                    renderSession(session);
+                    loadNotificationBadge();
+                },
+                this::renderGuestState);
     }
 
     /** Mở danh sách phiên đấu giá. */
@@ -121,6 +136,50 @@ public final class MainLayoutController {
         accountInfoLabel.setText("Chưa tìm thấy session đăng nhập.");
         updateSellerAccess(false);
         updateAdminAccess(false);
+    }
+
+    private void loadNotificationBadge() {
+        notificationService
+            .getNotifications()
+            .thenAccept(
+                notifications ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> renderNotificationBadge(countUnread(notifications))))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(this::hideNotificationBadge);
+                    return null;
+                });
+    }
+
+    private long countUnread(List<NotificationItemViewModel> notifications) {
+        if (notifications == null || notifications.isEmpty()) {
+            return 0;
+        }
+
+        return notifications.stream().filter(notification -> !notification.read()).count();
+    }
+
+    private void renderNotificationBadge(long unreadCount) {
+        if (notificationBadgeLabel == null) {
+            return;
+        }
+
+        if (unreadCount <= 0) {
+            hideNotificationBadge();
+            return;
+        }
+
+        notificationBadgeLabel.setText(unreadCount > 9 ? "9+" : Long.toString(unreadCount));
+        notificationBadgeLabel.setVisible(true);
+    }
+
+    private void hideNotificationBadge() {
+        if (notificationBadgeLabel == null) {
+            return;
+        }
+
+        notificationBadgeLabel.setVisible(false);
     }
 
     private void updateSellerAccess(boolean seller) {

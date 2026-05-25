@@ -26,6 +26,8 @@ import javafx.scene.layout.VBox;
 public final class NotificationCenterController {
 
     private static final String SECOND_CHANCE_NOTIFICATION_TYPE = "SecondChanceOffer";
+    private static final String NOTIFICATION_CELL_READ_CLASS = "notification-cell-read";
+    private static final String NOTIFICATION_CELL_UNREAD_CLASS = "notification-cell-unread";
 
     private final NotificationService notificationService = new NotificationService();
     private final PaymentService paymentService = new PaymentService();
@@ -311,69 +313,85 @@ public final class NotificationCenterController {
 
     private void configureSecondChanceInboxListView() {
         secondChanceInboxListView.setCellFactory(
-                ignored ->
-                        new ListCell<>() {
-                            @Override
-                            protected void updateItem(
-                                    NotificationItemViewModel notification, boolean empty) {
-                                super.updateItem(notification, empty);
-
-                                if (empty || notification == null) {
-                                    setText(null);
-                                    setGraphic(null);
-                                    return;
-                                }
-
-                                setText(
-                                        notification.title()
-                                                + "\n"
-                                                + notification.createdAtText()
-                                                + "  •  "
-                                                + notification.readStateText());
-                            }
-                        });
+            ignored ->
+                new ListCell<>() {
+                    @Override
+                    protected void updateItem(
+                        NotificationItemViewModel notification, boolean empty) {
+                        super.updateItem(notification, empty);
+                        renderNotificationCell(this, notification, empty);
+                    }
+                });
 
         secondChanceInboxListView
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (observable, oldValue, selected) -> {
-                            if (selected != null) {
-                                renderNotificationDetail(selected);
-                            }
-                        });
+            .getSelectionModel()
+            .selectedItemProperty()
+            .addListener(
+                (observable, oldValue, selected) -> {
+                    if (selected != null) {
+                        notificationListView.getSelectionModel().clearSelection();
+                        renderNotificationDetail(selected);
+                    }
+                });
     }
 
     private void configureNotificationListView() {
         notificationListView.setCellFactory(
-                ignored ->
-                        new ListCell<>() {
-                            @Override
-                            protected void updateItem(
-                                    NotificationItemViewModel notification, boolean empty) {
-                                super.updateItem(notification, empty);
-
-                                if (empty || notification == null) {
-                                    setText(null);
-                                    setGraphic(null);
-                                    return;
-                                }
-
-                                setText(
-                                        notification.title()
-                                                + "\n"
-                                                + notification.createdAtText()
-                                                + "  •  "
-                                                + notification.readStateText());
-                            }
-                        });
+            ignored ->
+                new ListCell<>() {
+                    @Override
+                    protected void updateItem(
+                        NotificationItemViewModel notification, boolean empty) {
+                        super.updateItem(notification, empty);
+                        renderNotificationCell(this, notification, empty);
+                    }
+                });
     }
 
     private void configureNotificationSelectionListener() {
         notificationListView
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, selected) -> renderNotificationDetail(selected));
+            .getSelectionModel()
+            .selectedItemProperty()
+            .addListener(
+                (observable, oldValue, selected) -> {
+                    if (selected != null) {
+                        secondChanceInboxListView.getSelectionModel().clearSelection();
+                        renderNotificationDetail(selected);
+                    } else if (secondChanceInboxListView
+                        .getSelectionModel()
+                        .getSelectedItem()
+                        == null) {
+                        clearNotificationDetail();
+                    }
+                });
+    }
+
+    private void renderNotificationCell(
+        ListCell<NotificationItemViewModel> cell,
+        NotificationItemViewModel notification,
+        boolean empty) {
+        cell.getStyleClass().removeAll(NOTIFICATION_CELL_READ_CLASS, NOTIFICATION_CELL_UNREAD_CLASS);
+
+        if (empty || notification == null) {
+            cell.setText(null);
+            cell.setGraphic(null);
+            return;
+        }
+
+        cell.getStyleClass()
+            .add(notification.read() ? NOTIFICATION_CELL_READ_CLASS : NOTIFICATION_CELL_UNREAD_CLASS);
+        cell.setText(buildNotificationCellText(notification));
+        cell.setGraphic(null);
+    }
+
+    private String buildNotificationCellText(NotificationItemViewModel notification) {
+        String unreadDot = notification.read() ? "" : "● ";
+        return unreadDot
+            + notification.title()
+            + "\n"
+            + notification.createdAtText()
+            + "  •  "
+            + notification.readStateText();
     }
 
     private void loadPendingSecondChanceOffers() {
