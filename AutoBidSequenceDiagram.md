@@ -2,62 +2,57 @@
 
 ```mermaid
 sequenceDiagram
-    participant Bidder as Client (Bidder)
-    participant BidHandler
-    participant AutoBidRegistry
+    autonumber
+    actor Bidder
+    participant Handler as BidHandler
+    participant Registry as AutoBidRegistry
     participant AutoBidDAO
-    participant AutoBidProcessor
-    participant AuctionManager
-    participant BidService
-    participant AuctionLockRegistry
+    participant BidSvc as BidService
+    participant Processor as AutoBidProcessor
+    participant Executor as PerAuctionExecutor
     participant Auction
-    participant BidTransactionDAO
-    participant SessionManager as SessionManager (broadcast)
+    participant Manager as AuctionManager
+    participant Sessions as SessionManager
+    participant UserDAO
 
-    Bidder->>BidHandler: REGISTER_AUTO_BID {auctionId, maxBid}
-    BidHandler->>AutoBidRegistry: register(userId, auctionId, maxBid)
-    AutoBidRegistry->>AutoBidDAO: upsert(userId, auctionId, maxBid)
-    AutoBidDAO-->>AutoBidRegistry: OK
-    AutoBidRegistry-->>BidHandler: registered
-    BidHandler-->>Bidder: AUTO_BID_REGISTERED
+    Bidder->>Handler: REGISTER_AUTO_BID {auctionId, maxBid}
+    Handler->>Registry: register(userId, auctionId, maxBid)
+    Registry->>AutoBidDAO: upsert(userId, auctionId, maxBid)
 
-    Note over BidHandler,AutoBidProcessor: Khi có bid mới (placeBid thành công)
+    alt bidder is already leader
+        Handler-->>Bidder: REGISTER_AUTO_BID_SUCCESS
+    else initial auto bid possible
+        Handler->>BidSvc: placeBid(bidder, auction, nextBid, AutoBidStrategy)
+        Handler->>Sessions: broadcastToAuction(BID_UPDATE)
+        Handler-->>Bidder: REGISTER_AUTO_BID_SUCCESS
+    end
 
-    BidHandler->>AutoBidProcessor: submit(auction, triggeredByUserId) [non-blocking ~1µs]
+    Handler->>Processor: submit(auction, userId)
+    Processor->>Executor: enqueue or mark recheck
 
-    Note over AutoBidProcessor: Task coalescing:<br/>chainRunning=false → submit task<br/>chainRunning=true → set needsRecheck=true
+    loop active auto bids
+        Executor->>Processor: runChain(auction)
+        Processor->>Registry: getEntriesForAuction(auctionId)
+        Processor->>Auction: currentLeader and currentPrice
+        Processor->>Processor: detectPhase() and buildCandidates()
 
-    Note over AutoBidProcessor: getOrCreateExecutor(auctionId).submit(runChain)
-
-    loop runChain — SingleThreadExecutor per auction
-        AutoBidProcessor->>AutoBidRegistry: getCandidates(auctionId)
-        AutoBidRegistry-->>AutoBidProcessor: List~AutoBidEntry~ (sorted by maxBid desc)
-
-        AutoBidProcessor->>AuctionManager: findAuctionById(auctionId)
-        AuctionManager-->>AutoBidProcessor: Auction
-
-        loop For each candidate
-            Note over AutoBidProcessor: AutoBidStrategy.calculateNextBid(auction)
-            
-            alt nextBid <= maxBid && auction.isAcceptingBids()
-                AutoBidProcessor->>BidService: placeBid(candidate, auction, nextBid, AutoBidStrategy)
-
-                BidService->>AuctionLockRegistry: acquireLock(auctionId)
-                BidService->>Auction: isValidBid / updateBid(nextBid, candidate)
-                BidTransactionDAO-->>BidService: saveTransaction(tx) [outside lock]
-                Note over BidService: notify(BID_PLACED) via AuctionService
-                BidService->>AutoBidProcessor: submit(auction, candidate.id) [recursive trigger]
-                BidService->>AuctionLockRegistry: releaseLock(auctionId)
-
-                BidService->>SessionManager: broadcast BID_UPDATE to auction room
-                BidService-->>AutoBidProcessor: OK
-            else nextBid > maxBid || !isAcceptingBids
-                Note over AutoBidProcessor: skip candidate
+        alt no online candidate or auction closed
+            Processor-->>Executor: stop chain
+        else candidate selected
+            Processor->>Manager: resolve user from memory
+            alt user not in memory
+                Processor->>UserDAO: findNormalUserById(userId)
+                Processor->>Manager: addToUserList(user)
             end
+            Processor->>BidSvc: placeBid(autoBidder, auction, smartNextBid, AutoBidStrategy)
+            Processor->>Sessions: broadcastToAuctionAsync(BID_UPDATE)
+            Processor->>Sessions: broadcastToAuctionAsync(BID_CHART_POINT_UPDATE)
         end
+    end
 
-        alt needsRecheck == true
-            Note over AutoBidProcessor: recheck.set(false) and runChain() again
-        end
+    loop exhausted auto bids
+        Processor->>Sessions: sendToUser(AUTO_BID_EXHAUSTED_NOTIFY)
+        Processor->>Registry: cancel(userId, auctionId)
+        Registry->>AutoBidDAO: delete(userId, auctionId)
     end
 ```
