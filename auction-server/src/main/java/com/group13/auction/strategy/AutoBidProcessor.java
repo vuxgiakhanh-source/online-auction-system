@@ -1,6 +1,5 @@
 package com.group13.auction.strategy;
 
-import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.dao.UserDAO;
@@ -9,6 +8,7 @@ import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.BidService;
@@ -551,13 +551,12 @@ public class AutoBidProcessor {
             }
 
             NormalUser leader = auction.getCurrentLeader();
-            BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
-            dto.setAuctionId(auctionId);
-            dto.setMaxBid(entry.getMaxBid());
-            dto.setCurrentPrice(auction.getCurrentPrice());
-            dto.setLeadingBidderUsername(leader != null ? leader.getUsername() : "Chưa có");
-            sessionManager.sendToUser(entry.getUserId(),
-                Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, dto));
+            ServerBroadcastNotifier.getInstance().notifyAutoBidExhausted(
+                entry.getUserId(),
+                auction,
+                entry.getMaxBid(),
+                auction.getCurrentPrice(),
+                leader != null ? leader.getUsername() : "Chưa có");
             registry.cancel(entry.getUserId(), auctionId);
             log.info("[AutoBid] Exhausted & cancelled: userId={} auctionId={} maxBid={}",
                 entry.getUserId(), auctionId, entry.getMaxBid());
