@@ -486,44 +486,43 @@
 }
 
 
-/* LIVE BIDDING OLD VIEW ENHANCEMENTS */
+/* LIVE BIDDING ENHANCEMENTS */
 
-.live-old-countdown-card {
-    -fx-min-width: 170;
-    -fx-padding: 10 16 10 16;
+.live-countdown-pill {
+    -fx-padding: 7 14 7 14;
 
     -fx-background-color: rgba(103, 184, 234, 0.16);
-    -fx-background-radius: 22;
+    -fx-background-radius: 999;
 
     -fx-border-color: rgba(103, 184, 234, 0.42);
-    -fx-border-radius: 22;
+    -fx-border-radius: 999;
     -fx-border-width: 1.2;
 
-    -fx-effect: dropshadow(gaussian, rgba(103, 184, 234, 0.22), 18, 0.22, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(103, 184, 234, 0.18), 14, 0.18, 0, 0);
 }
 
-.live-old-countdown-title {
-    -fx-font-size: 13px;
+.live-countdown-pill-label {
+    -fx-font-size: 12px;
     -fx-font-weight: 800;
     -fx-text-fill: rgba(255, 255, 255, 0.72);
 }
 
-.live-old-countdown-value {
-    -fx-font-size: 31px;
+.live-countdown-pill-value {
+    -fx-font-size: 19px;
     -fx-font-weight: 900;
     -fx-text-fill: #ffffff;
 }
 
-.live-old-clickable-card {
+.live-previewable-card {
     -fx-cursor: hand;
 }
 
-.live-old-clickable-card:hover {
+.live-previewable-card:hover {
     -fx-background-color: rgba(255, 255, 255, 0.115);
     -fx-border-color: rgba(103, 184, 234, 0.34);
 }
 
-.live-old-preview-badge {
+.live-expand-badge {
     -fx-padding: 5 10 5 10;
 
     -fx-background-color: rgba(103, 184, 234, 0.16);
