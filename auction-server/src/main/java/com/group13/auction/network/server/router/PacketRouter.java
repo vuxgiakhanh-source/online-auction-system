@@ -6,6 +6,7 @@ import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.server.handler.PacketHandler;
+import com.group13.auction.network.server.security.RestrictedAccessGuard;
 import com.group13.auction.network.server.session.ClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,10 @@ public class PacketRouter {
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                     ErrorDTO.of(ErrorDTO.VALIDATION_ERROR,
                             "Packet không hợp lệ: " + e.getMessage())));
+            return;
+        }
+
+        if (RestrictedAccessGuard.blockIfRestricted(session, type, requestId)) {
             return;
         }
 

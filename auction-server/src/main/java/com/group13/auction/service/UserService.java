@@ -58,15 +58,7 @@ public class UserService implements IUserService {
       return loginAdmin(username, inputPassword);
     }
 
-    // Kiểm tra trạng thái tài khoản
-    if (user.getAccountStatus() == AccountStatus.BANNED) {
-      log.warn("Login failed: account banned, username={}", username);
-      throw new AuthenticationException(Reason.ACCOUNT_BANNED);
-    }
-    if (user.getAccountStatus() == AccountStatus.SUSPENDED) {
-      log.warn("Login failed: account suspended, username={}", username);
-      throw new AuthenticationException(Reason.ACCOUNT_SUSPENDED);
-    }
+    // BANNED/SUSPENDED vẫn đăng nhập được (restricted mode — chỉ ví); kiểm tra mật khẩu bên dưới.
 
     // Kiểm tra mật khẩu
     if (!user.getHashedPassword().equals(User.hashPassword(inputPassword))) {

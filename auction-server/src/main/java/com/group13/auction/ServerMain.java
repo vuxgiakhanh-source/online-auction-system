@@ -27,6 +27,7 @@ import com.group13.auction.service.QualityReportService;
 import com.group13.auction.service.RatingService;
 import com.group13.auction.service.UserService;
 import com.group13.auction.service.WalletService;
+import com.group13.auction.service.seller.SellerSanctionCoordinator;
 import com.group13.auction.service.iservice.IAuctionTimerService;
 import com.group13.auction.strategy.AutoBidRegistry;
 import org.slf4j.Logger;
@@ -122,6 +123,9 @@ public class ServerMain {
 
         QualityReportService qualityReportService = new QualityReportService(
             ratingService, paymentService, qualityReportDAO, userDAO, notificationDAO);
+
+        SellerSanctionCoordinator.initialize(
+            auctionService, paymentService, auctionDAO, qualityReportDAO, secondChanceOfferDAO);
 
         // ── 6. Tải dữ liệu vào in-memory ─────────────────────────────────────
         AuctionManager.getInstance().loadDataFromDatabase();

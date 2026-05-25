@@ -120,6 +120,11 @@ public class SystemAdmin extends Admin {
                             BanReason.SYSTEM_AUTO.name(), null);
                 }
             }
+            com.group13.auction.service.seller.SellerSanctionCoordinator coordinator =
+                    com.group13.auction.service.seller.SellerSanctionCoordinator.getInstance();
+            if (coordinator != null) {
+                coordinator.onAccountSanctioned(user, AccountStatus.BANNED);
+            }
         }
     }
 

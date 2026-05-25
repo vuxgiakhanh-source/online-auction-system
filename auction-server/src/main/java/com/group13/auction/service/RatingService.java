@@ -7,6 +7,7 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.service.seller.SellerSanctionCoordinator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,21 @@ public class RatingService implements IRatingService {
   public boolean isEligible(User user) {
     return user.getAccountStatus() == AccountStatus.ACTIVE
         && user.getRating() >= MIN_RATING_ELIGIBLE;
+  }
+
+  /**
+   * Tài khoản BANNED/SUSPENDED vẫn được nạp/rút/xem ví (restricted login).
+   * Không ảnh hưởng {@link #isEligible(User)} dùng cho bid/auction/seller.
+   */
+  public boolean isWalletOperationAllowed(User user) {
+    if (user == null) {
+      return false;
+    }
+    AccountStatus status = user.getAccountStatus();
+    if (status == AccountStatus.BANNED || status == AccountStatus.SUSPENDED) {
+      return true;
+    }
+    return isEligible(user);
   }
 
   @Override
@@ -260,6 +276,11 @@ public class RatingService implements IRatingService {
           "Tài khoản bị tạm khóa",
           String.format("Điểm uy tín của bạn (%.2f) xuống dưới ngưỡng cho phép. "
               + "Tài khoản bị tạm khóa và sẽ được xem xét sau 3 tháng.", user.getRating()));
+
+      SellerSanctionCoordinator coordinator = SellerSanctionCoordinator.getInstance();
+      if (coordinator != null) {
+        coordinator.onAccountSanctioned(user, AccountStatus.SUSPENDED);
+      }
     }
   }
 

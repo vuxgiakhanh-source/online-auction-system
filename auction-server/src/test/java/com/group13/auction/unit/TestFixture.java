@@ -55,6 +55,7 @@ public final class TestFixture {
     public static IRatingService ratingServiceAllowAll() {
         return new IRatingService() {
             @Override public boolean isEligible(User user) { return true; }
+            @Override public boolean isWalletOperationAllowed(User user) { return true; }
             @Override public boolean canSellerCreateAuction(User seller) { return true; }
             @Override public void rewardBidder(NormalUser bidder) {}
             @Override public void rewardSeller(User seller) {}
@@ -72,6 +73,11 @@ public final class TestFixture {
     public static IRatingService ratingServiceDenyAll() {
         return new IRatingService() {
             @Override public boolean isEligible(User user) { return false; }
+            @Override public boolean isWalletOperationAllowed(User user) {
+                if (user == null) return false;
+                User.AccountStatus s = user.getAccountStatus();
+                return s == User.AccountStatus.BANNED || s == User.AccountStatus.SUSPENDED;
+            }
             @Override public boolean canSellerCreateAuction(User seller) { return false; }
             @Override public void rewardBidder(NormalUser bidder) {}
             @Override public void rewardSeller(User seller) {}

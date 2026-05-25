@@ -14,6 +14,7 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.StaffObserver;
 import com.group13.auction.service.iservice.IAccountService;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.service.seller.SellerSanctionCoordinator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,6 +124,11 @@ public class AccountService implements IAccountService {
     saveNotification(target.getId(), null,
         "Tài khoản bị khoá",
         String.format("Tài khoản của bạn đã bị khoá bởi quản trị viên. Lý do: %s.", reason));
+
+    SellerSanctionCoordinator coordinator = SellerSanctionCoordinator.getInstance();
+    if (coordinator != null) {
+      coordinator.onAccountSanctioned(target, AccountStatus.BANNED);
+    }
   }
 
   /**

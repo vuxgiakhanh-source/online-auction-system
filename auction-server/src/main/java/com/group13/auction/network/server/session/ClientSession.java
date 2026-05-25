@@ -40,11 +40,14 @@ public class ClientSession {
         final String username;
         final String userRole;
         final boolean authenticated;
-        AuthState(String userId, String username, String userRole, boolean authenticated) {
+        final boolean restricted;
+        AuthState(String userId, String username, String userRole,
+                  boolean authenticated, boolean restricted) {
             this.userId = userId; this.username = username;
             this.userRole = userRole; this.authenticated = authenticated;
+            this.restricted = restricted;
         }
-        static final AuthState ANONYMOUS = new AuthState(null, null, null, false);
+        static final AuthState ANONYMOUS = new AuthState(null, null, null, false, false);
     }
     private final java.util.concurrent.atomic.AtomicReference<AuthState> authState =
             new java.util.concurrent.atomic.AtomicReference<>(AuthState.ANONYMOUS);
@@ -128,9 +131,14 @@ public class ClientSession {
      * @param userRole role string
      */
     public void authenticate(String userId, String username, String userRole) {
-        authState.set(new AuthState(userId, username, userRole, true));
+        authenticate(userId, username, userRole, false);
+    }
+
+    public void authenticate(String userId, String username, String userRole, boolean restricted) {
+        authState.set(new AuthState(userId, username, userRole, true, restricted));
         this.cachedUser = null;  // FIX: xóa cache của user cũ khi có user mới đăng nhập trên cùng connection
-        log.info("Session authenticated: userId={}, username={}, role={}", userId, username, userRole);
+        log.info("Session authenticated: userId={}, username={}, role={}, restricted={}",
+                userId, username, userRole, restricted);
     }
 
     /** Reset trạng thái xác thực khi logout. */
@@ -176,8 +184,16 @@ public class ClientSession {
         return "ADMIN_MASTER".equals(authState.get().userRole);
     }
 
+    /** true khi user BANNED/SUSPENDED đăng nhập ở chế độ chỉ ví. */
+    public boolean isRestricted() {
+        return authState.get().restricted;
+    }
+
     @Override
     public String toString() {
-        AuthState s = authState.get(); return "ClientSession{userId='" + s.userId + "', username='" + s.username + "', role='" + s.userRole + "', authenticated=" + s.authenticated + "}";
+        AuthState s = authState.get();
+        return "ClientSession{userId='" + s.userId + "', username='" + s.username
+                + "', role='" + s.userRole + "', authenticated=" + s.authenticated
+                + ", restricted=" + s.restricted + "}";
     }
 }
