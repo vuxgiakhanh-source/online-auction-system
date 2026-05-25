@@ -44,6 +44,19 @@ public final class NotificationMessages {
             formatVnd(newAmount), formatVnd(yourAmount));
     }
 
+    public static String autoBidExhaustedTitle() {
+        return "Auto-bid đã hết hiệu lực";
+    }
+
+    public static String autoBidExhaustedBody(Auction auction, long maxBid,
+                                              long currentPrice, String leadingBidderName) {
+        return String.format(
+            "Phiên \"%s\" (mã %s): giá hiện tại %s đã vượt max bid auto-bid của bạn (%s). "
+                + "Người dẫn đầu: %s. Hãy đặt giá thủ công hoặc đăng ký auto-bid mới nếu vẫn muốn tham gia.",
+            itemName(auction), auction.getId(),
+            formatVnd(currentPrice), formatVnd(maxBid), leadingBidderName);
+    }
+
     public static String auctionEndingSoonTitle(int minutesLeft) {
         return String.format("Phiên sắp kết thúc — còn %d phút", minutesLeft);
     }

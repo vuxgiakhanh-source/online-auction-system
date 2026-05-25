@@ -22,6 +22,8 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +45,9 @@ public class ServerBroadcastNotifier {
     private final SessionManager sessionManager = SessionManager.getInstance();
     private final NotificationDAO notificationDAO = new NotificationDAO();
     private final UserDAO userDAO = new UserDAO();
+
+    /** Đã gửi AUTO_BID_EXHAUSTED cho cặp user+phiên — tránh spam khi chain chạy lặp. */
+    private final Set<String> autoBidExhaustedNotifiedKeys = ConcurrentHashMap.newKeySet();
 
     private ServerBroadcastNotifier() {}
 
@@ -186,6 +191,16 @@ public class ServerBroadcastNotifier {
 
     // ── Bid events ────────────────────────────────────────────────────────────
 
+    /**
+     * Xóa cờ đã báo exhausted — gọi khi user đăng ký/cập nhật auto-bid mới trong phiên.
+     */
+    public void clearAutoBidExhaustedFlag(String userId, String auctionId) {
+        if (userId == null || auctionId == null) {
+            return;
+        }
+        autoBidExhaustedNotifiedKeys.remove(exhaustedKey(userId, auctionId));
+    }
+
     /** Chỉ gửi cho bidder bid thủ công vừa bị vượt giá (không áp dụng khi đang bật auto-bid). */
     public void notifyOutbid(NormalUser previousLeader, Auction auction,
                              NormalUser newBidder, long newAmount, long previousAmount) {
@@ -196,9 +211,22 @@ public class ServerBroadcastNotifier {
             return;
         }
 
+        var autoBidRegistry = com.group13.auction.strategy.AutoBidRegistry.getInstance();
+        var activeAutoBid = autoBidRegistry.get(previousLeader.getId(), auction.getId());
+
         // Bidder đang bật auto-bid: hệ thống tự counter hoặc gửi EXHAUSTED — không báo outbid.
-        if (com.group13.auction.strategy.AutoBidRegistry.getInstance()
-                .get(previousLeader.getId(), auction.getId()) != null) {
+        if (activeAutoBid != null) {
+            NormalUser leader = auction.getCurrentLeader();
+            String leaderName = leader != null ? NotificationMessages.username(leader) : "Chưa có";
+            if (activeAutoBid.calculateNextBid(auction.getCurrentPrice()) < 0) {
+                notifyAutoBidExhausted(
+                    previousLeader.getId(),
+                    auction,
+                    activeAutoBid.getMaxBid(),
+                    auction.getCurrentPrice(),
+                    leaderName);
+                autoBidRegistry.cancel(previousLeader.getId(), auction.getId());
+            }
             log.debug("Skip outbid notify — user has active auto-bid: auctionId={}, userId={}",
                 auction.getId(), previousLeader.getId());
             return;
@@ -255,15 +283,47 @@ public class ServerBroadcastNotifier {
         sessionManager.sendToUser(userId, Packet.of(PacketType.AUTO_BID_TRIGGERED_NOTIFY, dto));
     }
 
-    public void notifyAutoBidExhausted(String userId, String auctionId,
+    /**
+     * Báo auto-bid không còn đủ max để counter — popup + inbox (tối đa một lần cho đến khi đăng ký lại).
+     */
+    public void notifyAutoBidExhausted(String userId, Auction auction,
                                        long maxBid, long currentPrice,
                                        String leadingUsername) {
+        if (userId == null || auction == null) {
+            return;
+        }
+        String auctionId = auction.getId();
+        if (!autoBidExhaustedNotifiedKeys.add(exhaustedKey(userId, auctionId))) {
+            log.debug("Skip duplicate auto-bid exhausted notify: auctionId={}, userId={}",
+                auctionId, userId);
+            return;
+        }
+
+        String leaderName = leadingUsername != null && !leadingUsername.isBlank()
+            ? leadingUsername
+            : "Chưa có";
+
+        persistNotification(
+            userId,
+            auctionId,
+            NotificationTypes.AUCTION,
+            NotificationMessages.autoBidExhaustedTitle(),
+            NotificationMessages.autoBidExhaustedBody(
+                auction, maxBid, currentPrice, leaderName));
+
         BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
         dto.setAuctionId(auctionId);
         dto.setMaxBid(maxBid);
         dto.setCurrentPrice(currentPrice);
-        dto.setLeadingBidderUsername(leadingUsername);
+        dto.setLeadingBidderUsername(leaderName);
         sessionManager.sendToUser(userId, Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, dto));
+
+        log.info("Auto-bid exhausted notification: auctionId={}, userId={}, maxBid={}, currentPrice={}",
+            auctionId, userId, maxBid, currentPrice);
+    }
+
+    private static String exhaustedKey(String userId, String auctionId) {
+        return userId + ":" + auctionId;
     }
 
     // ── Auction lifecycle ─────────────────────────────────────────────────────

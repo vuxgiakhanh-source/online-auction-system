@@ -478,6 +478,8 @@ public class BidHandler implements PacketHandler {
             }
 
             autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
+            ServerBroadcastNotifier.getInstance()
+                .clearAutoBidExhaustedFlag(bidder.getId(), req.getAuctionId());
             log.info("Auto-bid registered: auctionId={}, bidderId={}, username={}, maxBid={}, firstBid={}",
                 req.getAuctionId(), bidder.getId(), bidder.getUsername(), req.getMaxBid(), nextBid);
 
@@ -596,6 +598,8 @@ public class BidHandler implements PacketHandler {
 
             long oldMaxBid = existing.getMaxBid();
             autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
+            ServerBroadcastNotifier.getInstance()
+                .clearAutoBidExhaustedFlag(bidder.getId(), req.getAuctionId());
 
             BidDTOs.AutoBidRegistrationDTO reg = new BidDTOs.AutoBidRegistrationDTO();
             reg.setAuctionId(req.getAuctionId());
@@ -687,16 +691,13 @@ public class BidHandler implements PacketHandler {
                     dto.setActive(false);
                     session.send(Packet.of(PacketType.GET_AUTO_BID_STATUS_SUCCESS, dto, requestId));
 
-                    // Gửi thêm EXHAUSTED notify để client hiển thị popup cảnh báo đầy đủ
-                    BidDTOs.AutoBidExhaustedDTO exhausted = new BidDTOs.AutoBidExhaustedDTO();
-                    exhausted.setAuctionId(auctionId);
-                    exhausted.setMaxBid(entry.getMaxBid());
-                    exhausted.setCurrentPrice(currentPrice);
-                    exhausted.setLeadingBidderUsername(
-                        auction.getCurrentLeader() != null
-                            ? auction.getCurrentLeader().getUsername()
-                            : "Chưa có");
-                    session.send(Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, exhausted));
+                    NormalUser leader = auction.getCurrentLeader();
+                    ServerBroadcastNotifier.getInstance().notifyAutoBidExhausted(
+                        bidder.getId(),
+                        auction,
+                        entry.getMaxBid(),
+                        currentPrice,
+                        leader != null ? leader.getUsername() : "Chưa có");
 
                     log.info("auto-bid stale detected on status load: userId={} auctionId={} maxBid={} currentPrice={}",
                         bidder.getId(), auctionId, entry.getMaxBid(), currentPrice);
