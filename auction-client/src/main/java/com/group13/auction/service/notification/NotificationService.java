@@ -68,4 +68,30 @@ public final class NotificationService {
                 PacketType.MARK_NOTIFICATION_READ_SUCCESS,
                 "Không đánh dấu được thông báo là đã đọc.");
     }
+
+    /**
+     * Đánh dấu nhiều thông báo là đã đọc bằng API đánh dấu từng thông báo hiện có.
+     *
+     * @param notificationIds danh sách mã thông báo cần đánh dấu
+     * @return future hoàn tất khi server xác nhận toàn bộ request
+     */
+    public CompletableFuture<Void> markNotificationsRead(List<String> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<CompletableFuture<Void>> futures =
+            notificationIds.stream()
+                .filter(id -> id != null && !id.isBlank())
+                .map(String::trim)
+                .distinct()
+                .map(this::markNotificationRead)
+                .toList();
+
+        if (futures.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+    }
 }
