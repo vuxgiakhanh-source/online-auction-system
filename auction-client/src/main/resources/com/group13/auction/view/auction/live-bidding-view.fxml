@@ -34,6 +34,7 @@
                 minHeight="720.0" minWidth="1280.0"
                 prefHeight="720.0" prefWidth="1280.0"
                 styleClass="live-shell">
+
         <top>
             <HBox alignment="CENTER_LEFT"
                   maxHeight="58.0" minHeight="58.0" prefHeight="58.0"
@@ -80,7 +81,7 @@
         </top>
 
         <center>
-            <VBox maxHeight="598.0" minHeight="598.0" prefHeight="598.0"
+            <VBox maxHeight="586.0" minHeight="586.0" prefHeight="586.0"
                   spacing="10.0"
                   styleClass="live-center">
                 <padding>
@@ -127,7 +128,7 @@
                 </HBox>
 
                 <GridPane hgap="12.0"
-                          maxHeight="486.0" minHeight="486.0" prefHeight="486.0"
+                          maxHeight="474.0" minHeight="474.0" prefHeight="474.0"
                           styleClass="live-dashboard-grid"
                           vgap="0.0"
                           VBox.vgrow="ALWAYS">
@@ -136,14 +137,16 @@
                         <ColumnConstraints hgrow="ALWAYS" minWidth="520.0" prefWidth="590.0"/>
                         <ColumnConstraints hgrow="NEVER" maxWidth="280.0" minWidth="280.0" prefWidth="280.0"/>
                     </columnConstraints>
+
                     <rowConstraints>
-                        <RowConstraints maxHeight="486.0" minHeight="486.0" prefHeight="486.0" vgrow="ALWAYS"/>
+                        <RowConstraints maxHeight="474.0" minHeight="474.0" prefHeight="474.0" vgrow="ALWAYS"/>
                     </rowConstraints>
 
                     <VBox GridPane.columnIndex="0"
-                          maxHeight="486.0" minHeight="486.0" prefHeight="486.0"
+                          maxHeight="474.0" minHeight="474.0" prefHeight="474.0"
                           spacing="10.0"
                           styleClass="live-action-column">
+
                         <VBox maxHeight="112.0" minHeight="112.0" prefHeight="112.0"
                               spacing="7.0"
                               styleClass="auction-info-box, live-fixed-card">
@@ -172,7 +175,9 @@
                             <HBox alignment="CENTER_LEFT" spacing="8.0">
                                 <Label text="Đặt giá"
                                        styleClass="auction-section-title, live-card-title"/>
+
                                 <Region HBox.hgrow="ALWAYS"/>
+
                                 <Label text="Realtime" styleClass="live-chip"/>
                             </HBox>
 
@@ -193,14 +198,14 @@
                                     text="Gửi giá đặt"/>
                         </VBox>
 
-                        <VBox maxHeight="218.0" minHeight="218.0" prefHeight="218.0"
+                        <VBox maxHeight="206.0" minHeight="206.0" prefHeight="206.0"
                               spacing="8.0"
                               styleClass="auction-info-box, live-fixed-card">
                             <Label text="Auto-Bid"
                                    styleClass="auction-section-title, live-card-title"/>
 
                             <Label fx:id="autoBidStatusLabel"
-                                   maxHeight="42.0"
+                                   maxHeight="38.0"
                                    text="Chưa tải trạng thái auto-bid."
                                    wrapText="true"
                                    styleClass="auction-muted-text, live-tight-text"/>
@@ -236,7 +241,7 @@
                     </VBox>
 
                     <VBox GridPane.columnIndex="1"
-                          maxHeight="486.0" minHeight="486.0" prefHeight="486.0"
+                          maxHeight="474.0" minHeight="474.0" prefHeight="474.0"
                           spacing="9.0"
                           onMouseClicked="#handleOpenChartPreview"
                           styleClass="auction-info-box, live-chart-card, live-clickable-card">
@@ -251,15 +256,16 @@
                             </VBox>
 
                             <Region HBox.hgrow="ALWAYS"/>
+
                             <Label text="Phóng to ↗" styleClass="live-preview-badge"/>
                         </HBox>
 
                         <LineChart fx:id="bidLineChart"
                                    animated="false"
                                    legendVisible="false"
-                                   maxHeight="392.0"
-                                   minHeight="392.0"
-                                   prefHeight="392.0"
+                                   maxHeight="374.0"
+                                   minHeight="374.0"
+                                   prefHeight="374.0"
                                    styleClass="auction-line-chart, live-fixed-chart"
                                    VBox.vgrow="NEVER">
                             <xAxis>
@@ -272,7 +278,7 @@
                     </VBox>
 
                     <VBox GridPane.columnIndex="2"
-                          maxHeight="486.0" minHeight="486.0" prefHeight="486.0"
+                          maxHeight="474.0" minHeight="474.0" prefHeight="474.0"
                           spacing="9.0"
                           onMouseClicked="#handleOpenBidHistoryPreview"
                           styleClass="auction-info-box, live-history-card, live-clickable-card">
@@ -287,13 +293,14 @@
                             </VBox>
 
                             <Region HBox.hgrow="ALWAYS"/>
+
                             <Label text="↗" styleClass="live-preview-badge"/>
                         </HBox>
 
                         <ListView fx:id="bidHistoryListView"
-                                  maxHeight="408.0"
-                                  minHeight="408.0"
-                                  prefHeight="408.0"
+                                  maxHeight="384.0"
+                                  minHeight="384.0"
+                                  prefHeight="384.0"
                                   styleClass="auction-history-list, live-fixed-history-list"
                                   VBox.vgrow="NEVER"/>
                     </VBox>
@@ -303,7 +310,7 @@
 
         <bottom>
             <HBox alignment="CENTER_RIGHT"
-                  maxHeight="64.0" minHeight="64.0" prefHeight="64.0"
+                  maxHeight="76.0" minHeight="76.0" prefHeight="76.0"
                   spacing="10.0"
                   styleClass="live-bottom-bar">
                 <padding>
@@ -312,9 +319,15 @@
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
+                <VBox alignment="BOTTOM_RIGHT"
+                      maxWidth="190.0"
+                      pickOnBounds="false"
+                      spacing="2.0">
+                    <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-                <Label styleClass="signature-label, live-signature-label" text="by CKNT team"/>
+                    <Label styleClass="signature-label, live-signature-label"
+                           text="by CKNT team"/>
+                </VBox>
             </HBox>
         </bottom>
     </BorderPane>
