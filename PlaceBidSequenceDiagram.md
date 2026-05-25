@@ -39,7 +39,6 @@ sequenceDiagram
             BidSvc->>Wallet: forfeitDeposit(...)
         end
 
-        %% Đưa activate/deactivate ra ngoài cấu trúc rẽ nhánh của isValidBid để tránh xung đột lifecycle
         BidSvc->>Lock: getLock(auctionId)
         activate Lock
         BidSvc->>Strategy: isValidBid(auction, amount)
@@ -55,9 +54,8 @@ sequenceDiagram
             BidSvc->>Auction: addBidTransactionId(tx.id)
         end
         
-        deactivate Lock  %% Đóng Lock ở cuối quy trình đồng cấp với lệnh activate
+        deactivate Lock
         
-        %% Các logic hậu xử lý sau khi đã nhả Lock
         alt valid bid
             BidSvc->>BidDAO: saveTransactionAndUpdatePrice(tx, auctionId, amount, bidderId)
             BidSvc->>Notify: notify(BID_PLACED or BID_RESERVE_NOT_MET)
