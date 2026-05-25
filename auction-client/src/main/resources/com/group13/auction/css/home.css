@@ -106,6 +106,30 @@
     -fx-border-insets: 0;
 }
 
+.notification-button-stack {
+    -fx-padding: 0 4 0 0;
+}
+
+.notification-badge-label {
+    -fx-background-color: #ff5c5c;
+    -fx-background-radius: 999;
+    -fx-border-color: rgba(255, 255, 255, 0.84);
+    -fx-border-radius: 999;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Bricolage Grotesque", "Montserrat", "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-alignment: center;
+    -fx-min-width: 22px;
+    -fx-min-height: 22px;
+    -fx-pref-width: 22px;
+    -fx-pref-height: 22px;
+    -fx-translate-x: 8px;
+    -fx-translate-y: -8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 92, 92, 0.45), 10, 0, 0, 2);
+}
+
 .main-header-button {
     -fx-background-color: rgba(255, 255, 255, 0.11);
     -fx-border-color: rgba(255, 255, 255, 0.14);

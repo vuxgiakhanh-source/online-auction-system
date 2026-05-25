@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <AnchorPane prefHeight="720.0" prefWidth="1280.0"
@@ -65,10 +66,18 @@
                         styleClass="main-header-button"
                         text="Hồ sơ"/>
 
-                <Button mnemonicParsing="false"
-                        onAction="#handleOpenNotificationCenter"
-                        styleClass="main-header-button"
-                        text="Thông báo"/>
+                <StackPane alignment="TOP_RIGHT" styleClass="notification-button-stack">
+                    <Button mnemonicParsing="false"
+                            onAction="#handleOpenNotificationCenter"
+                            styleClass="main-header-button"
+                            text="Thông báo"/>
+
+                    <Label fx:id="notificationBadgeLabel"
+                           mouseTransparent="true"
+                           visible="false"
+                           styleClass="notification-badge-label"
+                           text="0"/>
+                </StackPane>
 
                 <Button mnemonicParsing="false"
                         onAction="#handleLogout"
