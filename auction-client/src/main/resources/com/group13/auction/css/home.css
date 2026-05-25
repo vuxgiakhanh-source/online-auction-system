@@ -125,8 +125,8 @@
     -fx-min-height: 22px;
     -fx-pref-width: 22px;
     -fx-pref-height: 22px;
-    -fx-translate-x: 8px;
-    -fx-translate-y: -8px;
+    -fx-translate-x: 7px;
+    -fx-translate-y: -6px;
     -fx-effect: dropshadow(three-pass-box, rgba(255, 92, 92, 0.45), 10, 0, 0, 2);
 }
 
