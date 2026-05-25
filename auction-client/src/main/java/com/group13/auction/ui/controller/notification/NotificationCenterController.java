@@ -76,6 +76,8 @@ public final class NotificationCenterController {
 
     @FXML private Button markReadButton;
 
+    @FXML private Button markAllReadButton;
+
     @FXML private Button openAuctionButton;
 
     @FXML private Button refreshButton;
@@ -250,6 +252,38 @@ public final class NotificationCenterController {
                                     });
                             return null;
                         });
+    }
+
+    /** Đánh dấu tất cả thông báo chưa đọc là đã đọc. */
+    @FXML
+    public void handleMarkAllRead() {
+        List<String> unreadNotificationIds = unreadNotificationIds();
+
+        if (unreadNotificationIds.isEmpty()) {
+            AlertUtil.showInfo("Tất cả thông báo đã được đánh dấu là đã đọc.");
+            return;
+        }
+
+        setLoading(true, "Đang đánh dấu tất cả thông báo là đã đọc...");
+
+        notificationService
+            .markNotificationsRead(unreadNotificationIds)
+            .thenRun(
+                () ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            markAllNotificationsReadLocally();
+                            setLoading(false, "Đã đánh dấu tất cả thông báo là đã đọc.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không đánh dấu được toàn bộ thông báo.");
+                            AlertUtil.showError(extractMessage(throwable));
+                        });
+                    return null;
+                });
     }
 
     /** Mở phiên đấu giá liên quan nếu thông báo có gắn mã phiên. */
@@ -536,6 +570,7 @@ public final class NotificationCenterController {
         }
 
         markReadButton.setDisable(notification.read());
+        updateMarkAllReadButtonState(false);
     }
 
     private void clearSecondChanceDetail() {
@@ -560,6 +595,56 @@ public final class NotificationCenterController {
         openAuctionButton.setDisable(true);
     }
 
+    private List<String> unreadNotificationIds() {
+        List<String> unreadIds = new java.util.ArrayList<>();
+        collectUnreadNotificationIds(notificationListView, unreadIds);
+        collectUnreadNotificationIds(secondChanceInboxListView, unreadIds);
+        return unreadIds;
+    }
+
+    private void collectUnreadNotificationIds(
+        ListView<NotificationItemViewModel> listView, List<String> unreadIds) {
+        for (NotificationItemViewModel notification : listView.getItems()) {
+            if (notification != null
+                && !notification.read()
+                && notification.id() != null
+                && !notification.id().isBlank()) {
+                unreadIds.add(notification.id());
+            }
+        }
+    }
+
+    private boolean hasUnreadNotifications() {
+        return !unreadNotificationIds().isEmpty();
+    }
+
+    private void markAllNotificationsReadLocally() {
+        markListNotificationsRead(notificationListView);
+        markListNotificationsRead(secondChanceInboxListView);
+
+        NotificationItemViewModel selected = selectedNotification();
+        if (selected != null) {
+            renderNotificationDetail(selected);
+        } else {
+            clearNotificationDetail();
+        }
+
+        updateMarkAllReadButtonState(false);
+    }
+
+    private void markListNotificationsRead(ListView<NotificationItemViewModel> listView) {
+        for (int index = 0; index < listView.getItems().size(); index++) {
+            NotificationItemViewModel notification = listView.getItems().get(index);
+            if (notification != null && !notification.read()) {
+                listView.getItems().set(index, notification.markRead());
+            }
+        }
+    }
+
+    private void updateMarkAllReadButtonState(boolean loading) {
+        markAllReadButton.setDisable(loading || !hasUnreadNotifications());
+    }
+
     private NotificationItemViewModel selectedNotification() {
         NotificationItemViewModel fromGeneral =
                 notificationListView.getSelectionModel().getSelectedItem();
@@ -575,6 +660,7 @@ public final class NotificationCenterController {
             notificationListView.getItems().set(generalIndex, updatedNotification);
             notificationListView.getSelectionModel().select(generalIndex);
             renderNotificationDetail(updatedNotification);
+            updateMarkAllReadButtonState(false);
             return;
         }
 
@@ -583,6 +669,7 @@ public final class NotificationCenterController {
             secondChanceInboxListView.getItems().set(scoIndex, updatedNotification);
             secondChanceInboxListView.getSelectionModel().select(scoIndex);
             renderNotificationDetail(updatedNotification);
+            updateMarkAllReadButtonState(false);
         }
     }
 
@@ -598,6 +685,7 @@ public final class NotificationCenterController {
         loadingIndicator.setManaged(loading);
 
         refreshButton.setDisable(loading);
+        updateMarkAllReadButtonState(loading);
         notificationListView.setDisable(loading);
         secondChanceListView.setDisable(loading);
         secondChanceInboxListView.setDisable(loading);

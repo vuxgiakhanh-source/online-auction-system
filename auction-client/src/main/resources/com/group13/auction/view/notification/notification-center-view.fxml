@@ -49,6 +49,13 @@
 
             <Region HBox.hgrow="ALWAYS"/>
 
+            <Button fx:id="markAllReadButton"
+                    disable="true"
+                    mnemonicParsing="false"
+                    onAction="#handleMarkAllRead"
+                    styleClass="notification-secondary-button"
+                    text="Đánh dấu tất cả đã đọc"/>
+
             <Button fx:id="refreshButton"
                     mnemonicParsing="false"
                     onAction="#handleRefresh"
@@ -118,7 +125,7 @@
                     <Label styleClass="notification-muted-text"
                            textAlignment="CENTER"
                            wrapText="true"
-                           text="Server hiện chưa trả về thông báo nào cho tài khoản này."/>
+                           text="Các thông báo mới sẽ xuất hiện tại đây."/>
                 </VBox>
 
                 <ListView fx:id="notificationListView"
