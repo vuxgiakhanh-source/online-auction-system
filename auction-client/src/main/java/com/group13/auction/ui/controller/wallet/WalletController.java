@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 
 /** Controller cho màn ví người dùng. */
 public final class WalletController {
@@ -140,11 +141,17 @@ public final class WalletController {
                         });
     }
 
-    private void renderWallet(WalletViewModel wallet) {
-        balanceLabel.setText(wallet.balanceText());
-        availableBalanceLabel.setText(wallet.availableBalanceText());
-        lockedDepositLabel.setText(wallet.lockedDepositText());
-    }
+  private void renderWallet(WalletViewModel wallet) {
+    updateMoneyLabel(balanceLabel, wallet.balanceText());
+    updateMoneyLabel(availableBalanceLabel, wallet.availableBalanceText());
+    updateMoneyLabel(lockedDepositLabel, wallet.lockedDepositText());
+  }
+
+  private void updateMoneyLabel(Label label, String text) {
+    String safeText = text == null || text.isBlank() ? "--" : text;
+    label.setText(safeText);
+    label.setTooltip(new Tooltip(safeText));
+  }
 
   private long parseAmount(String rawText) {
     if (rawText == null) {

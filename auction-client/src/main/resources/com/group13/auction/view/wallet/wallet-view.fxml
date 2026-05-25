@@ -52,10 +52,12 @@
             <Button fx:id="refreshButton"
                     mnemonicParsing="false"
                     onAction="#handleRefresh"
+                    styleClass="wallet-secondary-button"
                     text="Làm mới"/>
 
             <Button mnemonicParsing="false"
                     onAction="#handleBackToHome"
+                    styleClass="wallet-ghost-button"
                     text="Dashboard"/>
         </HBox>
 
@@ -65,25 +67,53 @@
                    text="Theo dõi số dư ví, khoản đặt cọc đang khóa và thực hiện nạp/rút tiền qua server."/>
         </VBox>
 
-        <HBox spacing="18.0">
-            <VBox spacing="8.0" styleClass="wallet-summary-card">
-                <Label styleClass="wallet-card-title" text="Tổng số dư"/>
-                <Label fx:id="balanceLabel" styleClass="wallet-main-balance" text="--"/>
-            </VBox>
+            <HBox spacing="18.0">
+                <VBox spacing="8.0"
+                      maxWidth="Infinity"
+                      minWidth="0.0"
+                      styleClass="wallet-summary-card"
+                      HBox.hgrow="ALWAYS">
+                    <Label styleClass="wallet-card-title" text="Tổng số dư"/>
+                    <Label fx:id="balanceLabel"
+                           maxWidth="Infinity"
+                           wrapText="true"
+                           styleClass="wallet-main-balance"
+                           text="--"/>
+                </VBox>
 
-            <VBox spacing="8.0" styleClass="wallet-summary-card">
-                <Label styleClass="wallet-card-title" text="Có thể sử dụng"/>
-                <Label fx:id="availableBalanceLabel" styleClass="wallet-balance-value" text="--"/>
-            </VBox>
+                <VBox spacing="8.0"
+                      maxWidth="Infinity"
+                      minWidth="0.0"
+                      styleClass="wallet-summary-card"
+                      HBox.hgrow="ALWAYS">
+                    <Label styleClass="wallet-card-title" text="Có thể sử dụng"/>
+                    <Label fx:id="availableBalanceLabel"
+                           maxWidth="Infinity"
+                           wrapText="true"
+                           styleClass="wallet-balance-value"
+                           text="--"/>
+                </VBox>
 
-            <VBox spacing="8.0" styleClass="wallet-summary-card">
-                <Label styleClass="wallet-card-title" text="Đang giữ đặt cọc"/>
-                <Label fx:id="lockedDepositLabel" styleClass="wallet-balance-value" text="--"/>
-            </VBox>
-        </HBox>
+                <VBox spacing="8.0"
+                      maxWidth="Infinity"
+                      minWidth="0.0"
+                      styleClass="wallet-summary-card"
+                      HBox.hgrow="ALWAYS">
+                    <Label styleClass="wallet-card-title" text="Đang giữ đặt cọc"/>
+                    <Label fx:id="lockedDepositLabel"
+                           maxWidth="Infinity"
+                           wrapText="true"
+                           styleClass="wallet-balance-value"
+                           text="--"/>
+                </VBox>
+            </HBox>
 
         <HBox spacing="22.0">
-            <VBox spacing="14.0" styleClass="wallet-action-card">
+            <VBox spacing="14.0"
+                  minWidth="0.0"
+                  maxWidth="Infinity"
+                  styleClass="wallet-action-card"
+                  HBox.hgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <ImageView fitHeight="38.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-plus.png"/>
@@ -96,15 +126,22 @@
                        text="Nhập số tiền cần nạp vào ví. Server sẽ trả về số dư mới sau khi xử lý."/>
 
                 <TextField fx:id="depositAmountField"
+                           maxWidth="Infinity"
+                           styleClass="wallet-input"
                            promptText="Ví dụ: 1000000"/>
 
                 <Button fx:id="depositButton"
                         mnemonicParsing="false"
                         onAction="#handleDeposit"
+                        styleClass="wallet-primary-button"
                         text="Nạp tiền"/>
             </VBox>
 
-            <VBox spacing="14.0" styleClass="wallet-action-card">
+            <VBox spacing="14.0"
+                  minWidth="0.0"
+                  maxWidth="Infinity"
+                  styleClass="wallet-action-card"
+                  HBox.hgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <ImageView fitHeight="38.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-minus.png"/>
@@ -117,11 +154,14 @@
                        text="Nhập số tiền cần rút. Server sẽ kiểm tra số dư khả dụng trước khi xác nhận."/>
 
                 <TextField fx:id="withdrawAmountField"
+                           maxWidth="Infinity"
+                           styleClass="wallet-input"
                            promptText="Ví dụ: 500000"/>
 
                 <Button fx:id="withdrawButton"
                         mnemonicParsing="false"
                         onAction="#handleWithdraw"
+                        styleClass="wallet-secondary-button"
                         text="Rút tiền"/>
             </VBox>
         </HBox>
@@ -133,6 +173,8 @@
                                visible="false"
                                managed="false"/>
             <Label fx:id="statusLabel"
+                   maxWidth="Infinity"
+                   wrapText="true"
                    styleClass="wallet-muted-text"
                    text="Sẵn sàng."/>
         </HBox>

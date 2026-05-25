@@ -147,12 +147,14 @@
     -fx-background-color: rgba(15, 37, 60, 0.06);
     -fx-background-radius: 16;
     -fx-padding: 10 14 10 14;
+    -fx-min-width: 0;
 }
 
 .order-metric-value {
-    -fx-font-size: 17px;
+    -fx-font-size: 16px;
     -fx-font-weight: 900;
     -fx-text-fill: #0f253c;
+    -fx-wrap-text: true;
 }
 
 

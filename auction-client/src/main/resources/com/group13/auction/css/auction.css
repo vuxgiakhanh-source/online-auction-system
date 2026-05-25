@@ -276,6 +276,7 @@
 
 .auction-metric-box {
     -fx-padding: 10 14 10 14;
+    -fx-min-width: 0;
 
     -fx-background-color: rgba(255, 255, 255, 0.075);
     -fx-background-radius: 18;
@@ -289,6 +290,21 @@
     -fx-font-size: 15px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
+}
+
+.auction-current-price {
+    -fx-font-size: 32px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #67b8ea;
+    -fx-wrap-text: true;
+}
+
+.auction-info-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 
