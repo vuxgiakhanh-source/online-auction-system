@@ -145,7 +145,7 @@ class WalletServiceTest {
 
             // Act & Assert
             assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 200_000L, AUCTION_ID));
+                () -> walletService.lockDeposit(bidder, 200_000L, AUCTION_ID));
         }
 
         @Test
@@ -156,7 +156,7 @@ class WalletServiceTest {
 
             // Act
             AuctionBusinessException ex = assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
+                () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
 
             // Assert
             assertEquals(AuctionBusinessException.Reason.INSUFFICIENT_DEPOSIT, ex.getReason());
@@ -173,7 +173,7 @@ class WalletServiceTest {
 
             // Act
             assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 200_000L, AUCTION_ID));
+                () -> walletService.lockDeposit(bidder, 200_000L, AUCTION_ID));
 
             // Assert — không có gì thay đổi
             assertEquals(balanceBefore,   bidder.getBalance());
@@ -189,7 +189,7 @@ class WalletServiceTest {
 
             // Act
             assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
+                () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
 
             // Assert
             verify(userDAO, never()).updateBalances(anyString(), anyLong(), anyLong());
@@ -203,7 +203,7 @@ class WalletServiceTest {
 
             // Act
             assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
+                () -> walletService.lockDeposit(bidder, 100_000L, AUCTION_ID));
 
             // Assert
             verify(financialTransactionDAO, never()).saveTransaction(any());
@@ -276,7 +276,7 @@ class WalletServiceTest {
 
             // Act
             assertThrows(AuctionBusinessException.class,
-                    () -> walletService.lockDeposit(bidder, 500_000L, "auction-002"));
+                () -> walletService.lockDeposit(bidder, 500_000L, "auction-002"));
 
             // Assert — lockedDeposit giữ nguyên giá trị sau lần 1
             assertEquals(lockedAfterFirst, bidder.getLockedDeposit());
@@ -295,7 +295,7 @@ class WalletServiceTest {
 
             // Assert
             verify(userDAO, times(1))
-                    .updateBalances(eq(bidder.getId()), eq(bidder.getBalance()), eq(bidder.getLockedDeposit()));
+                .updateBalances(eq(bidder.getId()), eq(bidder.getBalance()), eq(bidder.getLockedDeposit()));
         }
 
         @Test
@@ -382,8 +382,8 @@ class WalletServiceTest {
             // Act & Assert
             List<FinancialTransaction> log = walletService.getTransactionLog();
             assertThrows(UnsupportedOperationException.class,
-                    () -> log.add(null),
-                    "transaction log phải unmodifiable");
+                () -> log.add(null),
+                "transaction log phải unmodifiable");
         }
     }
 
@@ -474,7 +474,7 @@ class WalletServiceTest {
 
             // Assert
             assertEquals(0L, bidder.getLockedDeposit(),
-                    "lockedDeposit phải clamp về 0, không âm");
+                "lockedDeposit phải clamp về 0, không âm");
         }
 
         @Test
@@ -570,7 +570,7 @@ class WalletServiceTest {
 
             // Assert
             verify(userDAO, times(1))
-                    .updateBalances(eq(bidder.getId()), eq(bidder.getBalance()), eq(bidder.getLockedDeposit()));
+                .updateBalances(eq(bidder.getId()), eq(bidder.getBalance()), eq(bidder.getLockedDeposit()));
         }
 
         @Test
@@ -696,22 +696,23 @@ class WalletServiceTest {
         }
 
         @Test
-        @DisplayName("happy: forfeit → balance KHÔNG thay đổi (cọc bị tịch thu, không hoàn)")
+        @DisplayName("happy: forfeit → balance GIẢM đúng depositAmount (cọc bị tịch thu khỏi balance)")
         void forfeit_balanceUnchanged() {
             // Arrange
             NormalUser winner = TestFixture.bidderWithBalance("bidderBB2", 1_000_000L);
             walletService.lockDeposit(winner, 300_000L, AUCTION_ID);
-            long balanceBefore = winner.getBalance();
+            long balanceBefore = winner.getBalance(); // 1_000_000
 
             // Act
             walletService.forfeitDeposit(winner, 300_000L, AUCTION_ID);
 
-            // Assert — balance không đổi; tiền cọc đã bị khóa từ trước
-            assertEquals(balanceBefore, winner.getBalance());
+            // FIX: forfeitDeposit() gọi setBalance(balance - depositAmount) để tịch thu tiền thật.
+            // Nếu không trừ balance, user vẫn giữ đủ tiền sau khi cọc bị tịch thu — sai business logic.
+            assertEquals(balanceBefore - 300_000L, winner.getBalance());
         }
 
         @Test
-        @DisplayName("happy: forfeit → availableBalance tăng (cọc được giải phóng, nhưng không hoàn về balance)")
+        @DisplayName("happy: forfeit → availableBalance KHÔNG đổi (unlock cọc + trừ balance cân bằng nhau)")
         void forfeit_availableBalanceIncreases() {
             // Arrange
             NormalUser winner = TestFixture.bidderWithBalance("bidderCC3", 1_000_000L);
@@ -721,8 +722,10 @@ class WalletServiceTest {
             // Act
             walletService.forfeitDeposit(winner, 300_000L, AUCTION_ID);
 
-            // Assert — unlock giải phóng locked → available tăng (dù tiền không về balance)
-            assertEquals(availableBefore + 300_000L, winner.getAvailableBalance());
+            // FIX: forfeit = unlockDeposit(300K) → locked=0; setBalance(700K) → balance=700K.
+            // available = balance - locked = 700K - 0 = 700K = availableBefore (KHÔNG đổi).
+            // Trước đây test mong available tăng vì chưa có dòng setBalance(); bây giờ đã đúng.
+            assertEquals(availableBefore, winner.getAvailableBalance());
         }
 
         // --- SystemBank nhận tiền cọc ---
@@ -772,28 +775,28 @@ class WalletServiceTest {
 
             // Assert
             assertEquals(bankAfterLocks + 300_000L + 500_000L,
-                    SystemBank.getInstance().getTotalBalance());
+                SystemBank.getInstance().getTotalBalance());
         }
 
         // --- Forfeit không tương đương unlock (tiền không hoàn) ---
 
         @Test
-        @DisplayName("correctness: forfeit khác unlockDeposit — balance winner sau forfeit < balance trước lock")
+        @DisplayName("correctness: forfeit khác unlockDeposit — balance giảm và tiền về bank, winner không lấy lại được")
         void forfeit_winnerCannotRecoverDeposit() {
             // Arrange
             NormalUser winner = TestFixture.bidderWithBalance("bidderHH8", 1_000_000L);
-            long balanceBeforeLock = winner.getBalance();
+            long balanceBeforeLock = winner.getBalance(); // 1_000_000
             walletService.lockDeposit(winner, 300_000L, AUCTION_ID);
 
             // Act
             walletService.forfeitDeposit(winner, 300_000L, AUCTION_ID);
 
-            // Assert — balance trước lock ≠ balance sau forfeit: tiền không hoàn
-            // Thực ra balance không đổi khi lock/forfeit — nhưng available không = initial balance
-            // available = balance - lockedDeposit. Sau forfeit: locked = 0, balance không đổi.
-            // Tuy nhiên bank đã nhận 300_000 → tiền đó mất khỏi hệ thống winner.
-            assertEquals(balanceBeforeLock, winner.getBalance(), "balance không đổi — cọc đã bị lock từ trước");
-            assertEquals(300_000L, SystemBank.getInstance().getTotalBalance(), "tiền thuộc về bank, không trả winner");
+            // FIX: balance GIẢM đúng depositAmount sau forfeit (tiền không hoàn về user)
+            // bank đã nhận deposit → tiền mất khỏi hệ thống winner.
+            assertEquals(balanceBeforeLock - 300_000L, winner.getBalance(),
+                "balance giảm đúng depositAmount sau forfeit");
+            assertEquals(300_000L, SystemBank.getInstance().getTotalBalance(),
+                "tiền thuộc về bank, không trả winner");
         }
 
         // --- Over-forfeit: vượt lockedDeposit → clamp về 0 ---
@@ -842,7 +845,7 @@ class WalletServiceTest {
 
             // Assert
             verify(userDAO, times(1))
-                    .updateBalances(eq(winner.getId()), eq(winner.getBalance()), eq(winner.getLockedDeposit()));
+                .updateBalances(eq(winner.getId()), eq(winner.getBalance()), eq(winner.getLockedDeposit()));
         }
 
         @Test
@@ -926,7 +929,7 @@ class WalletServiceTest {
 
             // Assert — WalletService chỉ xử lý tiền, không penalize rating
             assertFalse(winner.isHasEverBeenPenalized(),
-                    "WalletService không chịu trách nhiệm penalize — đó là việc của RatingService");
+                "WalletService không chịu trách nhiệm penalize — đó là việc của RatingService");
         }
 
         @Test
@@ -958,7 +961,7 @@ class WalletServiceTest {
             // Assert — document behavior
             assertEquals(0L, winner.getLockedDeposit(), "clamp: không thể âm");
             assertEquals(300_000L, SystemBank.getInstance().getTotalBalance(),
-                    "bank vẫn nhận amount được truyền vào");
+                "bank vẫn nhận amount được truyền vào");
         }
     }
 

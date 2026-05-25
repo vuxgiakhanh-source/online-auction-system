@@ -165,9 +165,9 @@ class AuctionWinnerTest {
         void isExpired_whenPendingAndDeadlineNotYetPassed_returnsFalse() {
             // Arrange — deadline 1 giờ sau
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().plusHours(1),
-                    AuctionWinner.PaymentStatus.PENDING);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().plusHours(1),
+                AuctionWinner.PaymentStatus.PENDING);
 
             // Assert
             assertFalse(w.isExpired());
@@ -181,9 +181,9 @@ class AuctionWinnerTest {
             // chính xác 100% với system clock. Thay vào đó verify rằng
             // deadline trong tương lai gần (1 giây) không bị xem là expired.
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().plusSeconds(1),
-                    AuctionWinner.PaymentStatus.PENDING);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().plusSeconds(1),
+                AuctionWinner.PaymentStatus.PENDING);
 
             // Assert
             assertFalse(w.isExpired());
@@ -194,9 +194,9 @@ class AuctionWinnerTest {
         void isExpired_whenCompletedAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().minusHours(1),
-                    AuctionWinner.PaymentStatus.COMPLETED);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().minusHours(1),
+                AuctionWinner.PaymentStatus.COMPLETED);
 
             // Assert — chỉ PENDING mới expired
             assertFalse(w.isExpired());
@@ -207,9 +207,9 @@ class AuctionWinnerTest {
         void isExpired_whenFundsHeldAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().minusHours(1),
-                    AuctionWinner.PaymentStatus.FUNDS_HELD);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().minusHours(1),
+                AuctionWinner.PaymentStatus.FUNDS_HELD);
 
             // Assert
             assertFalse(w.isExpired());
@@ -220,9 +220,9 @@ class AuctionWinnerTest {
         void isExpired_whenStatusIsExpiredAndDeadlinePassed_returnsFalse() {
             // Arrange — status EXPIRED nhưng isExpired() kiểm tra PENDING
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().minusHours(1),
-                    AuctionWinner.PaymentStatus.EXPIRED);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().minusHours(1),
+                AuctionWinner.PaymentStatus.EXPIRED);
 
             // Assert
             assertFalse(w.isExpired());
@@ -233,9 +233,9 @@ class AuctionWinnerTest {
         void isExpired_whenCancelledAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().minusHours(1),
-                    AuctionWinner.PaymentStatus.CANCELLED);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().minusHours(1),
+                AuctionWinner.PaymentStatus.CANCELLED);
 
             // Assert
             assertFalse(w.isExpired());
@@ -271,9 +271,9 @@ class AuctionWinnerTest {
         void isExpired_whenDeadlineWasLongAgo_returnsTrue() {
             // Arrange
             AuctionWinner w = reconstituteWithDeadline(
-                    1_000_000L, 300_000L,
-                    LocalDateTime.now().minusDays(30),
-                    AuctionWinner.PaymentStatus.PENDING);
+                1_000_000L, 300_000L,
+                LocalDateTime.now().minusDays(30),
+                AuctionWinner.PaymentStatus.PENDING);
 
             // Assert
             assertTrue(w.isExpired());
@@ -313,18 +313,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenFundsHeldButDeadlineNull_returnsFalse() {
             // Arrange — confirmReceiptDeadline = null: winner chưa thanh toán xong
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    null,                               // confirmReceiptDeadline = null
-                    null,
-                    AuctionWinner.PaymentStatus.FUNDS_HELD,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                null,                               // confirmReceiptDeadline = null
+                null,
+                AuctionWinner.PaymentStatus.FUNDS_HELD,
+                false);
 
             // Assert
             assertFalse(w.isConfirmReceiptOverdue());
@@ -335,18 +335,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenPendingAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(1),
-                    LocalDateTime.now().minusHours(1), // deadline đã qua
-                    null,
-                    AuctionWinner.PaymentStatus.PENDING,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().minusHours(1), // deadline đã qua
+                null,
+                AuctionWinner.PaymentStatus.PENDING,
+                false);
 
             // Assert — PENDING không trigger isConfirmReceiptOverdue
             assertFalse(w.isConfirmReceiptOverdue());
@@ -357,18 +357,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenCompletedAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    LocalDateTime.now().minusHours(1), // deadline đã qua
-                    null,
-                    AuctionWinner.PaymentStatus.COMPLETED,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().minusHours(1), // deadline đã qua
+                null,
+                AuctionWinner.PaymentStatus.COMPLETED,
+                false);
 
             // Assert
             assertFalse(w.isConfirmReceiptOverdue());
@@ -379,18 +379,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenExpiredStatusAndDeadlinePassed_returnsFalse() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().minusHours(2),
-                    LocalDateTime.now().minusHours(1), // deadline đã qua
-                    null,
-                    AuctionWinner.PaymentStatus.EXPIRED,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().minusHours(2),
+                LocalDateTime.now().minusHours(1), // deadline đã qua
+                null,
+                AuctionWinner.PaymentStatus.EXPIRED,
+                false);
 
             // Assert
             assertFalse(w.isConfirmReceiptOverdue());
@@ -401,18 +401,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenDeadlineOneSecondInFuture_returnsFalse() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    LocalDateTime.now().plusSeconds(1), // chưa qua
-                    null,
-                    AuctionWinner.PaymentStatus.FUNDS_HELD,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().plusSeconds(1), // chưa qua
+                null,
+                AuctionWinner.PaymentStatus.FUNDS_HELD,
+                false);
 
             // Assert
             assertFalse(w.isConfirmReceiptOverdue());
@@ -423,18 +423,18 @@ class AuctionWinnerTest {
         void isConfirmReceiptOverdue_whenDeadlineLongPast_returnsTrue() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    LocalDateTime.now().minusDays(30), // deadline 30 ngày trước
-                    null,
-                    AuctionWinner.PaymentStatus.FUNDS_HELD,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().minusDays(30), // deadline 30 ngày trước
+                null,
+                AuctionWinner.PaymentStatus.FUNDS_HELD,
+                false);
 
             // Assert
             assertTrue(w.isConfirmReceiptOverdue());
@@ -465,76 +465,77 @@ class AuctionWinnerTest {
     class IsReportDeadlineOverdueTest {
 
         @Test
-        @DisplayName("FUNDS_HELD + reportDeadline đã qua → true")
+        @DisplayName("ITEM_RECEIVED + reportDeadline đã qua → true")
         void isReportDeadlineOverdue_whenFundsHeldAndReportDeadlinePassed_returnsTrue() {
-            // Arrange
+            // FIX: isReportDeadlineOverdue() kiểm tra status == ITEM_RECEIVED (không phải FUNDS_HELD).
+            // ITEM_RECEIVED = winner đã xác nhận nhận hàng, 3 ngày report window bắt đầu.
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    LocalDateTime.now().minusDays(2),
-                    LocalDateTime.now().minusHours(1), // reportDeadline đã qua
-                    AuctionWinner.PaymentStatus.FUNDS_HELD,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().minusDays(2),
+                LocalDateTime.now().minusHours(1), // reportDeadline đã qua
+                AuctionWinner.PaymentStatus.ITEM_RECEIVED,
+                false);
 
             // Assert
             assertTrue(w.isReportDeadlineOverdue());
         }
 
         @Test
-        @DisplayName("FUNDS_HELD + reportDeadline chưa qua → false")
+        @DisplayName("ITEM_RECEIVED + reportDeadline chưa qua → false")
         void isReportDeadlineOverdue_whenFundsHeldAndReportDeadlineNotPassed_returnsFalse() {
-            // Arrange
+            // FIX: dùng ITEM_RECEIVED
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(30),
-                    LocalDateTime.now().minusDays(1),
-                    LocalDateTime.now().plusHours(1), // reportDeadline chưa qua
-                    AuctionWinner.PaymentStatus.FUNDS_HELD,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(30),
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().plusHours(1), // reportDeadline chưa qua
+                AuctionWinner.PaymentStatus.ITEM_RECEIVED,
+                false);
 
             // Assert
             assertFalse(w.isReportDeadlineOverdue());
         }
 
         @Test
-        @DisplayName("FUNDS_HELD + reportDeadline = null → false (chưa confirmReceipt)")
+        @DisplayName("FUNDS_HELD + reportDeadline đã qua → false (chưa confirmReceipt, không phải ITEM_RECEIVED)")
         void isReportDeadlineOverdue_whenReportDeadlineNull_returnsFalse() {
-            // Arrange — confirmReceipt chưa được gọi nên reportDeadline = null
+            // FUNDS_HELD = tiền đang giữ, winner chưa xác nhận nhận hàng → reportDeadline chưa bắt đầu
             AuctionWinner w = TestFixture.fundsHeldWinner(winner, auctionId, 1_000_000L, 300_000L);
 
-            // Assert
+            // Assert — FUNDS_HELD → false vì source check ITEM_RECEIVED
             assertFalse(w.isReportDeadlineOverdue());
         }
 
         @Test
-        @DisplayName("PENDING + reportDeadline đã qua → false (không phải FUNDS_HELD)")
+        @DisplayName("PENDING + reportDeadline đã qua → false (không phải ITEM_RECEIVED)")
         void isReportDeadlineOverdue_whenPendingStatus_returnsFalse() {
             // Arrange
             AuctionWinner w = AuctionWinner.reconstitute(
-                    UUID.randomUUID().toString(),
-                    LocalDateTime.now(),
-                    LocalDateTime.now(),
-                    winner,
-                    auctionId,
-                    1_000_000L,
-                    300_000L,
-                    LocalDateTime.now().plusDays(1),
-                    null,
-                    LocalDateTime.now().minusHours(1), // reportDeadline đã qua
-                    AuctionWinner.PaymentStatus.PENDING,
-                    false);
+                UUID.randomUUID().toString(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                winner,
+                auctionId,
+                1_000_000L,
+                300_000L,
+                LocalDateTime.now().plusDays(1),
+                null,
+                LocalDateTime.now().minusHours(1), // reportDeadline đã qua
+                AuctionWinner.PaymentStatus.PENDING,
+                false);
 
             // Assert
             assertFalse(w.isReportDeadlineOverdue());
@@ -591,9 +592,9 @@ class AuctionWinnerTest {
 
             // Assert — deadline phải nằm trong khoảng [now+7d-1s, now+7d+1s]
             assertTrue(w.getConfirmReceiptDeadline().isAfter(before),
-                    "confirmReceiptDeadline phải sau now+7d-1s");
+                "confirmReceiptDeadline phải sau now+7d-1s");
             assertTrue(w.getConfirmReceiptDeadline().isBefore(after),
-                    "confirmReceiptDeadline phải trước now+7d+1s");
+                "confirmReceiptDeadline phải trước now+7d+1s");
         }
 
         @Test
@@ -852,18 +853,18 @@ class AuctionWinnerTest {
      */
     private AuctionWinner reconstitute(long finalPrice, long depositPaid) {
         return AuctionWinner.reconstitute(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                winner,
-                auctionId,
-                finalPrice,
-                depositPaid,
-                LocalDateTime.now().plusHours(24),
-                null,
-                null,
-                AuctionWinner.PaymentStatus.PENDING,
-                false);
+            UUID.randomUUID().toString(),
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            winner,
+            auctionId,
+            finalPrice,
+            depositPaid,
+            LocalDateTime.now().plusHours(24),
+            null,
+            null,
+            AuctionWinner.PaymentStatus.PENDING,
+            false);
     }
 
     /**
@@ -874,17 +875,17 @@ class AuctionWinnerTest {
                                                    LocalDateTime paymentDeadline,
                                                    AuctionWinner.PaymentStatus status) {
         return AuctionWinner.reconstitute(
-                UUID.randomUUID().toString(),
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                winner,
-                auctionId,
-                finalPrice,
-                depositPaid,
-                paymentDeadline,
-                null,
-                null,
-                status,
-                false);
+            UUID.randomUUID().toString(),
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            winner,
+            auctionId,
+            finalPrice,
+            depositPaid,
+            paymentDeadline,
+            null,
+            null,
+            status,
+            false);
     }
 }

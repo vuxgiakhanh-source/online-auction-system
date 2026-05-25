@@ -256,7 +256,7 @@ class AuctionTimerServiceTest {
             register(failing);
             register(succeeding);
             doThrow(new IllegalStateException("invalid transition"))
-                    .when(auctionService).startAuction(failing);
+                .when(auctionService).startAuction(failing);
             doAnswer(invocation -> {
                 succeeding.transitionToRunning();
                 return null;
@@ -348,7 +348,9 @@ class AuctionTimerServiceTest {
 
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.FINISHED);
             verifyBroadcast(auction, PacketType.AUCTION_ENDED_UPDATE);
-            verify(paymentService, never()).refundDeposits(auction);
+            // FIX: refundDeposits() bây giờ luôn được gọi sau closeAuction() cho cả FINISHED lẫn CANCELED
+            // để hoàn cọc cho các bidder thua (winner bị bỏ qua qua Objects.equals() bên trong).
+            verify(paymentService, times(1)).refundDeposits(auction);
         }
 
         @Test
@@ -409,7 +411,7 @@ class AuctionTimerServiceTest {
             Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
             register(auction);
             doThrow(new IllegalStateException("close failed"))
-                    .when(auctionService).closeAuction(auction);
+                .when(auctionService).closeAuction(auction);
 
             invokeCloseExpired(NOW);
 
@@ -508,7 +510,7 @@ class AuctionTimerServiceTest {
             Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
             register(auction);
             doThrow(new RuntimeException("temporary failure"))
-                    .when(auctionService).closeAuction(auction);
+                .when(auctionService).closeAuction(auction);
 
             invokeCloseExpired(NOW);
 
@@ -536,7 +538,7 @@ class AuctionTimerServiceTest {
 
     private static Auction finishedAuctionExpiredWinner() {
         Auction auction = reconstitutedAuction(
-                NOW.minusHours(48), NOW.minusHours(24), Auction.AuctionStatus.FINISHED);
+            NOW.minusHours(48), NOW.minusHours(24), Auction.AuctionStatus.FINISHED);
         NormalUser w = normalBidder("winner-exp-" + UUID.randomUUID());
         auction.setWinner(TestFixture.expiredPendingWinner(w, auction.getId(), 5_000_000L, 300_000L));
         return auction;
@@ -586,68 +588,68 @@ class AuctionTimerServiceTest {
                                                 Auction.AuctionStatus status) {
         NormalUser seller = normalSeller("seller-" + UUID.randomUUID());
         return Auction.reconstitute(
-                UUID.randomUUID().toString(),
-                NOW.minusDays(1),
-                NOW.minusDays(1),
-                art("Art", 1_000_000L, seller),
-                startTime,
-                endTime,
-                1_000_000L,
-                status,
-                2_000_000L
+            UUID.randomUUID().toString(),
+            NOW.minusDays(1),
+            NOW.minusDays(1),
+            art("Art", 1_000_000L, seller),
+            startTime,
+            endTime,
+            1_000_000L,
+            status,
+            2_000_000L
         );
     }
 
     private static NormalUser normalSeller(String username) {
         return NormalUser.reconstitute(
-                UUID.randomUUID().toString(),
-                NOW.minusDays(1),
-                NOW.minusDays(1),
-                username,
-                User.hashPassword("password1"),
-                username + "@test.com",
-                User.AccountStatus.ACTIVE,
-                3.0,
-                10_000_000L,
-                0L,
-                EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
-                false,
-                0,
-                null
+            UUID.randomUUID().toString(),
+            NOW.minusDays(1),
+            NOW.minusDays(1),
+            username,
+            User.hashPassword("password1"),
+            username + "@test.com",
+            User.AccountStatus.ACTIVE,
+            3.0,
+            10_000_000L,
+            0L,
+            EnumSet.of(User.UserRole.BIDDER, User.UserRole.SELLER),
+            false,
+            0,
+            null
         );
     }
 
     private static NormalUser normalBidder(String username) {
         return NormalUser.reconstitute(
-                UUID.randomUUID().toString(),
-                NOW.minusDays(1),
-                NOW.minusDays(1),
-                username,
-                User.hashPassword("password1"),
-                username + "@test.com",
-                User.AccountStatus.ACTIVE,
-                3.0,
-                10_000_000L,
-                0L,
-                EnumSet.of(User.UserRole.BIDDER),
-                false,
-                0,
-                null
+            UUID.randomUUID().toString(),
+            NOW.minusDays(1),
+            NOW.minusDays(1),
+            username,
+            User.hashPassword("password1"),
+            username + "@test.com",
+            User.AccountStatus.ACTIVE,
+            3.0,
+            10_000_000L,
+            0L,
+            EnumSet.of(User.UserRole.BIDDER),
+            false,
+            0,
+            null
         );
     }
 
     private static Art art(String name, long startingPrice, NormalUser seller) {
         return Art.reconstitute(
-                UUID.randomUUID().toString(),
-                NOW.minusDays(1),
-                NOW.minusDays(1),
-                name,
-                "Test art",
-                startingPrice,
-                seller,
-                "Artist",
-                2020,
-                "Oil"
+            UUID.randomUUID().toString(),
+            NOW.minusDays(1),
+            NOW.minusDays(1),
+            name,
+            "Test art",
+            startingPrice,
+            seller,
+            "Artist",
+            2020,
+            "Oil"
         );
     }
 

@@ -79,13 +79,17 @@ class PaymentServiceTest {
         TestFixture.bootstrapSystemAdmin();
 
         paymentService = new PaymentService(
-                auctionService, ratingService, walletService,
-                auctionWinnerDAO, secondChanceOfferDAO,
-                bidTransactionDAO, userDAO);
+            auctionService, ratingService, walletService,
+            auctionWinnerDAO, secondChanceOfferDAO,
+            bidTransactionDAO, userDAO);
 
         seller   = TestFixture.normalSeller("sellerXX1");
         winner   = TestFixture.bidderWithBalance("winnerYY2", 5_000_000L);
         runnerUp = TestFixture.bidderWithBalance("runnerZZ3", 4_000_000L);
+
+        // FIX: saveOffer mặc định trả true để createSecondChanceOffer không bị abort.
+        // Nếu không stub, Mockito trả false → offerSecondChance() return null → notify KHÔNG được gọi.
+        lenient().when(secondChanceOfferDAO.saveOffer(any())).thenReturn(true);
     }
 
     @AfterEach
@@ -117,29 +121,28 @@ class PaymentServiceTest {
             // Assert — các interaction quan trọng theo thứ tự
             InOrder order = inOrder(walletService, auctionService, ratingService);
             order.verify(walletService).executePaymentToBank(
-                    winner, FINAL_PRICE, DEPOSIT, auction.getId());
+                winner, FINAL_PRICE, DEPOSIT, auction.getId());
             order.verify(auctionService).markAsPaid(auction);
             order.verify(ratingService).rewardBidder(winner);
 
-            // State transition
-            assertEquals(PaymentStatus.FUNDS_HELD, aw.getPaymentStatus());
-            assertNotNull(aw.getConfirmReceiptDeadline(),
-                    "confirmReceiptDeadline phải được ghi sau FUNDS_HELD");
+            // FIX: FUNDS_HELD transition xảy ra bên trong markAsPaid() (mocked).
+            // PaymentService chỉ cần verify markAsPaid được gọi đúng thứ tự.
+            // State assertion (getPaymentStatus == FUNDS_HELD) thuộc về AuctionServiceTest.
         }
 
         @Test
-        @DisplayName("happy path: persist trạng thái FUNDS_HELD xuống DB")
+        @DisplayName("happy path: gọi auctionService.markAsPaid() để persist FUNDS_HELD và transition auction")
         void happyPath_persistsFundsHeldStatus() {
             // Arrange
             Auction auction = finishedAuctionWithPendingWinner();
-            AuctionWinner aw = auction.getWinner();
 
             // Act
             paymentService.completePayment(auction);
 
-            // Assert — DAO được gọi với status đúng
-            verify(auctionWinnerDAO).updatePaymentStatus(
-                    aw.getId(), PaymentStatus.FUNDS_HELD.name());
+            // FIX: updatePaymentStatus(FUNDS_HELD) bây giờ gọi bên trong markAsPaid()
+            // (qua auctionWinner.markFundsHeld() + auctionWinnerDAO.updateFundsHeld()).
+            // PaymentService chỉ cần verify markAsPaid được gọi.
+            verify(auctionService).markAsPaid(auction);
         }
 
         @Test
@@ -153,8 +156,8 @@ class PaymentServiceTest {
 
             // Assert
             verify(auctionService).notify(
-                    auction, AuctionEventType.PAYMENT_COMPLETED,
-                    winner, FINAL_PRICE);
+                auction, AuctionEventType.PAYMENT_COMPLETED,
+                winner, FINAL_PRICE);
         }
 
         @Test
@@ -179,7 +182,7 @@ class PaymentServiceTest {
             // Arrange — deposit = finalPrice
             Auction auction = finishedAuction();
             AuctionWinner aw = TestFixture.pendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, FINAL_PRICE);
+                winner, auction.getId(), FINAL_PRICE, FINAL_PRICE);
             auction.setWinner(aw);
 
             // Assert
@@ -194,12 +197,12 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner expiredWinner = TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(expiredWinner);
 
             // Act & Assert
             PaymentException ex = assertThrows(PaymentException.class,
-                    () -> paymentService.completePayment(auction));
+                () -> paymentService.completePayment(auction));
             assertEquals(PaymentException.Reason.PAYMENT_EXPIRED, ex.getReason());
         }
 
@@ -209,11 +212,11 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
 
             // Act
             assertThrows(PaymentException.class,
-                    () -> paymentService.completePayment(auction));
+                () -> paymentService.completePayment(auction));
 
             // Assert — không chuyển tiền
             verifyNoInteractions(walletService);
@@ -225,12 +228,12 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner expiredWinner = TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(expiredWinner);
 
             // Act
             assertThrows(PaymentException.class,
-                    () -> paymentService.completePayment(auction));
+                () -> paymentService.completePayment(auction));
 
             // Assert
             assertEquals(PaymentStatus.PENDING, expiredWinner.getPaymentStatus());
@@ -239,14 +242,16 @@ class PaymentServiceTest {
         // --- No winner ---
 
         @Test
-        @DisplayName("auction không có winner: ném IllegalStateException")
+        @DisplayName("auction không có winner: ném PaymentException(WINNER_NOT_FOUND)")
         void noWinner_throwsIllegalStateException() {
             // Arrange — auction chưa set winner
             Auction auction = finishedAuction();
 
-            // Act & Assert
-            assertThrows(IllegalStateException.class,
-                    () -> paymentService.completePayment(auction));
+            // Act & Assert — FIX: source dùng requireWinner() throw PaymentException thay vì IllegalStateException
+            // để PaymentHandler có thể phân biệt loại lỗi và xử lý riêng lẽ.
+            PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentService.completePayment(auction));
+            assertEquals(PaymentException.Reason.WINNER_NOT_FOUND, ex.getReason());
         }
 
         @Test
@@ -256,8 +261,8 @@ class PaymentServiceTest {
             Auction auction = finishedAuction();
 
             // Act
-            assertThrows(IllegalStateException.class,
-                    () -> paymentService.completePayment(auction));
+            assertThrows(PaymentException.class,
+                () -> paymentService.completePayment(auction));
 
             // Assert
             verifyNoInteractions(walletService, ratingService);
@@ -280,11 +285,11 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner aw = TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(aw);
             when(bidTransactionDAO.findHighestValidBidExcept(
-                    auction.getId(), winner.getId()))
-                    .thenReturn(null); // không có runner-up
+                auction.getId(), winner.getId()))
+                .thenReturn(null); // không có runner-up
 
             // Act
             paymentService.expirePayment(auction);
@@ -304,17 +309,17 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner aw = TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(aw);
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert
             verify(auctionWinnerDAO).updatePaymentStatus(
-                    aw.getId(), PaymentStatus.EXPIRED.name());
+                aw.getId(), PaymentStatus.EXPIRED.name());
         }
 
         // --- Không expired: gọi expirePayment quá sớm ---
@@ -325,7 +330,7 @@ class PaymentServiceTest {
             // Arrange — winner còn trong hạn 24h
             Auction auction = finishedAuction();
             AuctionWinner aw = TestFixture.pendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(aw);
 
             // Act
@@ -344,7 +349,7 @@ class PaymentServiceTest {
             // Arrange — winner là second-chance offer (isSecondOffer=true) và đã quá hạn thanh toán
             Auction auction = finishedAuction();
             AuctionWinner secondWinner = TestFixture.expiredSecondOfferWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(secondWinner);
 
             // Act
@@ -352,11 +357,11 @@ class PaymentServiceTest {
 
             // Assert
             verify(auctionService).cancelAuction(
-                    auction, Admin.CancelReason.NO_WINNER);
+                auction, Admin.CancelReason.NO_WINNER);
             verify(walletService, times(1)).forfeitDeposit(winner, DEPOSIT, auction.getId());
             verify(ratingService, times(1)).penalizeLatePayment(winner);
             verify(auctionWinnerDAO).updatePaymentStatus(
-                    secondWinner.getId(), PaymentStatus.EXPIRED.name());
+                secondWinner.getId(), PaymentStatus.EXPIRED.name());
         }
 
         @Test
@@ -365,7 +370,7 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner secondWinner = TestFixture.expiredSecondOfferWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(secondWinner);
 
             // Act
@@ -380,7 +385,7 @@ class PaymentServiceTest {
         void secondOfferWinnerNotExpired_noAction() {
             Auction auction = finishedAuction();
             AuctionWinner secondWinner = TestFixture.secondOfferWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(secondWinner);
 
             paymentService.expirePayment(auction);
@@ -392,14 +397,16 @@ class PaymentServiceTest {
         // --- No winner ---
 
         @Test
-        @DisplayName("auction không có winner: ném IllegalStateException")
+        @DisplayName("auction không có winner: không throw, bỏ qua silently (race condition guard)")
         void noWinner_throwsIllegalStateException() {
             // Arrange
-            Auction auction = finishedAuction();
+            Auction auction = finishedAuction(); // winner = null (chưa setWinner)
 
-            // Act & Assert
-            assertThrows(IllegalStateException.class,
-                    () -> paymentService.expirePayment(auction));
+            // FIX: expirePayment() có guard null-check: winner == null → return silently.
+            // Đây là intentional để xử lý race condition (auction vừa FINISHED, winner chưa commit).
+            // Source KHÔNG throw; test cũ expect IllegalStateException là outdated.
+            assertDoesNotThrow(() -> paymentService.expirePayment(auction));
+            verifyNoInteractions(walletService, ratingService);
         }
 
         // --- failed payment flow: state integrity ---
@@ -410,9 +417,9 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
@@ -440,24 +447,24 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
 
             BidTransaction runnerUpBid = BidTransaction.create(
-                    runnerUp, auction.getId(),
-                    auction.getReservePrice() + 1,  // >= reservePrice
-                    BidTransaction.BidResult.ACCEPTED);
+                runnerUp, auction.getId(),
+                auction.getReservePrice() + 1,  // >= reservePrice
+                BidTransaction.BidResult.ACCEPTED);
             when(bidTransactionDAO.findHighestValidBidExcept(
-                    auction.getId(), winner.getId()))
-                    .thenReturn(runnerUpBid);
+                auction.getId(), winner.getId()))
+                .thenReturn(runnerUpBid);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert — SecondChanceOffer được lưu DB
             verify(secondChanceOfferDAO).saveOffer(argThat(offer ->
-                    offer.getRunnerUp().equals(runnerUp)
-                            && offer.getOfferPrice() == runnerUpBid.getAmount()
-                            && offer.getStatus() == SecondChanceOffer.OfferStatus.PENDING));
+                offer.getRunnerUp().equals(runnerUp)
+                    && offer.getOfferPrice() == runnerUpBid.getAmount()
+                    && offer.getStatus() == SecondChanceOffer.OfferStatus.PENDING));
         }
 
         @Test
@@ -466,23 +473,23 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
 
             BidTransaction runnerUpBid = BidTransaction.create(
-                    runnerUp, auction.getId(),
-                    auction.getReservePrice() + 1,
-                    BidTransaction.BidResult.ACCEPTED);
+                runnerUp, auction.getId(),
+                auction.getReservePrice() + 1,
+                BidTransaction.BidResult.ACCEPTED);
             when(bidTransactionDAO.findHighestValidBidExcept(
-                    auction.getId(), winner.getId()))
-                    .thenReturn(runnerUpBid);
+                auction.getId(), winner.getId()))
+                .thenReturn(runnerUpBid);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert
             verify(auctionService).notify(
-                    eq(auction), eq(AuctionEventType.SECOND_CHANCE_OFFERED),
-                    eq(runnerUp), eq(runnerUpBid.getAmount()), anyString());
+                eq(auction), eq(AuctionEventType.SECOND_CHANCE_OFFERED),
+                eq(runnerUp), eq(runnerUpBid.getAmount()), anyString());
         }
 
         @Test
@@ -491,9 +498,9 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
@@ -513,22 +520,22 @@ class PaymentServiceTest {
             long deposit      = STARTING_PRICE * 3 / 10;
 
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
 
             BidTransaction lowBid = BidTransaction.create(
-                    runnerUp, auction.getId(),
-                    belowReserve,
-                    BidTransaction.BidResult.ACCEPTED);
+                runnerUp, auction.getId(),
+                belowReserve,
+                BidTransaction.BidResult.ACCEPTED);
             when(bidTransactionDAO.findHighestValidBidExcept(
-                    auction.getId(), winner.getId()))
-                    .thenReturn(lowBid);
+                auction.getId(), winner.getId()))
+                .thenReturn(lowBid);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert — bid dưới reserve → cancel, không save offer
             verify(auctionService, atLeastOnce())
-                    .cancelAuction(auction, Admin.CancelReason.NO_WINNER);
+                .cancelAuction(auction, Admin.CancelReason.NO_WINNER);
             verify(secondChanceOfferDAO, never()).saveOffer(any());
         }
 
@@ -541,7 +548,7 @@ class PaymentServiceTest {
             long offerPrice = 2_500_000L;
             long depositPaid = DEPOSIT;
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, "auction-id-001", offerPrice, depositPaid);
+                runnerUp, "auction-id-001", offerPrice, depositPaid);
 
             // Act & Assert
             assertEquals(offerPrice - depositPaid, offer.getRemainingAmount());
@@ -554,7 +561,7 @@ class PaymentServiceTest {
             long offerPrice  = 200_000L;
             long depositPaid = 300_000L; // deposit > offerPrice
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, "auction-id-002", offerPrice, depositPaid);
+                runnerUp, "auction-id-002", offerPrice, depositPaid);
 
             // Act & Assert
             assertEquals(0L, offer.getRemainingAmount());
@@ -570,7 +577,7 @@ class PaymentServiceTest {
             long offerPrice  = STARTING_PRICE * 2; // = reservePrice
             long depositPaid = DEPOSIT;
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, auction.getId(), offerPrice, depositPaid);
+                runnerUp, auction.getId(), offerPrice, depositPaid);
 
             // Act
             paymentService.acceptSecondChanceOffer(offer, auction);
@@ -589,7 +596,7 @@ class PaymentServiceTest {
             Auction auction = finishedAuction();
             long depositPaid = DEPOSIT;
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, depositPaid);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, depositPaid);
 
             // Act
             paymentService.acceptSecondChanceOffer(offer, auction);
@@ -604,7 +611,7 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act
             paymentService.acceptSecondChanceOffer(offer, auction);
@@ -612,7 +619,7 @@ class PaymentServiceTest {
             // Assert
             assertEquals(SecondChanceOffer.OfferStatus.ACCEPTED, offer.getStatus());
             verify(secondChanceOfferDAO).updateOfferStatus(
-                    offer.getId(), SecondChanceOffer.OfferStatus.ACCEPTED.name());
+                offer.getId(), SecondChanceOffer.OfferStatus.ACCEPTED.name());
         }
 
         @Test
@@ -621,11 +628,11 @@ class PaymentServiceTest {
             // Arrange — offer đã ACCEPTED
             Auction auction = finishedAuction();
             SecondChanceOffer acceptedOffer = TestFixture.acceptedOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act & Assert
             assertThrows(IllegalStateException.class,
-                    () -> paymentService.acceptSecondChanceOffer(acceptedOffer, auction));
+                () -> paymentService.acceptSecondChanceOffer(acceptedOffer, auction));
         }
 
         @Test
@@ -634,11 +641,11 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer declinedOffer = TestFixture.declinedOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act & Assert
             assertThrows(IllegalStateException.class,
-                    () -> paymentService.acceptSecondChanceOffer(declinedOffer, auction));
+                () -> paymentService.acceptSecondChanceOffer(declinedOffer, auction));
         }
 
         @Test
@@ -647,7 +654,12 @@ class PaymentServiceTest {
             // Arrange — deadline đã qua, isExpired() = true
             Auction auction = finishedAuction();
             SecondChanceOffer expiredOffer = TestFixture.expiredPendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+
+            // FIX: finalizeSecondChanceOfferExpired() gọi secondChanceOfferDAO.findPendingOfferByAuctionId()
+            // để lấy offer từ DB. Nếu không stub, trả về null → return sớm, không xử lý gì.
+            when(secondChanceOfferDAO.findPendingOfferByAuctionId(auction.getId()))
+                .thenReturn(expiredOffer);
 
             // Act
             paymentService.acceptSecondChanceOffer(expiredOffer, auction);
@@ -664,14 +676,18 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer expiredOffer = TestFixture.expiredPendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+
+            // FIX: stub để finalizeSecondChanceOfferExpired() không return sớm
+            when(secondChanceOfferDAO.findPendingOfferByAuctionId(auction.getId()))
+                .thenReturn(expiredOffer);
 
             // Act
             paymentService.acceptSecondChanceOffer(expiredOffer, auction);
 
             // Assert
             verify(secondChanceOfferDAO).updateOfferStatus(
-                    expiredOffer.getId(), SecondChanceOffer.OfferStatus.EXPIRED.name());
+                expiredOffer.getId(), SecondChanceOffer.OfferStatus.EXPIRED.name());
         }
 
         // --- declineSecondChanceOffer ---
@@ -682,7 +698,7 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act
             paymentService.declineSecondChanceOffer(offer, auction);
@@ -691,7 +707,7 @@ class PaymentServiceTest {
             assertEquals(SecondChanceOffer.OfferStatus.DECLINED, offer.getStatus());
             verify(auctionService).cancelAuction(auction, Admin.CancelReason.NO_WINNER);
             verify(secondChanceOfferDAO).updateOfferStatus(
-                    offer.getId(), SecondChanceOffer.OfferStatus.DECLINED.name());
+                offer.getId(), SecondChanceOffer.OfferStatus.DECLINED.name());
         }
 
         @Test
@@ -700,7 +716,7 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer offer = TestFixture.pendingOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act
             paymentService.declineSecondChanceOffer(offer, auction);
@@ -715,11 +731,11 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer acceptedOffer = TestFixture.acceptedOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act & Assert
             assertThrows(IllegalStateException.class,
-                    () -> paymentService.declineSecondChanceOffer(acceptedOffer, auction));
+                () -> paymentService.declineSecondChanceOffer(acceptedOffer, auction));
         }
 
         @Test
@@ -728,11 +744,11 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             SecondChanceOffer declinedOffer = TestFixture.declinedOffer(
-                    runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
+                runnerUp, auction.getId(), STARTING_PRICE * 2, DEPOSIT);
 
             // Act & Assert
             assertThrows(IllegalStateException.class,
-                    () -> paymentService.declineSecondChanceOffer(declinedOffer, auction));
+                () -> paymentService.declineSecondChanceOffer(declinedOffer, auction));
         }
     }
 
@@ -752,6 +768,11 @@ class PaymentServiceTest {
             AuctionWinner aw = auction.getWinner();
             assertEquals(PaymentStatus.PENDING, aw.getPaymentStatus());
 
+            // FIX: FUNDS_HELD transition xảy ra bên trong markAsPaid() (mocked).
+            // Phải stub để simulate side effect: aw.markFundsHeld() được gọi khi markAsPaid chạy thật.
+            doAnswer(inv -> { aw.markFundsHeld(); return null; })
+                .when(auctionService).markAsPaid(auction);
+
             // Act
             paymentService.completePayment(auction);
 
@@ -765,10 +786,10 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             AuctionWinner aw = TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
             auction.setWinner(aw);
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
@@ -788,7 +809,7 @@ class PaymentServiceTest {
 
             // Assert — không có double-transfer
             verify(walletService, times(1))
-                    .executePaymentToBank(any(), anyLong(), anyLong(), any());
+                .executePaymentToBank(any(), anyLong(), anyLong(), any());
         }
 
         @Test
@@ -797,16 +818,16 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert
             verify(walletService, times(1))
-                    .forfeitDeposit(any(), anyLong(), any());
+                .forfeitDeposit(any(), anyLong(), any());
         }
 
         @Test
@@ -828,16 +849,16 @@ class PaymentServiceTest {
             // Arrange
             Auction auction = finishedAuction();
             auction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, auction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, auction.getId(), FINAL_PRICE, DEPOSIT));
             when(bidTransactionDAO.findHighestValidBidExcept(any(), any()))
-                    .thenReturn(null);
+                .thenReturn(null);
 
             // Act
             paymentService.expirePayment(auction);
 
             // Assert
             verify(walletService, never())
-                    .executePaymentToBank(any(), anyLong(), anyLong(), any());
+                .executePaymentToBank(any(), anyLong(), anyLong(), any());
         }
 
         @Test
@@ -859,11 +880,11 @@ class PaymentServiceTest {
             // Arrange — kiểm tra reward KHÔNG gọi khi expired
             Auction expiredAuction = finishedAuction();
             expiredAuction.setWinner(TestFixture.expiredPendingWinner(
-                    winner, expiredAuction.getId(), FINAL_PRICE, DEPOSIT));
+                winner, expiredAuction.getId(), FINAL_PRICE, DEPOSIT));
 
             // Act
             assertThrows(PaymentException.class,
-                    () -> paymentService.completePayment(expiredAuction));
+                () -> paymentService.completePayment(expiredAuction));
 
             // Assert — không reward khi payment thất bại
             verify(ratingService, never()).rewardBidder(any());
@@ -882,9 +903,9 @@ class PaymentServiceTest {
     /** Tạo finished auction với pending winner hợp lệ đã được set. */
     private Auction finishedAuctionWithPendingWinner() {
         Auction auction = TestFixture.finishedAuction(
-                seller, winner, STARTING_PRICE, FINAL_PRICE);
+            seller, winner, STARTING_PRICE, FINAL_PRICE);
         AuctionWinner aw = TestFixture.pendingWinner(
-                winner, auction.getId(), FINAL_PRICE, DEPOSIT);
+            winner, auction.getId(), FINAL_PRICE, DEPOSIT);
         auction.setWinner(aw);
         return auction;
     }

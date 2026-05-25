@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/auction-server/src/main/resources/database/seed.sql" value="8b6e7012-e4f3-4cfb-b191-7dedb62ddae5" />
+  </component>
+</project>

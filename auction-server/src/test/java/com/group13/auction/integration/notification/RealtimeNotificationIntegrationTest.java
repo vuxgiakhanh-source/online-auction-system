@@ -46,6 +46,12 @@ class RealtimeNotificationIntegrationTest {
 
     @Mock private AuctionDAO mockAuctionDAO;
     @Mock private com.group13.auction.dao.FinancialTransactionDAO mockFinancialTransactionDAO;
+    /**
+     * FIX: inject mock AuctionWinnerDAO.
+     * closeAuction() TH2 gọi saveWinner() — real DAO sẽ fail vì auction không có trong DB
+     * (FK constraint) → throw RuntimeException → test TC_TD_01 crash.
+     */
+    @Mock private com.group13.auction.dao.AuctionWinnerDAO mockAuctionWinnerDAO;
 
     private IRatingService ratingService;
     private AuctionService auctionService;
@@ -64,17 +70,21 @@ class RealtimeNotificationIntegrationTest {
         bidder  = TestFixture.bidderWithBalance("bidderUser",  5_000_000L);
         bidder2 = TestFixture.bidderWithBalance("bidder2User", 3_000_000L);
 
-        // FIX: dùng 3-arg constructor để inject mock FinancialTransactionDAO.
-        // Constructor 2-arg tự new FinancialTransactionDAO() thật → INSERT vào DB
-        // với auction_id chưa persist → SQLIntegrityConstraintViolationException (FK fail).
-        auctionService = new AuctionService(ratingService, mockAuctionDAO, mockFinancialTransactionDAO);
+        // FIX: dùng 4-arg constructor để inject mock AuctionWinnerDAO.
+        // Constructor 3-arg tự new AuctionWinnerDAO() thật → saveWinner() cố INSERT vào DB
+        // với auction_id chưa persist → SQLIntegrityConstraintViolationException (FK fail)
+        // → throw RuntimeException → TC_TD_01 (closeAuction với winner) crash.
+        auctionService = new AuctionService(ratingService, mockAuctionDAO,
+            mockFinancialTransactionDAO, mockAuctionWinnerDAO);
 
         // Stub DAO calls fired inside AuctionService
         when(mockAuctionDAO.updateAuctionStatus(anyString(), anyString())).thenReturn(true);
         when(mockAuctionDAO.updateAuctionResult(any(Auction.class))).thenReturn(true);
         when(mockFinancialTransactionDAO.saveTransaction(
-                any(com.group13.auction.model.bid.FinancialTransaction.class))).thenReturn(true);
+            any(com.group13.auction.model.bid.FinancialTransaction.class))).thenReturn(true);
         when(mockFinancialTransactionDAO.findLockedDepositAmount(anyString(), anyString())).thenReturn(0L);
+        // FIX: stub saveWinner → true để TH2 không crash
+        when(mockAuctionWinnerDAO.saveWinner(any())).thenReturn(true);
     }
 
     @AfterEach
@@ -107,7 +117,7 @@ class RealtimeNotificationIntegrationTest {
             ArgumentCaptor<AuctionEvent> cap = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(spy, atLeastOnce()).onAuctionEnded(cap.capture());
             List<AuctionEventType> types = cap.getAllValues().stream()
-                    .map(AuctionEvent::getEventType).toList();
+                .map(AuctionEvent::getEventType).toList();
             assertThat(types).contains(AuctionEventType.AUCTION_ENDED);
         }
 
@@ -125,7 +135,7 @@ class RealtimeNotificationIntegrationTest {
             ArgumentCaptor<AuctionEvent> cap = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(spy, atLeastOnce()).onAuctionEnded(cap.capture());
             List<AuctionEventType> types = cap.getAllValues().stream()
-                    .map(AuctionEvent::getEventType).toList();
+                .map(AuctionEvent::getEventType).toList();
             assertThat(types).contains(AuctionEventType.AUCTION_NO_WINNER);
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.CANCELED);
         }
@@ -143,9 +153,9 @@ class RealtimeNotificationIntegrationTest {
             auctionService.startAuction(auction);
 
             verify(spyB, times(1)).onAuctionEnded(
-                    argThat(e -> e.getEventType() == AuctionEventType.AUCTION_STARTED));
+                argThat(e -> e.getEventType() == AuctionEventType.AUCTION_STARTED));
             verify(spyS, times(1)).onAuctionEnded(
-                    argThat(e -> e.getEventType() == AuctionEventType.AUCTION_STARTED));
+                argThat(e -> e.getEventType() == AuctionEventType.AUCTION_STARTED));
         }
 
         @Test
@@ -163,7 +173,7 @@ class RealtimeNotificationIntegrationTest {
             ArgumentCaptor<AuctionEvent> cap = ArgumentCaptor.forClass(AuctionEvent.class);
             verify(spy, atLeastOnce()).onAuctionEnded(cap.capture());
             List<AuctionEventType> types = cap.getAllValues().stream()
-                    .map(AuctionEvent::getEventType).toList();
+                .map(AuctionEvent::getEventType).toList();
             assertThat(types).contains(AuctionEventType.RESERVE_NOT_MET_CLOSED);
         }
     }
@@ -183,7 +193,7 @@ class RealtimeNotificationIntegrationTest {
             auction.updateBid(1_100_000L, bidder);
             BidderObserver obs = new BidderObserver(bidder, ratingService);
             AuctionEvent event = new AuctionEvent(AuctionEventType.AUCTION_ENDED,
-                    auction, bidder, 1_100_000L);
+                auction, bidder, 1_100_000L);
 
             assertThatCode(() -> obs.onAuctionEnded(event)).doesNotThrowAnyException();
         }
@@ -195,7 +205,7 @@ class RealtimeNotificationIntegrationTest {
             auction.updateBid(1_100_000L, bidder2);
             BidderObserver obs = new BidderObserver(bidder, ratingService);
             AuctionEvent event = new AuctionEvent(AuctionEventType.AUCTION_ENDED,
-                    auction, bidder2, 1_100_000L);
+                auction, bidder2, 1_100_000L);
 
             assertThatCode(() -> obs.onAuctionEnded(event)).doesNotThrowAnyException();
         }
@@ -207,7 +217,7 @@ class RealtimeNotificationIntegrationTest {
             auction.updateBid(1_100_000L, bidder);
             SellerObserver obs = new SellerObserver(seller, ratingService);
             AuctionEvent event = new AuctionEvent(AuctionEventType.AUCTION_ENDED,
-                    auction, bidder, 1_100_000L);
+                auction, bidder, 1_100_000L);
 
             assertThatCode(() -> obs.onAuctionEnded(event)).doesNotThrowAnyException();
         }
@@ -218,7 +228,7 @@ class RealtimeNotificationIntegrationTest {
             Auction auction = TestFixture.runningAuction(seller, 500_000L);
             BidderObserver obs = new BidderObserver(bidder, ratingService);
             AuctionEvent event = new AuctionEvent(AuctionEventType.BID_PLACED,
-                    auction, bidder2, 600_000L);
+                auction, bidder2, 600_000L);
 
             assertThatCode(() -> obs.onBidPlaced(event)).doesNotThrowAnyException();
         }
@@ -244,7 +254,7 @@ class RealtimeNotificationIntegrationTest {
             auctionService.closeAuction(auction);
 
             verify(spy, times(1)).onAuctionEnded(
-                    argThat(e -> e.getEventType() == AuctionEventType.AUCTION_ENDED));
+                argThat(e -> e.getEventType() == AuctionEventType.AUCTION_ENDED));
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.FINISHED);
         }
 
@@ -374,13 +384,13 @@ class RealtimeNotificationIntegrationTest {
             long amount = 600_000L;
 
             AuctionEvent event = new AuctionEvent(AuctionEventType.BID_PLACED,
-                    auction, bidder, amount);
+                auction, bidder, amount);
 
             assertAll(
-                    () -> assertThat(event.getEventType()).isEqualTo(AuctionEventType.BID_PLACED),
-                    () -> assertThat(event.getAuction().getId()).isEqualTo(auction.getId()),
-                    () -> assertThat(event.getBidder()).isEqualTo(bidder),
-                    () -> assertThat(event.getBidAmount()).isEqualTo(amount)
+                () -> assertThat(event.getEventType()).isEqualTo(AuctionEventType.BID_PLACED),
+                () -> assertThat(event.getAuction().getId()).isEqualTo(auction.getId()),
+                () -> assertThat(event.getBidder()).isEqualTo(bidder),
+                () -> assertThat(event.getBidAmount()).isEqualTo(amount)
             );
         }
     }
@@ -408,7 +418,7 @@ class RealtimeNotificationIntegrationTest {
             Auction open = TestFixture.openAuction(seller, 500_000L);
 
             assertThatThrownBy(() -> auctionService.closeAuction(open))
-                    .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -417,7 +427,7 @@ class RealtimeNotificationIntegrationTest {
             String auctionId = "test-null-observer";
 
             assertThatCode(() -> auctionService.addObserver(auctionId, null))
-                    .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
             assertThat(auctionService.getObservers(auctionId)).isEmpty();
         }
 
@@ -429,9 +439,9 @@ class RealtimeNotificationIntegrationTest {
             auctionService.addObserver(auction.getId(), spy);
 
             assertThatCode(() ->
-                    auctionService.notify(auction, AuctionEventType.AUCTION_EXTENDED,
-                            bidder, 0L, null))
-                    .doesNotThrowAnyException();
+                auctionService.notify(auction, AuctionEventType.AUCTION_EXTENDED,
+                    bidder, 0L, null))
+                .doesNotThrowAnyException();
         }
     }
 
@@ -453,7 +463,7 @@ class RealtimeNotificationIntegrationTest {
         Object manager = cls.getDeclaredMethod("getInstance").invoke(null);
 
         for (String fieldName : new String[]{"allAuctions", "allUsers",
-                "globalObservers", "staffObservers"}) {
+            "globalObservers", "staffObservers"}) {
             Field f = cls.getDeclaredField(fieldName);
             f.setAccessible(true);
             Object col = f.get(manager);
