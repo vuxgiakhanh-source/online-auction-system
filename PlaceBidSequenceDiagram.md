@@ -42,9 +42,9 @@ sequenceDiagram
         BidSvc->>Lock: getLock(auctionId)
         activate Lock
         BidSvc->>Strategy: isValidBid(auction, amount)
+        
         alt invalid or auction closed
             BidSvc-->>Handler: throw business exception
-            deactivate Lock
             Handler-->>Bidder: PLACE_BID_FAILED
         else valid bid
             BidSvc->>Auction: updateBid(amount, bidder)
@@ -52,8 +52,11 @@ sequenceDiagram
                 BidSvc->>Auction: extendEndTime(60s)
             end
             BidSvc->>Auction: addBidTransactionId(tx.id)
-            deactivate Lock
-
+        end
+        
+        deactivate Lock
+        
+        alt valid bid
             BidSvc->>BidDAO: saveTransactionAndUpdatePrice(tx, auctionId, amount, bidderId)
             BidSvc->>Notify: notify(BID_PLACED or BID_RESERVE_NOT_MET)
             Notify->>Broadcast: notifyJoinedParticipantsForEvent(event)

@@ -1,74 +1,93 @@
 # Use Case Diagram
 
+## General Management Subsystem
+
+```mermaid
+flowchart LR
+    User["Bidder / Seller"]
+    Staff["Staff Admin"]
+    SysAdmin["System Admin"]
+
+    subgraph General["General Management Subsystem"]
+        UCAuth["Register / Login"]
+        UCWallet["Manage Wallet"]
+        UCNotify["Receive Realtime<br/>and Inbox Updates"]
+        UCAdmin["Manage Users / Bans"]
+    end
+
+    User --> UCAuth
+    User --> UCWallet
+    User --> UCNotify
+    Staff --> UCAdmin
+    Staff --> UCNotify
+    SysAdmin --> UCAdmin
+    SysAdmin --> UCNotify
+```
+
+## Auction & Bidding Engine
+
 ```mermaid
 flowchart LR
     Bidder["Bidder / Buyer"]
     Seller["Seller"]
-    Staff["Staff Admin"]
-    SysAdmin["System Admin"]
-    Timer["AuctionTimerService"]
 
-    subgraph AuctionSystem["Online Auction Server"]
-        UCAuth["Register / Login"]
-        UCWallet["Manage Wallet"]
+    subgraph Engine["Auction & Bidding Engine"]
         UCBrowse["Browse / Watch Auctions"]
+        UCCreate["Create Auction"]
         UCJoin["Join Auction<br/>(lock deposit)"]
         UCBid["Place Bid"]
         UCAutoBid["Manage Auto-Bid"]
         UCLeave["Leave Auction"]
-        UCCreate["Create Auction"]
-        UCCancel["Request / Cancel Auction"]
-        UCLifecycle["Start / Close Auction"]
-        UCPay["Pay Winning Auction"]
-        UCSCO["Accept / Decline<br/>Second Chance Offer"]
-        UCConfirm["Confirm Item Received"]
-        UCReport["Submit Quality Report"]
-        UCArbitrate["Arbitrate Quality Report"]
-        UCNotify["Receive Realtime<br/>and Inbox Updates"]
-        UCAdmin["Manage Users / Bans"]
-        UCSchedule["Run Background Jobs"]
+        UCCancelReq["Request Auction Cancel"]
     end
 
-    Bidder --> UCAuth
-    Bidder --> UCWallet
     Bidder --> UCBrowse
     Bidder --> UCJoin
     Bidder --> UCBid
     Bidder --> UCAutoBid
     Bidder --> UCLeave
-    Bidder --> UCPay
-    Bidder --> UCSCO
-    Bidder --> UCConfirm
-    Bidder --> UCReport
-    Bidder --> UCNotify
-
-    Seller --> UCAuth
-    Seller --> UCWallet
     Seller --> UCCreate
-    Seller --> UCCancel
-    Seller --> UCNotify
+    Seller --> UCCancelReq
 
-    Staff --> UCArbitrate
-    Staff --> UCCancel
-    Staff --> UCAdmin
-    Staff --> UCNotify
-
-    SysAdmin --> UCAdmin
-    SysAdmin --> UCCancel
-    SysAdmin --> UCNotify
-
-    Timer --> UCSchedule
-
-    UCJoin -. include .-> UCWallet
-    UCBid -. include .-> UCNotify
+    UCJoin -. include .-> UCBrowse
     UCAutoBid -. include .-> UCBid
-    UCLifecycle -. include .-> UCNotify
+```
+
+## Post-Auction & Lifecycle Subsystem
+
+```mermaid
+flowchart LR
+    Timer["AuctionTimerService"]
+    Winner["Winner"]
+    RunnerUp["Runner-up"]
+    Staff["Staff Admin"]
+
+    subgraph Lifecycle["Post-Auction & Lifecycle Subsystem"]
+        UCLifecycle["Start / Close Auction"]
+        UCRefund["Refund Losing Deposits"]
+        UCPay["Pay Winning Auction"]
+        UCSCO["Second Chance Offer"]
+        UCConfirm["Confirm Item Received"]
+        UCReport["Submit Quality Report"]
+        UCArbitrate["Arbitrate Quality Report"]
+        UCPayout["Release Seller Payout"]
+        UCJobs["Run Background Jobs"]
+    end
+
+    Timer --> UCJobs
+    Winner --> UCPay
+    Winner --> UCConfirm
+    Winner --> UCReport
+    RunnerUp --> UCSCO
+    Staff --> UCArbitrate
+
+    UCJobs -. include .-> UCLifecycle
+    UCLifecycle -. include .-> UCRefund
     UCLifecycle -. extend .-> UCPay
-    UCSchedule -. include .-> UCLifecycle
-    UCSchedule -. include .-> UCSCO
-    UCPay -. include .-> UCWallet
+    UCPay -. extend .-> UCSCO
     UCPay -. extend .-> UCConfirm
-    UCReport -. extend .-> UCConfirm
-    UCArbitrate -. include .-> UCWallet
-    UCArbitrate -. include .-> UCNotify
+    UCConfirm -. extend .-> UCReport
+    UCReport -. extend .-> UCArbitrate
+    UCJobs -. include .-> UCPayout
+    UCJobs -. include .-> UCSCO
 ```
