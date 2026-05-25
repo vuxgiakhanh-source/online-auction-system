@@ -488,3 +488,234 @@
 .progress-indicator {
     -fx-progress-color: #67b8ea;
 }
+
+/* LIVE BIDDING FIXED DASHBOARD */
+
+.live-root,
+.live-shell {
+    -fx-background-color: #0f253c;
+}
+
+.live-top-bar,
+.live-bottom-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.045);
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+}
+
+.live-top-bar {
+    -fx-border-width: 0 0 1 0;
+}
+
+.live-bottom-bar {
+    -fx-border-width: 1 0 0 0;
+}
+
+.live-center {
+    -fx-background-color: transparent;
+}
+
+.live-top-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.76);
+}
+
+.live-compact-button {
+    -fx-font-size: 13px;
+    -fx-padding: 8 14 8 14;
+}
+
+.live-summary-strip {
+    -fx-padding: 13 18 13 18;
+    -fx-background-color: rgba(255, 255, 255, 0.105);
+    -fx-background-radius: 26;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
+}
+
+.live-auction-title {
+    -fx-font-size: 23px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.live-small-badge {
+    -fx-font-size: 12px;
+    -fx-padding: 5 10 5 10;
+}
+
+.live-metric-card {
+    -fx-min-width: 150;
+    -fx-pref-width: 150;
+    -fx-padding: 9 13 9 13;
+    -fx-background-color: rgba(255, 255, 255, 0.085);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+}
+
+.live-metric-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.66);
+}
+
+.live-current-price {
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #67b8ea;
+}
+
+.live-countdown-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.live-dashboard-grid {
+    -fx-background-color: transparent;
+}
+
+.live-action-column {
+    -fx-background-color: transparent;
+}
+
+.live-fixed-card,
+.live-chart-card,
+.live-history-card {
+    -fx-padding: 13;
+    -fx-background-radius: 22;
+    -fx-border-radius: 22;
+}
+
+.live-card-title {
+    -fx-font-size: 15px;
+}
+
+.live-info-value {
+    -fx-font-size: 14px;
+}
+
+.live-tight-text {
+    -fx-font-size: 12px;
+    -fx-line-spacing: 1px;
+}
+
+.live-input {
+    -fx-font-size: 13px;
+    -fx-padding: 8 13 8 13;
+}
+
+.live-wide-button {
+    -fx-font-size: 13px;
+    -fx-padding: 8 14 8 14;
+}
+
+.live-auto-button {
+    -fx-font-size: 12px;
+    -fx-padding: 8 10 8 10;
+}
+
+.live-chip {
+    -fx-padding: 4 9 4 9;
+    -fx-background-color: rgba(125, 211, 252, 0.16);
+    -fx-background-radius: 999;
+    -fx-border-color: rgba(125, 211, 252, 0.35);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #dff4ff;
+}
+
+.live-clickable-card {
+    -fx-cursor: hand;
+}
+
+.live-clickable-card:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: rgba(103, 184, 234, 0.34);
+}
+
+.live-preview-badge {
+    -fx-padding: 5 10 5 10;
+    -fx-background-color: rgba(103, 184, 234, 0.16);
+    -fx-background-radius: 999;
+    -fx-border-color: rgba(103, 184, 234, 0.36);
+    -fx-border-radius: 999;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #dff4ff;
+}
+
+.live-chart-card,
+.live-history-card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 14, 0.12, 0, 5);
+}
+
+.live-fixed-chart {
+    -fx-padding: 6;
+}
+
+.live-fixed-history-list {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+}
+
+.live-signature-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255, 255, 255, 0.72);
+}
+
+.live-preview-chart {
+    -fx-background-color: rgba(255, 255, 255, 0.055);
+    -fx-background-radius: 20;
+    -fx-padding: 12;
+}
+
+.live-preview-table {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+}
+
+.live-preview-table .column-header-background {
+    -fx-background-color: rgba(103, 184, 234, 0.22);
+    -fx-background-radius: 18 18 0 0;
+}
+
+.live-preview-table .column-header,
+.live-preview-table .filler {
+    -fx-background-color: transparent;
+    -fx-size: 42px;
+}
+
+.live-preview-table .column-header .label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.live-preview-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.055);
+    -fx-border-width: 0 0 1 0;
+}
+
+.live-preview-table .table-row-cell:filled:selected {
+    -fx-background-color: rgba(103, 184, 234, 0.20);
+}
+
+.live-preview-table .table-cell {
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.88);
+    -fx-border-color: transparent;
+}
