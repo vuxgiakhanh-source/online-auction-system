@@ -77,7 +77,7 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 👷 Chức năng hệ thống
 
 ### Use Case tổng quát
-  > Tham khảo __UseCase Diagram__ [tại đây](./UsecaseDiagram.jpg)
+  > Tham khảo __UseCase Diagram__ [tại đây](./UseCaseDiagram.md)
 
 ### Chức năng cốt lõi
 * __Quản lý tài khoản và Phân quyền__: Hệ thống phân quyền chi tiết cho 03 nhóm đối tượng: Bidder (Người mua), Seller (Người bán) và Admin (Quản trị viên), đảm bảo tính bảo mật và đúng vai trò trong mọi tác vụ.
@@ -93,7 +93,7 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
   > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
-  > Tham khảo toàn bộ về khâu __Payment and Deposit Escrow__ [tại đây](./PaymentAndDepositEscrowSequenceDiagram.md)
+  > Tham khảo __Payment and Deposit Escrow__ [tại đây](./PaymentAndDepositEscrowSequenceDiagram.md), __Payment Expiration / Second Chance__ [tại đây](./PaymentExpirationSequenceDiagram.md), và __Seller Payout__ [tại đây](./SellerPayoutSequenceDiagram.md)
 
 ### Chức năng nâng cao
 * __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.

@@ -5,17 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/security/AuctionHandlerSecurityTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/security/BidHandlerWebSocketSecurityTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuctionHandlerDispatchTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/AuthHandlerDispatchTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/BidWebSocketIntegrationIT.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketResponseAssert.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PacketRouterDispatchTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/PaymentHandlerDispatchTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/SessionManagerBroadcastTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/websocket/UserAdminHandlerDispatchTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AuctionLifecycleSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/AuctionLifecycleSequenceDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AutoBidSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/AutoBidSequenceDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClassDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/ClassDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PaymentAndDepositEscrowSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/PaymentAndDepositEscrowSequenceDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PlaceBidSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/PlaceBidSequenceDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/QualityReportArbitrationSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/QualityReportArbitrationSequenceDiagram.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RealtimeBroadcastViaObserverSequenceDiagram.md" beforeDir="false" afterPath="$PROJECT_DIR$/RealtimeBroadcastViaObserverSequenceDiagram.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,7 +22,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="737" />
+    <option name="cachedIndexableFilesCount" value="723" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -251,7 +250,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.TestLauncher">
+  <component name="RunManager" selected="Application.Launcher">
     <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
       <module name="auction-client" />
@@ -342,9 +341,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.TestLauncher" />
         <item itemvalue="Application.Launcher" />
         <item itemvalue="Application.ServerMain" />
+        <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.ChatbotProviderTest" />
         <item itemvalue="JUnit.AuctionSystemLoadIT" />
       </list>
@@ -504,11 +503,6 @@
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AccountServiceLoadIT.java</url>
           <line>80</line>
           <option name="timeStamp" value="57" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
-          <line>50</line>
-          <option name="timeStamp" value="58" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>

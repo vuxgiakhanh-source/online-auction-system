@@ -1,24 +1,54 @@
-# Real-time BroadCast via Observer
+# Realtime Broadcast Via Observer SequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Client as "WebSocket Client"
-    participant SessionManager
-    participant AuctionEvent as "AuctionEvent"
-    participant Observers as "5 Observer types<br/>(BidderObserver, SellerObserver, ...)"
-    participant ServerBroadcastNotifier
-    participant WebSocket
+    autonumber
+    participant Service as Auction, Bid, Payment services
+    participant AuctionSvc as AuctionService
+    participant Event as AuctionEvent
+    participant PerAuction as Per-auction Observers
+    participant Manager as AuctionManager
+    participant Global as Global Observers
+    participant Staff as Staff Observers
+    participant Bridge as ServerBroadcastNotifier
+    participant NotifyDAO as NotificationDAO
+    participant UserDAO
+    participant Sessions as SessionManager
+    participant Clients as WebSocket Clients
 
-    Client->>SessionManager: subscribe(auctionId)
-    SessionManager-->>Client: Session registered
+    Service->>AuctionSvc: notify(auction, eventType, actor, amount, message)
+    AuctionSvc->>Event: create AuctionEvent
 
-    AuctionEvent->>Observers: notify(eventType: BID_PLACED / AUCTION_ENDED / ...)
-    
-    loop For each matching observer
-        Observers->>ServerBroadcastNotifier: broadcast(event)
-        ServerBroadcastNotifier->>WebSocket: push to specific sessions (per auction/user)
+    loop auction observers
+        AuctionSvc->>PerAuction: onBidPlaced() or onAuctionEnded()
     end
 
-    WebSocket-->>Client: realtime update (JSON payload)
-    Note right of ServerBroadcastNotifier: Filter theo auctionId + user roles
+    AuctionSvc->>Manager: notifyGlobalObservers(event)
+    Manager->>Global: dispatch event
+
+    opt staff relevant event
+        AuctionSvc->>Manager: notifyStaffObservers(event)
+        Manager->>Staff: dispatch event
+    end
+
+    AuctionSvc->>Bridge: notifyJoinedParticipantsForEvent(event)
+    alt event creates inbox notification
+        Bridge->>UserDAO: findJoinedUserIdsByAuctionId(auctionId)
+        loop joined participants
+            Bridge->>NotifyDAO: save(Notification)
+        end
+    else realtime-only or specialized event
+        Bridge-->>AuctionSvc: skip generic inbox
+    end
+
+    opt explicit websocket update from handler/service
+        Service->>Sessions: broadcastToAuctionAsync(packet)
+        Sessions->>Sessions: FIFO event queue
+        Sessions->>Clients: parallel sendRaw(json)
+    end
+
+    opt targeted notification
+        Bridge->>NotifyDAO: save(Notification)
+        Bridge->>Sessions: sendToUser(userId, packet)
+    end
 ```
