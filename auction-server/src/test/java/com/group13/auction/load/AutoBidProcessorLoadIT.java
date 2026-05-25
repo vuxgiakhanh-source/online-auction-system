@@ -81,10 +81,10 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
 
     @Container
     static final MySQLContainer mysql = new MySQLContainer("mysql:8.0")
-            .withDatabaseName("omnibid_test")
-            .withUsername("test_user")
-            .withPassword("test_pass")
-            .withInitScript("database/schema.sql");
+        .withDatabaseName("omnibid_test")
+        .withUsername("test_user")
+        .withPassword("test_pass")
+        .withInitScript("database/schema.sql");
 
     private UserDAO              userDAO;
     private ItemDAO              itemDAO;
@@ -117,7 +117,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
         walletService  = new WalletService(financialTransactionDAO, userDAO, ratingService);
         auctionService = new AuctionService(ratingService, auctionDAO);
         bidService     = new BidService(auctionService, ratingService, walletService,
-                bidTransactionDAO, auctionDAO, userDAO);
+            bidTransactionDAO, auctionDAO, userDAO);
 
         // SessionManager mock — không gửi packet thật
         sessionManager = SessionManager.getInstance();
@@ -189,7 +189,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                             auctionLock.lock();
                             try {
                                 bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                autoBidProcessor.process(auction, bidder.getId());
+                                autoBidProcessor.submit(auction, bidder.getId());
                                 successes.incrementAndGet();
                             } finally {
                                 auctionLock.unlock();
@@ -207,8 +207,8 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
 
             // Giá không vượt maxBid cao nhất
             assertThat(auction.getCurrentPrice())
-                    .as("Giá cuối không được vượt maxBid lớn nhất (%d)", baseMaxBid)
-                    .isLessThanOrEqualTo(baseMaxBid);
+                .as("Giá cuối không được vượt maxBid lớn nhất (%d)", baseMaxBid)
+                .isLessThanOrEqualTo(baseMaxBid);
             assertThat(auction.getCurrentPrice()).isGreaterThanOrEqualTo(1_000_000L);
 
             // Có ít nhất 1 bid thành công
@@ -245,7 +245,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             lock.lock();
             try {
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-                autoBidProcessor.process(auction, manualBidder.getId());
+                autoBidProcessor.submit(auction, manualBidder.getId());
             } finally {
                 lock.unlock();
             }
@@ -323,7 +323,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                                 lock.lock();
                                 try {
                                     bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                    autoBidProcessor.process(auction, bidder.getId());
+                                    autoBidProcessor.submit(auction, bidder.getId());
                                     success.incrementAndGet();
                                 } finally {
                                     lock.unlock();
@@ -343,8 +343,8 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                 Auction auction = auctions.get(a);
                 Auction fromDb  = auctionDAO.findAuctionById(auction.getId());
                 assertThat(fromDb.getCurrentPrice())
-                        .as("Giá DB phiên %d phải khớp RAM", a)
-                        .isEqualTo(auction.getCurrentPrice());
+                    .as("Giá DB phiên %d phải khớp RAM", a)
+                    .isEqualTo(auction.getCurrentPrice());
                 // Release lock
                 AuctionLockRegistry.getInstance().release(auction.getId());
             }
@@ -404,7 +404,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                                 lock.lock();
                                 try {
                                     bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                    autoBidProcessor.process(auction, bidder.getId());
+                                    autoBidProcessor.submit(auction, bidder.getId());
                                     snapshots.add(auction.getCurrentPrice());
                                     success.incrementAndGet();
                                 } finally {
@@ -430,14 +430,14 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             // Giá trong snapshots phải tăng đơn điệu
             for (int i = 1; i < snapshots.size(); i++) {
                 assertThat(snapshots.get(i))
-                        .as("Snapshot[%d] phải >= snapshot[%d-1]", i, i)
-                        .isGreaterThanOrEqualTo(snapshots.get(i - 1));
+                    .as("Snapshot[%d] phải >= snapshot[%d-1]", i, i)
+                    .isGreaterThanOrEqualTo(snapshots.get(i - 1));
             }
 
             // Giá không vượt autoBidMax
             assertThat(auction.getCurrentPrice())
-                    .as("Giá cuối không được vượt autoBidMax")
-                    .isLessThanOrEqualTo(autoBidMax);
+                .as("Giá cuối không được vượt autoBidMax")
+                .isLessThanOrEqualTo(autoBidMax);
 
             AuctionLockRegistry.getInstance().release(auction.getId());
         }
@@ -470,15 +470,15 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             try {
                 long firstBid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                 bidService.placeBid(trigger, auction, firstBid, new StandardBidStrategy());
-                autoBidProcessor.process(auction, trigger.getId());
+                autoBidProcessor.submit(auction, trigger.getId());
             } finally {
                 lock.unlock();
             }
 
             long elapsedMs = System.currentTimeMillis() - startMs;
             assertThat(elapsedMs)
-                    .as("process() phải kết thúc trong < 5s (không vô tận): thực tế=%dms", elapsedMs)
-                    .isLessThan(5_000L);
+                .as("process() phải kết thúc trong < 5s (không vô tận): thực tế=%dms", elapsedMs)
+                .isLessThan(5_000L);
 
             // Giá không vượt maxBid
             assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(sameMaxBid);
@@ -520,7 +520,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                 long manualBid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
                 // process() phải tìm autoBidder qua DB fallback
-                autoBidProcessor.process(auction, manualBidder.getId());
+                autoBidProcessor.submit(auction, manualBidder.getId());
             } catch (Exception e) {
                 failures.incrementAndGet();
             } finally {
@@ -528,8 +528,8 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             }
 
             assertThat(failures.get())
-                    .as("process() không được throw exception khi fallback DB")
-                    .isZero();
+                .as("process() không được throw exception khi fallback DB")
+                .isZero();
             assertThat(auction.getCurrentPrice()).isGreaterThan(1_000_000L);
 
             AuctionLockRegistry.getInstance().release(auction.getId());
@@ -572,7 +572,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                         try {
                             long bid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                             bidService.placeBid(bidder, auction, bid, new StandardBidStrategy());
-                            autoBidProcessor.process(auction, bidder.getId());
+                            autoBidProcessor.submit(auction, bidder.getId());
                         } finally {
                             lock.unlock();
                         }
@@ -587,8 +587,8 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             assertThat(pool.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
 
             assertThat(failures.get())
-                    .as("DB fallback đồng thời không được throw exception")
-                    .isZero();
+                .as("DB fallback đồng thời không được throw exception")
+                .isZero();
 
             for (int a = 0; a < auctionCount; a++) {
                 AuctionLockRegistry.getInstance().release(auctions.get(a).getId());
@@ -605,9 +605,9 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
         String itemId = buildItem(seller.getId(), "ABP-Item-" + sellerPrefix, startingPrice, itemDAO);
         Item item = itemDAO.findItemById(itemId);
         Auction auction = Auction.create(item,
-                LocalDateTime.now().minusMinutes(1),
-                LocalDateTime.now().plusHours(3),
-                reservePrice);
+            LocalDateTime.now().minusMinutes(1),
+            LocalDateTime.now().plusHours(3),
+            reservePrice);
         auctionDAO.createAuction(auction);
         auctionService.startAuction(auction);
         trackAuction(auction.getId());

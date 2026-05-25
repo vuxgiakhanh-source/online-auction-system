@@ -186,10 +186,14 @@ public class AuctionService implements IAuctionService {
       notify(auction, AuctionEvent.AuctionEventType.AUCTION_NO_WINNER, null, 0L);
       ServerBroadcastNotifier.getInstance().notifyAuctionNoWinner(auction);
       cancelAuction(auction, Admin.CancelReason.NO_WINNER);
+      // cancelAuction() đã gọi updateAuctionStatus() — không cần updateAuctionResult() ở đây.
       log.info("Phiên đóng - không có ai đặt giá: auctionId={}", auction.getId());
 
     } else if (!auction.isReserveMet()) {
-      // TH1.2: có leader nhưng chưa đạt reserve -> SYSTEM auto-cancel
+      // TH1.2: có leader nhưng chưa đạt reserve -> SYSTEM auto-cancel.
+      // FIX: Không gọi updateAuctionResult() ở đây để tránh ghi sai winning_bidder_id
+      // (leader ≠ winner khi reserve chưa đạt).
+      // cancelAuction() đã gọi updateAuctionStatus() để persist CANCELED.
       NormalUser leader = auction.getCurrentLeader();
       notify(auction, AuctionEvent.AuctionEventType.RESERVE_NOT_MET_CLOSED,
           leader, auction.getCurrentPrice());
@@ -234,10 +238,11 @@ public class AuctionService implements IAuctionService {
       ServerBroadcastNotifier.getInstance().notifyAuctionEnded(auction);
       log.info("Winner: auctionId={} winner={} price={}",
           auction.getId(), winner.getUsername(), auction.getCurrentPrice());
-    }
 
-    // Đã thực hiện TODO: auctionDAO.update(auction)
-    auctionDAO.updateAuctionResult(auction);
+      // FIX: updateAuctionResult() chỉ gọi ở TH2 (có winner) để tránh ghi sai
+      // winning_bidder_id cho auction CANCELED (TH1.2).
+      auctionDAO.updateAuctionResult(auction);
+    }
   }
 
   /**
