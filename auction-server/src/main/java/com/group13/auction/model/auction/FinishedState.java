@@ -18,18 +18,19 @@ public class FinishedState implements AuctionState {
     @Override
     public AuctionState start() {
         throw new IllegalStateException(
-                "Phiên đã FINISHED - không thể start lại.");
+            "Phiên đã FINISHED - không thể start lại.");
     }
 
     @Override
     public AuctionState close(boolean hasWinner) {
         throw new IllegalStateException(
-                "Phiên đã FINISHED - không thể đóng lại.");
+            "Phiên đã FINISHED - không thể đóng lại.");
     }
 
     @Override
     public AuctionState cancel() {
-        return CanceledState.INSTANCE;
+        throw new IllegalStateException(
+            "Phiên đã FINISHED — không thể cancel. Chỉ có thể PAID.");
     }
 
     @Override
