@@ -714,7 +714,6 @@ public final class LiveBiddingController implements ClientEventListener {
     updateMinimumBidHint();
   }
 
-
   private LineChart<String, Number> createExpandedBidLineChart() {
     CategoryAxis xAxis = new CategoryAxis();
     xAxis.setLabel("Thời gian");
