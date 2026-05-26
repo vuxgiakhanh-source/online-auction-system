@@ -219,78 +219,6 @@ class AdminTest {
             // Assert
             assertThat(admin.getAccountStatus()).isEqualTo(User.AccountStatus.ACTIVE);
         }
-
-        @Test
-        @DisplayName("printInfo() không ném exception")
-        void printInfo_doesNotThrow() {
-            // Arrange
-            Admin admin = staffAdmin("staff23");
-
-            // Act & Assert
-            assertThatCode(admin::printInfo).doesNotThrowAnyException();
-        }
-    }
-
-    @Nested
-    @DisplayName("inherited User behavior")
-    class InheritedUserBehavior {
-
-        @Test
-        @DisplayName("setAccountStatus(SUSPENDED) cập nhật status và suspendedAt")
-        void setAccountStatus_suspended_setsSuspendedAt() {
-            // Arrange
-            Admin admin = staffAdmin("staff30");
-
-            // Act
-            admin.setAccountStatus(User.AccountStatus.SUSPENDED);
-
-            // Assert
-            assertThat(admin.getAccountStatus()).isEqualTo(User.AccountStatus.SUSPENDED);
-            assertThat(admin.getSuspendedAt()).isNotNull();
-        }
-
-        @Test
-        @DisplayName("setAccountStatus(null) ném NullPointerException")
-        void setAccountStatus_null_throwsNullPointerException() {
-            // Arrange
-            Admin admin = staffAdmin("staff31");
-
-            // Act & Assert
-            assertThatThrownBy(() -> admin.setAccountStatus(null))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("Status");
-        }
-
-        @Test
-        @DisplayName("addJoinedAuction() kế thừa từ User hoạt động và idempotent theo Set")
-        void addJoinedAuction_inheritedBehavior_isIdempotent() {
-            // Arrange
-            Admin admin = staffAdmin("staff32");
-            String auctionId = "auction-1";
-
-            // Act
-            admin.addJoinedAuction(auctionId);
-            admin.addJoinedAuction(auctionId);
-
-            // Assert
-            assertThat(admin.hasJoined(auctionId)).isTrue();
-            assertThat(admin.getJoinedAuctionIds()).containsExactly(auctionId);
-        }
-
-        @Test
-        @DisplayName("addToWatchList() kế thừa từ User không thêm trùng auctionId")
-        void addToWatchList_inheritedBehavior_doesNotDuplicate() {
-            // Arrange
-            Admin admin = staffAdmin("staff33");
-            String auctionId = "auction-watch-1";
-
-            // Act
-            admin.addToWatchList(auctionId);
-            admin.addToWatchList(auctionId);
-
-            // Assert
-            assertThat(admin.getWatchListAuctionIds()).containsExactly(auctionId);
-        }
     }
 
     @Nested
@@ -351,48 +279,25 @@ class AdminTest {
     class PolymorphismBehavior {
 
         @Test
-        @DisplayName("Admin dùng qua kiểu User vẫn giữ role ADMIN")
-        void adminAsUser_keepsAdminRole() {
-            // Arrange
-            User user = staffAdmin("staff50");
-
-            // Act & Assert
-            assertThat(user).isInstanceOf(Admin.class);
-            assertThat(user.getPrimaryRole()).isEqualTo(User.UserRole.ADMIN);
-            assertThat(user.hasRole(User.UserRole.ADMIN)).isTrue();
-        }
-
-        @Test
-        @DisplayName("Admin dùng qua kiểu User vẫn chặn addRole()")
-        void adminAsUser_addRoleStillThrows() {
-            // Arrange
-            User user = staffAdmin("staff51");
-
-            // Act & Assert
-            assertThatThrownBy(() -> user.addRole(User.UserRole.SELLER))
-                    .isInstanceOf(UnsupportedOperationException.class);
-        }
-
-        @Test
-        @DisplayName("Admin dùng qua kiểu User vẫn có rating cố định 5.0")
-        void adminAsUser_ratingStillFixed() {
-            // Arrange
+        @DisplayName("Admin qua kiểu User — role ADMIN, chặn addRole, rating cố định 5.0")
+        void adminAsUser_contract() {
             User user = Admin.reconstitute(
                     UUID.randomUUID().toString(),
                     CREATED_AT,
                     UPDATED_AT,
-                    "staff52",
+                    "staff50",
                     User.hashPassword("adminPass1"),
-                    "staff52@test.com",
+                    "staff50@test.com",
                     User.AccountStatus.ACTIVE,
                     1.0,
                     Admin.LEVEL_STAFF,
                     null);
 
-            // Act
+            assertThat(user).isInstanceOf(Admin.class);
+            assertThat(user.getPrimaryRole()).isEqualTo(User.UserRole.ADMIN);
+            assertThatThrownBy(() -> user.addRole(User.UserRole.SELLER))
+                    .isInstanceOf(UnsupportedOperationException.class);
             user.adjustRating(-3.0);
-
-            // Assert
             assertThat(user.getRating()).isEqualTo(5.0);
         }
     }

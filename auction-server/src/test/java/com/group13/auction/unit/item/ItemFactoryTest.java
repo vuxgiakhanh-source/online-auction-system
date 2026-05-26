@@ -6,6 +6,9 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.iservice.IRatingService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -13,6 +16,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -108,28 +113,6 @@ class ItemFactoryTest {
                     .isInstanceOf(IllegalStateException.class);
         }
 
-        // ── imageUrls mới ──────────────────────────────────────────────────────
-
-        @Test
-        @DisplayName("createItem không có imageUrls → imageUrls rỗng, không null")
-        void createItem_noImages_emptyList() {
-            allowSeller();
-            Item item = factory.createItem("Bức tranh", "desc", 500_000L, seller,
-                    "Nghệ sĩ", 2000, "Màu nước");
-            assertThat(item.getImageUrls()).isNotNull().isEmpty();
-            assertThat(item.hasImages()).isFalse();
-        }
-
-        @Test
-        @DisplayName("createItem với imageUrls → imageUrls được lưu đúng")
-        void createItem_withImages_stored() {
-            allowSeller();
-            List<String> imgs = List.of("/uploads/items/a.jpg", "/uploads/items/b.jpg");
-            Item item = factory.createItem("Van Gogh", "desc", 2_000_000L, seller,
-                    "Van Gogh", 1889, "Sơn dầu", imgs);
-            assertThat(item.getImageUrls()).containsExactlyElementsOf(imgs);
-            assertThat(item.hasImages()).isTrue();
-        }
     }
 
     // =========================================================================
@@ -156,24 +139,6 @@ class ItemFactoryTest {
             assertEquals("Mới", e.getCondition());
         }
 
-        @Test
-        @DisplayName("createItem không có imageUrls → imageUrls rỗng")
-        void noImages_emptyList() {
-            allowSeller();
-            Item item = factory.createItem("Laptop", "desc", 15_000_000L, seller,
-                    "Dell", 24, "Mới");
-            assertThat(item.getImageUrls()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("createItem với imageUrls → lưu đúng")
-        void withImages_stored() {
-            allowSeller();
-            List<String> imgs = List.of("/uploads/items/img1.jpg");
-            Item item = factory.createItem("Monitor", "desc", 5_000_000L, seller,
-                    "LG", 12, "Mới", imgs);
-            assertThat(item.getImageUrls()).hasSize(1).containsExactly("/uploads/items/img1.jpg");
-        }
     }
 
     // =========================================================================
@@ -200,14 +165,57 @@ class ItemFactoryTest {
             assertEquals(50000.0, v.getMileage());
         }
 
-        @Test
-        @DisplayName("createItem với imageUrls → lưu đúng")
-        void withImages_stored() {
-            allowSeller();
-            List<String> imgs = List.of("/uploads/items/car1.jpg", "/uploads/items/car2.jpg");
-            Item item = factory.createItem("Honda CR-V", "desc", 600_000_000L, seller,
-                    "Honda", 2022, 10000.0, imgs);
-            assertThat(item.getImageUrls()).hasSize(2);
+    }
+
+    @Nested
+    @DisplayName("Factory createItem — imageUrls contract")
+    class FactoryImageUrlsContract {
+
+        static Stream<Arguments> factoriesWithAndWithoutImages() {
+            IRatingService rating = org.mockito.Mockito.mock(IRatingService.class);
+            when(rating.canSellerCreateAuction(any())).thenReturn(true);
+            List<String> imgs = List.of("/uploads/items/a.jpg", "/uploads/items/b.jpg");
+
+            BiFunction<List<String>, NormalUser, Item> artFactory = (images, seller) -> {
+                ArtFactory f = new ArtFactory(rating);
+                return images == null
+                        ? f.createItem("Art", "d", 500_000L, seller, "Artist", 2000, "Oil")
+                        : f.createItem("Art", "d", 500_000L, seller, "Artist", 2000, "Oil", images);
+            };
+            BiFunction<List<String>, NormalUser, Item> electronicsFactory = (images, seller) -> {
+                ElectronicsFactory f = new ElectronicsFactory(rating);
+                return images == null
+                        ? f.createItem("PC", "d", 5_000_000L, seller, "LG", 12, "Mới")
+                        : f.createItem("PC", "d", 5_000_000L, seller, "LG", 12, "Mới", images);
+            };
+            BiFunction<List<String>, NormalUser, Item> vehicleFactory = (images, seller) -> {
+                VehicleFactory f = new VehicleFactory(rating);
+                return images == null
+                        ? f.createItem("Car", "d", 100_000_000L, seller, "Honda", 2022, 10000.0)
+                        : f.createItem("Car", "d", 100_000_000L, seller, "Honda", 2022, 10000.0, images);
+            };
+
+            return Stream.of(
+                    Arguments.of("Art", artFactory, null, 0),
+                    Arguments.of("Art", artFactory, imgs, 2),
+                    Arguments.of("Electronics", electronicsFactory, null, 0),
+                    Arguments.of("Electronics", electronicsFactory, List.of("/uploads/items/e.jpg"), 1),
+                    Arguments.of("Vehicle", vehicleFactory, null, 0),
+                    Arguments.of("Vehicle", vehicleFactory, imgs, 2));
+        }
+
+        @ParameterizedTest(name = "{0} images={2}")
+        @MethodSource("factoriesWithAndWithoutImages")
+        void createItem_imageUrlsStored(String label,
+                BiFunction<List<String>, NormalUser, Item> factory,
+                List<String> images,
+                int expectedCount) {
+            Item item = factory.apply(images, TestFixture.normalSeller("imgSeller" + label));
+            assertThat(item.getImageUrls()).isNotNull().hasSize(expectedCount);
+            assertThat(item.hasImages()).isEqualTo(expectedCount > 0);
+            if (expectedCount > 0) {
+                assertThat(item.getImageUrls()).containsExactlyElementsOf(images);
+            }
         }
     }
 
@@ -306,49 +314,6 @@ class ItemFactoryTest {
     class ItemImageContractTests {
 
         @Test
-        @DisplayName("Art.reconstitute không ảnh → imageUrls rỗng, không null")
-        void art_reconstitute_noImages_emptyList() {
-            NormalUser s = TestFixture.normalSeller("imgS1");
-            Art art = Art.reconstitute("id", LocalDateTime.now(), LocalDateTime.now(),
-                    "Test", "desc", 1_000_000L, s, "Artist", 2000, "Oil");
-            assertThat(art.getImageUrls()).isNotNull().isEmpty();
-            assertThat(art.hasImages()).isFalse();
-        }
-
-        @Test
-        @DisplayName("Art.reconstitute có ảnh → imageUrls đúng")
-        void art_reconstitute_withImages() {
-            NormalUser s = TestFixture.normalSeller("imgS2");
-            List<String> imgs = List.of("/uploads/items/a.jpg", "/uploads/items/b.png");
-            Art art = Art.reconstitute("id", LocalDateTime.now(), LocalDateTime.now(),
-                    "Test", "desc", 1_000_000L, s, "Artist", 2000, "Oil", imgs);
-            assertThat(art.getImageUrls()).hasSize(2);
-            assertThat(art.hasImages()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Electronics.reconstitute có ảnh → imageUrls đúng")
-        void electronics_reconstitute_withImages() {
-            NormalUser s = TestFixture.normalSeller("imgS3");
-            List<String> imgs = List.of("/uploads/items/e1.jpg");
-            Electronics e = Electronics.reconstitute("id", LocalDateTime.now(),
-                    LocalDateTime.now(), "Test", "desc", 5_000_000L, s,
-                    "Samsung", 12, "Mới", imgs);
-            assertThat(e.getImageUrls()).containsExactly("/uploads/items/e1.jpg");
-        }
-
-        @Test
-        @DisplayName("Vehicle.reconstitute có ảnh → imageUrls đúng")
-        void vehicle_reconstitute_withImages() {
-            NormalUser s = TestFixture.normalSeller("imgS4");
-            List<String> imgs = List.of("/uploads/items/v1.jpg", "/uploads/items/v2.jpg",
-                    "/uploads/items/v3.jpg");
-            Vehicle v = Vehicle.reconstitute("id", LocalDateTime.now(), LocalDateTime.now(),
-                    "Test", "desc", 100_000_000L, s, "Toyota", 2020, 50000.0, imgs);
-            assertThat(v.getImageUrls()).hasSize(3);
-        }
-
-        @Test
         @DisplayName("imageUrls list là immutable — không thể add/remove")
         void imageUrls_isImmutable() {
             NormalUser s = TestFixture.normalSeller("imgS5");
@@ -370,14 +335,9 @@ class ItemFactoryTest {
         }
 
         @Test
-        @DisplayName("MAX_IMAGES = 3")
-        void maxImagesConstant() {
+        @DisplayName("MAX_IMAGES và MAX_IMAGE_BYTES")
+        void imageLimitsConstants() {
             assertThat(Item.MAX_IMAGES).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("MAX_IMAGE_BYTES = 2_000_000")
-        void maxImageBytesConstant() {
             assertThat(Item.MAX_IMAGE_BYTES).isEqualTo(2_000_000L);
         }
     }

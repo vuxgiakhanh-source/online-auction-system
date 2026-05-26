@@ -1,6 +1,7 @@
 package com.group13.auction.unit;
 
 import com.group13.auction.bank.SystemBank;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.SecondChanceOffer;
@@ -22,6 +23,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * Các helper/fixture dùng chung cho toàn bộ unit test OOP.
@@ -661,6 +664,19 @@ public final class TestFixture {
     // =========================================================================
     // SystemBank utility
     // =========================================================================
+
+    /**
+     * Thay {@link ServerBroadcastNotifier#getInstance()} bằng Mockito no-op
+     * để unit test không gọi WebSocket / {@link com.group13.auction.dao.NotificationDAO}.
+     */
+    public static void installNoOpBroadcastNotifier() {
+        ServerBroadcastNotifier.setTestInstance(mock(ServerBroadcastNotifier.class));
+    }
+
+    /** Khôi phục {@link ServerBroadcastNotifier} production sau unit test. */
+    public static void resetBroadcastNotifier() {
+        ServerBroadcastNotifier.setTestInstance(null);
+    }
 
     /**
      * Bootstrap SystemAdmin Singleton cho unit test — không chạm DB.

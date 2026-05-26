@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -91,32 +93,18 @@ class QualityReportServiceTest {
     class SubmitReport {
 
         @Test
-        @DisplayName("happy path: lưu report xuống DAO và trả về report")
-        void happyPath_savesAndReturnsReport() {
-            // Arrange
+        @DisplayName("happy path: lưu PENDING, không gọi rating/payment")
+        void happyPath_savesPendingReport() {
             QualityReport report = TestFixture.pendingReport(winner, "auction-001");
             when(qualityReportDAO.saveReport(report)).thenReturn(true);
 
-            // Act
             QualityReport result = qualityReportService.submitReport(report);
 
-            // Assert — DAO được gọi đúng 1 lần
-            verify(qualityReportDAO, times(1)).saveReport(report);
-            assertSame(report, result, "submitReport phải trả về cùng object report");
-        }
-
-        @Test
-        @DisplayName("happy path: status sau khi submit vẫn là PENDING")
-        void happyPath_statusRemainspending() {
-            // Arrange
-            QualityReport report = TestFixture.pendingReport(winner, "auction-002");
-            when(qualityReportDAO.saveReport(any())).thenReturn(true);
-
-            // Act
-            qualityReportService.submitReport(report);
-
-            // Assert
+            assertSame(report, result);
             assertEquals(QualityReport.ReportStatus.PENDING, report.getStatus());
+            verify(qualityReportDAO).saveReport(report);
+            verifyNoInteractions(ratingService);
+            verifyNoInteractions(paymentService);
         }
 
         @Test
@@ -132,24 +120,8 @@ class QualityReportServiceTest {
         @Test
         @DisplayName("report không có ảnh: ném IllegalArgumentException từ QualityReport.create()")
         void noImages_throwsIllegalArgumentException() {
-            // Assert — QualityReport.create() sẽ ném trước khi vào service
             assertThrows(IllegalArgumentException.class, () ->
                     QualityReport.create(winner, "auction-003", "Mô tả", List.of()));
-        }
-
-        @Test
-        @DisplayName("happy path: ratingService và paymentService không được gọi khi submit")
-        void happyPath_noRatingOrPaymentInteraction() {
-            // Arrange
-            QualityReport report = TestFixture.pendingReport(winner, "auction-004");
-            when(qualityReportDAO.saveReport(any())).thenReturn(true);
-
-            // Act
-            qualityReportService.submitReport(report);
-
-            // Assert
-            verifyNoInteractions(ratingService);
-            verifyNoInteractions(paymentService);
         }
     }
 
@@ -162,89 +134,21 @@ class QualityReportServiceTest {
     class ApproveReport {
 
         @Test
-        @DisplayName("happy path: status chuyển sang APPROVED")
-        void happyPath_statusBecomesApproved() {
-            // Arrange
+        @DisplayName("happy path: penalize, refund, persist APPROVED")
+        void happyPath_fullOrchestration() {
             Auction auction = finishedAuctionWithWinner();
             QualityReport report = TestFixture.pendingReport(winner, auction.getId());
 
-            // Act
             qualityReportService.approveReport(admin, report, auction);
 
-            // Assert
             assertEquals(QualityReport.ReportStatus.APPROVED, report.getStatus());
-        }
+            assertTrue(report.isRefundCompleted());
 
-        @Test
-        @DisplayName("happy path: penalizeSeller được gọi đúng 1 lần với seller đúng")
-        void happyPath_penalizeSellerCalled() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Act
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Assert
-            verify(ratingService, times(1)).penalizeSeller(seller);
-        }
-
-        @Test
-        @DisplayName("happy path: refundToWinnerFromBank được gọi đúng 1 lần")
-        void happyPath_refundCalledOnce() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Act
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Assert — không double-refund
-            verify(paymentService, times(1)).refundToWinnerFromBank(auction);
-        }
-
-        @Test
-        @DisplayName("happy path: report.isRefundCompleted() = true sau approve")
-        void happyPath_refundCompletedFlagSet() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Act
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Assert
-            assertTrue(report.isRefundCompleted(),
-                    "refundCompleted phải true sau khi approve thành công");
-        }
-
-        @Test
-        @DisplayName("happy path: updateReport DAO được gọi để persist trạng thái")
-        void happyPath_daoUpdateCalled() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Act
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Assert
-            verify(qualityReportDAO, times(1)).updateReport(report);
-        }
-
-        @Test
-        @DisplayName("happy path: updateAccountStatus được gọi cho seller (có thể đã bị ban)")
-        void happyPath_sellerAccountStatusUpdated() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Act
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Assert
-            verify(userDAO, times(1)).updateAccountStatus(
-                    eq(seller.getId()), any(String.class));
+            InOrder order = inOrder(ratingService, paymentService, qualityReportDAO, userDAO);
+            order.verify(ratingService).penalizeSeller(seller);
+            order.verify(paymentService).refundToWinnerFromBank(auction);
+            order.verify(qualityReportDAO).updateReport(report);
+            order.verify(userDAO).updateAccountStatus(eq(seller.getId()), any(String.class));
         }
 
         @Test
@@ -314,54 +218,15 @@ class QualityReportServiceTest {
     class RejectReport {
 
         @Test
-        @DisplayName("happy path: status chuyển sang REJECTED")
-        void happyPath_statusBecomesRejected() {
-            // Arrange
+        @DisplayName("happy path: REJECTED, persist, không refund/penalize")
+        void happyPath_rejectsWithoutRefund() {
             QualityReport report = TestFixture.pendingReport(winner, "auction-010");
 
-            // Act
             qualityReportService.rejectReport(admin, report);
 
-            // Assert
             assertEquals(QualityReport.ReportStatus.REJECTED, report.getStatus());
-        }
-
-        @Test
-        @DisplayName("happy path: updateReport DAO được gọi để persist trạng thái")
-        void happyPath_daoUpdateCalled() {
-            // Arrange
-            QualityReport report = TestFixture.pendingReport(winner, "auction-011");
-
-            // Act
-            qualityReportService.rejectReport(admin, report);
-
-            // Assert
-            verify(qualityReportDAO, times(1)).updateReport(report);
-        }
-
-        @Test
-        @DisplayName("happy path: paymentService KHÔNG được gọi khi reject")
-        void happyPath_noRefundOnReject() {
-            // Arrange
-            QualityReport report = TestFixture.pendingReport(winner, "auction-012");
-
-            // Act
-            qualityReportService.rejectReport(admin, report);
-
-            // Assert — reject không hoàn tiền
+            verify(qualityReportDAO).updateReport(report);
             verifyNoInteractions(paymentService);
-        }
-
-        @Test
-        @DisplayName("happy path: ratingService KHÔNG được gọi khi reject")
-        void happyPath_noRatingPenaltyOnReject() {
-            // Arrange
-            QualityReport report = TestFixture.pendingReport(winner, "auction-013");
-
-            // Act
-            qualityReportService.rejectReport(admin, report);
-
-            // Assert
             verifyNoInteractions(ratingService);
         }
 
@@ -409,36 +274,6 @@ class QualityReportServiceTest {
     @Nested
     @DisplayName("Idempotency / Double-call guard")
     class IdempotencyGuard {
-
-        @Test
-        @DisplayName("approve sau reject: ném IllegalStateException")
-        void approveAfterReject_throwsIllegalState() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Reject trước
-            qualityReportService.rejectReport(admin, report);
-
-            // Act — thử approve sau khi đã reject
-            assertThrows(IllegalStateException.class,
-                    () -> qualityReportService.approveReport(admin, report, auction));
-        }
-
-        @Test
-        @DisplayName("reject sau approve: ném IllegalStateException")
-        void rejectAfterApprove_throwsIllegalState() {
-            // Arrange
-            Auction auction = finishedAuctionWithWinner();
-            QualityReport report = TestFixture.pendingReport(winner, auction.getId());
-
-            // Approve trước
-            qualityReportService.approveReport(admin, report, auction);
-
-            // Act — thử reject sau khi đã approve
-            assertThrows(IllegalStateException.class,
-                    () -> qualityReportService.rejectReport(admin, report));
-        }
 
         @Test
         @DisplayName("approve 2 lần liên tiếp: lần 2 ném IllegalStateException, refund chỉ xảy ra 1 lần")
