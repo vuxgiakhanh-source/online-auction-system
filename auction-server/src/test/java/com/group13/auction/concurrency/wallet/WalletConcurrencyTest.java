@@ -45,9 +45,9 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         mockUserDAO       = mock(UserDAO.class);
         mockRatingService = mock(IRatingService.class);
 
-        // FIX: stub isEligible → true để deposit() và withdraw() không throw
-        // Mockito default trả false cho boolean → mọi giao dịch bị chặn sớm
-        when(mockRatingService.isEligible(any())).thenReturn(true);
+        // FIX: deposit() và withdraw() gọi isWalletOperationAllowed(), KHÔNG phải isEligible().
+        // Mockito default trả false → mọi giao dịch throw IllegalStateException → test sai.
+        when(mockRatingService.isWalletOperationAllowed(any())).thenReturn(true);
 
         when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
         when(mockUserDAO.addBalance(any(), anyLong())).thenReturn(true);
@@ -102,16 +102,16 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
         assertThat(successes.get())
-                .as("Đúng 1 payment phải thành công")
-                .isEqualTo(1);
+            .as("Đúng 1 payment phải thành công")
+            .isEqualTo(1);
         assertThat(failures.get())
-                .as("Thread thứ 2 phải thất bại do insufficient balance")
-                .isEqualTo(1);
+            .as("Thread thứ 2 phải thất bại do insufficient balance")
+            .isEqualTo(1);
 
         long expectedBalance = initialBalance - finalPrice; // = 0
         assertThat(winner.getBalance())
-                .as("Balance sau 1 payment: %d", expectedBalance)
-                .isEqualTo(expectedBalance);
+            .as("Balance sau 1 payment: %d", expectedBalance)
+            .isEqualTo(expectedBalance);
     }
 
     // ── G2-2 ─────────────────────────────────────────────────────────────────
@@ -144,8 +144,8 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
         assertThat(user.getBalance())
-                .as("Balance sau 5 deposits phải chính xác, không lost update")
-                .isEqualTo(depositAmount * threadCount);
+            .as("Balance sau 5 deposits phải chính xác, không lost update")
+            .isEqualTo(depositAmount * threadCount);
     }
 
     // ── G2-3 ─────────────────────────────────────────────────────────────────
@@ -189,8 +189,8 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
         assertThat(user.getAvailableBalance())
-                .as("availableBalance sau concurrent ops phải >= 0")
-                .isGreaterThanOrEqualTo(0L);
+            .as("availableBalance sau concurrent ops phải >= 0")
+            .isGreaterThanOrEqualTo(0L);
     }
 
     // ── G5-1 ─────────────────────────────────────────────────────────────────
@@ -248,13 +248,13 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
         assertThat(user.getAvailableBalance())
-                .as("availableBalance cuối phải >= 0 (synchronized bảo vệ)")
-                .isGreaterThanOrEqualTo(0L);
+            .as("availableBalance cuối phải >= 0 (synchronized bảo vệ)")
+            .isGreaterThanOrEqualTo(0L);
 
         if (minBalance.get() < 0) {
             log.warn("[G5-1] Thoáng âm snapshot: minObserved={}. Non-atomic read window, "
-                            + "không phải bug tiền tệ. Fix: AtomicReference<long[]> cho cả 2 fields.",
-                    minBalance.get());
+                    + "không phải bug tiền tệ. Fix: AtomicReference<long[]> cho cả 2 fields.",
+                minBalance.get());
         }
     }
 
@@ -294,7 +294,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         assertThat(successes.get()).isEqualTo(1);
         assertThat(failures.get()).isEqualTo(1);
         assertThat(user.getBalance())
-                .as("Balance sau 1 withdraw đúng phải = 0")
-                .isEqualTo(0L);
+            .as("Balance sau 1 withdraw đúng phải = 0")
+            .isEqualTo(0L);
     }
 }
