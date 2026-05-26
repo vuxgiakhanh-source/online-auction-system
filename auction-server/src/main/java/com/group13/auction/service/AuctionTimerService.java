@@ -260,20 +260,18 @@ public class AuctionTimerService implements IAuctionTimerService {
                 continue;
             }
 
-            String endKey = auction.getEndTime().toString();
-            // FIX double-notification: key10 chỉ gửi khi còn trong cửa sổ 5–10 phút.
-            // Bug cũ: cả 2 block đều chạy khi secondsLeft <= 300 trong cùng 1 scan
-            // → 2 inbox "5 phút" gửi đồng thời (server restart khi phiên còn < 5 phút).
+            // Mỗi mốc (10 phút / 5 phút) chỉ gửi một lần cho cả phiên — không gắn endTime.
+            // Bug cũ: key kèm endTime → anti-sniping đổi endTime → gửi lại "còn 10 phút".
             if (secondsLeft <= UPCOMING_END_10_MIN_SECONDS
                 && secondsLeft > UPCOMING_END_5_MIN_SECONDS) {
-                String key10 = auction.getId() + ":10:" + endKey;
+                String key10 = auction.getId() + ":10";
                 if (upcomingEndNotifiedKeys.add(key10)) {
                     ServerBroadcastNotifier.getInstance()
                         .notifyAuctionUpcomingEnd(auction, 10);
                 }
             }
             if (secondsLeft <= UPCOMING_END_5_MIN_SECONDS) {
-                String key5 = auction.getId() + ":5:" + endKey;
+                String key5 = auction.getId() + ":5";
                 if (upcomingEndNotifiedKeys.add(key5)) {
                     ServerBroadcastNotifier.getInstance().notifyAuctionUpcomingEnd(auction, 5);
                 }
