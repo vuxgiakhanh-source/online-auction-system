@@ -51,6 +51,7 @@ public final class UserViewModelMapper {
                 formatMoney(dto.getAvailableBalance()),
                 DateTimeUtil.formatDateTime(dto.getCreatedAt()),
                 DateTimeUtil.formatDateTime(dto.getUpdatedAt()),
+                restoredText(dto.getTimesRestored()),
                 bidder,
                 seller,
                 admin,
@@ -253,6 +254,7 @@ public final class UserViewModelMapper {
                 "--",
                 "--",
                 "--",
+                "--",
                 false,
                 false,
                 false,
@@ -328,6 +330,11 @@ public final class UserViewModelMapper {
 
         String status = dto.getAccountStatus();
         return status != null && status.equalsIgnoreCase("ACTIVE");
+    }
+
+    private static String restoredText(int timesRestored) {
+        int safeTimes = Math.max(0, timesRestored);
+        return safeTimes + " lần";
     }
 
     private static String formatMoney(long amount) {

@@ -5,168 +5,280 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="720.0" prefWidth="1280.0"
-            stylesheets="@../../css/profile.css"
-            styleClass="screen-root"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.group13.auction.ui.controller.profile.ProfileController">
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/profile.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.profile.ProfileController">
 
-    <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
-
-    <ScrollPane fitToWidth="true"
-                hbarPolicy="NEVER"
-                pannable="true"
-                styleClass="page-scroll-pane"
-                AnchorPane.topAnchor="0.0"
-                AnchorPane.bottomAnchor="0.0"
-                AnchorPane.leftAnchor="0.0"
-                AnchorPane.rightAnchor="0.0">
-        <VBox spacing="24.0">
+    <VBox spacing="20.0" styleClass="profile-page">
         <padding>
-            <Insets top="28.0" right="42.0" bottom="28.0" left="42.0"/>
+            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
         </padding>
 
-        <HBox alignment="CENTER_LEFT" spacing="18.0">
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
-                <ImageView fitWidth="210.0" preserveRatio="true">
-                    <Image url="@../../assets/images/logo.png"/>
-                </ImageView>
-
-                <ImageView fitHeight="44.0" preserveRatio="true">
-                    <Image url="@../../assets/images/mascot-version-1.png"/>
-                </ImageView>
-            </HBox>
+        <HBox alignment="CENTER_LEFT" spacing="16.0">
+            <VBox spacing="6.0">
+                <Label text="Hồ sơ cá nhân" styleClass="page-title"/>
+                <Label
+                        text="Quản lý thông tin tài khoản, vai trò và trạng thái sử dụng OmniBid."
+                        styleClass="page-subtitle"
+                        wrapText="true"/>
+            </VBox>
 
             <Region HBox.hgrow="ALWAYS"/>
 
-            <Button fx:id="refreshButton"
-                    mnemonicParsing="false"
-                    onAction="#handleRefresh"
-                    text="Làm mới"/>
+            <Button
+                    fx:id="refreshButton"
+                    text="Tải lại"
+                    styleClass="secondary-button"
+                    onAction="#handleRefresh"/>
 
-            <Button mnemonicParsing="false"
-                    onAction="#handleBackToHome"
-                    text="Dashboard"/>
+            <Button
+                    text="Về trang chính"
+                    styleClass="secondary-button"
+                    onAction="#handleBackToHome"/>
         </HBox>
+
+        <ScrollPane
+                fitToWidth="true"
+                hbarPolicy="NEVER"
+                VBox.vgrow="ALWAYS"
+                styleClass="profile-scroll-pane">
+            <VBox spacing="18.0" styleClass="profile-content">
+                <padding>
+                    <Insets top="2.0" right="4.0" bottom="4.0" left="4.0"/>
+                </padding>
+
+                <VBox spacing="14.0" styleClass="profile-section-card">
+                    <Label text="Thông tin tài khoản" styleClass="profile-section-title"/>
+
+                    <GridPane hgap="18.0" vgap="12.0" styleClass="profile-info-grid">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="22.0"/>
+                            <ColumnConstraints percentWidth="28.0"/>
+                            <ColumnConstraints percentWidth="22.0"/>
+                            <ColumnConstraints percentWidth="28.0"/>
+                        </columnConstraints>
+
+                        <Label
+                                text="Tên đăng nhập"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="usernameLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="1"/>
+
+                        <Label
+                                text="Email"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="2"/>
+                        <Label
+                                fx:id="emailLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="3"/>
+
+                        <Label
+                                text="Vai trò"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="rolesLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="1"/>
+
+                        <Label
+                                text="Trạng thái"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="2"/>
+                        <Label
+                                fx:id="accountStatusLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="3"/>
+
+                        <Label
+                                text="Đánh giá"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="ratingLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="1"/>
+
+                        <Label
+                                text="Đã khôi phục"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="2"/>
+                        <Label
+                                fx:id="restoredLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="3"/>
+                    </GridPane>
+                </VBox>
+
+                <VBox spacing="14.0" styleClass="profile-section-card">
+                    <Label text="Ví tài khoản" styleClass="profile-section-title"/>
+
+                    <GridPane hgap="18.0" vgap="12.0" styleClass="profile-info-grid">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="22.0"/>
+                            <ColumnConstraints percentWidth="28.0"/>
+                            <ColumnConstraints percentWidth="22.0"/>
+                            <ColumnConstraints percentWidth="28.0"/>
+                        </columnConstraints>
+
+                        <Label
+                                text="Tổng số dư"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="balanceLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="1"/>
+
+                        <Label
+                                text="Số dư khả dụng"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="2"/>
+                        <Label
+                                fx:id="availableBalanceLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="0"
+                                GridPane.columnIndex="3"/>
+
+                        <Label
+                                text="Đang giữ đặt cọc"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="lockedDepositLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="1"/>
+
+                        <Label
+                                text="Ngày tạo tài khoản"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="2"/>
+                        <Label
+                                fx:id="createdAtLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="1"
+                                GridPane.columnIndex="3"/>
+
+                        <Label
+                                text="Cập nhật lần cuối"
+                                styleClass="profile-field-title"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="0"/>
+                        <Label
+                                fx:id="updatedAtLabel"
+                                text="--"
+                                wrapText="true"
+                                styleClass="profile-field-value"
+                                GridPane.rowIndex="2"
+                                GridPane.columnIndex="1"
+                                GridPane.columnSpan="3"/>
+                    </GridPane>
+                </VBox>
+
+                <VBox
+                        fx:id="sellerRequestCard"
+                        spacing="14.0"
+                        styleClass="profile-section-card">
+                    <Label text="Quyền Seller" styleClass="profile-section-title"/>
+
+                    <Label
+                            fx:id="sellerRequestHintLabel"
+                            text="Bạn có thể gửi yêu cầu mở quyền Seller cho tài khoản này."
+                            wrapText="true"
+                            styleClass="profile-muted-text"/>
+
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Button
+                                fx:id="requestSellerRoleButton"
+                                text="Yêu cầu quyền Seller"
+                                styleClass="primary-button"
+                                onAction="#handleRequestSellerRole"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
 
         <VBox spacing="8.0">
-            <Label styleClass="profile-title" text="Hồ sơ người dùng"/>
-            <Label styleClass="profile-subtitle"
-                   text="Thông tin tài khoản được tải trực tiếp từ server qua profile API."/>
-        </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <ProgressIndicator
+                        fx:id="loadingIndicator"
+                        prefWidth="24.0"
+                        prefHeight="24.0"
+                        visible="false"
+                        managed="false"/>
 
-        <HBox spacing="22.0">
-            <VBox spacing="14.0" styleClass="profile-card">
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <ImageView fitHeight="38.0" preserveRatio="true">
-                        <Image url="@../../assets/icons/accent/icon-profile.png"/>
-                    </ImageView>
-                    <Label styleClass="profile-section-title" text="Thông tin tài khoản"/>
-                </HBox>
+                <Label
+                        fx:id="statusLabel"
+                        text="Sẵn sàng."
+                        wrapText="true"
+                        styleClass="status-label"/>
 
-                <VBox spacing="10.0">
-                    <Label styleClass="profile-field-title" text="Username"/>
-                    <Label fx:id="usernameLabel" styleClass="profile-field-value" text="--"/>
+                <Region HBox.hgrow="ALWAYS"/>
+            </HBox>
 
-                    <Label styleClass="profile-field-title" text="Email"/>
-                    <Label fx:id="emailLabel" styleClass="profile-field-value" text="--"/>
+            <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
+                <Region HBox.hgrow="ALWAYS"/>
 
-                    <Label styleClass="profile-field-title" text="Vai trò"/>
-                    <Label fx:id="rolesLabel" styleClass="profile-field-value" text="--"/>
+                <VBox alignment="CENTER_RIGHT" spacing="2.0">
+                    <fx:include source="../shared/chatbot-launcher.fxml"/>
 
-                    <Label styleClass="profile-field-title" text="Vai trò chính"/>
-                    <Label fx:id="primaryRoleLabel" styleClass="profile-field-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Trạng thái"/>
-                    <Label fx:id="accountStatusLabel" styleClass="profile-field-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Đánh giá"/>
-                    <Label fx:id="ratingLabel" styleClass="profile-field-value" text="--"/>
+                    <Label styleClass="signature-label" text="by CKNT team"/>
                 </VBox>
-            </VBox>
-
-            <VBox spacing="14.0" styleClass="profile-card">
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <ImageView fitHeight="38.0" preserveRatio="true">
-                        <Image url="@../../assets/icons/accent/icon-wallet.png"/>
-                    </ImageView>
-                    <Label styleClass="profile-section-title" text="Ví tài khoản"/>
-                </HBox>
-
-                <VBox spacing="10.0">
-                    <Label styleClass="profile-field-title" text="Tổng số dư"/>
-                    <Label fx:id="balanceLabel" styleClass="profile-money-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Số dư khả dụng"/>
-                    <Label fx:id="availableBalanceLabel" styleClass="profile-money-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Đang giữ đặt cọc"/>
-                    <Label fx:id="lockedDepositLabel" styleClass="profile-money-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Ngày tạo tài khoản"/>
-                    <Label fx:id="createdAtLabel" styleClass="profile-field-value" text="--"/>
-
-                    <Label styleClass="profile-field-title" text="Cập nhật lần cuối"/>
-                    <Label fx:id="updatedAtLabel" styleClass="profile-field-value" text="--"/>
-                </VBox>
-            </VBox>
-
-            <VBox spacing="14.0" styleClass="profile-card">
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <ImageView fitHeight="38.0" preserveRatio="true">
-                        <Image url="@../../assets/icons/accent/icon-gavel.png"/>
-                    </ImageView>
-                    <Label styleClass="profile-section-title" text="Quyền Seller"/>
-                </HBox>
-
-                <Label fx:id="sellerRequestHintLabel"
-                       styleClass="profile-muted-text"
-                       wrapText="true"
-                       text="Đang kiểm tra điều kiện nâng cấp Seller..."/>
-
-                <Button fx:id="requestSellerRoleButton"
-                        mnemonicParsing="false"
-                        onAction="#handleRequestSellerRole"
-                        text="Yêu cầu quyền Seller"/>
-
-                <Label styleClass="profile-muted-text"
-                       wrapText="true"
-                       text="Client chỉ gửi yêu cầu. Việc duyệt hoặc từ chối quyền Seller do server xử lý."/>
-            </VBox>
-        </HBox>
-
-        <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <ProgressIndicator fx:id="loadingIndicator"
-                               maxHeight="22.0"
-                               maxWidth="22.0"
-                               visible="false"
-                               managed="false"/>
-            <Label fx:id="statusLabel"
-                   styleClass="profile-muted-text"
-                   text="Sẵn sàng."/>
-        </HBox>
-
-        <Region VBox.vgrow="ALWAYS"/>
-
-        <!-- Chatbot launcher + signature -->
-        <HBox alignment="BOTTOM_RIGHT">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="2.0">
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
-
-                <Label styleClass="signature-label" text="by CKNT team"/>
-            </VBox>
-        </HBox>
+            </HBox>
         </VBox>
-    </ScrollPane>
-</AnchorPane>
+    </VBox>
+</StackPane>

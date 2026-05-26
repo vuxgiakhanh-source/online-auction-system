@@ -15,6 +15,7 @@ public final class UserProfileViewModel {
     private final String availableBalanceText;
     private final String createdAtText;
     private final String updatedAtText;
+    private final String restoredText;
     private final boolean bidder;
     private final boolean seller;
     private final boolean admin;
@@ -36,6 +37,7 @@ public final class UserProfileViewModel {
      * @param availableBalanceText số dư khả dụng đã format
      * @param createdAtText ngày tạo tài khoản đã format
      * @param updatedAtText thời điểm cập nhật đã format
+     * @param restoredText số lần tài khoản đã được khôi phục
      * @param bidder có quyền bidder hay không
      * @param seller có quyền seller hay không
      * @param admin có quyền admin hay không
@@ -43,23 +45,24 @@ public final class UserProfileViewModel {
      * @param penalized đã từng bị phạt hay chưa
      */
     public UserProfileViewModel(
-            String userId,
-            String username,
-            String email,
-            String rolesText,
-            String primaryRoleText,
-            String accountStatusText,
-            String ratingText,
-            String balanceText,
-            String lockedDepositText,
-            String availableBalanceText,
-            String createdAtText,
-            String updatedAtText,
-            boolean bidder,
-            boolean seller,
-            boolean admin,
-            boolean canRequestSellerRole,
-            boolean penalized) {
+        String userId,
+        String username,
+        String email,
+        String rolesText,
+        String primaryRoleText,
+        String accountStatusText,
+        String ratingText,
+        String balanceText,
+        String lockedDepositText,
+        String availableBalanceText,
+        String createdAtText,
+        String updatedAtText,
+        String restoredText,
+        boolean bidder,
+        boolean seller,
+        boolean admin,
+        boolean canRequestSellerRole,
+        boolean penalized) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -72,6 +75,7 @@ public final class UserProfileViewModel {
         this.availableBalanceText = availableBalanceText;
         this.createdAtText = createdAtText;
         this.updatedAtText = updatedAtText;
+        this.restoredText = restoredText;
         this.bidder = bidder;
         this.seller = seller;
         this.admin = admin;
@@ -125,6 +129,10 @@ public final class UserProfileViewModel {
 
     public String updatedAtText() {
         return updatedAtText;
+    }
+
+    public String restoredText() {
+        return restoredText;
     }
 
     public boolean bidder() {

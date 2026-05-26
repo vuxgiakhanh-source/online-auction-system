@@ -39,3 +39,66 @@
     -fx-font-weight: 900;
     -fx-text-fill: #67b8ea;
 }
+
+.profile-page {
+    -fx-background-color: transparent;
+}
+
+.profile-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.profile-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.profile-content {
+    -fx-background-color: transparent;
+}
+
+.profile-section-card {
+    -fx-background-color: rgba(255, 255, 255, 0.94);
+    -fx-background-radius: 22px;
+    -fx-border-color: rgba(255, 255, 255, 0.55);
+    -fx-border-radius: 22px;
+    -fx-padding: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.22, 0, 8);
+}
+
+.profile-section-title {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 20px;
+    -fx-font-weight: 900;
+}
+
+.profile-info-grid {
+    -fx-background-color: rgba(15, 37, 60, 0.04);
+    -fx-background-radius: 16px;
+    -fx-padding: 16px;
+}
+
+.profile-field-title {
+    -fx-text-fill: rgba(15, 37, 60, 0.68);
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.profile-field-value {
+    -fx-text-fill: #0f253c;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.profile-muted-text {
+    -fx-text-fill: rgba(15, 37, 60, 0.72);
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.status-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
