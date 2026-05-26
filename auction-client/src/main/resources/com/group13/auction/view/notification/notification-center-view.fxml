@@ -135,7 +135,11 @@
             </VBox>
 
             <VBox spacing="14.0" styleClass="notification-detail-card">
-                <VBox spacing="12.0" styleClass="notification-offer-detail-card">
+                <VBox fx:id="secondChanceDetailCard"
+                      spacing="12.0"
+                      visible="false"
+                      managed="false"
+                      styleClass="notification-offer-detail-card">
                     <Label styleClass="notification-section-title" text="Xử lý Second Chance"/>
 
                     <VBox spacing="8.0">
@@ -175,8 +179,11 @@
                                 styleClass="notification-danger-button"
                                 text="Từ chối"/>
 
-                        <Button mnemonicParsing="false"
+                        <Button fx:id="openSecondChanceAuctionButton"
+                                disable="true"
+                                mnemonicParsing="false"
                                 onAction="#handleOpenSecondChanceAuction"
+                                styleClass="notification-secondary-button"
                                 text="Mở phiên"/>
                     </HBox>
                 </VBox>
@@ -217,12 +224,14 @@
                                 disable="true"
                                 mnemonicParsing="false"
                                 onAction="#handleMarkRead"
+                                styleClass="notification-secondary-button"
                                 text="Đánh dấu đã đọc"/>
 
                         <Button fx:id="openAuctionButton"
                                 disable="true"
                                 mnemonicParsing="false"
                                 onAction="#handleOpenRelatedAuction"
+                                styleClass="notification-secondary-button"
                                 text="Mở phiên liên quan"/>
                     </HBox>
                 </VBox>

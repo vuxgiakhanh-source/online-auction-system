@@ -4,6 +4,9 @@ package com.group13.auction.core.state;
 public final class ScreenStateKeys {
 
     public static final String SELECTED_AUCTION_ID = "selectedAuctionId";
+
+    /** {@code true} khi mở màn live bidding ở chế độ chỉ xem lịch sử (phiên đã kết thúc / đã hủy). */
+    public static final String LIVE_BIDDING_READ_ONLY = "liveBiddingReadOnly";
     public static final String SELECTED_SELLER_AUCTION_ROW = "selectedSellerAuctionRow";
     public static final String SELECTED_WON_ORDER = "selectedWonOrder";
 

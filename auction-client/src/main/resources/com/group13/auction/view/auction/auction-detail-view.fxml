@@ -210,7 +210,7 @@
                             mnemonicParsing="false"
                             onAction="#handleWatchLive"
                             styleClass="auction-secondary-button"
-                            text="Watch realtime"/>
+                            text="Theo dõi realtime"/>
 
                     <Button fx:id="joinLiveButton"
                             mnemonicParsing="false"
