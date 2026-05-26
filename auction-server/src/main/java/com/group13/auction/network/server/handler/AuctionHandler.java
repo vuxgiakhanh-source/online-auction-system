@@ -258,10 +258,11 @@ public class AuctionHandler implements PacketHandler {
     private void handleGetDetail(ClientSession session, JsonElement payload, String requestId) {
         try {
             String auctionId = PacketCodec.fromElement(payload, String.class);
-            Auction auction  = AuctionManager.getInstance().findAuctionById(auctionId);
+            Auction auction =
+                    com.group13.auction.network.server.util.AuctionLookup.resolveForRead(auctionId);
             if (auction == null) {
                 session.send(Packet.of(PacketType.GET_AUCTION_DETAIL_FAILED,
-                    ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy.", requestId), requestId));
+                    ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND, "Không tìm thấy phiên đấu giá.", requestId), requestId));
                 return;
             }
             // Resolve user từ session cache để set joinedByCurrentUser / leftByCurrentUser.

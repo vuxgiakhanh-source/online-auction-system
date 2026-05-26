@@ -19,6 +19,7 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
+import com.group13.auction.network.server.util.AuctionLookup;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.observer.BidderObserver;
 import com.group13.auction.service.BidService;
@@ -152,6 +153,10 @@ public class BidHandler implements PacketHandler {
             String auctionId = PacketCodec.fromElement(payload, String.class);
             Auction auction = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
+            if (rejectIfNotLiveParticipation(
+                    session, auction, requestId, PacketType.JOIN_AUCTION_FAILED)) {
+                return;
+            }
 
             NormalUser bidder = requireNormalUser(session, requestId);
             if (bidder == null) return;
@@ -196,6 +201,10 @@ public class BidHandler implements PacketHandler {
             String auctionId = PacketCodec.fromElement(payload, String.class);
             Auction auction = requireAuction(session, auctionId, requestId);
             if (auction == null) return;
+            if (rejectIfNotLiveParticipation(
+                    session, auction, requestId, PacketType.WATCH_AUCTION_FAILED)) {
+                return;
+            }
 
             NormalUser user = requireNormalUser(session, requestId);
             if (user == null) return;
@@ -343,6 +352,10 @@ public class BidHandler implements PacketHandler {
         // Resolve auction từ in-memory map (không cần lock, không cần DB)
         Auction auction = requireAuction(session, req.getAuctionId(), requestId);
         if (auction == null) return;
+        if (rejectIfNotLiveParticipation(
+                session, auction, requestId, PacketType.PLACE_BID_FAILED)) {
+            return;
+        }
 
         // Capture state TRƯỚC bid để tính delta cho broadcast
         long previousPrice       = auction.getCurrentPrice();
@@ -453,12 +466,18 @@ public class BidHandler implements PacketHandler {
         NormalUser bidder = requireNormalUser(session, requestId);
         if (bidder == null) return;
 
+        Auction auctionForRegister = requireAuction(session, req.getAuctionId(), requestId);
+        if (auctionForRegister == null) return;
+        if (rejectIfNotLiveParticipation(
+                session, auctionForRegister, requestId, PacketType.REGISTER_AUTO_BID_FAILED)) {
+            return;
+        }
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
             // bidder đã resolve trước lock
-            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
-            if (auction == null) return;
+            Auction auction = auctionForRegister;
 
             registerAutoBidAuction  = auction;
             registerAutoBidBidderId = bidder.getId();
@@ -564,6 +583,13 @@ public class BidHandler implements PacketHandler {
         NormalUser bidder = requireNormalUser(session, requestId);
         if (bidder == null) return;
 
+        Auction auctionForUpdate = requireAuction(session, req.getAuctionId(), requestId);
+        if (auctionForUpdate == null) return;
+        if (rejectIfNotLiveParticipation(
+                session, auctionForUpdate, requestId, PacketType.UPDATE_AUTO_BID_FAILED)) {
+            return;
+        }
+
         ReentrantLock lock = lockRegistry.getLock(req.getAuctionId());
         lock.lock();
         try {
@@ -579,8 +605,7 @@ public class BidHandler implements PacketHandler {
                 return;
             }
 
-            Auction auction = requireAuction(session, req.getAuctionId(), requestId);
-            if (auction == null) return;
+            Auction auction = auctionForUpdate;
 
             updateAutoBidAuction  = auction;
             updateAutoBidBidderId = bidder.getId();
@@ -764,15 +789,36 @@ public class BidHandler implements PacketHandler {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Auction requireAuction(ClientSession session, String auctionId, String requestId) {
-        Auction auction = AuctionManager.getInstance().findAuctionById(auctionId);
+        Auction auction = AuctionLookup.resolveForRead(auctionId);
         if (auction == null) {
             log.warn("Auction not found while handling bid request: auctionId={}, requestId={}",
                 auctionId, requestId);
             session.send(Packet.of(PacketType.SYSTEM_ERROR,
                 ErrorDTO.of(ErrorDTO.AUCTION_NOT_FOUND,
-                    "Phiên đấu giá không tồn tại: " + auctionId, requestId), requestId));
+                    "Không tìm thấy phiên đấu giá.", requestId), requestId));
         }
         return auction;
+    }
+
+    /**
+     * @return {@code true} nếu đã gửi phản hồi lỗi và handler nên dừng.
+     */
+    private boolean rejectIfNotLiveParticipation(
+            ClientSession session,
+            Auction auction,
+            String requestId,
+            PacketType failureType) {
+        if (AuctionLookup.allowsLiveParticipation(auction)) {
+            return false;
+        }
+        session.send(Packet.of(
+                failureType,
+                ErrorDTO.of(
+                        ErrorDTO.AUCTION_CLOSED,
+                        AuctionLookup.liveParticipationBlockedMessage(auction),
+                        requestId),
+                requestId));
+        return true;
     }
 
     private NormalUser requireNormalUser(ClientSession session, String requestId) {
