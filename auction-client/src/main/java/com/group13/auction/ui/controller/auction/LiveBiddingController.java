@@ -98,14 +98,28 @@ public final class LiveBiddingController implements ClientEventListener {
   @FXML private LineChart<String, Number> bidLineChart;
   @FXML private ListView<String> bidHistoryListView;
 
-  /** Đăng ký realtime listener, watch auction và tải lịch sử bid ban đầu. */
-  @FXML
-  public void initialize() {
+  /** Khởi tạo đường biểu đồ và cấu hình NumberAxis Y để mốc giá không bị mất khi nhiều bid. */
+  private void initBidLineChart() {
     priceSeries.setName("Giá cao nhất");
     bidLineChart.getData().clear();
     bidLineChart.getData().add(priceSeries);
     bidLineChart.setAnimated(false);
     bidLineChart.setLegendVisible(false);
+
+    // Tắt autoRanging trên Y-axis và quản lý bounds thủ công.
+    // Khi autoRanging=true, JavaFX không luôn recalculate đúng sau khi xóa data point đầu tiên,
+    // dẫn đến mốc giá (tick labels) ở đầu trục Y bị mất hoặc bị cắt.
+    NumberAxis yAxis = (NumberAxis) bidLineChart.getYAxis();
+    yAxis.setAutoRanging(false);
+    yAxis.setForceZeroInRange(false);
+    yAxis.setLowerBound(0);
+    yAxis.setUpperBound(1_000_000);
+    yAxis.setTickUnit(200_000);
+  }
+
+  @FXML
+  public void initialize() {
+    initBidLineChart();
 
     auctionId =
         AppContext.getInstance()
@@ -687,6 +701,36 @@ public final class LiveBiddingController implements ClientEventListener {
     setMessage("Đã tải " + points.size() + " điểm lịch sử bid.");
   }
 
+  /**
+   * Cập nhật bounds của NumberAxis Y-axis dựa trên dữ liệu hiện có trong priceSeries.
+   * Gọi sau mỗi lần thêm/xóa data point để mốc giá trên trục Y không bị mất.
+   */
+  private void updateChartYAxisBounds() {
+    if (priceSeries.getData().isEmpty()) {
+      return;
+    }
+    NumberAxis yAxis = (NumberAxis) bidLineChart.getYAxis();
+    long min = Long.MAX_VALUE;
+    long max = Long.MIN_VALUE;
+    for (XYChart.Data<String, Number> d : priceSeries.getData()) {
+      long v = d.getYValue().longValue();
+      if (v < min) {
+        min = v;
+      }
+      if (v > max) {
+        max = v;
+      }
+    }
+    // Padding 10% range để đường giá không chạm sát viền trên/dưới
+    long range = Math.max(max - min, 100_000L);
+    long padding = range / 8;
+    yAxis.setLowerBound(Math.max(0, min - padding));
+    yAxis.setUpperBound(max + padding);
+    // Tick unit ~ 6–8 khoảng trên trục
+    long totalRange = (max + padding) - Math.max(0, min - padding);
+    yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
+  }
+
   private void appendHistoryPoint(BidHistoryPointViewModel point) {
     if (point == null) {
       return;
@@ -698,6 +742,9 @@ public final class LiveBiddingController implements ClientEventListener {
     if (priceSeries.getData().size() > MAX_CHART_POINTS) {
       priceSeries.getData().remove(0);
     }
+
+    // Cập nhật Y-axis bounds sau mỗi thay đổi dữ liệu để mốc giá không bị mất
+    updateChartYAxisBounds();
 
     bidHistoryListView
         .getItems()
@@ -720,6 +767,31 @@ public final class LiveBiddingController implements ClientEventListener {
 
     NumberAxis yAxis = new NumberAxis();
     yAxis.setLabel("Giá");
+    yAxis.setAutoRanging(false);
+    yAxis.setForceZeroInRange(false);
+    // Tính bounds từ historyPoints để mốc giá hiển thị đầy đủ
+    if (!historyPoints.isEmpty()) {
+      long min =
+          historyPoints.stream()
+              .mapToLong(BidHistoryPointViewModel::price)
+              .min()
+              .getAsLong();
+      long max =
+          historyPoints.stream()
+              .mapToLong(BidHistoryPointViewModel::price)
+              .max()
+              .getAsLong();
+      long range = Math.max(max - min, 100_000L);
+      long padding = range / 8;
+      yAxis.setLowerBound(Math.max(0, min - padding));
+      yAxis.setUpperBound(max + padding);
+      long totalRange = (max + padding) - Math.max(0, min - padding);
+      yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
+    } else {
+      yAxis.setLowerBound(0);
+      yAxis.setUpperBound(1_000_000);
+      yAxis.setTickUnit(200_000);
+    }
 
     LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
     chart.setAnimated(false);
