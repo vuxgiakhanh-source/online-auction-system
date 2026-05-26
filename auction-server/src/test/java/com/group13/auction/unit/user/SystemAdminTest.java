@@ -426,20 +426,56 @@ class SystemAdminTest {
     }
 
     @Nested
-    @DisplayName("identity và polymorphism")
-    class IdentityAndPolymorphism {
+    @DisplayName("inherited behavior và polymorphism")
+    class InheritedBehaviorAndPolymorphism {
 
         @Test
-        @DisplayName("SystemAdmin — isSystem/master, role ADMIN, chặn addRole")
-        void systemAdmin_identityAndUserContract() throws Exception {
-            SystemAdmin sut = systemAdmin(mock(UserDAO.class));
+        @DisplayName("SystemAdmin dùng qua kiểu Admin vẫn có isSystem() true")
+        void systemAdminAsAdmin_keepsSystemIdentity() throws Exception {
+            // Arrange
+            Admin admin = systemAdmin(mock(UserDAO.class));
 
-            assertThat(sut.isSystem()).isTrue();
-            assertThat(sut.isMaster()).isTrue();
-            assertThat(sut.isStaff()).isFalse();
-            assertThat(sut.getPrimaryRole()).isEqualTo(User.UserRole.ADMIN);
-            assertThatThrownBy(() -> sut.addRole(User.UserRole.SELLER))
+            // Act & Assert
+            assertThat(admin.isSystem()).isTrue();
+            assertThat(admin.isMaster()).isTrue();
+            assertThat(admin.isStaff()).isFalse();
+        }
+
+        @Test
+        @DisplayName("SystemAdmin dùng qua kiểu User vẫn giữ primaryRole ADMIN")
+        void systemAdminAsUser_keepsAdminRole() throws Exception {
+            // Arrange
+            User user = systemAdmin(mock(UserDAO.class));
+
+            // Act & Assert
+            assertThat(user).isInstanceOf(SystemAdmin.class);
+            assertThat(user.getPrimaryRole()).isEqualTo(User.UserRole.ADMIN);
+            assertThat(user.hasRole(User.UserRole.ADMIN)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SystemAdmin dùng qua kiểu User vẫn chặn addRole()")
+        void systemAdminAsUser_addRoleStillThrows() throws Exception {
+            // Arrange
+            User user = systemAdmin(mock(UserDAO.class));
+
+            // Act & Assert
+            assertThatThrownBy(() -> user.addRole(User.UserRole.SELLER))
                     .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("setAccountStatus(SUSPENDED) kế thừa từ User vẫn cập nhật suspendedAt")
+        void setAccountStatus_suspended_setsSuspendedAt() throws Exception {
+            // Arrange
+            SystemAdmin systemAdmin = systemAdmin(mock(UserDAO.class));
+
+            // Act
+            systemAdmin.setAccountStatus(User.AccountStatus.SUSPENDED);
+
+            // Assert
+            assertThat(systemAdmin.getAccountStatus()).isEqualTo(User.AccountStatus.SUSPENDED);
+            assertThat(systemAdmin.getSuspendedAt()).isNotNull();
         }
     }
 

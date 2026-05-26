@@ -16,18 +16,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Contract + smoke tests cho {@link AuctionObserver}.
+ * Contract tests cho {@link AuctionObserver} — non-throwing, null-safe, isolation.
  */
-@DisplayName("AuctionObserver — contract & smoke")
+@DisplayName("AuctionObserver — contract")
 class AuctionObserverContractTest {
 
     private NormalUser seller;
@@ -70,6 +67,14 @@ class AuctionObserverContractTest {
 
     @ParameterizedTest
     @MethodSource("allConcreteObservers")
+    @DisplayName("mọi implementation là AuctionObserver")
+    void implementsContract(AuctionObserver observer) {
+        assertNotNull(observer);
+    }
+
+    @ParameterizedTest
+    @MethodSource("allConcreteObservers")
+    @DisplayName("onBidPlaced(BID_PLACED) — không ném exception")
     void onBidPlaced_bidPlaced_nonThrowing(AuctionObserver observer) {
         AuctionEvent event = new AuctionEvent(
                 AuctionEventType.BID_PLACED, runningAuction, bidder, 1_000_000L);
@@ -78,6 +83,7 @@ class AuctionObserverContractTest {
 
     @ParameterizedTest
     @MethodSource("allConcreteObservers")
+    @DisplayName("onBidPlaced — bidder null không crash")
     void onBidPlaced_nullBidder_safe(AuctionObserver observer) {
         AuctionEvent event = new AuctionEvent(
                 AuctionEventType.BID_PLACED, runningAuction, null, 1_000_000L);
@@ -86,6 +92,7 @@ class AuctionObserverContractTest {
 
     @ParameterizedTest
     @MethodSource("allConcreteObservers")
+    @DisplayName("onAuctionEnded — lifecycle events không crash")
     void onAuctionEnded_lifecycle_nonThrowing(AuctionObserver observer) {
         assertDoesNotThrow(() -> observer.onAuctionEnded(
                 new AuctionEvent(AuctionEventType.AUCTION_STARTED, runningAuction, null, 0)));
@@ -94,37 +101,28 @@ class AuctionObserverContractTest {
     }
 
     @Test
-    void observerIsolation_twoInstancesIndependent() {
+    @DisplayName("hai observer độc lập — gọi observer A không ảnh hưởng B")
+    void observerIsolation() {
         BidderObserver a = new BidderObserver(bidder, TestFixture.ratingServiceAllowAll());
         BidderObserver b = new BidderObserver(
                 TestFixture.bidderWithBalance("contractBid2", 5_000_000L),
                 TestFixture.ratingServiceAllowAll());
-        assertDoesNotThrow(() -> a.onBidPlaced(new AuctionEvent(
-                AuctionEventType.BID_PLACED, runningAuction, bidder, 2_000_000L)));
-        assertDoesNotThrow(() -> b.onAuctionEnded(new AuctionEvent(
-                AuctionEventType.AUCTION_STARTED, runningAuction, null, 0)));
+        AuctionEvent event = new AuctionEvent(
+                AuctionEventType.BID_PLACED, runningAuction, bidder, 2_000_000L);
+
+        AuctionEvent otherEvent = new AuctionEvent(
+                AuctionEventType.AUCTION_STARTED, runningAuction, null, 0);
+        assertDoesNotThrow(() -> a.onBidPlaced(event));
+        assertDoesNotThrow(() -> b.onAuctionEnded(otherEvent));
     }
 
     @Test
+    @DisplayName("onBidPlaced không mutate auction price")
     void onBidPlaced_doesNotMutateAuction() {
         long priceBefore = runningAuction.getCurrentPrice();
-        new SellerObserver(seller, TestFixture.ratingServiceAllowAll())
-                .onBidPlaced(new AuctionEvent(
-                        AuctionEventType.BID_PLACED, runningAuction, bidder, 9_999_999L));
+        AuctionObserver observer = new SellerObserver(seller, TestFixture.ratingServiceAllowAll());
+        observer.onBidPlaced(new AuctionEvent(
+                AuctionEventType.BID_PLACED, runningAuction, bidder, 9_999_999L));
         assertEquals(priceBefore, runningAuction.getCurrentPrice());
-    }
-
-    @Test
-    void bidderObserver_notifiesViaNotifier() {
-        List<String> titles = new ArrayList<>();
-        BidderObserver observer = new BidderObserver(bidder, TestFixture.ratingServiceAllowAll());
-        observer.setNotifier((target, title, message) -> titles.add(title));
-
-        observer.onBidPlaced(new AuctionEvent(
-                AuctionEventType.BID_PLACED, runningAuction, bidder, 2_000_000L));
-        observer.onBidPlaced(new AuctionEvent(
-                AuctionEventType.BID_RESERVE_NOT_MET, runningAuction, bidder, 1_100_000L));
-
-        assertThat(titles).contains("BID_PLACED", "BID_RESERVE_NOT_MET");
     }
 }

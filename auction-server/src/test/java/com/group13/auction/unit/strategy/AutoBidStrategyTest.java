@@ -42,6 +42,29 @@ class AutoBidStrategyTest {
     }
 
     @Nested
+    @DisplayName("isValidBid")
+    class IsValidBidTest {
+
+        @Test
+        void validAmountWithinMaxBid() {
+            AutoBidStrategy strategy = new AutoBidStrategy(2_000_000L);
+            assertThat(strategy.isValidBid(auctionAt(500_000L), 600_000L)).isTrue();
+        }
+
+        @Test
+        void belowMinimumIncrement_invalid() {
+            AutoBidStrategy strategy = new AutoBidStrategy(2_000_000L);
+            assertThat(strategy.isValidBid(auctionAt(500_000L), 500_000L)).isFalse();
+        }
+
+        @Test
+        void aboveMaxBid_invalid() {
+            AutoBidStrategy strategy = new AutoBidStrategy(1_000_000L);
+            assertThat(strategy.isValidBid(auctionAt(500_000L), 1_000_001L)).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("calculateNextBid")
     class CalculateNextBidTest {
 
