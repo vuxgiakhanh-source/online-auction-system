@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -86,6 +87,7 @@ class AuctionTimerServiceTest {
         inject("sessionManager", null);
         inject("scheduler", null);
         inject("running", false);
+        clearUpcomingEndNotifiedKeys();
         resetAuctionManager();
         clearLockRegistry();
         clearAutoBidRegistry();
@@ -423,6 +425,28 @@ class AuctionTimerServiceTest {
     }
 
     @Nested
+    @DisplayName("upcoming end notifications")
+    class UpcomingEndNotifications {
+
+        @Test
+        @DisplayName("anti-sniping gia hạn endTime không gửi lại cảnh báo 10 phút")
+        void antiSnipingExtension_doesNotDuplicate10MinKey() throws Exception {
+            clearUpcomingEndNotifiedKeys();
+            Auction auction = runningAuction(NOW.minusHours(1), NOW.plusMinutes(8));
+            register(auction);
+
+            invokeNotifyUpcomingAuctionEnds(NOW);
+            auction.extendEndTime(Duration.ofMinutes(1));
+
+            invokeNotifyUpcomingAuctionEnds(NOW);
+
+            @SuppressWarnings("unchecked")
+            Set<String> keys = (Set<String>) readFieldObject("upcomingEndNotifiedKeys");
+            assertThat(keys).containsExactly(auction.getId() + ":10");
+        }
+    }
+
+    @Nested
     @DisplayName("state consistency and cleanup")
     class StateConsistencyAndCleanup {
 
@@ -534,6 +558,19 @@ class AuctionTimerServiceTest {
         Method method = AuctionTimerService.class.getDeclaredMethod("expirePendingWinnerPayments");
         method.setAccessible(true);
         method.invoke(sut);
+    }
+
+    private void invokeNotifyUpcomingAuctionEnds(LocalDateTime now) throws Exception {
+        Method method = AuctionTimerService.class.getDeclaredMethod(
+            "notifyUpcomingAuctionEnds", LocalDateTime.class);
+        method.setAccessible(true);
+        method.invoke(sut, now);
+    }
+
+    private void clearUpcomingEndNotifiedKeys() throws Exception {
+        @SuppressWarnings("unchecked")
+        Set<String> keys = (Set<String>) readFieldObject("upcomingEndNotifiedKeys");
+        keys.clear();
     }
 
     private static Auction finishedAuctionExpiredWinner() {
