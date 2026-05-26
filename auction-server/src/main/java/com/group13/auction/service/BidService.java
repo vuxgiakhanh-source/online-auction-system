@@ -140,11 +140,6 @@ public class BidService implements IBidService {
 
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
-    // FIX: chặn user đã rời phiên join lại
-    if (user.hasLeft(auction.getId())) {
-      log.warn("Rejoin blocked — user already left: userId={}, auctionId={}", user.getId(), auction.getId());
-      throw new AuctionBusinessException(AuctionBusinessException.Reason.ALREADY_LEFT_AUCTION);
-    }
     if (!user.tryMarkJoined(auction.getId())) {
       log.warn("User already joined: userId={}, auctionId={}", user.getId(), auction.getId());
       return;
@@ -322,6 +317,7 @@ public class BidService implements IBidService {
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     lock.lock();
     try {
+      user.clearLeftAuction(auction.getId());
       user.addJoinedAuction(auction.getId());
       boolean alreadyWatching = user.getWatchListAuctionIds().contains(auction.getId());
       user.addToWatchList(auction.getId());
@@ -457,8 +453,11 @@ public class BidService implements IBidService {
 
     if (auctionId != null) {
       user.removeJoinedAuction(auctionId);
+      user.removeFromWatchList(auctionId);
       user.addLeftAuction(auctionId);
       userDAO.markUserLeftAuction(user.getId(), auctionId);
+      auctionService.removeObserversForUser(auctionId, user.getId());
+      ServerBroadcastNotifier.getInstance().clearAutoBidExhaustedFlag(user.getId(), auctionId);
       // FIX: cancel autobid của người rời phiên — tránh entry zombie trong registry
       // khiến process() tính candidate sai (người đã rời không được bid nữa)
       boolean autoBidCancelled = AutoBidRegistry.getInstance().cancel(user.getId(), auctionId);

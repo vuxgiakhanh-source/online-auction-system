@@ -90,11 +90,6 @@ public final class WatchAuctionService {
 
         JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
 
-        if (joinedAuctionState.hasLeft(auctionId)) {
-            return AuctionServiceSupport.failedFuture(
-                "Bạn đã hủy tham gia phiên đấu giá này và không thể tham gia lại.");
-        }
-
         if (joinedAuctionState.hasJoined(auctionId)) {
             return CompletableFuture.completedFuture(null);
         }

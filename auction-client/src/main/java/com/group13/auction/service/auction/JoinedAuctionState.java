@@ -63,8 +63,8 @@ public final class JoinedAuctionState {
   /**
    * Đánh dấu user hiện tại đã hủy tham gia phiên đấu giá.
    *
-   * <p>Server hiện xử lý LEAVE_AUCTION như hành động hủy tham gia thật và có thể chặn join lại. Vì
-   * vậy client cần nhớ trạng thái LEFT để không hiển thị lại nút tham gia trong cùng phiên app.
+   * <p>Cache LEFT giúp UI phản ánh đúng sau khi hủy tham gia; user vẫn có thể join lại nếu phiên OPEN
+   * (server xác thực cuối cùng).
    *
    * @param auctionId id phiên đấu giá
    */
@@ -144,6 +144,10 @@ public final class JoinedAuctionState {
    * @return true nếu client đã ghi nhận user hủy tham gia phiên này
    */
   public synchronized boolean hasLeft(String auctionId) {
+    return hasLeftFlag(auctionId) && !hasJoined(auctionId);
+  }
+
+  private synchronized boolean hasLeftFlag(String auctionId) {
     String userKey = currentUserKey();
     if (userKey.isBlank() || isBlank(auctionId)) {
       return false;
