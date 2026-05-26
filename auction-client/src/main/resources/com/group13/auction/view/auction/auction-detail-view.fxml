@@ -120,7 +120,7 @@
                         <Label text="Ảnh sản phẩm"
                                styleClass="auction-section-title"/>
 
-                        <Label text="Ảnh được tải từ ImageUploadServer."
+                        <Label text="Bấm vào ảnh để xem chi tiết."
                                styleClass="auction-muted-text"/>
                     </HBox>
 
@@ -128,6 +128,22 @@
                               hgap="10.0"
                               vgap="10.0"
                               styleClass="auction-image-gallery"/>
+                </VBox>
+
+                <!-- Product specifications -->
+                <VBox spacing="12.0" styleClass="auction-info-box">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="Thông tin sản phẩm"
+                               styleClass="auction-section-title"/>
+
+                        <Label text="Thông số riêng theo từng loại sản phẩm."
+                               styleClass="auction-muted-text"/>
+                    </HBox>
+
+                    <GridPane fx:id="productSpecsGrid"
+                              hgap="18.0"
+                              vgap="10.0"
+                              styleClass="auction-product-spec-grid"/>
                 </VBox>
 
                 <!-- Metrics -->

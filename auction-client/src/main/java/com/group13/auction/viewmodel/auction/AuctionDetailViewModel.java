@@ -29,6 +29,7 @@ public final class AuctionDetailViewModel {
     /** Thời điểm kết thúc phiên dưới dạng raw — dùng cho countdown timer. Null nếu chưa xác định. */
     private final LocalDateTime rawEndTime;
     private final List<String> imageUrls;
+    private final List<ProductSpecificationViewModel> productSpecifications;
     private final boolean joinable;
     private final boolean liveBiddingAllowed;
     private final double currentPrice;
@@ -55,6 +56,7 @@ public final class AuctionDetailViewModel {
         LocalDateTime rawStartTime,
         LocalDateTime rawEndTime,
         List<String> imageUrls,
+        List<ProductSpecificationViewModel> productSpecifications,
         boolean joinable,
         boolean liveBiddingAllowed,
         double currentPrice) {
@@ -78,6 +80,8 @@ public final class AuctionDetailViewModel {
         this.rawStartTime = rawStartTime;
         this.rawEndTime = rawEndTime;
         this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+        this.productSpecifications =
+            productSpecifications == null ? List.of() : List.copyOf(productSpecifications);
         this.joinable = joinable;
         this.liveBiddingAllowed = liveBiddingAllowed;
         this.currentPrice = currentPrice;
@@ -171,6 +175,14 @@ public final class AuctionDetailViewModel {
 
     public boolean hasImages() {
         return !imageUrls.isEmpty();
+    }
+
+    public List<ProductSpecificationViewModel> productSpecifications() {
+        return productSpecifications;
+    }
+
+    public boolean hasProductSpecifications() {
+        return !productSpecifications.isEmpty();
     }
 
     public boolean joinable() {
