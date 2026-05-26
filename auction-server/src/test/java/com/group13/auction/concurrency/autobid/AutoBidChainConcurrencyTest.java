@@ -71,6 +71,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
 
     @AfterEach
     void tearDown() {
+        clearAutoBidProcessorState();
         autoBidRegistry.clearAuction(auction.getId());
         lockRegistry.release(auction.getId());
         resetAuctionManagerUsers();
@@ -97,10 +98,12 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualBidAmount, new StandardBidStrategy());
-            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
+        // FIX: submit() NGOÀI lock — chain cần lock để chạy placeBid
+        autoBidProcessor.submit(auction, manualBidder.getId());
+        awaitAutoBidChain(auction.getId(), 4);
 
         long expectedAutoPrice = manualBidAmount + BidIncrementCalculator.calculate(manualBidAmount);
 
@@ -136,10 +139,11 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualAmount, new StandardBidStrategy());
-            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
+        autoBidProcessor.submit(auction, manualBidder.getId());
+        awaitAutoBidChain(auction.getId(), 4);
 
         assertThat(auction.getCurrentPrice())
             .as("Giá phải là manualAmount vì auto-bid exhausted")
@@ -179,10 +183,11 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         lock.lock();
         try {
             bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-            autoBidProcessor.submit(auction, manualBidder.getId());
         } finally {
             lock.unlock();
         }
+        autoBidProcessor.submit(auction, manualBidder.getId());
+        awaitAutoBidChain(auction.getId(), 4);
 
         long finalPrice = auction.getCurrentPrice();
 
@@ -234,12 +239,13 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
                     lock.lock();
                     try {
                         bidService.placeBid(mb, auction, bid, new StandardBidStrategy());
-                        autoBidProcessor.submit(auction, mb.getId());
                         snapshots.add(auction.getCurrentPrice());
                     } catch (Exception ignored) {
                     } finally {
                         lock.unlock();
                     }
+                    // FIX: submit() NGOÀI lock
+                    autoBidProcessor.submit(auction, mb.getId());
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } finally {
@@ -250,6 +256,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
 
         gate.countDown();
         done.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        awaitAutoBidChain(auction.getId(), 5);
 
         for (int i = 1; i < snapshots.size(); i++) {
             assertThat(snapshots.get(i))
@@ -339,18 +346,67 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         long manualBid = 550_000L;
         ReentrantLock lock = lockRegistry.getLock(auction.getId());
 
+        // FIX: placeBid trong lock, submit() NGOÀI lock
         assertThatCode(() -> {
             lock.lock();
             try {
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-                autoBidProcessor.submit(auction, manualBidder.getId());
             } finally {
                 lock.unlock();
             }
+            autoBidProcessor.submit(auction, manualBidder.getId());
+            awaitAutoBidChain(auction.getId(), 4);
         }).doesNotThrowAnyException();
 
         assertThat(auction.getCurrentPrice())
             .isGreaterThanOrEqualTo(manualBid)
             .isLessThanOrEqualTo(sameMaxBid);
+    }
+
+    // ── Helpers (reflection — không đụng production code) ─────────────────────
+
+    private void clearAutoBidProcessorState() {
+        try {
+            java.lang.reflect.Field execField =
+                AutoBidProcessor.class.getDeclaredField("auctionExecutors");
+            execField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.concurrent.ConcurrentHashMap<String, ExecutorService> executors =
+                (java.util.concurrent.ConcurrentHashMap<String, ExecutorService>) execField.get(null);
+            for (ExecutorService ex : executors.values()) ex.shutdownNow();
+            for (ExecutorService ex : executors.values()) {
+                try { ex.awaitTermination(300, TimeUnit.MILLISECONDS); }
+                catch (InterruptedException ignored) {}
+            }
+            executors.clear();
+            for (String name : new String[]{"chainRunning", "chainNeedsRecheck",
+                "bidActivityRings", "lastAutoBidMs"}) {
+                java.lang.reflect.Field f = AutoBidProcessor.class.getDeclaredField(name);
+                f.setAccessible(true);
+                Object map = f.get(null);
+                if (map instanceof java.util.Map<?, ?> m) m.clear();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void awaitAutoBidChain(String auctionId, long timeoutSeconds) {
+        try {
+            java.lang.reflect.Field f = AutoBidProcessor.class.getDeclaredField("chainRunning");
+            f.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.concurrent.ConcurrentHashMap<String,
+                java.util.concurrent.atomic.AtomicBoolean> runningMap =
+                (java.util.concurrent.ConcurrentHashMap<String,
+                    java.util.concurrent.atomic.AtomicBoolean>) f.get(null);
+            long deadline = System.currentTimeMillis() + timeoutSeconds * 1_000L;
+            Thread.sleep(20);
+            while (System.currentTimeMillis() < deadline) {
+                java.util.concurrent.atomic.AtomicBoolean flag = runningMap.get(auctionId);
+                if (flag == null || !flag.get()) return;
+                Thread.sleep(30);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {}
     }
 }
