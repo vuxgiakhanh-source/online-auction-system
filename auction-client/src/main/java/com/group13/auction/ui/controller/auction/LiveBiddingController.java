@@ -9,6 +9,7 @@ import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.mapper.BidViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.session.ClientEventListener;
+import com.group13.auction.service.auction.AuctionQueryService;
 import com.group13.auction.service.auction.AutoBidService;
 import com.group13.auction.service.auction.BidHistoryService;
 import com.group13.auction.service.auction.BidService;
@@ -58,6 +59,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   private final ClientNetworkFacade networkFacade = ClientNetworkFacade.getDefault();
   private final WatchAuctionService watchAuctionService = new WatchAuctionService();
+  private final AuctionQueryService auctionQueryService = new AuctionQueryService();
   private final JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
   private final BidService bidService = new BidService();
   private final BidHistoryService bidHistoryService = new BidHistoryService();
@@ -67,6 +69,7 @@ public final class LiveBiddingController implements ClientEventListener {
       FXCollections.observableArrayList();
 
   private String auctionId;
+  private boolean readOnlyMode;
   private boolean bidAllowed;
   private long currentPriceRaw;
   private volatile boolean pendingBidRequest;
@@ -136,6 +139,18 @@ public final class LiveBiddingController implements ClientEventListener {
 
     syncAutoBidButtons(true);
 
+    readOnlyMode =
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .get(ScreenStateKeys.LIVE_BIDDING_READ_ONLY, Boolean.class)
+            .orElse(false);
+    AppContext.getInstance().getScreenStateStore().remove(ScreenStateKeys.LIVE_BIDDING_READ_ONLY);
+
+    if (readOnlyMode) {
+      enterReadOnlyMode();
+      return;
+    }
+
     networkFacade.addListener(this);
     watchCurrentAuction();
     loadBidHistory();
@@ -155,6 +170,10 @@ public final class LiveBiddingController implements ClientEventListener {
   /** Gửi yêu cầu đặt giá. */
   @FXML
   public void handlePlaceBid() {
+    if (readOnlyMode) {
+      AlertUtil.showWarning("Phiên đã kết thúc hoặc đã hủy — chỉ được xem lịch sử đặt giá.");
+      return;
+    }
     if (!bidAllowed) {
       AlertUtil.showWarning("Hãy tham gia phiên đấu giá trước khi đặt giá.");
       return;
@@ -190,6 +209,10 @@ public final class LiveBiddingController implements ClientEventListener {
   /** Đăng ký Auto-Bid cho phiên hiện tại. */
   @FXML
   public void handleRegisterAutoBid() {
+    if (readOnlyMode) {
+      AlertUtil.showWarning("Phiên đã kết thúc hoặc đã hủy — không thể bật auto-bid.");
+      return;
+    }
     if (!bidAllowed) {
       AlertUtil.showWarning("Hãy tham gia phiên đấu giá trước khi bật auto-bid.");
       return;
@@ -223,6 +246,10 @@ public final class LiveBiddingController implements ClientEventListener {
   /** Cập nhật maxBid cho Auto-Bid đang hoạt động. */
   @FXML
   public void handleUpdateAutoBid() {
+    if (readOnlyMode) {
+      AlertUtil.showWarning("Phiên đã kết thúc hoặc đã hủy — không thể cập nhật auto-bid.");
+      return;
+    }
     if (!bidAllowed) {
       AlertUtil.showWarning("Hãy tham gia phiên đấu giá trước khi cập nhật auto-bid.");
       return;
@@ -256,6 +283,10 @@ public final class LiveBiddingController implements ClientEventListener {
   /** Hủy Auto-Bid của user trong phiên hiện tại. */
   @FXML
   public void handleCancelAutoBid() {
+    if (readOnlyMode) {
+      AlertUtil.showWarning("Phiên đã kết thúc hoặc đã hủy — không thể hủy auto-bid.");
+      return;
+    }
     if (!bidAllowed) {
       AlertUtil.showWarning("Hãy tham gia phiên đấu giá trước khi quản lý auto-bid.");
       return;
@@ -541,6 +572,58 @@ public final class LiveBiddingController implements ClientEventListener {
         });
   }
 
+  private void enterReadOnlyMode() {
+    bidAllowed = false;
+    placeBidButton.setDisable(true);
+    if (bidAmountField != null) {
+      bidAmountField.setDisable(true);
+    }
+    if (autoBidMaxField != null) {
+      autoBidMaxField.setDisable(true);
+    }
+    syncAutoBidButtons(true);
+    if (autoBidStatusLabel != null) {
+      autoBidStatusLabel.setText("Auto-bid không khả dụng ở chế độ chỉ xem.");
+    }
+
+    setLoading(true, "Đang tải lịch sử phiên đấu giá...");
+
+    auctionQueryService
+        .getAuctionDetail(auctionId)
+        .thenAccept(
+            detail ->
+                FxThreadUtil.runOnFxThread(
+                    () -> {
+                      renderAuctionDetail(detail);
+                      stopCountdownTimer();
+                      if (countdownLabel != null) {
+                        countdownLabel.setText("--");
+                      }
+                      setLoading(false, readOnlyArchiveMessage(detail));
+                    }))
+        .exceptionally(
+            throwable -> {
+              FxThreadUtil.runOnFxThread(
+                  () -> {
+                    setLoading(false, "Không tải được thông tin phiên.");
+                    AlertUtil.showError(extractMessage(throwable));
+                  });
+              return null;
+            });
+
+    loadBidHistory();
+  }
+
+  private static String readOnlyArchiveMessage(AuctionDetailViewModel detail) {
+    if (detail == null) {
+      return "Chế độ chỉ xem — không thể đặt giá hay tham gia phiên.";
+    }
+    if ("CANCELED".equalsIgnoreCase(detail.rawStatus())) {
+      return "Phiên đã bị hủy. Bạn đang xem lịch sử đặt giá và biểu đồ (chỉ đọc).";
+    }
+    return "Phiên đã kết thúc. Bạn đang xem lịch sử đặt giá và biểu đồ (chỉ đọc).";
+  }
+
   private void watchCurrentAuction() {
     setLoading(true, "Đang kết nối phòng đấu giá realtime...");
 
@@ -611,6 +694,14 @@ public final class LiveBiddingController implements ClientEventListener {
 
     auctionEndTime = detail.rawEndTime();
     startCountdownTimer();
+
+    if (readOnlyMode) {
+      bidAllowed = false;
+      placeBidButton.setDisable(true);
+      syncAutoBidButtons(true);
+      setLoading(false, readOnlyArchiveMessage(detail));
+      return;
+    }
 
     bidAllowed = detail.liveBiddingAllowed() && joinedAuctionState.hasJoined(auctionId);
     placeBidButton.setDisable(!bidAllowed);

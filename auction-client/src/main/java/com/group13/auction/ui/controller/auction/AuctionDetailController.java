@@ -38,6 +38,7 @@ public final class AuctionDetailController {
 
   private String auctionId;
   private boolean currentAuctionJoinable;
+  private boolean currentArchiveViewable;
   private boolean currentUserLeftAuction;
   private boolean paymentAllowed;
   private AuctionDetailViewModel currentDetail;
@@ -190,6 +191,11 @@ public final class AuctionDetailController {
    */
   @FXML
   public void handleWatchLive() {
+    if (currentArchiveViewable) {
+      openLiveBiddingReadOnly();
+      return;
+    }
+
     setLoading(true, "Đang mở phòng live bidding...");
 
     watchAuctionService
@@ -348,16 +354,24 @@ public final class AuctionDetailController {
     boolean joinedByCurrentUser = joinedAuctionState.hasJoined(detail.auctionId());
     currentUserLeftAuction = joinedAuctionState.hasLeft(detail.auctionId());
     currentAuctionJoinable = detail.joinable();
+    currentArchiveViewable = !currentAuctionJoinable;
 
-    if (currentUserLeftAuction) {
+    if (currentArchiveViewable) {
+      joinLiveButton.setText("Phiên đã đóng");
+      joinLiveButton.setDisable(true);
+      watchLiveButton.setText("Xem lịch sử đặt giá");
+      watchLiveButton.setDisable(false);
+    } else if (currentUserLeftAuction) {
       joinLiveButton.setText("Đã hủy tham gia");
       joinLiveButton.setDisable(true);
+      watchLiveButton.setText("Theo dõi realtime");
+      watchLiveButton.setDisable(!currentAuctionJoinable);
     } else {
       joinLiveButton.setText(joinedByCurrentUser ? "Tiếp tục đặt giá" : "Tham gia đặt giá");
       joinLiveButton.setDisable(!currentAuctionJoinable);
+      watchLiveButton.setText("Theo dõi realtime");
+      watchLiveButton.setDisable(!currentAuctionJoinable);
     }
-
-    watchLiveButton.setDisable(!currentAuctionJoinable);
     setCancelJoinButtonVisible(joinedByCurrentUser && currentAuctionJoinable && !currentUserLeftAuction);
 
     updatePaymentControls(detail);
@@ -554,12 +568,16 @@ public final class AuctionDetailController {
     Navigator.getInstance().goToLiveBidding();
   }
 
+  private void openLiveBiddingReadOnly() {
+    Navigator.getInstance().goToLiveBiddingReadOnly(auctionId);
+  }
+
   private void setLoading(boolean loading, String message) {
     loadingIndicator.setVisible(loading);
     loadingIndicator.setManaged(loading);
 
     joinLiveButton.setDisable(loading || !currentAuctionJoinable || currentUserLeftAuction);
-    watchLiveButton.setDisable(loading || !currentAuctionJoinable);
+    watchLiveButton.setDisable(loading || (!currentArchiveViewable && !currentAuctionJoinable));
     paymentButton.setDisable(loading || !paymentAllowed);
 
     if (cancelJoinButton != null && cancelJoinButton.isManaged()) {

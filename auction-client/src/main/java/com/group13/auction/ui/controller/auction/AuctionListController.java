@@ -222,10 +222,14 @@ public final class AuctionListController {
         detailButton.getStyleClass().add("auction-secondary-button");
         detailButton.setOnAction(event -> openAuctionDetail(card.auctionId()));
 
-        Button liveButton = new Button("Vào phòng live");
+        Button liveButton = new Button(card.joinable() ? "Vào phòng live" : "Xem lịch sử");
         liveButton.getStyleClass().add("auction-primary-button");
-        liveButton.setDisable(!card.joinable());
-        liveButton.setOnAction(event -> openLiveBidding(card.auctionId()));
+        liveButton.setDisable(false);
+        if (card.joinable()) {
+            liveButton.setOnAction(event -> openLiveBidding(card.auctionId()));
+        } else {
+            liveButton.setOnAction(event -> openLiveBiddingReadOnly(card.auctionId()));
+        }
 
         actionRow.getChildren().addAll(detailButton, liveButton);
         root.getChildren().addAll(topRow, priceRow, actionRow);
@@ -300,6 +304,10 @@ public final class AuctionListController {
             .getScreenStateStore()
             .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
         Navigator.getInstance().goToLiveBidding();
+    }
+
+    private void openLiveBiddingReadOnly(String auctionId) {
+        Navigator.getInstance().goToLiveBiddingReadOnly(auctionId);
     }
 
     private String selectedKeyword() {

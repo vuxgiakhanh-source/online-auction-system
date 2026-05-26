@@ -32,13 +32,15 @@ public final class NotificationCenterController {
     private final NotificationService notificationService = new NotificationService();
     private final PaymentService paymentService = new PaymentService();
     private final SecondChanceRealtimeService secondChanceRealtimeService =
-            SecondChanceRealtimeService.getInstance();
+        SecondChanceRealtimeService.getInstance();
 
     @FXML private ListView<SecondChanceOfferViewModel> secondChanceListView;
 
     @FXML private ListView<NotificationItemViewModel> secondChanceInboxListView;
 
     @FXML private VBox secondChanceEmptyBox;
+
+    @FXML private VBox secondChanceDetailCard;
 
     @FXML private Label offerItemNameLabel;
 
@@ -55,6 +57,8 @@ public final class NotificationCenterController {
     @FXML private Button acceptSecondChanceButton;
 
     @FXML private Button declineSecondChanceButton;
+
+    @FXML private Button openSecondChanceAuctionButton;
 
     @FXML private ListView<NotificationItemViewModel> notificationListView;
 
@@ -120,7 +124,7 @@ public final class NotificationCenterController {
     @FXML
     public void handleAcceptSecondChance() {
         SecondChanceOfferViewModel selected =
-                secondChanceListView.getSelectionModel().getSelectedItem();
+            secondChanceListView.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
             AlertUtil.showWarning("Vui lòng chọn một Second Chance Offer.");
@@ -135,13 +139,13 @@ public final class NotificationCenterController {
         }
 
         boolean confirmed =
-                AlertUtil.confirm(
-                        "Chấp nhận Second Chance Offer cho \""
-                                + selected.auctionItemName()
-                                + "\"?\nGiá đề nghị: "
-                                + selected.offerPriceText()
-                                + "\nTiền cọc yêu cầu: "
-                                + selected.depositRequiredText());
+            AlertUtil.confirm(
+                "Chấp nhận Second Chance Offer cho \""
+                    + selected.auctionItemName()
+                    + "\"?\nGiá đề nghị: "
+                    + selected.offerPriceText()
+                    + "\nTiền cọc yêu cầu: "
+                    + selected.depositRequiredText());
         if (!confirmed) {
             return;
         }
@@ -149,33 +153,33 @@ public final class NotificationCenterController {
         setLoading(true, "Đang chấp nhận Second Chance Offer...");
 
         paymentService
-                .acceptSecondChance(selected.auctionId())
-                .thenAccept(
-                        result ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            secondChanceRealtimeService.removeOfferByAuctionId(
-                                                    selected.auctionId());
-                                            loadPendingSecondChanceOffers();
-                                            setLoading(false, "Đã chấp nhận Second Chance Offer.");
-                                            AlertUtil.showInfo(buildSecondChanceAcceptedMessage(result));
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không chấp nhận được Second Chance Offer.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .acceptSecondChance(selected.auctionId())
+            .thenAccept(
+                result ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            secondChanceRealtimeService.removeOfferByAuctionId(
+                                selected.auctionId());
+                            loadPendingSecondChanceOffers();
+                            setLoading(false, "Đã chấp nhận Second Chance Offer.");
+                            AlertUtil.showInfo(buildSecondChanceAcceptedMessage(result));
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không chấp nhận được Second Chance Offer.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     /** Từ chối Second Chance Offer đang chọn. */
     @FXML
     public void handleDeclineSecondChance() {
         SecondChanceOfferViewModel selected =
-                secondChanceListView.getSelectionModel().getSelectedItem();
+            secondChanceListView.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
             AlertUtil.showWarning("Vui lòng chọn một Second Chance Offer.");
@@ -183,10 +187,10 @@ public final class NotificationCenterController {
         }
 
         boolean confirmed =
-                AlertUtil.confirm(
-                        "Từ chối Second Chance Offer cho \""
-                                + selected.auctionItemName()
-                                + "\"?");
+            AlertUtil.confirm(
+                "Từ chối Second Chance Offer cho \""
+                    + selected.auctionItemName()
+                    + "\"?");
         if (!confirmed) {
             return;
         }
@@ -194,27 +198,27 @@ public final class NotificationCenterController {
         setLoading(true, "Đang từ chối Second Chance Offer...");
 
         paymentService
-                .declineSecondChance(selected.auctionId())
-                .thenRun(
-                        () ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            secondChanceRealtimeService.removeOfferByAuctionId(
-                                                    selected.auctionId());
-                                            loadPendingSecondChanceOffers();
-                                            setLoading(false, "Đã từ chối Second Chance Offer.");
-                                            AlertUtil.showInfo(
-                                                    "Đã ghi nhận từ chối Second Chance Offer.");
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không từ chối được Second Chance Offer.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .declineSecondChance(selected.auctionId())
+            .thenRun(
+                () ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            secondChanceRealtimeService.removeOfferByAuctionId(
+                                selected.auctionId());
+                            loadPendingSecondChanceOffers();
+                            setLoading(false, "Đã từ chối Second Chance Offer.");
+                            AlertUtil.showInfo(
+                                "Đã ghi nhận từ chối Second Chance Offer.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không từ chối được Second Chance Offer.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     /** Đánh dấu thông báo đang chọn là đã đọc. */
@@ -235,23 +239,23 @@ public final class NotificationCenterController {
         setLoading(true, "Đang đánh dấu thông báo là đã đọc...");
 
         notificationService
-                .markNotificationRead(selected.id())
-                .thenRun(
-                        () ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            replaceSelectedNotification(selected.markRead());
-                                            setLoading(false, "Đã đánh dấu thông báo là đã đọc.");
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không đánh dấu được thông báo.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .markNotificationRead(selected.id())
+            .thenRun(
+                () ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            replaceSelectedNotification(selected.markRead());
+                            setLoading(false, "Đã đánh dấu thông báo là đã đọc.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không đánh dấu được thông báo.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     /** Đánh dấu tất cả thông báo chưa đọc là đã đọc. */
@@ -303,7 +307,7 @@ public final class NotificationCenterController {
     @FXML
     public void handleOpenSecondChanceAuction() {
         SecondChanceOfferViewModel selected =
-                secondChanceListView.getSelectionModel().getSelectedItem();
+            secondChanceListView.getSelectionModel().getSelectedItem();
 
         if (selected == null || selected.auctionId().isBlank()) {
             AlertUtil.showWarning("Vui lòng chọn một Second Chance Offer.");
@@ -315,34 +319,42 @@ public final class NotificationCenterController {
 
     private void configureSecondChanceListView() {
         secondChanceListView.setCellFactory(
-                ignored ->
-                        new ListCell<>() {
-                            @Override
-                            protected void updateItem(
-                                    SecondChanceOfferViewModel offer, boolean empty) {
-                                super.updateItem(offer, empty);
+            ignored ->
+                new ListCell<>() {
+                    @Override
+                    protected void updateItem(
+                        SecondChanceOfferViewModel offer, boolean empty) {
+                        super.updateItem(offer, empty);
 
-                                if (empty || offer == null) {
-                                    setText(null);
-                                    setGraphic(null);
-                                    return;
-                                }
+                        if (empty || offer == null) {
+                            setText(null);
+                            setGraphic(null);
+                            return;
+                        }
 
-                                setText(
-                                        offer.auctionItemName()
-                                                + "\n"
-                                                + offer.offerPriceText()
-                                                + "  •  Hạn: "
-                                                + offer.deadlineText());
-                            }
-                        });
+                        setText(
+                            offer.auctionItemName()
+                                + "\n"
+                                + offer.offerPriceText()
+                                + "  •  Hạn: "
+                                + offer.deadlineText());
+                    }
+                });
     }
 
     private void configureSecondChanceSelectionListener() {
         secondChanceListView
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((observable, oldValue, selected) -> renderSecondChanceDetail(selected));
+            .getSelectionModel()
+            .selectedItemProperty()
+            .addListener(
+                (observable, oldValue, selected) -> {
+                    if (selected != null) {
+                        notificationListView.getSelectionModel().clearSelection();
+                        secondChanceInboxListView.getSelectionModel().clearSelection();
+                        clearNotificationDetail();
+                    }
+                    renderSecondChanceDetail(selected);
+                });
     }
 
     private void configureSecondChanceInboxListView() {
@@ -364,6 +376,7 @@ public final class NotificationCenterController {
                 (observable, oldValue, selected) -> {
                     if (selected != null) {
                         notificationListView.getSelectionModel().clearSelection();
+                        secondChanceListView.getSelectionModel().clearSelection();
                         renderNotificationDetail(selected);
                     }
                 });
@@ -390,6 +403,7 @@ public final class NotificationCenterController {
                 (observable, oldValue, selected) -> {
                     if (selected != null) {
                         secondChanceInboxListView.getSelectionModel().clearSelection();
+                        secondChanceListView.getSelectionModel().clearSelection();
                         renderNotificationDetail(selected);
                     } else if (secondChanceInboxListView
                         .getSelectionModel()
@@ -437,26 +451,27 @@ public final class NotificationCenterController {
         setLoading(true, "Đang tải thông báo...");
 
         notificationService
-                .getNotifications()
-                .thenAccept(
-                        notifications ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            renderAllNotifications(notifications);
-                                            setLoading(false, "Đã tải danh sách thông báo.");
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không tải được danh sách thông báo.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .getNotifications()
+            .thenAccept(
+                notifications ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            renderAllNotifications(notifications);
+                            setLoading(false, "Đã tải danh sách thông báo.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không tải được danh sách thông báo.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void renderSecondChanceOffers(List<SecondChanceOfferViewModel> offers) {
+        String previouslySelectedAuctionId = selectedSecondChanceAuctionId();
         List<SecondChanceOfferViewModel> safeOffers = offers == null ? List.of() : offers;
         secondChanceListView.setItems(FXCollections.observableArrayList(safeOffers));
 
@@ -471,12 +486,17 @@ public final class NotificationCenterController {
             return;
         }
 
-        secondChanceListView.getSelectionModel().selectFirst();
+        if (previouslySelectedAuctionId == null || previouslySelectedAuctionId.isBlank()) {
+            clearSecondChanceDetail();
+            return;
+        }
+
+        selectSecondChanceOffer(previouslySelectedAuctionId);
     }
 
     private void renderAllNotifications(List<NotificationItemViewModel> notifications) {
         List<NotificationItemViewModel> safeNotifications =
-                notifications == null ? List.of() : notifications;
+            notifications == null ? List.of() : notifications;
 
         List<NotificationItemViewModel> general = new java.util.ArrayList<>();
         List<NotificationItemViewModel> secondChanceInbox = new java.util.ArrayList<>();
@@ -507,7 +527,7 @@ public final class NotificationCenterController {
 
     private void renderNotifications(List<NotificationItemViewModel> notifications) {
         List<NotificationItemViewModel> safeNotifications =
-                notifications == null ? List.of() : notifications;
+            notifications == null ? List.of() : notifications;
 
         notificationListView.setItems(FXCollections.observableArrayList(safeNotifications));
 
@@ -532,6 +552,9 @@ public final class NotificationCenterController {
             return;
         }
 
+        secondChanceDetailCard.setVisible(true);
+        secondChanceDetailCard.setManaged(true);
+
         offerItemNameLabel.setText(offer.auctionItemName());
         offerAuctionIdLabel.setText(offer.auctionId());
         offerPriceLabel.setText(offer.offerPriceText());
@@ -547,6 +570,7 @@ public final class NotificationCenterController {
             acceptSecondChanceButton.setDisable(false);
             declineSecondChanceButton.setDisable(false);
         }
+        openSecondChanceAuctionButton.setDisable(offer.auctionId().isBlank());
     }
 
     private void renderNotificationDetail(NotificationItemViewModel notification) {
@@ -574,7 +598,9 @@ public final class NotificationCenterController {
     }
 
     private void clearSecondChanceDetail() {
-        offerItemNameLabel.setText("Chưa có Second Chance Offer");
+        secondChanceDetailCard.setVisible(false);
+        secondChanceDetailCard.setManaged(false);
+        offerItemNameLabel.setText("Chọn một Second Chance Offer");
         offerAuctionIdLabel.setText("--");
         offerPriceLabel.setText("--");
         offerDepositLabel.setText("--");
@@ -582,6 +608,7 @@ public final class NotificationCenterController {
         offerStatusLabel.setText("--");
         acceptSecondChanceButton.setDisable(true);
         declineSecondChanceButton.setDisable(true);
+        openSecondChanceAuctionButton.setDisable(true);
     }
 
     private void clearNotificationDetail() {
@@ -645,9 +672,26 @@ public final class NotificationCenterController {
         markAllReadButton.setDisable(loading || !hasUnreadNotifications());
     }
 
+    private String selectedSecondChanceAuctionId() {
+        SecondChanceOfferViewModel selected =
+            secondChanceListView.getSelectionModel().getSelectedItem();
+        return selected == null ? null : selected.auctionId();
+    }
+
+    private void selectSecondChanceOffer(String auctionId) {
+        for (int index = 0; index < secondChanceListView.getItems().size(); index++) {
+            SecondChanceOfferViewModel offer = secondChanceListView.getItems().get(index);
+            if (offer != null && auctionId.equals(offer.auctionId())) {
+                secondChanceListView.getSelectionModel().select(index);
+                return;
+            }
+        }
+        clearSecondChanceDetail();
+    }
+
     private NotificationItemViewModel selectedNotification() {
         NotificationItemViewModel fromGeneral =
-                notificationListView.getSelectionModel().getSelectedItem();
+            notificationListView.getSelectionModel().getSelectedItem();
         if (fromGeneral != null) {
             return fromGeneral;
         }
@@ -675,8 +719,8 @@ public final class NotificationCenterController {
 
     private void openAuctionDetail(String auctionId) {
         AppContext.getInstance()
-                .getScreenStateStore()
-                .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
+            .getScreenStateStore()
+            .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
         Navigator.getInstance().goToAuctionDetail();
     }
 
@@ -692,32 +736,33 @@ public final class NotificationCenterController {
 
         NotificationItemViewModel selectedNotification = selectedNotification();
         markReadButton.setDisable(
-                loading || selectedNotification == null || selectedNotification.read());
+            loading || selectedNotification == null || selectedNotification.read());
         openAuctionButton.setDisable(
-                loading || selectedNotification == null || !selectedNotification.hasRelatedAuction());
+            loading || selectedNotification == null || !selectedNotification.hasRelatedAuction());
 
         SecondChanceOfferViewModel selectedOffer =
-                secondChanceListView.getSelectionModel().getSelectedItem();
+            secondChanceListView.getSelectionModel().getSelectedItem();
         boolean offerActionDisabled = loading || selectedOffer == null || selectedOffer.expired();
         acceptSecondChanceButton.setDisable(offerActionDisabled);
         declineSecondChanceButton.setDisable(offerActionDisabled);
+        openSecondChanceAuctionButton.setDisable(loading || selectedOffer == null);
 
         statusLabel.setText(message);
     }
 
     private String buildSecondChanceAcceptedMessage(PaymentResultViewModel result) {
         return "Đã chấp nhận Second Chance Offer.\n"
-                + "Giá đề nghị: "
-                + result.finalPriceText()
-                + "\n"
-                + "Tiền cọc đã trừ: "
-                + result.depositDeductedText()
-                + "\n"
-                + "Phần còn cần thanh toán: "
-                + result.remainingToPayText()
-                + "\n"
-                + "Số dư mới: "
-                + result.newBalanceText();
+            + "Giá đề nghị: "
+            + result.finalPriceText()
+            + "\n"
+            + "Tiền cọc đã trừ: "
+            + result.depositDeductedText()
+            + "\n"
+            + "Phần còn cần thanh toán: "
+            + result.remainingToPayText()
+            + "\n"
+            + "Số dư mới: "
+            + result.newBalanceText();
     }
 
     private String extractMessage(Throwable throwable) {
@@ -728,7 +773,7 @@ public final class NotificationCenterController {
 
         String message = current.getMessage();
         return message == null || message.isBlank()
-                ? "Có lỗi xảy ra khi xử lý thông báo."
-                : message;
+            ? "Có lỗi xảy ra khi xử lý thông báo."
+            : message;
     }
 }
