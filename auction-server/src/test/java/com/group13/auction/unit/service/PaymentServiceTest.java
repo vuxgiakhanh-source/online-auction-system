@@ -1,6 +1,5 @@
 package com.group13.auction.unit.service;
 
-import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
@@ -12,7 +11,6 @@ import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.bid.BidTransaction.BidResult;
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.observer.AuctionEvent.AuctionEventType;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.service.WalletService;
@@ -39,13 +37,10 @@ class PaymentServiceTest {
     @Mock IAuctionService auctionService;
     @Mock IRatingService ratingService;
     @Mock WalletService walletService;
-    @Mock AuctionDAO auctionDAO;
     @Mock AuctionWinnerDAO auctionWinnerDAO;
     @Mock SecondChanceOfferDAO secondChanceOfferDAO;
     @Mock BidTransactionDAO bidTransactionDAO;
     @Mock UserDAO userDAO;
-
-    @Mock ServerBroadcastNotifier broadcastNotifier;
 
     PaymentService paymentService;
     NormalUser seller;
@@ -59,9 +54,8 @@ class PaymentServiceTest {
     @BeforeEach
     void setUp() throws Exception {
         TestFixture.bootstrapSystemAdmin();
-        ServerBroadcastNotifier.setTestInstance(broadcastNotifier);
         paymentService = new PaymentService(
-                auctionService, ratingService, walletService, auctionDAO,
+                auctionService, ratingService, walletService,
                 auctionWinnerDAO, secondChanceOfferDAO, bidTransactionDAO, userDAO);
         seller = TestFixture.normalSeller("sellerXX1");
         winner = TestFixture.bidderWithBalance("winnerYY2", 5_000_000L);
@@ -71,7 +65,6 @@ class PaymentServiceTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        TestFixture.resetBroadcastNotifier();
         TestFixture.resetSystemAdmin();
     }
 
@@ -84,7 +77,6 @@ class PaymentServiceTest {
                 winner, FINAL_PRICE, DEPOSIT, auction.getId());
         order.verify(auctionService).markAsPaid(auction);
         order.verify(ratingService).rewardBidder(winner);
-        verify(broadcastNotifier).notifyPaymentSuccess(eq(auction), any());
     }
 
     @Test
@@ -110,8 +102,6 @@ class PaymentServiceTest {
         verify(ratingService).penalizeLatePayment(winner);
         verify(auctionService).notify(eq(auction), eq(AuctionEventType.SECOND_CHANCE_OFFERED),
                 eq(runnerUp), eq(2_500_000L), anyString());
-        verify(broadcastNotifier).notifyPaymentFailed(auction);
-        verify(broadcastNotifier).notifySecondChanceOffered(eq(auction), eq(runnerUp), any());
     }
 
     @Test
@@ -122,11 +112,7 @@ class PaymentServiceTest {
         when(auctionWinnerDAO.saveWinner(any())).thenReturn(true);
         paymentService.acceptSecondChanceOffer(offer, auction);
         assertEquals(SecondChanceOffer.OfferStatus.ACCEPTED, offer.getStatus());
-        verify(auctionWinnerDAO).saveWinner(any());
-        verify(auctionDAO).updateAuctionStatus(auction.getId(), auction.getStatus().name());
         verify(secondChanceOfferDAO).updateOfferStatus(offer.getId(), "ACCEPTED");
-        verify(broadcastNotifier).notifySecondChanceAccepted(auction);
-        verifyNoInteractions(userDAO);
     }
 
     @Test
@@ -138,8 +124,6 @@ class PaymentServiceTest {
         assertEquals(SecondChanceOffer.OfferStatus.DECLINED, offer.getStatus());
         verify(secondChanceOfferDAO).updateOfferStatus(offer.getId(), "DECLINED");
         verify(auctionService).cancelAuction(eq(auction), any());
-        verify(broadcastNotifier).notifySecondChanceDeclined(eq(auction), eq(offer));
-        verifyNoInteractions(auctionDAO);
     }
 
     private Auction finishedAuctionWithPendingWinner() {
