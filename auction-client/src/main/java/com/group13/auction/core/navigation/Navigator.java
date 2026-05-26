@@ -142,8 +142,18 @@ public final class Navigator {
         goTo(Route.AUCTION_DETAIL);
     }
 
-    /** Chuyển tới màn đấu giá trực tiếp. */
+    /** Chuyển tới màn đấu giá trực tiếp (tham gia / theo dõi realtime). */
     public void goToLiveBidding() {
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .remove(ScreenStateKeys.LIVE_BIDDING_READ_ONLY);
+        goTo(Route.LIVE_BIDDING);
+    }
+
+    /** Chuyển tới màn xem lịch sử bid và biểu đồ — không join, không đặt giá. */
+    public void goToLiveBiddingReadOnly(String auctionId) {
+        AppContext.getInstance().getScreenStateStore().put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
+        AppContext.getInstance().getScreenStateStore().put(ScreenStateKeys.LIVE_BIDDING_READ_ONLY, Boolean.TRUE);
         goTo(Route.LIVE_BIDDING);
     }
 
