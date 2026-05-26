@@ -128,6 +128,9 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
 
     @AfterEach
     void tearDown() throws Exception {
+        // Dừng tất cả executor của AutoBidProcessor trước khi xóa DB,
+        // tránh chain vẫn đang ghi notification khi auction đã bị xóa.
+        clearAutoBidProcessorState();
         clearAutoBidRegistryAll();
         clearAuctionManagerSingletons();
         cleanupDB();
@@ -189,11 +192,12 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                             auctionLock.lock();
                             try {
                                 bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                autoBidProcessor.submit(auction, bidder.getId());
                                 successes.incrementAndGet();
                             } finally {
                                 auctionLock.unlock();
                             }
+                            // FIX: submit() NGOÀI lock — chain cần acquire lock để chạy placeBid
+                            autoBidProcessor.submit(auction, bidder.getId());
                         } catch (Exception e) {
                             failures.incrementAndGet();
                         }
@@ -204,6 +208,9 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             for (Future<?> f : futures) f.get(90, TimeUnit.SECONDS);
             pool.shutdown();
             assertThat(pool.awaitTermination(15, TimeUnit.SECONDS)).isTrue();
+
+            // FIX: chờ chain autobid ghi xong DB trước khi assert
+            awaitAutoBidChain(auction.getId(), 15);
 
             // Giá không vượt maxBid cao nhất
             assertThat(auction.getCurrentPrice())
@@ -245,10 +252,12 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             lock.lock();
             try {
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-                autoBidProcessor.submit(auction, manualBidder.getId());
             } finally {
                 lock.unlock();
             }
+            // FIX: submit() NGOÀI lock
+            autoBidProcessor.submit(auction, manualBidder.getId());
+            awaitAutoBidChain(auction.getId(), 15);
 
             // autoBidder đang dẫn đầu hoặc đã cạn và bị xóa
             long finalPrice = auction.getCurrentPrice();
@@ -323,11 +332,12 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                                 lock.lock();
                                 try {
                                     bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                    autoBidProcessor.submit(auction, bidder.getId());
-                                    success.incrementAndGet();
                                 } finally {
                                     lock.unlock();
                                 }
+                                // FIX: submit() NGOÀI lock
+                                autoBidProcessor.submit(auction, bidder.getId());
+                                success.incrementAndGet();
                             } catch (Exception ignored) {}
                         }
                     }));
@@ -337,6 +347,11 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             for (Future<?> f : futures) f.get(120, TimeUnit.SECONDS);
             pool.shutdown();
             assertThat(pool.awaitTermination(15, TimeUnit.SECONDS)).isTrue();
+
+            // FIX: chờ tất cả chain hoàn thành trước khi assert DB
+            for (int a = 0; a < auctionCount; a++) {
+                awaitAutoBidChain(auctions.get(a).getId(), 15);
+            }
 
             // Mỗi phiên: giá DB khớp RAM
             for (int a = 0; a < auctionCount; a++) {
@@ -404,12 +419,13 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                                 lock.lock();
                                 try {
                                     bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                                    autoBidProcessor.submit(auction, bidder.getId());
                                     snapshots.add(auction.getCurrentPrice());
                                     success.incrementAndGet();
                                 } finally {
                                     lock.unlock();
                                 }
+                                // FIX: submit() NGOÀI lock
+                                autoBidProcessor.submit(auction, bidder.getId());
                             } catch (Exception ignored) {}
                         }
                     } catch (InterruptedException e) {
@@ -423,6 +439,9 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
 
             gate.countDown();
             assertThat(done.await(60, TimeUnit.SECONDS)).isTrue();
+
+            // FIX: chờ chain cuối hoàn thành trước khi assert giá
+            awaitAutoBidChain(auction.getId(), 15);
 
             assertThat(failures.get()).isZero();
             assertThat(success.get()).isPositive();
@@ -463,21 +482,24 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             bidService.joinAuction(trigger, auction, new BidderObserver(trigger, null));
 
             ReentrantLock lock = AuctionLockRegistry.getInstance().getLock(auction.getId());
-            long startMs = System.currentTimeMillis();
 
-            // Test không timeout = chain không vô tận
+            // FIX: placeBid trong lock, release lock, rồi mới submit()
             lock.lock();
             try {
                 long firstBid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                 bidService.placeBid(trigger, auction, firstBid, new StandardBidStrategy());
-                autoBidProcessor.submit(auction, trigger.getId());
             } finally {
                 lock.unlock();
             }
 
+            // Đo thời gian chain chạy (không giữ lock nên chain không bị block)
+            long startMs = System.currentTimeMillis();
+            autoBidProcessor.submit(auction, trigger.getId());
+            awaitAutoBidChain(auction.getId(), 10);
             long elapsedMs = System.currentTimeMillis() - startMs;
+
             assertThat(elapsedMs)
-                .as("process() phải kết thúc trong < 5s (không vô tận): thực tế=%dms", elapsedMs)
+                .as("Chain phải kết thúc trong < 5s (không vô tận): thực tế=%dms", elapsedMs)
                 .isLessThan(5_000L);
 
             // Giá không vượt maxBid
@@ -519,12 +541,17 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
             try {
                 long manualBid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                 bidService.placeBid(manualBidder, auction, manualBid, new StandardBidStrategy());
-                // process() phải tìm autoBidder qua DB fallback
-                autoBidProcessor.submit(auction, manualBidder.getId());
             } catch (Exception e) {
                 failures.incrementAndGet();
             } finally {
                 lock.unlock();
+            }
+            // FIX: submit() và chờ chain NGOÀI lock
+            try {
+                autoBidProcessor.submit(auction, manualBidder.getId());
+                awaitAutoBidChain(auction.getId(), 15);
+            } catch (Exception e) {
+                failures.incrementAndGet();
             }
 
             assertThat(failures.get())
@@ -572,10 +599,11 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
                         try {
                             long bid = 1_000_000L + BidIncrementCalculator.calculate(1_000_000L);
                             bidService.placeBid(bidder, auction, bid, new StandardBidStrategy());
-                            autoBidProcessor.submit(auction, bidder.getId());
                         } finally {
                             lock.unlock();
                         }
+                        // FIX: submit() NGOÀI lock
+                        autoBidProcessor.submit(auction, bidder.getId());
                     } catch (Exception e) {
                         failures.incrementAndGet();
                     }
@@ -637,5 +665,66 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
         Object obj = f.get(target);
         if (obj instanceof Map<?, ?> m) m.clear();
         else if (obj instanceof List<?> l) l.clear();
+    }
+
+    /**
+     * Dùng reflection để shutdown tất cả executor của AutoBidProcessor và xóa static state.
+     * Gọi trước cleanupDB() để tránh chain vẫn đang chạy khi auction bị xóa khỏi DB.
+     */
+    private void clearAutoBidProcessorState() {
+        try {
+            // 1. Shutdown tất cả per-auction executor
+            java.lang.reflect.Field execField =
+                AutoBidProcessor.class.getDeclaredField("auctionExecutors");
+            execField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.concurrent.ConcurrentHashMap<String, ExecutorService> executors =
+                (java.util.concurrent.ConcurrentHashMap<String, ExecutorService>) execField.get(null);
+            for (ExecutorService ex : executors.values()) {
+                ex.shutdownNow();
+            }
+            for (ExecutorService ex : executors.values()) {
+                try { ex.awaitTermination(500, TimeUnit.MILLISECONDS); }
+                catch (InterruptedException ignored) {}
+            }
+            executors.clear();
+
+            // 2. Xóa các static map khác
+            for (String name : new String[]{"chainRunning", "chainNeedsRecheck",
+                "bidActivityRings", "lastAutoBidMs"}) {
+                java.lang.reflect.Field f = AutoBidProcessor.class.getDeclaredField(name);
+                f.setAccessible(true);
+                Object map = f.get(null);
+                if (map instanceof Map<?, ?> m) m.clear();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Poll chainRunning via reflection cho đến khi chain kết thúc hoặc hết timeout.
+     * chainRunning được set false trong finally block của chain task, SAU KHI tất cả
+     * DB writes (từ bidService.placeBid) đã hoàn thành → an toàn để assert DB sau đây.
+     */
+    private void awaitAutoBidChain(String auctionId, long timeoutSeconds) {
+        try {
+            java.lang.reflect.Field f = AutoBidProcessor.class.getDeclaredField("chainRunning");
+            f.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.concurrent.ConcurrentHashMap<String,
+                java.util.concurrent.atomic.AtomicBoolean> runningMap =
+                (java.util.concurrent.ConcurrentHashMap<String,
+                    java.util.concurrent.atomic.AtomicBoolean>) f.get(null);
+
+            long deadline = System.currentTimeMillis() + timeoutSeconds * 1_000L;
+            // Cho chain một chút thời gian để start (executor scheduling delay)
+            Thread.sleep(30);
+            while (System.currentTimeMillis() < deadline) {
+                java.util.concurrent.atomic.AtomicBoolean flag = runningMap.get(auctionId);
+                if (flag == null || !flag.get()) return; // chain đã xong hoặc chưa bắt đầu
+                Thread.sleep(50);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {}
     }
 }
