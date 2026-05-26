@@ -1,5 +1,6 @@
 package com.group13.auction.viewmodel.seller;
 
+import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public final class SellerAuctionRowViewModel {
     private final LocalDateTime endTime;
     private final String viewerCountText;
     private final List<String> imageUrls;
+    private final List<ProductSpecificationViewModel> productSpecifications;
     private final boolean editable;
     private final boolean cancelRequestAllowed;
 
@@ -38,6 +40,7 @@ public final class SellerAuctionRowViewModel {
      * @param endTime thời gian kết thúc dạng raw
      * @param viewerCountText số lượt truy cập đã format
      * @param imageUrls danh sách URL ảnh sản phẩm đã upload
+     * @param productSpecifications thông số riêng của sản phẩm đã format để hiển thị
      * @param editable true nếu phiên còn có thể sửa
      * @param cancelRequestAllowed true nếu phiên còn có thể gửi yêu cầu hủy
      */
@@ -55,6 +58,7 @@ public final class SellerAuctionRowViewModel {
         LocalDateTime endTime,
         String viewerCountText,
         List<String> imageUrls,
+        List<ProductSpecificationViewModel> productSpecifications,
         boolean editable,
         boolean cancelRequestAllowed) {
         this.auctionId = auctionId;
@@ -70,6 +74,8 @@ public final class SellerAuctionRowViewModel {
         this.endTime = endTime;
         this.viewerCountText = viewerCountText;
         this.imageUrls = imageUrls == null ? List.of() : List.copyOf(imageUrls);
+        this.productSpecifications =
+            productSpecifications == null ? List.of() : List.copyOf(productSpecifications);
         this.editable = editable;
         this.cancelRequestAllowed = cancelRequestAllowed;
     }
@@ -132,6 +138,14 @@ public final class SellerAuctionRowViewModel {
 
     public boolean hasImages() {
         return !imageUrls.isEmpty();
+    }
+
+    public List<ProductSpecificationViewModel> productSpecifications() {
+        return productSpecifications;
+    }
+
+    public boolean hasProductSpecifications() {
+        return !productSpecifications.isEmpty();
     }
 
     public boolean editable() {
