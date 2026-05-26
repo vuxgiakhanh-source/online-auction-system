@@ -15,7 +15,6 @@ import com.group13.auction.model.item.Vehicle;
 import java.util.LinkedHashMap;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 
 import java.time.LocalDateTime;
@@ -47,10 +46,8 @@ public final class DTOMapper {
         }
         dto.setRoles(roles);
 
-        if (user instanceof SystemAdmin) {
-            dto.setAdminType("MASTER");
-        } else if (user instanceof Admin) {
-            dto.setAdminType("STAFF");
+        if (user instanceof Admin admin) {
+            dto.setAdminType(admin.getAdminLevel());
         }
 
         if (showBalance && user instanceof NormalUser normalUser) {
