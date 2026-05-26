@@ -400,6 +400,13 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 var result = PacketCodec.fromElement(payload, PaymentDTOs.PaymentResultDTO.class);
                 listeners.forEach(l -> l.onSecondChanceAcceptSuccess(result));
             }
+            // FIX BUG #5: SECOND_CHANCE_ACCEPTED_UPDATE bị thiếu → client không nhận broadcast
+            // khi runner-up chấp nhận SCO. Các watcher trên màn live-bidding không thấy winner mới.
+            // Map về onAuctionEnded vì cả 2 đều mang AuctionUpdateDTO với winner mới.
+            case SECOND_CHANCE_ACCEPTED_UPDATE -> {
+                var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
+                listeners.forEach(l -> l.onAuctionEnded(update));
+            }
             case SECOND_CHANCE_ACCEPT_FAILED -> {
                 var err = PacketCodec.fromElement(payload, ErrorDTO.class);
                 listeners.forEach(l -> l.onSecondChanceAcceptFailed(err));
