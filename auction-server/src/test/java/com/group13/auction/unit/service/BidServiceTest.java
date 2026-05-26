@@ -835,6 +835,21 @@ class BidServiceTest {
             assertThat(auction.getEndTime()).isEqualTo(endBefore);
             verify(auctionDAO, never()).updateEndTime(any(), any());
         }
+
+        @Test
+        @DisplayName("leave → gỡ observer, watchlist và đánh dấu LEFT")
+        void leaveAuction_cleansParticipationState() {
+            bidder.addJoinedAuction(runningAuction.getId());
+            bidder.addToWatchList(runningAuction.getId());
+            when(bidTransactionDAO.cancelBidsByBidder(any(), any())).thenReturn(0);
+
+            bidService.leaveAuction(bidder, runningAuction);
+
+            assertThat(bidder.hasJoined(runningAuction.getId())).isFalse();
+            assertThat(bidder.hasLeft(runningAuction.getId())).isTrue();
+            verify(auctionService).removeObserversForUser(runningAuction.getId(), bidder.getId());
+            verify(userDAO).markUserLeftAuction(bidder.getId(), runningAuction.getId());
+        }
     }
 
     // =========================================================================
@@ -888,6 +903,21 @@ class BidServiceTest {
         @BeforeEach
         void setUpFreshBidder() {
             freshBidder = TestFixture.bidderWithBalance("freshBidr1", 10_000_000L);
+        }
+
+        @Test
+        @DisplayName("đã leave trước đó → join lại phiên OPEN thành công và xóa trạng thái LEFT")
+        void joinAuction_afterLeave_rejoinsAndClearsLeft() {
+            freshBidder.addLeftAuction(runningAuction.getId());
+            when(ratingService.isEligible(freshBidder)).thenReturn(true);
+            doNothing().when(walletService).lockDeposit(any(), anyLong(), any());
+
+            bidService.joinAuction(freshBidder, runningAuction, observer);
+
+            assertThat(freshBidder.hasJoined(runningAuction.getId())).isTrue();
+            assertThat(freshBidder.hasLeft(runningAuction.getId())).isFalse();
+            verify(userDAO).saveUserAuctionActivity(
+                freshBidder.getId(), runningAuction.getId(), "JOINED");
         }
 
         @Test

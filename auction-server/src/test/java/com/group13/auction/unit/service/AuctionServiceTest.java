@@ -15,6 +15,8 @@ import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.observer.BidderObserver;
+import com.group13.auction.unit.TestFixture;
 import com.group13.auction.service.AuctionService;
 import com.group13.auction.service.iservice.IRatingService;
 
@@ -1018,6 +1020,36 @@ class AuctionServiceTest {
             // Assert
             assertThatThrownBy(() -> observers.add(mock(AuctionObserver.class)))
                 .isInstanceOf(UnsupportedOperationException.class);
+        }
+
+        @Test
+        @DisplayName("removeObserversForUser — gỡ BidderObserver của user khỏi phiên")
+        void removeObserversForUser_removesBidderObserver() {
+            Auction auction = openAuction(seller, 1_000_000L);
+            NormalUser bidder = TestFixture.bidderWithBalance("obsBidder", 5_000_000L);
+            BidderObserver bidderObserver = new BidderObserver(bidder, ratingService);
+            sut.addObserver(auction.getId(), bidderObserver);
+
+            sut.removeObserversForUser(auction.getId(), bidder.getId());
+
+            assertThat(sut.getObservers(auction.getId())).isEmpty();
+        }
+
+        @Test
+        @DisplayName("notify — bidder đã leave (không còn hasJoined) không nhận observer event")
+        void notify_skipsObserverWhenBidderNoLongerJoined() {
+            Auction auction = openAuction(seller, 1_000_000L);
+            NormalUser bidder = TestFixture.bidderWithBalance("leftBidder", 5_000_000L);
+            BidderObserver bidderObserver = spy(new BidderObserver(bidder, ratingService));
+            sut.addObserver(auction.getId(), bidderObserver);
+            bidder.addJoinedAuction(auction.getId());
+
+            bidder.removeJoinedAuction(auction.getId());
+            bidder.addLeftAuction(auction.getId());
+
+            sut.notify(auction, AuctionEvent.AuctionEventType.BID_PLACED, bidder, 1_500_000L);
+
+            verify(bidderObserver, never()).onBidPlaced(any());
         }
 
         @Test
