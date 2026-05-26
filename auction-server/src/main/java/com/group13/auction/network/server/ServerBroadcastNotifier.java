@@ -42,9 +42,6 @@ public class ServerBroadcastNotifier {
     private static final Logger log = LoggerFactory.getLogger(ServerBroadcastNotifier.class);
     private static final ServerBroadcastNotifier INSTANCE = new ServerBroadcastNotifier();
 
-    /** Override cho unit test — khi non-null, {@link #getInstance()} trả về instance này. */
-    private static volatile ServerBroadcastNotifier testInstance;
-
     private final SessionManager sessionManager = SessionManager.getInstance();
     private final NotificationDAO notificationDAO = new NotificationDAO();
     private final UserDAO userDAO = new UserDAO();
@@ -54,20 +51,7 @@ public class ServerBroadcastNotifier {
 
     private ServerBroadcastNotifier() {}
 
-    public static ServerBroadcastNotifier getInstance() {
-        ServerBroadcastNotifier test = testInstance;
-        return test != null ? test : INSTANCE;
-    }
-
-    /**
-     * Gán instance thay thế cho unit test (thường là Mockito no-op).
-     * Truyền {@code null} để trở lại singleton production.
-     *
-     * @see com.group13.auction.unit.TestFixture#installNoOpBroadcastNotifier()
-     */
-    public static void setTestInstance(ServerBroadcastNotifier instance) {
-        testInstance = instance;
-    }
+    public static ServerBroadcastNotifier getInstance() { return INSTANCE; }
 
     private void persistNotification(String userId, String auctionId, String title, String body) {
         persistNotification(userId, auctionId, NotificationTypes.SYSTEM, title, body);
