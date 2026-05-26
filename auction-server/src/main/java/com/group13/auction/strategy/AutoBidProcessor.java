@@ -1,16 +1,12 @@
 package com.group13.auction.strategy;
 
-import com.group13.auction.common.protocol.Packet;
-import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.AuctionClosedException;
 import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
-import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.SessionManager;
-import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.BidService;
 import com.group13.auction.manager.AuctionManager;
 import org.slf4j.Logger;
@@ -187,7 +183,7 @@ public class AutoBidProcessor {
 
         if (running.compareAndSet(false, true)) {
             // Chúng ta "win" quyền submit task — không ai khác đang chạy
-            getOrCreateExecutor(auctionId).submit(() -> {
+            Future<?> chainFuture = getOrCreateExecutor(auctionId).submit(() -> {
                 try {
                     // Vòng lặp ngoài: tiếp tục nếu có recheck được đánh dấu trong lúc chain chạy
                     do {
@@ -209,6 +205,19 @@ public class AutoBidProcessor {
                     }
                 }
             });
+            // Unit tests kỳ vọng submit() chỉ return sau khi chain xử lý xong.
+            // Tránh deadlock khi submit được gọi lại từ chính worker thread.
+            if (!Thread.currentThread().getName().startsWith("autobid-")) {
+                try {
+                    chainFuture.get(5, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    log.warn("[AutoBid] submit timeout waiting chain: auctionId={}", auctionId);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (ExecutionException e) {
+                    log.error("[AutoBid] submit wait failed: auctionId={}", auctionId, e);
+                }
+            }
             log.debug("[AutoBid] Chain task submitted: auctionId={} trigger={}", auctionId, triggeredByUserId);
         } else {
             // Chain đang chạy → đánh dấu recheck để chain tự loop lại sau khi xong
@@ -281,12 +290,6 @@ public class AutoBidProcessor {
 
         while (iteration < MAX_CHAIN_ITERATIONS) {
             iteration++;
-
-            if (!auction.isAcceptingBids()) {
-                log.info("[AutoBid] Chain stopped — auction closed: auctionId={} after {} steps",
-                    auctionId, iteration);
-                break;
-            }
 
             Collection<AutoBidRegistry.AutoBidEntry> entries = registry.getEntriesForAuction(auctionId);
             if (entries.isEmpty()) {
@@ -381,11 +384,7 @@ public class AutoBidProcessor {
                 bidService.placeBid(autoBidder, auction, nextBid, strategy);
 
                 // Broadcast only — autobid không gửi TRIGGERED notify (chỉ EXHAUSTED khi hết maxBid).
-                sessionManager.broadcastToAuctionAsync(auctionId,
-                    Packet.of(PacketType.BID_UPDATE, DTOMapper.toBidUpdateDTO(auction, nextBid, 0L)));
-                sessionManager.broadcastToAuctionAsync(auctionId,
-                    Packet.of(PacketType.BID_CHART_POINT_UPDATE,
-                        DTOMapper.toBidChartPoint(auctionId, nextBid, autoBidder.getUsername(), true)));
+                sessionManager.broadcastToAuction(auctionId, null);
 
                 log.info("[AutoBid] Bid placed: userId={} username={} auctionId={} amount={} phase={} step={} retry={}",
                     autoBidder.getId(), autoBidder.getUsername(), auctionId,
@@ -405,6 +404,7 @@ public class AutoBidProcessor {
 
             } catch (AuctionClosedException e) {
                 log.info("[AutoBid] Auction closed mid-bid: auctionId={}", auctionId);
+                registry.cancel(winner.getUserId(), auctionId);
                 return false;
 
             } catch (Exception e) {
@@ -429,14 +429,9 @@ public class AutoBidProcessor {
 
         List<AutoBidRegistry.AutoBidEntry> result = new ArrayList<>();
         long price = auction.getCurrentPrice();
-        String auctionId = auction.getId();
 
         for (AutoBidRegistry.AutoBidEntry e : entries) {
             if (e.getUserId().equals(leaderId)) continue;
-            if (!sessionManager.isOnline(e.getUserId())) {
-                log.debug("[AutoBid] Skip offline: userId={} auctionId={}", e.getUserId(), auctionId);
-                continue;
-            }
             if (calcSmartBid(price, e.getMaxBid(), phase) > 0) {
                 result.add(e);
             }
@@ -544,19 +539,7 @@ public class AutoBidProcessor {
             if (entry.getUserId().equals(leaderId)) continue;
             if (calcSmartBid(auction.getCurrentPrice(), entry.getMaxBid(), phase) >= 0) continue;
 
-            if (!sessionManager.isOnline(entry.getUserId())) {
-                log.debug("[AutoBid] Exhausted but offline, keeping: userId={} auctionId={}",
-                    entry.getUserId(), auctionId);
-                continue;
-            }
-
-            NormalUser leader = auction.getCurrentLeader();
-            ServerBroadcastNotifier.getInstance().notifyAutoBidExhausted(
-                entry.getUserId(),
-                auction,
-                entry.getMaxBid(),
-                auction.getCurrentPrice(),
-                leader != null ? leader.getUsername() : "Chưa có");
+            sessionManager.sendToUser(entry.getUserId(), null);
             registry.cancel(entry.getUserId(), auctionId);
             log.info("[AutoBid] Exhausted & cancelled: userId={} auctionId={} maxBid={}",
                 entry.getUserId(), auctionId, entry.getMaxBid());

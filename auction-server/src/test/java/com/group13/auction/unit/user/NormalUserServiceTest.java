@@ -310,6 +310,26 @@ class NormalUserWalletTest {
     }
 
     // =========================================================================
+    // markPenalized
+    // =========================================================================
+
+    @Nested
+    @DisplayName("markPenalized()")
+    class PenalizedFlag {
+
+        @Test
+        @DisplayName("sets flag; second call is idempotent")
+        void setsFlag_idempotent() {
+            NormalUser user = TestFixture.normalBidder("penalizedUser");
+            assertThat(user.isHasEverBeenPenalized()).isFalse();
+            user.markPenalized();
+            assertThat(user.isHasEverBeenPenalized()).isTrue();
+            user.markPenalized();
+            assertThat(user.isHasEverBeenPenalized()).isTrue();
+        }
+    }
+
+    // =========================================================================
     // addToWatchList (idempotent)
     // =========================================================================
 

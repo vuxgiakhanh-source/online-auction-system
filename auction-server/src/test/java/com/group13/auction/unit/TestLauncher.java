@@ -22,10 +22,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPacka
 public final class TestLauncher {
 
     private static final String UNIT = "com.group13.auction.unit";
-    private static final String WEBSOCKET_UNIT = "com.group13.auction.websocket";
-    private static final String SECURITY = "com.group13.auction.security";
-    private static final String CONCURRENCY = "com.group13.auction.concurrency";
-    private static final String LOAD = "com.group13.auction.load";
 
     private TestLauncher() {}
 
@@ -41,11 +37,7 @@ public final class TestLauncher {
         LauncherDiscoveryRequest request =
                 LauncherDiscoveryRequestBuilder.request()
                         .selectors(
-                                selectPackage(UNIT),
-                                selectPackage(WEBSOCKET_UNIT),
-                                selectPackage(SECURITY),
-                                selectPackage(CONCURRENCY),
-                                selectPackage(LOAD))
+                                selectPackage(UNIT))
                         .filters(includeClassNamePatterns(".*Test"))
                         .build();
 

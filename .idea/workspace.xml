@@ -6,8 +6,45 @@
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/home.css" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/css/home.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/resources/com/group13/auction/view/home/landing-view.fxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidProcessor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestFixture.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestFixture.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionStateMachineTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionStateMachineTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionWinnerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionWinnerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/SecondChanceOfferTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/SecondChanceOfferTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/bank/SystemBankTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/bank/SystemBankTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/bid/QualityReportTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/bid/QualityReportTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/manager/AuctionManagerTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/manager/AuctionManagerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/model/BidTransactionTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/model/NotificationTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/network/RestrictedPacketPolicyTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AdminObserverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionEventTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionObserverContractTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionObserverContractTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/BidderObserverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/SellerObserverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/StaffObserverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/SystemAdminObserverTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AccountServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AccountServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AuctionServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AuctionServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/AuctionSortServiceTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/BidServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/PaymentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/PaymentServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/RatingServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/RatingServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/WalletServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/service/WalletServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AutoBidRegistryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AutoBidRegistryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AutoBidStrategyTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/AutoBidStrategyTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/BidIncrementCalculatorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/BidIncrementCalculatorTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/BidStrategyContractTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/BidStrategyContractTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/strategy/StandardBidStrategyTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/AdminTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/AdminTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/SystemAdminTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/SystemAdminTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserFactoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserFactoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,7 +52,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="748" />
+    <option name="cachedIndexableFilesCount" value="754" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -243,7 +280,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Launcher">
+  <component name="RunManager" selected="Application.TestLauncher">
     <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
       <module name="auction-client" />
@@ -334,10 +371,10 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.TestLauncher" />
         <item itemvalue="Application.Launcher" />
         <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.AutoBidProcessorTest" />
-        <item itemvalue="Application.TestLauncher" />
         <item itemvalue="JUnit.ChatbotProviderTest" />
       </list>
     </recent_temporary>
@@ -430,13 +467,8 @@
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserTest.java</url>
-          <line>26</line>
-          <option name="timeStamp" value="30" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/UserFactoryTest.java</url>
-          <line>30</line>
+          <line>19</line>
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -456,7 +488,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/user/NormalUserServiceTest.java</url>
-          <line>317</line>
+          <line>337</line>
           <option name="timeStamp" value="46" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -466,28 +498,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/auction/AuctionStateMachineTest.java</url>
-          <line>23</line>
+          <line>17</line>
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/bid/QualityReportTest.java</url>
-          <line>35</line>
+          <line>18</line>
           <option name="timeStamp" value="53" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionObserverContractTest.java</url>
-          <line>51</line>
+          <line>27</line>
           <option name="timeStamp" value="54" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/BidderObserverTest.java</url>
-          <line>33</line>
-          <option name="timeStamp" value="55" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/SystemAdminObserverTest.java</url>
-          <line>33</line>
-          <option name="timeStamp" value="56" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/AccountServiceLoadIT.java</url>
@@ -496,18 +518,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
-          <line>36</line>
-          <properties class="com.group13.auction.unit.TestLauncher">
+          <line>32</line>
+          <properties class="com.group13.auction.unit.TestLauncher" method="main">
             <option name="EMULATED" value="true" />
             <option name="WATCH_EXIT" value="false" />
           </properties>
           <option name="timeStamp" value="43" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-field">
-          <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
-          <line>26</line>
-          <properties field="CONCURRENCY" class="com.group13.auction.unit.TestLauncher" />
-          <option name="timeStamp" value="49" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -23,6 +23,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -179,10 +183,15 @@ class AuctionTimerServiceTest {
     @DisplayName("start pending auctions")
     class StartPendingAuctions {
 
-        @Test
-        @DisplayName("OPEN auction with startTime before now starts and broadcasts")
-        void openAuction_startTimeBeforeNow_startsAndBroadcasts() throws Exception {
-            Auction auction = openAuction(NOW.minusMinutes(1), NOW.plusHours(1));
+        static Stream<LocalDateTime> dueStartTimes() {
+            return Stream.of(NOW.minusMinutes(1), NOW);
+        }
+
+        @ParameterizedTest
+        @MethodSource("dueStartTimes")
+        @DisplayName("OPEN auction with startTime <= now starts and broadcasts")
+        void openAuction_startTimeDue_startsAndBroadcasts(LocalDateTime startTime) throws Exception {
+            Auction auction = openAuction(startTime, NOW.plusHours(1));
             register(auction);
             doAnswer(invocation -> {
                 auction.transitionToRunning();
@@ -194,22 +203,6 @@ class AuctionTimerServiceTest {
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.RUNNING);
             verify(auctionService).startAuction(auction);
             verifyBroadcast(auction, PacketType.AUCTION_STARTED_UPDATE);
-        }
-
-        @Test
-        @DisplayName("OPEN auction with startTime equal now starts")
-        void openAuction_startTimeEqualNow_starts() throws Exception {
-            Auction auction = openAuction(NOW, NOW.plusHours(1));
-            register(auction);
-            doAnswer(invocation -> {
-                auction.transitionToRunning();
-                return null;
-            }).when(auctionService).startAuction(auction);
-
-            invokeStartPending(NOW);
-
-            assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.RUNNING);
-            verify(auctionService).startAuction(auction);
         }
 
         @Test
@@ -278,10 +271,15 @@ class AuctionTimerServiceTest {
     @DisplayName("close expired auctions")
     class CloseExpiredAuctions {
 
-        @Test
-        @DisplayName("RUNNING auction with endTime before now closes")
-        void runningAuction_endTimeBeforeNow_closes() throws Exception {
-            Auction auction = runningAuction(NOW.minusHours(1), NOW.minusMinutes(1));
+        static Stream<LocalDateTime> expiredEndTimes() {
+            return Stream.of(NOW.minusMinutes(1), NOW);
+        }
+
+        @ParameterizedTest
+        @MethodSource("expiredEndTimes")
+        @DisplayName("RUNNING auction with endTime <= now closes")
+        void runningAuction_endTimeDue_closes(LocalDateTime endTime) throws Exception {
+            Auction auction = runningAuction(NOW.minusHours(1), endTime);
             register(auction);
             doAnswer(invocation -> {
                 auction.transitionToCancel();
@@ -291,21 +289,6 @@ class AuctionTimerServiceTest {
             invokeCloseExpired(NOW);
 
             assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.CANCELED);
-            verify(auctionService).closeAuction(auction);
-        }
-
-        @Test
-        @DisplayName("RUNNING auction with endTime equal now closes")
-        void runningAuction_endTimeEqualNow_closes() throws Exception {
-            Auction auction = runningAuction(NOW.minusHours(1), NOW);
-            register(auction);
-            doAnswer(invocation -> {
-                auction.transitionToCancel();
-                return null;
-            }).when(auctionService).closeAuction(auction);
-
-            invokeCloseExpired(NOW);
-
             verify(auctionService).closeAuction(auction);
         }
 
