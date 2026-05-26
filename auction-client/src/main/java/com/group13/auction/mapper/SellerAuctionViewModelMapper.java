@@ -4,9 +4,12 @@ import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
+import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mapper chuyển auction DTO sang view model phục vụ màn quản lý phiên của người bán.
@@ -68,6 +71,7 @@ public final class SellerAuctionViewModelMapper {
                 endTime,
                 Math.max(0, auction == null ? 0 : auction.getViewerCount()) + " lượt truy cập",
                 imageUrls(item),
+                productSpecifications(item),
                 isOpen,
                 isOpen);
     }
@@ -109,6 +113,115 @@ public final class SellerAuctionViewModelMapper {
             .filter(url -> url != null && !url.isBlank())
             .map(String::trim)
             .toList();
+    }
+
+    private static List<ProductSpecificationViewModel> productSpecifications(
+        AuctionDTOs.ItemDTO item) {
+        if (item == null || item.getExtraFields() == null || item.getExtraFields().isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Object> fields = item.getExtraFields();
+        List<ProductSpecificationViewModel> specifications = new ArrayList<>();
+
+        switch (normalize(item.getCategory())) {
+            case "ELECTRONICS" -> {
+                addTextSpecification(specifications, "Thương hiệu", fields.get("brand"));
+                addNumberSpecification(specifications, "Bảo hành", fields.get("warrantyMonths"), " tháng");
+                addTextSpecification(specifications, "Tình trạng", fields.get("condition"));
+            }
+            case "ART" -> {
+                addTextSpecification(specifications, "Nghệ sĩ", fields.get("artist"));
+                addNumberSpecification(specifications, "Năm sáng tác", fields.get("yearCreated"), "");
+                addTextSpecification(specifications, "Chất liệu", fields.get("medium"));
+            }
+            case "VEHICLE" -> {
+                addTextSpecification(specifications, "Nhà sản xuất", fields.get("manufacturer"));
+                addNumberSpecification(specifications, "Năm sản xuất", fields.get("year"), "");
+                addNumberSpecification(specifications, "Số km đã đi", fields.get("mileage"), " km");
+            }
+            default -> addUnknownCategorySpecifications(specifications, fields);
+        }
+
+        return List.copyOf(specifications);
+    }
+
+    private static void addUnknownCategorySpecifications(
+        List<ProductSpecificationViewModel> specifications, Map<String, Object> fields) {
+        fields.forEach(
+            (key, value) -> addTextSpecification(specifications, humanReadableKey(key), value));
+    }
+
+    private static void addTextSpecification(
+        List<ProductSpecificationViewModel> specifications, String label, Object value) {
+        String text = objectToText(value);
+        if (hasText(label) && hasText(text)) {
+            specifications.add(new ProductSpecificationViewModel(label, text));
+        }
+    }
+
+    private static void addNumberSpecification(
+        List<ProductSpecificationViewModel> specifications,
+        String label,
+        Object value,
+        String suffix) {
+        String numberText = numberToText(value);
+        if (hasText(numberText)) {
+            specifications.add(
+                new ProductSpecificationViewModel(label, numberText + (suffix == null ? "" : suffix)));
+        }
+    }
+
+    private static String objectToText(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        String text = String.valueOf(value).trim();
+        return "null".equalsIgnoreCase(text) ? "" : text;
+    }
+
+    private static String numberToText(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        if (value instanceof Number number) {
+            long longValue = number.longValue();
+            if (Math.abs(number.doubleValue() - longValue) < 0.000_001D) {
+                return String.format("%,d", longValue);
+            }
+            return String.format("%,.2f", number.doubleValue());
+        }
+
+        String text = objectToText(value);
+        if (!hasText(text)) {
+            return "";
+        }
+
+        try {
+            double number = Double.parseDouble(text);
+            long longValue = (long) number;
+            if (Math.abs(number - longValue) < 0.000_001D) {
+                return String.format("%,d", longValue);
+            }
+            return String.format("%,.2f", number);
+        } catch (NumberFormatException exception) {
+            return text;
+        }
+    }
+
+    private static String humanReadableKey(String key) {
+        if (!hasText(key)) {
+            return "Thông tin";
+        }
+
+        String withSpaces =
+            key.trim()
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .replaceAll("(?<=[a-z])(?=[A-Z])", " ");
+        return Character.toUpperCase(withSpaces.charAt(0)) + withSpaces.substring(1);
     }
 
     private static String categoryText(AuctionDTOs.ItemDTO item) {
