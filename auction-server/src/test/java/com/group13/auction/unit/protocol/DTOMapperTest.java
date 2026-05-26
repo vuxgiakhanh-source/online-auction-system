@@ -7,7 +7,9 @@ import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.item.Art;
 import com.group13.auction.model.item.Item;
+import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.unit.TestFixture;
 import org.junit.jupiter.api.*;
@@ -85,6 +87,40 @@ class DTOMapperTest {
         void bannedUser_statusMapped() {
             NormalUser banned = TestFixture.bannedBidder("bannedusr1");
             assertThat(DTOMapper.toUserDTO(banned, false).getAccountStatus()).isEqualTo("BANNED");
+        }
+
+        @Test
+        @DisplayName("Admin MASTER (reconstitute) → adminType MASTER")
+        void adminMaster_adminTypeMapped() {
+            Admin master = Admin.reconstitute(
+                    "admin-master-1",
+                    LocalDateTime.now(),
+                    LocalDateTime.now(),
+                    "superadmin",
+                    "hash",
+                    "master@test.com",
+                    User.AccountStatus.ACTIVE,
+                    5.0,
+                    Admin.LEVEL_MASTER,
+                    null);
+            assertThat(DTOMapper.toUserDTO(master, false).getAdminType()).isEqualTo(Admin.LEVEL_MASTER);
+        }
+
+        @Test
+        @DisplayName("Admin STAFF (reconstitute) → adminType STAFF")
+        void adminStaff_adminTypeMapped() {
+            Admin staff = Admin.reconstitute(
+                    "admin-staff-1",
+                    LocalDateTime.now(),
+                    LocalDateTime.now(),
+                    "staff1",
+                    "hash",
+                    "staff@test.com",
+                    User.AccountStatus.ACTIVE,
+                    5.0,
+                    Admin.LEVEL_STAFF,
+                    null);
+            assertThat(DTOMapper.toUserDTO(staff, false).getAdminType()).isEqualTo(Admin.LEVEL_STAFF);
         }
     }
 
