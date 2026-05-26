@@ -21,26 +21,7 @@
 
     <Pane styleClass="background-layer"/>
 
-    <HBox maxHeight="-Infinity"
-          maxWidth="-Infinity"
-          pickOnBounds="false"
-          styleClass="auth-back-container"
-          StackPane.alignment="TOP_LEFT">
-        <Button fx:id="backToLandingButton"
-                graphicTextGap="8.0"
-                mnemonicParsing="false"
-                onAction="#handleBackToLanding"
-                styleClass="auth-back-button"
-                text="Landing">
-            <graphic>
-                <ImageView fitHeight="18.0" preserveRatio="true">
-                    <Image url="@../../assets/icons/accent/icon-back.png"/>
-                </ImageView>
-            </graphic>
-        </Button>
-    </HBox>
-
-    <VBox alignment="CENTER" fillWidth="false">
+    <VBox alignment="CENTER" fillWidth="false" pickOnBounds="false">
         <StackPane maxWidth="700.0"
                    minHeight="540.0"
                    prefHeight="540.0"
@@ -97,6 +78,25 @@
             </VBox>
         </StackPane>
     </VBox>
+
+    <HBox maxHeight="-Infinity"
+          maxWidth="-Infinity"
+          pickOnBounds="false"
+          styleClass="auth-back-container"
+          StackPane.alignment="TOP_LEFT">
+        <Button fx:id="backToLandingButton"
+                graphicTextGap="8.0"
+                mnemonicParsing="false"
+                onAction="#handleBackToLanding"
+                styleClass="auth-back-button"
+                text="Landing">
+            <graphic>
+                <ImageView fitHeight="18.0" preserveRatio="true">
+                    <Image url="@../../assets/icons/accent/icon-back.png"/>
+                </ImageView>
+            </graphic>
+        </Button>
+    </HBox>
 
     <VBox alignment="BOTTOM_RIGHT"
           maxWidth="190.0"
