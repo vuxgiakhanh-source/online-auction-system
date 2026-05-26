@@ -8,7 +8,11 @@ import com.group13.auction.common.dto.user.UserDTO;
 import com.group13.auction.dao.AccountBanDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.SecondChanceOffer;
+import com.group13.auction.model.item.Art;
+import com.group13.auction.model.item.Electronics;
 import com.group13.auction.model.item.Item;
+import com.group13.auction.model.item.Vehicle;
+import java.util.LinkedHashMap;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
@@ -157,6 +161,25 @@ public final class DTOMapper {
             dto.setSellerId(item.getSeller().getId());
             dto.setSellerUsername(item.getSeller().getUsername());
         }
+        // Map extraFields — các trường riêng theo loại sản phẩm
+        java.util.Map<String, Object> extraFields = new LinkedHashMap<>();
+        if (item instanceof Electronics e) {
+            extraFields.put("brand", e.getBrand());
+            extraFields.put("warrantyMonths", e.getWarrantyMonths());
+            extraFields.put("condition", e.getCondition());
+        } else if (item instanceof Art a) {
+            extraFields.put("artist", a.getArtist());
+            extraFields.put("yearCreated", a.getYearCreated());
+            extraFields.put("medium", a.getMedium());
+        } else if (item instanceof Vehicle v) {
+            extraFields.put("manufacturer", v.getManufacturer());
+            extraFields.put("year", v.getYear());
+            extraFields.put("mileage", v.getMileage());
+        }
+        if (!extraFields.isEmpty()) {
+            dto.setExtraFields(extraFields);
+        }
+
         // Map imageUrls — trả về list rỗng (không null) khi item không có ảnh
         dto.setImageUrls(item.getImageUrls());
         return dto;
