@@ -10,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.layout.VBox;
 
 /** Controller cho màn hồ sơ người dùng. */
 public final class ProfileController {
@@ -17,35 +18,24 @@ public final class ProfileController {
     private final ProfileService profileService = new ProfileService();
 
     @FXML private Label usernameLabel;
-
     @FXML private Label emailLabel;
-
     @FXML private Label rolesLabel;
-
-    @FXML private Label primaryRoleLabel;
-
     @FXML private Label accountStatusLabel;
-
     @FXML private Label ratingLabel;
+    @FXML private Label restoredLabel;
 
     @FXML private Label balanceLabel;
-
     @FXML private Label availableBalanceLabel;
-
     @FXML private Label lockedDepositLabel;
-
     @FXML private Label createdAtLabel;
-
     @FXML private Label updatedAtLabel;
 
+    @FXML private VBox sellerRequestCard;
     @FXML private Label sellerRequestHintLabel;
-
-    @FXML private Label statusLabel;
-
     @FXML private Button requestSellerRoleButton;
 
+    @FXML private Label statusLabel;
     @FXML private Button refreshButton;
-
     @FXML private ProgressIndicator loadingIndicator;
 
     /** Khởi tạo màn hồ sơ và tải thông tin user hiện tại. */
@@ -66,66 +56,66 @@ public final class ProfileController {
         loadProfile();
     }
 
-    /** Gửi yêu cầu nâng cấp tài khoản thành Seller. */
+    /** Gửi yêu cầu mở quyền Seller cho tài khoản hiện tại. */
     @FXML
     public void handleRequestSellerRole() {
-        if (!AlertUtil.confirm("Gửi yêu cầu nâng cấp tài khoản hiện tại thành Seller?")) {
+        if (!AlertUtil.confirm("Gửi yêu cầu mở quyền Seller cho tài khoản này?")) {
             return;
         }
 
-        setLoading(true, "Đang gửi yêu cầu nâng cấp Seller...");
+        setLoading(true, "Đang gửi yêu cầu...");
 
         profileService
-                .requestSellerRole()
-                .thenAccept(
-                        profile ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            renderProfile(profile);
-                                            setLoading(false, "Yêu cầu nâng cấp Seller đã được xử lý.");
-                                            AlertUtil.showInfo("Tài khoản đã được cập nhật theo phản hồi từ server.");
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không gửi được yêu cầu nâng cấp Seller.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .requestSellerRole()
+            .thenAccept(
+                profile ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            renderProfile(profile);
+                            setLoading(false, "Yêu cầu đã được xử lý.");
+                            AlertUtil.showInfo("Thông tin tài khoản đã được cập nhật.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không gửi được yêu cầu.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void loadProfile() {
-        setLoading(true, "Đang tải hồ sơ người dùng...");
+        setLoading(true, "Đang tải hồ sơ...");
 
         profileService
-                .getMyProfile()
-                .thenAccept(
-                        profile ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            renderProfile(profile);
-                                            setLoading(false, "Đã tải hồ sơ người dùng mới nhất.");
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không tải được hồ sơ người dùng.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .getMyProfile()
+            .thenAccept(
+                profile ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            renderProfile(profile);
+                            setLoading(false, "Đã tải hồ sơ mới nhất.");
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không tải được hồ sơ.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void renderProfile(UserProfileViewModel profile) {
         usernameLabel.setText(profile.username());
         emailLabel.setText(profile.email());
         rolesLabel.setText(profile.rolesText());
-        primaryRoleLabel.setText(profile.primaryRoleText());
         accountStatusLabel.setText(profile.accountStatusText());
         ratingLabel.setText(profile.ratingText());
+        restoredLabel.setText(profile.restoredText());
 
         balanceLabel.setText(profile.balanceText());
         availableBalanceLabel.setText(profile.availableBalanceText());
@@ -138,34 +128,25 @@ public final class ProfileController {
     }
 
     private void updateSellerRequestState(UserProfileViewModel profile) {
-        requestSellerRoleButton.setDisable(!profile.canRequestSellerRole());
+        boolean showSellerRequest = !profile.seller() && !profile.admin();
 
-        if (profile.seller()) {
-            sellerRequestHintLabel.setText("Tài khoản hiện tại đã có quyền Seller.");
-            requestSellerRoleButton.setText("Đã là Seller");
-            return;
-        }
+        sellerRequestCard.setVisible(showSellerRequest);
+        sellerRequestCard.setManaged(showSellerRequest);
 
-        if (profile.admin()) {
-            sellerRequestHintLabel.setText("Tài khoản Admin không cần yêu cầu quyền Seller.");
-            requestSellerRoleButton.setText("Không áp dụng");
-            return;
-        }
-
-        if (profile.penalized()) {
-            sellerRequestHintLabel.setText("Tài khoản đã từng bị xử phạt nên không thể tự động nâng cấp Seller.");
-            requestSellerRoleButton.setText("Không đủ điều kiện");
+        if (!showSellerRequest) {
             return;
         }
 
         if (profile.canRequestSellerRole()) {
-            sellerRequestHintLabel.setText("Tài khoản đủ điều kiện gửi yêu cầu nâng cấp thành Seller.");
+            sellerRequestHintLabel.setText("Bạn có thể gửi yêu cầu mở quyền Seller cho tài khoản này.");
             requestSellerRoleButton.setText("Yêu cầu quyền Seller");
+            requestSellerRoleButton.setDisable(false);
             return;
         }
 
-        sellerRequestHintLabel.setText("Tài khoản hiện tại chưa đủ điều kiện yêu cầu quyền Seller.");
-        requestSellerRoleButton.setText("Không đủ điều kiện");
+        sellerRequestHintLabel.setText("Tài khoản hiện chưa thể gửi yêu cầu mở quyền Seller.");
+        requestSellerRoleButton.setText("Không khả dụng");
+        requestSellerRoleButton.setDisable(true);
     }
 
     private void setLoading(boolean loading, String message) {
@@ -173,7 +154,10 @@ public final class ProfileController {
         loadingIndicator.setManaged(loading);
 
         refreshButton.setDisable(loading);
-        requestSellerRoleButton.setDisable(loading);
+
+        if (requestSellerRoleButton != null && requestSellerRoleButton.isVisible()) {
+            requestSellerRoleButton.setDisable(loading);
+        }
 
         statusLabel.setText(message);
     }
@@ -183,6 +167,8 @@ public final class ProfileController {
         if (current instanceof CompletionException && current.getCause() != null) {
             current = current.getCause();
         }
-        return current.getMessage() == null ? "Có lỗi xảy ra khi xử lý hồ sơ." : current.getMessage();
+
+        String message = current == null ? null : current.getMessage();
+        return message == null || message.isBlank() ? "Có lỗi xảy ra khi xử lý hồ sơ." : message;
     }
 }
