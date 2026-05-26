@@ -95,6 +95,11 @@ public interface IAuctionService {
    */
   void addObserver(String auctionId, AuctionObserver observer);
 
+  /**
+   * Gỡ observer in-memory của user khỏi phiên (sau leave/cancel participation).
+   */
+  void removeObserversForUser(String auctionId, String userId);
+
   void notify(Auction auction, AuctionEvent.AuctionEventType type,
               NormalUser bidder, long amount);
 

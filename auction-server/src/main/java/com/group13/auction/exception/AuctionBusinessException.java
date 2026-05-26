@@ -10,7 +10,7 @@ public class AuctionBusinessException extends RuntimeException {
         INSUFFICIENT_DEPOSIT,
         /** Seller không được tự đấu giá món hàng của chính mình. */
         SELLER_CANNOT_BID_OWN_ITEM,
-        /** User đã từng rời phiên này — không được tham gia lại. */
+        /** @deprecated Giữ mã lỗi tương thích client; phiên OPEN cho phép join lại sau leave. */
         ALREADY_LEFT_AUCTION
     }
 
@@ -30,7 +30,7 @@ public class AuctionBusinessException extends RuntimeException {
             case SELLER_CANNOT_BID_OWN_ITEM:
                 return "Seller không được tự đấu giá món hàng của chính mình.";
             case ALREADY_LEFT_AUCTION:
-                return "Bạn đã rời phiên đấu giá này và không thể tham gia lại.";
+                return "Bạn đã rời phiên đấu giá này.";
             default:
                 return "Vi phạm logic hệ thống.";
         }

@@ -156,11 +156,6 @@ public final class AuctionDetailController {
    */
   @FXML
   public void handleJoinLive() {
-    if (joinedAuctionState.hasLeft(auctionId)) {
-      AlertUtil.showWarning("Bạn đã hủy tham gia phiên đấu giá này và không thể tham gia lại.");
-      return;
-    }
-
     if (joinedAuctionState.hasJoined(auctionId)) {
       openLiveBidding();
       return;
@@ -182,15 +177,6 @@ public final class AuctionDetailController {
               FxThreadUtil.runOnFxThread(
                   () -> {
                     String message = extractMessage(throwable);
-
-                    if (message.contains("ALREADY_LEFT_AUCTION") || message.contains("đã rời")) {
-                      joinedAuctionState.markLeft(auctionId);
-                      setLoading(false, "Bạn đã hủy tham gia phiên đấu giá này.");
-                      AlertUtil.showWarning(
-                          "Bạn đã từng hủy tham gia phiên này và không thể tham gia lại.");
-                      loadAuctionDetail();
-                      return;
-                    }
 
                     setLoading(false, "Không tham gia được phiên đấu giá.");
                     AlertUtil.showError(message);

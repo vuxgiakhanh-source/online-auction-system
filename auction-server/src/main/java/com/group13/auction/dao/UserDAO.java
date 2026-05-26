@@ -136,7 +136,11 @@ public class UserDAO {
         String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
             "VALUES (?, ?, ?) " +
             "ON DUPLICATE KEY UPDATE " +
-            "  activity_type = IF(activity_type = 'JOINED', 'JOINED', VALUES(activity_type))";
+            "  activity_type = CASE " +
+            "    WHEN VALUES(activity_type) = 'JOINED' THEN 'JOINED' " +
+            "    WHEN activity_type = 'JOINED' THEN 'JOINED' " +
+            "    ELSE VALUES(activity_type) " +
+            "  END";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userId);
@@ -150,9 +154,8 @@ public class UserDAO {
     }
 
     /**
-     * FIX: Thay vì xóa bản ghi JOINED, cập nhật thành LEFT để theo dõi lịch sử
-     * và chặn user rejoin phiên này khi server restart (load từ DB).
-     * findLeftAuctionIdsByUserId() sẽ đọc các bản ghi LEFT này khi load user.
+     * Ghi nhận user đã rời/hủy tham gia — activity_type = LEFT (không còn là participant active).
+     * findLeftAuctionIdsByUserId() đọc các bản ghi LEFT khi load user (UI/history).
      */
     public boolean markUserLeftAuction(String userId, String auctionId) {
         String sql = "INSERT INTO user_auction_activity (user_id, auction_id, activity_type) " +
@@ -432,6 +435,28 @@ public class UserDAO {
 
     public Set<String> findLeftAuctionIdsByUserId(String userId) {
         return findAuctionIdsByUserIdAndActivityType(userId, "LEFT");
+    }
+
+    /**
+     * User còn đang tham gia đặt cọc phiên (activity_type = JOINED).
+     */
+    public boolean isActiveJoinedParticipant(String userId, String auctionId) {
+        if (userId == null || auctionId == null) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM user_auction_activity " +
+            "WHERE user_id = ? AND auction_id = ? AND activity_type = 'JOINED' LIMIT 1";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userId);
+            pstmt.setString(2, auctionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            log.error("Lỗi kiểm tra participant active: userId={}, auctionId={}", userId, auctionId, e);
+            return false;
+        }
     }
 
     /**

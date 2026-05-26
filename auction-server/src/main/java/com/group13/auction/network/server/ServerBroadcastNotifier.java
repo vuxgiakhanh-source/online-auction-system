@@ -207,6 +207,11 @@ public class ServerBroadcastNotifier {
         if (previousLeader == null || auction == null || newBidder == null) {
             return;
         }
+        if (!userDAO.isActiveJoinedParticipant(previousLeader.getId(), auction.getId())) {
+            log.debug("Skip outbid notify — user no longer active participant: auctionId={}, userId={}",
+                auction.getId(), previousLeader.getId());
+            return;
+        }
         if (previousLeader.getId().equals(newBidder.getId())) {
             return;
         }
@@ -273,6 +278,9 @@ public class ServerBroadcastNotifier {
     public void notifyAutoBidTriggered(String userId, String auctionId,
                                        long bidAmount, long newPrice,
                                        long maxBid, boolean isLeading) {
+        if (!userDAO.isActiveJoinedParticipant(userId, auctionId)) {
+            return;
+        }
         BidDTOs.AutoBidTriggeredDTO dto = new BidDTOs.AutoBidTriggeredDTO();
         dto.setAuctionId(auctionId);
         dto.setBidAmount(bidAmount);
@@ -293,6 +301,9 @@ public class ServerBroadcastNotifier {
             return;
         }
         String auctionId = auction.getId();
+        if (!userDAO.isActiveJoinedParticipant(userId, auctionId)) {
+            return;
+        }
         if (!autoBidExhaustedNotifiedKeys.add(exhaustedKey(userId, auctionId))) {
             log.debug("Skip duplicate auto-bid exhausted notify: auctionId={}, userId={}",
                 auctionId, userId);

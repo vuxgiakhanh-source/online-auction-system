@@ -1,5 +1,6 @@
 package com.group13.auction.network.server.security;
 
+import com.group13.auction.common.messages.RealtimeAccessMessages;
 import com.group13.auction.common.protocol.PacketType;
 
 import java.util.EnumSet;
@@ -27,6 +28,6 @@ public final class RestrictedPacketPolicy {
     }
 
     public static String denialMessage() {
-        return "Account is suspended. Access denied except for wallet services.";
+        return RealtimeAccessMessages.restrictedAccountDenial();
     }
 }
