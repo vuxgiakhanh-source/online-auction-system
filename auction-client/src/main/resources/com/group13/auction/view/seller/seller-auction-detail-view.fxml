@@ -109,6 +109,21 @@
                           styleClass="seller-image-gallery"/>
             </VBox>
 
+            <VBox spacing="12.0" styleClass="seller-detail-spec-section">
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label text="Thông tin sản phẩm"
+                           styleClass="seller-form-label"/>
+
+                    <Label text="Thông số riêng theo loại sản phẩm."
+                           styleClass="seller-muted-text"/>
+                </HBox>
+
+                <GridPane fx:id="productSpecsGrid"
+                          hgap="18.0"
+                          vgap="10.0"
+                          styleClass="seller-product-spec-grid"/>
+            </VBox>
+
             <GridPane hgap="18.0" vgap="16.0" styleClass="seller-detail-grid">
                 <columnConstraints>
                     <javafx.scene.layout.ColumnConstraints percentWidth="50.0"/>

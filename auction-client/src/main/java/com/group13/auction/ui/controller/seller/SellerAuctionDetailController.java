@@ -8,6 +8,7 @@ import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.DialogSoundUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.ui.util.ImageLoader;
+import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
@@ -16,6 +17,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 
 /** Controller cho màn chi tiết phiên đấu giá trong khu vực người bán. */
 public final class SellerAuctionDetailController {
@@ -45,6 +47,8 @@ public final class SellerAuctionDetailController {
     @FXML private Label viewerCountLabel;
 
     @FXML private FlowPane imageGalleryPane;
+
+    @FXML private GridPane productSpecsGrid;
 
     @FXML private Label messageLabel;
 
@@ -122,6 +126,7 @@ public final class SellerAuctionDetailController {
     private void renderAuctionDetail() {
         titleLabel.setText(selectedAuction.itemName());
         ImageLoader.fillPreviewableGallery(imageGalleryPane, selectedAuction.imageUrls());
+        renderProductSpecifications(selectedAuction);
         auctionIdLabel.setText(selectedAuction.auctionId());
         categoryLabel.setText(selectedAuction.categoryText());
         statusLabel.setText(selectedAuction.statusText());
@@ -140,6 +145,37 @@ public final class SellerAuctionDetailController {
         }
     }
 
+    private void renderProductSpecifications(SellerAuctionRowViewModel auction) {
+        if (productSpecsGrid == null) {
+            return;
+        }
+
+        productSpecsGrid.getChildren().clear();
+
+        if (auction == null || !auction.hasProductSpecifications()) {
+            Label emptyLabel = new Label("Thông tin sản phẩm đang được cập nhật.");
+            emptyLabel.setWrapText(true);
+            emptyLabel.getStyleClass().add("seller-spec-empty-text");
+            productSpecsGrid.add(emptyLabel, 0, 0, 2, 1);
+            return;
+        }
+
+        int rowIndex = 0;
+        for (ProductSpecificationViewModel specification : auction.productSpecifications()) {
+            Label label = new Label(specification.label());
+            label.setWrapText(true);
+            label.getStyleClass().add("seller-spec-label");
+
+            Label value = new Label(specification.value());
+            value.setWrapText(true);
+            value.getStyleClass().add("seller-spec-value");
+
+            productSpecsGrid.add(label, 0, rowIndex);
+            productSpecsGrid.add(value, 1, rowIndex);
+            rowIndex++;
+        }
+    }
+
     private void renderMissingState() {
         titleLabel.setText("Chưa chọn phiên đấu giá");
         auctionIdLabel.setText("-");
@@ -152,6 +188,7 @@ public final class SellerAuctionDetailController {
         endTimeLabel.setText("-");
         viewerCountLabel.setText("-");
         clearImageGallery();
+        renderProductSpecifications(null);
 
         editButton.setDisable(true);
         cancelButton.setDisable(true);
