@@ -16,6 +16,8 @@ import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.observer.BidderObserver;
+import com.group13.auction.observer.SellerObserver;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IRatingService;
 import org.slf4j.Logger;
@@ -405,6 +407,43 @@ public class AuctionService implements IAuctionService {
     return Collections.unmodifiableList(list);
   }
 
+  @Override
+  public void removeObserversForUser(String auctionId, String userId) {
+    if (auctionId == null || userId == null) {
+      return;
+    }
+    List<AuctionObserver> observers = observersMap.get(auctionId);
+    if (observers == null || observers.isEmpty()) {
+      return;
+    }
+    synchronized (observerLockFor(auctionId)) {
+      boolean removed = observers.removeIf(obs -> observerOwnedByUser(obs, userId));
+      if (removed) {
+        log.info("Removed observer(s) for user leaving auction: auctionId={}, userId={}",
+            auctionId, userId);
+      }
+    }
+  }
+
+  private static boolean observerOwnedByUser(AuctionObserver observer, String userId) {
+    if (observer instanceof BidderObserver bidderObserver) {
+      return bidderObserver.getBidder() != null
+          && userId.equals(bidderObserver.getBidder().getId());
+    }
+    if (observer instanceof SellerObserver sellerObserver) {
+      return sellerObserver.getSeller() != null
+          && userId.equals(sellerObserver.getSeller().getId());
+    }
+    return false;
+  }
+
+  private boolean shouldNotifyObserver(AuctionObserver observer, String auctionId) {
+    if (observer instanceof BidderObserver bidderObserver) {
+      NormalUser bidder = bidderObserver.getBidder();
+      return bidder != null && bidder.hasJoined(auctionId);
+    }
+    return true;
+  }
 
   @Override
   public void notify(Auction auction, AuctionEvent.AuctionEventType type,
@@ -421,6 +460,9 @@ public class AuctionService implements IAuctionService {
     List<AuctionObserver> observers = observersMap.getOrDefault(
         auction.getId(), Collections.emptyList());
     for (AuctionObserver observer : observers) {
+      if (!shouldNotifyObserver(observer, auction.getId())) {
+        continue;
+      }
       if (type == AuctionEvent.AuctionEventType.BID_PLACED
           || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET) {
         observer.onBidPlaced(event);

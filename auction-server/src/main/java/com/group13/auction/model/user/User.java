@@ -206,16 +206,26 @@ public abstract class User extends Entity {
   }
 
   /**
-   * FIX: Đánh dấu user đã rời phiên — không cho join lại.
+   * Đánh dấu user đã rời/hủy tham gia phiên (in-memory, cùng phiên app / sau load DB).
    * Gọi trong BidService.leaveAuction() sau khi rời thành công.
    */
   public void addLeftAuction(String auctionId) {
     leftAuctionIds.add(auctionId);
   }
 
-  /** Kiểm tra user đã từng rời phiên này chưa (để chặn rejoin). */
+  /**
+   * Xóa dấu đã rời khi user join lại phiên còn mở.
+   */
+  public void clearLeftAuction(String auctionId) {
+    leftAuctionIds.remove(auctionId);
+  }
+
+  /**
+   * User đã rời và chưa join lại trong phiên hiện tại.
+   * Dùng cho UI/DTO — không chặn rejoin khi phiên vẫn OPEN.
+   */
   public boolean hasLeft(String auctionId) {
-    return leftAuctionIds.contains(auctionId);
+    return leftAuctionIds.contains(auctionId) && !hasJoined(auctionId);
   }
 
   /** Inject leftAuctionIds từ DB — chỉ DAO gọi sau reconstitute(). */

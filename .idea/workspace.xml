@@ -493,7 +493,7 @@
         <line-breakpoint enabled="true" type="java-method">
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/TestLauncher.java</url>
           <line>36</line>
-          <properties class="com.group13.auction.unit.TestLauncher" method="main">
+          <properties class="com.group13.auction.unit.TestLauncher">
             <option name="EMULATED" value="true" />
             <option name="WATCH_EXIT" value="false" />
           </properties>

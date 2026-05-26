@@ -24,6 +24,10 @@ public class BidderObserver implements AuctionObserver {
     this.notifier = Objects.requireNonNull(notifier, "notifier must not be null");
   }
 
+  public NormalUser getBidder() {
+    return bidder;
+  }
+
   @Override
   public void onBidPlaced(AuctionEvent event) {
     if (event.getEventType() == AuctionEvent.AuctionEventType.BID_PLACED) {
