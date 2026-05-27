@@ -3,7 +3,7 @@
 Góc nhìn nghiệp vụ (actor → capability), không thay sequence diagram.  
 Dùng để đối chiếu phạm vi sản phẩm với implementation.
 
-**Mục đích:** Tổng quan chức năng cho BA/PM/developer mới.  
+**Mục đích:** Tổng quan chức năng.  
 **Use case:** Review scope dự án, map use case → file sequence/class diagram bên dưới.  
 **Chi tiết kỹ thuật:** Các file `*SequenceDiagram.md`, `*ClassDiagram.md`.
 
