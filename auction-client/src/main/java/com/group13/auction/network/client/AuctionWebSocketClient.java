@@ -13,6 +13,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
@@ -49,24 +50,30 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final long BASE_RECONNECT_DELAY_MS = 1_000;
-    private volatile int reconnectAttempts = 0;
+    /**
+     * FIX [Qodana "Non-atomic operation on volatile field"]: trước đây dùng
+     * {@code private volatile int reconnectAttempts = 0;} rồi {@code reconnectAttempts++}.
+     * volatile chỉ đảm bảo visibility, KHÔNG đảm bảo atomicity của read-modify-write — nếu
+     * hai luồng cùng increment có thể mất tăng. Thay bằng {@link AtomicInteger} để CAS đúng.
+     */
+    private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
     private volatile boolean shuttingDown = false;
     private final ScheduledExecutorService reconnectScheduler =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "ws-reconnect");
-                t.setDaemon(true);
-                return t;
-            });
+        Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "ws-reconnect");
+            t.setDaemon(true);
+            return t;
+        });
 
     // ── Heartbeat ─────────────────────────────────────────────────────────────
 
     private static final long PING_INTERVAL_MS = 30_000;
     private final ScheduledExecutorService heartbeatScheduler =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "ws-heartbeat");
-                t.setDaemon(true);
-                return t;
-            });
+        Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "ws-heartbeat");
+            t.setDaemon(true);
+            return t;
+        });
     private ScheduledFuture<?> heartbeatFuture;
 
     // ── Auth state ────────────────────────────────────────────────────────────
@@ -103,7 +110,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        reconnectAttempts = 0;
+        reconnectAttempts.set(0);
         log.info("[CLIENT] ✅ Kết nối thành công tới server: " + getURI());
         startHeartbeat();
     }
@@ -118,9 +125,9 @@ public class AuctionWebSocketClient extends WebSocketClient {
             JsonObject obj = JsonParser.parseString(message).getAsJsonObject();
             type = PacketType.valueOf(obj.get("type").getAsString());
             payload = obj.has("payload") && !obj.get("payload").isJsonNull()
-                    ? obj.get("payload") : null;
+                ? obj.get("payload") : null;
             requestId = obj.has("requestId") && !obj.get("requestId").isJsonNull()
-                    ? obj.get("requestId").getAsString() : null;
+                ? obj.get("requestId").getAsString() : null;
         } catch (Exception e) {
             log.warning("[CLIENT] Malformed message từ server: " + e.getMessage());
             return;
@@ -161,7 +168,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
     public void onClose(int code, String reason, boolean remote) {
         stopHeartbeat();
         log.warning("[CLIENT] ❌ Mất kết nối | code=" + code + " | reason=" + reason
-                + " | remote=" + remote);
+            + " | remote=" + remote);
         if (!shuttingDown) {
             scheduleReconnect();
         }
@@ -263,7 +270,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
                 // Fix: luôn gọi callback với (null, null) để controller biết và hiện
                 // thông báo lỗi phù hợp.
                 log.warning("[CLIENT] Pending request timeout: " + packet.getType()
-                        + " | requestId=" + requestId);
+                    + " | requestId=" + requestId);
                 try {
                     removed.callback.accept(null, null);
                 } catch (Exception e) {
@@ -327,16 +334,26 @@ public class AuctionWebSocketClient extends WebSocketClient {
         if (shuttingDown || reconnectScheduler.isShutdown()) {
             return;
         }
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        // Atomic check-and-increment qua updateAndGet:
+        //  - Nếu current < MAX → tăng 1 và trả về giá trị mới (1, 2, ..., MAX)
+        //  - Nếu current >= MAX → giữ nguyên, trả về Integer.MIN_VALUE làm sentinel để
+        //    biết là đã vượt ngưỡng (mọi attempt thật phải > 0).
+        // Atomic này tránh race của volatile++: 2 luồng cùng tăng có thể vượt MAX.
+        int attempt = reconnectAttempts.updateAndGet(
+            current -> current >= MAX_RECONNECT_ATTEMPTS ? Integer.MIN_VALUE : current + 1);
+        if (attempt == Integer.MIN_VALUE) {
+            // Phục hồi giá trị MAX để các thread sau cũng nhìn thấy đúng và không reset
+            // sentinel xuống — onOpen() là điểm duy nhất reset về 0.
+            reconnectAttempts.set(MAX_RECONNECT_ATTEMPTS);
             log.severe("[CLIENT] Đã thử kết nối lại " + MAX_RECONNECT_ATTEMPTS
-                    + " lần không thành công. Dừng.");
+                + " lần không thành công. Dừng.");
             return;
         }
 
-        long delay = BASE_RECONNECT_DELAY_MS * (long) Math.pow(2, reconnectAttempts);
-        reconnectAttempts++;
-        log.info("[CLIENT] Thử kết nối lại lần " + reconnectAttempts
-                + " sau " + delay + "ms...");
+        // attempt = 1, 2, ..., MAX. delay = base * 2^(attempt-1)
+        long delay = BASE_RECONNECT_DELAY_MS * (long) Math.pow(2, attempt - 1);
+        log.info("[CLIENT] Thử kết nối lại lần " + attempt
+            + " sau " + delay + "ms...");
 
         reconnectScheduler.schedule(() -> {
             try {
