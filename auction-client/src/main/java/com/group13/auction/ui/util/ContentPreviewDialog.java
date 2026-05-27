@@ -3,6 +3,7 @@ package com.group13.auction.ui.util;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -114,7 +115,24 @@ public final class ContentPreviewDialog {
       return;
     }
 
-    previewScene.getStylesheets().addAll(ownerNode.getScene().getStylesheets());
+    copyStylesheets(ownerNode.getScene().getStylesheets(), previewScene);
+
+    Node current = ownerNode;
+    while (current != null) {
+      if (current instanceof Parent parent) {
+        copyStylesheets(parent.getStylesheets(), previewScene);
+      }
+      current = current.getParent();
+    }
+  }
+
+  private static void copyStylesheets(
+      Iterable<String> stylesheets, Scene previewScene) {
+    for (String stylesheet : stylesheets) {
+      if (!previewScene.getStylesheets().contains(stylesheet)) {
+        previewScene.getStylesheets().add(stylesheet);
+      }
+    }
   }
 
   private static Window resolveOwner(Node ownerNode) {
