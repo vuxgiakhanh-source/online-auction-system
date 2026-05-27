@@ -20,8 +20,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 /**
  * Controller cho màn System Admin quản lý Staff Admin.
  *
- * <p>Màn này chỉ dùng các API đã có trong common/server: tạo Staff Admin mới và lấy danh sách
- * Staff Admin. Rule phân quyền MASTER được kiểm tra ở cả client service và server.
+ * <p>Màn này chỉ dùng các API đã có trong common/server: tạo Staff Admin mới và lấy danh sách Staff
+ * Admin. Rule phân quyền MASTER được kiểm tra ở cả client service và server.
  */
 public final class StaffAdminManagementController {
 
@@ -133,8 +133,7 @@ public final class StaffAdminManagementController {
             return;
           }
 
-          List<StaffAdminViewModel> safeStaffAdmins =
-              staffAdmins == null ? List.of() : staffAdmins;
+          List<StaffAdminViewModel> safeStaffAdmins = staffAdmins == null ? List.of() : staffAdmins;
           if (staffTable != null) {
             staffTable.setItems(FXCollections.observableArrayList(safeStaffAdmins));
           }
