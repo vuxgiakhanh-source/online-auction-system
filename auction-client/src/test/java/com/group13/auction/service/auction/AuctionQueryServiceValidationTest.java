@@ -16,18 +16,14 @@ class AuctionQueryServiceValidationTest {
   void getAuctionDetailShouldFailWhenAuctionIdIsNull() {
     AuctionQueryService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getAuctionDetail(null),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.getAuctionDetail(null), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
   void getAuctionDetailShouldFailWhenAuctionIdIsBlank() {
     AuctionQueryService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getAuctionDetail("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.getAuctionDetail("   "), "Thiếu mã phiên đấu giá.");
   }
 
   private static AuctionQueryService createService() {

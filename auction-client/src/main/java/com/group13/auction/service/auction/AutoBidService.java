@@ -12,9 +12,8 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Service xử lý request Auto-Bid ở phía client.
  *
- * <p>Client chỉ validate dữ liệu nhập và gửi request xuống server. Toàn bộ logic nghiệp vụ
- * như tính bước giá, so sánh nhiều auto-bid, xử lý đồng thời và quyết định winner vẫn do server
- * đảm nhiệm.
+ * <p>Client chỉ validate dữ liệu nhập và gửi request xuống server. Toàn bộ logic nghiệp vụ như tính
+ * bước giá, so sánh nhiều auto-bid, xử lý đồng thời và quyết định winner vẫn do server đảm nhiệm.
  */
 public final class AutoBidService {
 

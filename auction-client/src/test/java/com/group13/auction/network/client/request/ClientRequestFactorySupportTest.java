@@ -23,8 +23,7 @@ class ClientRequestFactorySupportTest {
     banRequest.setUserId("U-1");
     banRequest.setReason("FRAUD");
 
-    Packet<AdminDTOs.AdminBanUserDTO> banPacket =
-        ClientRequestFactory.adminBanUser(banRequest);
+    Packet<AdminDTOs.AdminBanUserDTO> banPacket = ClientRequestFactory.adminBanUser(banRequest);
     Packet<String> unbanPacket = ClientRequestFactory.adminUnbanUser("U-1");
     Packet<Void> allUsersPacket = ClientRequestFactory.adminGetAllUsers();
     Packet<Void> accountBansPacket = ClientRequestFactory.adminGetAccountBans();
@@ -96,8 +95,7 @@ class ClientRequestFactorySupportTest {
 
   @Test
   void qualityReportUserAndSellerRequestsShouldCreateExpectedPackets() {
-    ReportDTOs.QualityReportRequestDTO request =
-        new ReportDTOs.QualityReportRequestDTO();
+    ReportDTOs.QualityReportRequestDTO request = new ReportDTOs.QualityReportRequestDTO();
     request.setAuctionId("A-1");
     request.setDescription("Sản phẩm không đúng mô tả.");
 
@@ -159,8 +157,7 @@ class ClientRequestFactorySupportTest {
     ChatbotDTOs.ChatbotAskRequestDTO request =
         ChatbotDTOs.ChatbotAskRequestDTO.byQuery("Làm sao để đặt giá?");
 
-    Packet<ChatbotDTOs.ChatbotAskRequestDTO> packet =
-        ClientRequestFactory.chatbotAsk(request);
+    Packet<ChatbotDTOs.ChatbotAskRequestDTO> packet = ClientRequestFactory.chatbotAsk(request);
 
     assertPacketType(packet, PacketType.CHATBOT_ASK);
     assertSame(request, packet.getPayload());

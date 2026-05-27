@@ -11,11 +11,7 @@ class StaffAdminViewModelTest {
   void gettersShouldReturnStaffAdminDisplayData() {
     StaffAdminViewModel viewModel =
         new StaffAdminViewModel(
-            "A-ADMIN-1",
-            "staff01",
-            "staff01@example.com",
-            "STAFF_ADMIN",
-            "ACTIVE");
+            "A-ADMIN-1", "staff01", "staff01@example.com", "STAFF_ADMIN", "ACTIVE");
 
     assertEquals("A-ADMIN-1", viewModel.getAdminId());
     assertEquals("staff01", viewModel.getUsername());

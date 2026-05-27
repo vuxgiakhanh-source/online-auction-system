@@ -1,7 +1,5 @@
 package com.group13.auction.ui.controller.auction;
 
-import com.group13.auction.common.dto.auction.AuctionDTOs;
-import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
@@ -16,9 +14,7 @@ import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
-
 import java.util.concurrent.CompletionException;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -26,9 +22,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 
-/**
- * Controller cho màn chi tiết phiên đấu giá.
- */
+/** Controller cho màn chi tiết phiên đấu giá. */
 public final class AuctionDetailController {
 
   private final AuctionQueryService auctionQueryService = new AuctionQueryService();
@@ -43,81 +37,58 @@ public final class AuctionDetailController {
   private boolean paymentAllowed;
   private AuctionDetailViewModel currentDetail;
 
-  @FXML
-  private Label titleLabel;
+  @FXML private Label titleLabel;
 
-  @FXML
-  private Label categoryLabel;
+  @FXML private Label categoryLabel;
 
-  @FXML
-  private Label statusLabel;
+  @FXML private Label statusLabel;
 
-  @FXML
-  private Label descriptionLabel;
+  @FXML private Label descriptionLabel;
 
-  @FXML
-  private Label sellerLabel;
+  @FXML private Label sellerLabel;
 
-  @FXML
-  private Label currentPriceLabel;
+  @FXML private Label currentPriceLabel;
 
-  @FXML
-  private Label startingPriceLabel;
+  @FXML private Label startingPriceLabel;
 
-  @FXML
-  private Label reservePriceLabel;
+  @FXML private Label reservePriceLabel;
 
-  @FXML
-  private Label leaderLabel;
+  @FXML private Label leaderLabel;
 
-  @FXML
-  private Label viewerCountLabel;
+  @FXML private Label viewerCountLabel;
 
-  @FXML
-  private Label startTimeLabel;
+  @FXML private Label startTimeLabel;
 
-  @FXML
-  private Label endTimeLabel;
+  @FXML private Label endTimeLabel;
 
-  @FXML
-  private Label remainingTimeLabel;
+  @FXML private Label remainingTimeLabel;
 
-  @FXML
-  private Label paymentStatusLabel;
+  @FXML private Label paymentStatusLabel;
 
-  @FXML
-  private Label messageLabel;
+  @FXML private Label messageLabel;
 
-  @FXML
-  private Button joinLiveButton;
+  @FXML private Button joinLiveButton;
 
-  @FXML
-  private Button watchLiveButton;
+  @FXML private Button watchLiveButton;
 
-  @FXML
-  private Button paymentButton;
+  @FXML private Button paymentButton;
 
-  @FXML
-  private Button cancelJoinButton;
+  @FXML private Button cancelJoinButton;
 
-  @FXML
-  private FlowPane imageGalleryPane;
+  @FXML private FlowPane imageGalleryPane;
 
-  @FXML
-  private GridPane productSpecsGrid;
+  @FXML private GridPane productSpecsGrid;
 
-  @FXML
-  private ProgressIndicator loadingIndicator;
+  @FXML private ProgressIndicator loadingIndicator;
 
-  /**
-   * Đọc auction id từ screen state và tải chi tiết phiên.
-   */
+  /** Đọc auction id từ screen state và tải chi tiết phiên. */
   @FXML
   public void initialize() {
-    auctionId = AppContext.getInstance()
-        .getScreenStateStore()
-        .get(ScreenStateKeys.SELECTED_AUCTION_ID, String.class)
-        .orElse("");
+    auctionId =
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .get(ScreenStateKeys.SELECTED_AUCTION_ID, String.class)
+            .orElse("");
 
     if (auctionId.isBlank()) {
       setMessage("Thiếu mã phiên đấu giá. Hãy quay lại danh sách và chọn lại phiên.");
@@ -136,25 +107,19 @@ public final class AuctionDetailController {
     loadAuctionDetail();
   }
 
-  /**
-   * Quay lại danh sách phiên đấu giá.
-   */
+  /** Quay lại danh sách phiên đấu giá. */
   @FXML
   public void handleBackToList() {
     Navigator.getInstance().goToAuctionList();
   }
 
-  /**
-   * Tải lại chi tiết phiên hiện tại.
-   */
+  /** Tải lại chi tiết phiên hiện tại. */
   @FXML
   public void handleRefresh() {
     loadAuctionDetail();
   }
 
-  /**
-   * Tham gia phiên rồi mở màn live bidding.
-   */
+  /** Tham gia phiên rồi mở màn live bidding. */
   @FXML
   public void handleJoinLive() {
     if (joinedAuctionState.hasJoined(auctionId)) {
@@ -186,9 +151,7 @@ public final class AuctionDetailController {
             });
   }
 
-  /**
-   * Watch phiên rồi mở màn live bidding.
-   */
+  /** Watch phiên rồi mở màn live bidding. */
   @FXML
   public void handleWatchLive() {
     if (currentArchiveViewable) {
@@ -218,9 +181,7 @@ public final class AuctionDetailController {
             });
   }
 
-  /**
-   * Hủy tham gia phiên đấu giá và xử lý tiền cọc theo rule của server.
-   */
+  /** Hủy tham gia phiên đấu giá và xử lý tiền cọc theo rule của server. */
   @FXML
   public void handleCancelJoin() {
     if (!joinedAuctionState.hasJoined(auctionId)) {
@@ -267,9 +228,7 @@ public final class AuctionDetailController {
             });
   }
 
-  /**
-   * Gửi yêu cầu thanh toán phiên đấu giá đã thắng.
-   */
+  /** Gửi yêu cầu thanh toán phiên đấu giá đã thắng. */
   @FXML
   public void handleRequestPayment() {
     if (currentDetail == null) {
@@ -372,7 +331,8 @@ public final class AuctionDetailController {
       watchLiveButton.setText("Theo dõi realtime");
       watchLiveButton.setDisable(!currentAuctionJoinable);
     }
-    setCancelJoinButtonVisible(joinedByCurrentUser && currentAuctionJoinable && !currentUserLeftAuction);
+    setCancelJoinButtonVisible(
+        joinedByCurrentUser && currentAuctionJoinable && !currentUserLeftAuction);
 
     updatePaymentControls(detail);
   }
@@ -437,26 +397,30 @@ public final class AuctionDetailController {
   private String buildCancelJoinConfirmationMessage(AuctionDetailViewModel detail) {
     if (isCurrentUserLeading(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-          + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
-          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy tín.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-          + "Bạn có chắc muốn tiếp tục không?";
+                 + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
+                 + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
+                 + " tín.\n\n"
+                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+                 + "Bạn có chắc muốn tiếp tục không?";
     }
 
     if (detail != null && detail.pastTwoThirdsElapsed()) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-          + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
-          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy tín.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-          + "Bạn có chắc muốn tiếp tục không?";
+                 + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
+                 + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
+                 + " tín.\n\n"
+                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+                 + "Bạn có chắc muốn tiếp tục không?";
     }
 
     if (hasCurrentLeader(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-          + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu và phiên chưa đi qua 2/3 thời gian.\n"
-          + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ thống.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-          + "Bạn có chắc muốn tiếp tục không?";
+                 + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu và phiên chưa đi qua 2/3"
+                 + " thời gian.\n"
+                 + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ"
+                 + " thống.\n\n"
+                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+                 + "Bạn có chắc muốn tiếp tục không?";
     }
 
     return "Hủy tham gia phiên đấu giá?\n\n"

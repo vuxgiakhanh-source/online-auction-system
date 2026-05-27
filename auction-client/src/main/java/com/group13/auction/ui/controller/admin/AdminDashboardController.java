@@ -11,126 +11,126 @@ import javafx.scene.layout.VBox;
 /**
  * Controller cho màn Admin Dashboard.
  *
- * <p>Màn này không fake dashboard statistics nếu backend chưa có API thống kê. Controller chỉ
- * hiển thị các module admin có backend support và điều hướng tới màn quản trị tương ứng.
+ * <p>Màn này không fake dashboard statistics nếu backend chưa có API thống kê. Controller chỉ hiển
+ * thị các module admin có backend support và điều hướng tới màn quản trị tương ứng.
  */
 public final class AdminDashboardController {
 
-    private final AdminModerationService adminModerationService = new AdminModerationService();
+  private final AdminModerationService adminModerationService = new AdminModerationService();
 
-    @FXML private Label titleLabel;
-    @FXML private Label accessStatusLabel;
-    @FXML private Label statisticsStatusLabel;
-    @FXML private Label supportedModulesLabel;
+  @FXML private Label titleLabel;
+  @FXML private Label accessStatusLabel;
+  @FXML private Label statisticsStatusLabel;
+  @FXML private Label supportedModulesLabel;
 
-    @FXML private Button usersButton;
-    @FXML private Button auctionsButton;
-    @FXML private Button sellersButton;
-    @FXML private Button reportsButton;
-    @FXML private Button backButton;
-    @FXML private Button staffAdminButton;
+  @FXML private Button usersButton;
+  @FXML private Button auctionsButton;
+  @FXML private Button sellersButton;
+  @FXML private Button reportsButton;
+  @FXML private Button backButton;
+  @FXML private Button staffAdminButton;
 
-    @FXML private VBox staffAdminCard;
+  @FXML private VBox staffAdminCard;
 
-    /** Khởi tạo dashboard và kiểm tra quyền Admin. */
-    @FXML
-    private void initialize() {
-        boolean admin = adminModerationService.currentUserIsAdmin();
+  /** Khởi tạo dashboard và kiểm tra quyền Admin. */
+  @FXML
+  private void initialize() {
+    boolean admin = adminModerationService.currentUserIsAdmin();
 
-        if (titleLabel != null) {
-            titleLabel.setText("Admin Dashboard");
-        }
-
-        if (accessStatusLabel != null) {
-            accessStatusLabel.setText(adminModerationService.getCurrentAdminAccessLabel());
-        }
-
-        if (statisticsStatusLabel != null) {
-            statisticsStatusLabel.setText(
-                    "API dashboard statistics hiện chưa khả dụng. Có thể dùng các module quản trị bên dưới.");
-        }
-
-        if (supportedModulesLabel != null) {
-            supportedModulesLabel.setText(buildSupportedModulesText());
-        }
-
-        setAdminActionsEnabled(admin);
-        setMasterOnlyActionsVisible(adminModerationService.currentUserIsMasterAdmin());
+    if (titleLabel != null) {
+      titleLabel.setText("Admin Dashboard");
     }
 
-    @FXML
-    private void handleOpenStaffAdminManagement() {
-        if (adminModerationService.currentUserIsMasterAdmin()) {
-            Navigator.getInstance().goToAdminStaffManagement();
-        }
+    if (accessStatusLabel != null) {
+      accessStatusLabel.setText(adminModerationService.getCurrentAdminAccessLabel());
     }
 
-    @FXML
-    private void handleOpenUserModeration() {
-        if (adminModerationService.currentUserIsAdmin()) {
-            Navigator.getInstance().goToAdminUsers();
-        }
+    if (statisticsStatusLabel != null) {
+      statisticsStatusLabel.setText(
+          "API dashboard statistics hiện chưa khả dụng. Có thể dùng các module quản trị bên dưới.");
     }
 
-    @FXML
-    private void handleOpenAuctionModeration() {
-        if (adminModerationService.currentUserIsAdmin()) {
-            Navigator.getInstance().goToAdminAuctions();
-        }
+    if (supportedModulesLabel != null) {
+      supportedModulesLabel.setText(buildSupportedModulesText());
     }
 
-    @FXML
-    private void handleOpenSellerApproval() {
-        if (adminModerationService.currentUserIsAdmin()) {
-            Navigator.getInstance().goToAdminSellerApproval();
-        }
-    }
+    setAdminActionsEnabled(admin);
+    setMasterOnlyActionsVisible(adminModerationService.currentUserIsMasterAdmin());
+  }
 
-    @FXML
-    private void handleOpenReportReview() {
-        if (adminModerationService.currentUserIsAdmin()) {
-            Navigator.getInstance().goToAdminReportReview();
-        }
+  @FXML
+  private void handleOpenStaffAdminManagement() {
+    if (adminModerationService.currentUserIsMasterAdmin()) {
+      Navigator.getInstance().goToAdminStaffManagement();
     }
+  }
 
-    @FXML
-    private void handleBackToMain() {
-        Navigator.getInstance().goToMainLayout();
+  @FXML
+  private void handleOpenUserModeration() {
+    if (adminModerationService.currentUserIsAdmin()) {
+      Navigator.getInstance().goToAdminUsers();
     }
+  }
 
-    private void setAdminActionsEnabled(boolean enabled) {
-        if (usersButton != null) {
-            usersButton.setDisable(!enabled);
-        }
-        if (auctionsButton != null) {
-            auctionsButton.setDisable(!enabled);
-        }
-        if (sellersButton != null) {
-            sellersButton.setDisable(!enabled);
-        }
-        if (reportsButton != null) {
-            reportsButton.setDisable(!enabled);
-        }
-        if (staffAdminButton != null) {
-            staffAdminButton.setDisable(!enabled || !adminModerationService.currentUserIsMasterAdmin());
-        }
+  @FXML
+  private void handleOpenAuctionModeration() {
+    if (adminModerationService.currentUserIsAdmin()) {
+      Navigator.getInstance().goToAdminAuctions();
     }
+  }
 
-    private void setMasterOnlyActionsVisible(boolean visible) {
-        if (staffAdminCard != null) {
-            staffAdminCard.setVisible(visible);
-            staffAdminCard.setManaged(visible);
-        }
-        if (staffAdminButton != null) {
-            staffAdminButton.setVisible(visible);
-            staffAdminButton.setManaged(visible);
-            staffAdminButton.setDisable(!visible);
-        }
+  @FXML
+  private void handleOpenSellerApproval() {
+    if (adminModerationService.currentUserIsAdmin()) {
+      Navigator.getInstance().goToAdminSellerApproval();
     }
+  }
 
-    private String buildSupportedModulesText() {
-        StringJoiner joiner = new StringJoiner("\n• ", "Module được hỗ trợ:\n• ", "");
-        adminModerationService.getSupportedAdminModules().forEach(joiner::add);
-        return joiner.toString();
+  @FXML
+  private void handleOpenReportReview() {
+    if (adminModerationService.currentUserIsAdmin()) {
+      Navigator.getInstance().goToAdminReportReview();
     }
+  }
+
+  @FXML
+  private void handleBackToMain() {
+    Navigator.getInstance().goToMainLayout();
+  }
+
+  private void setAdminActionsEnabled(boolean enabled) {
+    if (usersButton != null) {
+      usersButton.setDisable(!enabled);
+    }
+    if (auctionsButton != null) {
+      auctionsButton.setDisable(!enabled);
+    }
+    if (sellersButton != null) {
+      sellersButton.setDisable(!enabled);
+    }
+    if (reportsButton != null) {
+      reportsButton.setDisable(!enabled);
+    }
+    if (staffAdminButton != null) {
+      staffAdminButton.setDisable(!enabled || !adminModerationService.currentUserIsMasterAdmin());
+    }
+  }
+
+  private void setMasterOnlyActionsVisible(boolean visible) {
+    if (staffAdminCard != null) {
+      staffAdminCard.setVisible(visible);
+      staffAdminCard.setManaged(visible);
+    }
+    if (staffAdminButton != null) {
+      staffAdminButton.setVisible(visible);
+      staffAdminButton.setManaged(visible);
+      staffAdminButton.setDisable(!visible);
+    }
+  }
+
+  private String buildSupportedModulesText() {
+    StringJoiner joiner = new StringJoiner("\n• ", "Module được hỗ trợ:\n• ", "");
+    adminModerationService.getSupportedAdminModules().forEach(joiner::add);
+    return joiner.toString();
+  }
 }

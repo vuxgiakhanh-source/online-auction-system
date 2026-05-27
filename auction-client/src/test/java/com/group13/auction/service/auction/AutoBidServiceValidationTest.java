@@ -16,9 +16,7 @@ class AutoBidServiceValidationTest {
   void getAutoBidStatusShouldFailWhenAuctionIdIsBlank() {
     AutoBidService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getAutoBidStatus("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.getAutoBidStatus("   "), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -26,8 +24,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.registerAutoBid("   ", "2500000"),
-        "Thiếu mã phiên đấu giá.");
+        service.registerAutoBid("   ", "2500000"), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -35,8 +32,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.registerAutoBid("A-1", "   "),
-        "Bạn chưa nhập giá tối đa cho auto-bid.");
+        service.registerAutoBid("A-1", "   "), "Bạn chưa nhập giá tối đa cho auto-bid.");
   }
 
   @Test
@@ -44,8 +40,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.registerAutoBid("A-1", "abc"),
-        "Giá tối đa phải là số nguyên hợp lệ.");
+        service.registerAutoBid("A-1", "abc"), "Giá tối đa phải là số nguyên hợp lệ.");
   }
 
   @Test
@@ -53,8 +48,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.registerAutoBid("A-1", "999"),
-        "Giá tối đa tối thiểu là 1.000 ₫.");
+        service.registerAutoBid("A-1", "999"), "Giá tối đa tối thiểu là 1.000 ₫.");
   }
 
   @Test
@@ -62,8 +56,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.registerAutoBid("A-1", "100000000001"),
-        "Giá tối đa vượt quá giới hạn cho phép.");
+        service.registerAutoBid("A-1", "100000000001"), "Giá tối đa vượt quá giới hạn cho phép.");
   }
 
   @Test
@@ -71,8 +64,7 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.updateAutoBid("   ", "2500000"),
-        "Thiếu mã phiên đấu giá.");
+        service.updateAutoBid("   ", "2500000"), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -80,17 +72,14 @@ class AutoBidServiceValidationTest {
     AutoBidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.updateAutoBid("A-1", "abc"),
-        "Giá tối đa phải là số nguyên hợp lệ.");
+        service.updateAutoBid("A-1", "abc"), "Giá tối đa phải là số nguyên hợp lệ.");
   }
 
   @Test
   void cancelAutoBidShouldFailWhenAuctionIdIsBlank() {
     AutoBidService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.cancelAutoBid("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.cancelAutoBid("   "), "Thiếu mã phiên đấu giá.");
   }
 
   private static AutoBidService createService() {

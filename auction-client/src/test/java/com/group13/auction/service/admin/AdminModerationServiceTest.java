@@ -60,14 +60,12 @@ class AdminModerationServiceTest {
     AdminModerationService service = new AdminModerationService();
 
     assertEquals(
-        "Bạn không có quyền truy cập khu vực Admin.",
-        service.getCurrentAdminAccessLabel());
+        "Bạn không có quyền truy cập khu vực Admin.", service.getCurrentAdminAccessLabel());
 
     startBidderSession();
 
     assertEquals(
-        "Bạn không có quyền truy cập khu vực Admin.",
-        service.getCurrentAdminAccessLabel());
+        "Bạn không có quyền truy cập khu vực Admin.", service.getCurrentAdminAccessLabel());
   }
 
   @Test
@@ -75,9 +73,7 @@ class AdminModerationServiceTest {
     startStaffAdminSession();
     AdminModerationService service = new AdminModerationService();
 
-    assertEquals(
-        "Tài khoản hiện tại có quyền Staff Admin.",
-        service.getCurrentAdminAccessLabel());
+    assertEquals("Tài khoản hiện tại có quyền Staff Admin.", service.getCurrentAdminAccessLabel());
   }
 
   @Test
@@ -85,9 +81,7 @@ class AdminModerationServiceTest {
     startMasterAdminSession();
     AdminModerationService service = new AdminModerationService();
 
-    assertEquals(
-        "Tài khoản hiện tại có quyền System Admin.",
-        service.getCurrentAdminAccessLabel());
+    assertEquals("Tài khoản hiện tại có quyền System Admin.", service.getCurrentAdminAccessLabel());
   }
 
   @Test
@@ -137,8 +131,7 @@ class AdminModerationServiceTest {
         "Dashboard statistics API is not available yet. Use the moderation cards below.",
         service.getStatisticsUnavailableMessage());
     assertEquals(
-        "You do not have permission to access the Admin area.",
-        service.getAccessDeniedMessage());
+        "You do not have permission to access the Admin area.", service.getAccessDeniedMessage());
   }
 
   private static void startBidderSession() {

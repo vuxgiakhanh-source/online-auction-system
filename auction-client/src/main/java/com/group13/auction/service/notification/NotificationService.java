@@ -19,79 +19,78 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class NotificationService {
 
-    private final ClientNetworkFacade networkFacade;
+  private final ClientNetworkFacade networkFacade;
 
-    /** Tạo notification service dùng network facade mặc định của app. */
-    public NotificationService() {
-        this(ClientNetworkFacade.getDefault());
+  /** Tạo notification service dùng network facade mặc định của app. */
+  public NotificationService() {
+    this(ClientNetworkFacade.getDefault());
+  }
+
+  /**
+   * Tạo notification service với dependency truyền vào, hữu ích cho test.
+   *
+   * @param networkFacade facade tầng network
+   */
+  public NotificationService(ClientNetworkFacade networkFacade) {
+    this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+  }
+
+  /**
+   * Lấy danh sách thông báo của user hiện tại.
+   *
+   * @return future chứa danh sách view model thông báo
+   */
+  public CompletableFuture<List<NotificationItemViewModel>> getNotifications() {
+    return AuctionServiceSupport.sendRequest(
+            networkFacade,
+            ClientRequestFactory.getNotifications(),
+            PacketType.GET_NOTIFICATIONS_SUCCESS,
+            AdminDTOs.NotificationDTO[].class,
+            "Không tải được danh sách thông báo.")
+        .thenApply(NotificationViewModelMapper::toViewModels);
+  }
+
+  /**
+   * Đánh dấu một thông báo là đã đọc.
+   *
+   * @param notificationId mã thông báo
+   * @return future hoàn tất khi server xác nhận
+   */
+  public CompletableFuture<Void> markNotificationRead(String notificationId) {
+    if (notificationId == null || notificationId.isBlank()) {
+      return AuctionServiceSupport.failedFuture("Thiếu mã thông báo.");
     }
 
-    /**
-     * Tạo notification service với dependency truyền vào, hữu ích cho test.
-     *
-     * @param networkFacade facade tầng network
-     */
-    public NotificationService(ClientNetworkFacade networkFacade) {
-        this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+    return AuctionServiceSupport.sendVoidRequest(
+        networkFacade,
+        ClientRequestFactory.markNotificationRead(notificationId.trim()),
+        PacketType.MARK_NOTIFICATION_READ_SUCCESS,
+        "Không đánh dấu được thông báo là đã đọc.");
+  }
+
+  /**
+   * Đánh dấu nhiều thông báo là đã đọc bằng API đánh dấu từng thông báo hiện có.
+   *
+   * @param notificationIds danh sách mã thông báo cần đánh dấu
+   * @return future hoàn tất khi server xác nhận toàn bộ request
+   */
+  public CompletableFuture<Void> markNotificationsRead(List<String> notificationIds) {
+    if (notificationIds == null || notificationIds.isEmpty()) {
+      return CompletableFuture.completedFuture(null);
     }
 
-    /**
-     * Lấy danh sách thông báo của user hiện tại.
-     *
-     * @return future chứa danh sách view model thông báo
-     */
-    public CompletableFuture<List<NotificationItemViewModel>> getNotifications() {
-        return AuctionServiceSupport
-                .sendRequest(
-                        networkFacade,
-                        ClientRequestFactory.getNotifications(),
-                        PacketType.GET_NOTIFICATIONS_SUCCESS,
-                        AdminDTOs.NotificationDTO[].class,
-                        "Không tải được danh sách thông báo.")
-                .thenApply(NotificationViewModelMapper::toViewModels);
+    List<CompletableFuture<Void>> futures =
+        notificationIds.stream()
+            .filter(id -> id != null && !id.isBlank())
+            .map(String::trim)
+            .distinct()
+            .map(this::markNotificationRead)
+            .toList();
+
+    if (futures.isEmpty()) {
+      return CompletableFuture.completedFuture(null);
     }
 
-    /**
-     * Đánh dấu một thông báo là đã đọc.
-     *
-     * @param notificationId mã thông báo
-     * @return future hoàn tất khi server xác nhận
-     */
-    public CompletableFuture<Void> markNotificationRead(String notificationId) {
-        if (notificationId == null || notificationId.isBlank()) {
-            return AuctionServiceSupport.failedFuture("Thiếu mã thông báo.");
-        }
-
-        return AuctionServiceSupport.sendVoidRequest(
-                networkFacade,
-                ClientRequestFactory.markNotificationRead(notificationId.trim()),
-                PacketType.MARK_NOTIFICATION_READ_SUCCESS,
-                "Không đánh dấu được thông báo là đã đọc.");
-    }
-
-    /**
-     * Đánh dấu nhiều thông báo là đã đọc bằng API đánh dấu từng thông báo hiện có.
-     *
-     * @param notificationIds danh sách mã thông báo cần đánh dấu
-     * @return future hoàn tất khi server xác nhận toàn bộ request
-     */
-    public CompletableFuture<Void> markNotificationsRead(List<String> notificationIds) {
-        if (notificationIds == null || notificationIds.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        List<CompletableFuture<Void>> futures =
-            notificationIds.stream()
-                .filter(id -> id != null && !id.isBlank())
-                .map(String::trim)
-                .distinct()
-                .map(this::markNotificationRead)
-                .toList();
-
-        if (futures.isEmpty()) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
-    }
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+  }
 }

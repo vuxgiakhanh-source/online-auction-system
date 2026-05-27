@@ -34,13 +34,7 @@ class SecondChanceOfferViewModelTest {
   void expiredShouldReturnTrueWhenOfferIsExpired() {
     SecondChanceOfferViewModel viewModel =
         new SecondChanceOfferViewModel(
-            "SCO-2",
-            "A-2",
-            "Art Print",
-            "1.200.000 ₫",
-            "120.000 ₫",
-            "26/05/2026 10:00",
-            true);
+            "SCO-2", "A-2", "Art Print", "1.200.000 ₫", "120.000 ₫", "26/05/2026 10:00", true);
 
     assertTrue(viewModel.expired());
   }

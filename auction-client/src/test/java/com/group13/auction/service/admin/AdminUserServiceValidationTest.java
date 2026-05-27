@@ -25,9 +25,7 @@ class AdminUserServiceValidationTest {
   void getAllUsersShouldFailWhenCurrentUserIsNotAdmin() {
     AdminUserService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getAllUsers(),
-        "Tài khoản hiện tại không có quyền Admin.");
+    assertFutureFailsWithMessage(service.getAllUsers(), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -35,8 +33,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.getAccountBans(),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.getAccountBans(), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -45,8 +42,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.banUser("U-1", "FRAUD"),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.banUser("U-1", "FRAUD"), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -54,9 +50,7 @@ class AdminUserServiceValidationTest {
     startStaffAdminSession();
     AdminUserService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.banUser("   ", "FRAUD"),
-        "Thiếu mã người dùng cần ban.");
+    assertFutureFailsWithMessage(service.banUser("   ", "FRAUD"), "Thiếu mã người dùng cần ban.");
   }
 
   @Test
@@ -65,8 +59,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.banUser("U-1", "   "),
-        "Vui lòng chọn lý do ban tài khoản.");
+        service.banUser("U-1", "   "), "Vui lòng chọn lý do ban tài khoản.");
   }
 
   @Test
@@ -75,8 +68,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.unbanUser("U-1"),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.unbanUser("U-1"), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -84,9 +76,7 @@ class AdminUserServiceValidationTest {
     startStaffAdminSession();
     AdminUserService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.unbanUser("   "),
-        "Thiếu mã người dùng cần mở khóa.");
+    assertFutureFailsWithMessage(service.unbanUser("   "), "Thiếu mã người dùng cần mở khóa.");
   }
 
   @Test
@@ -95,8 +85,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.getAllStaffAdmins(),
-        "Tài khoản hiện tại không có quyền System Admin.");
+        service.getAllStaffAdmins(), "Tài khoản hiện tại không có quyền System Admin.");
   }
 
   @Test
@@ -135,8 +124,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.createStaffAdmin("staff01", "secret1", "   "),
-        "Vui lòng nhập email Staff Admin.");
+        service.createStaffAdmin("staff01", "secret1", "   "), "Vui lòng nhập email Staff Admin.");
   }
 
   @Test
@@ -145,8 +133,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.getSellerApprovalCandidates(),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.getSellerApprovalCandidates(), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -155,8 +142,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.approveSellerRole("U-1"),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.approveSellerRole("U-1"), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -165,8 +151,7 @@ class AdminUserServiceValidationTest {
     AdminUserService service = createService();
 
     assertFutureFailsWithMessage(
-        service.approveSellerRole("   "),
-        "Thiếu mã người dùng cần duyệt Seller.");
+        service.approveSellerRole("   "), "Thiếu mã người dùng cần duyệt Seller.");
   }
 
   private static AdminUserService createService() {
@@ -190,13 +175,7 @@ class AdminUserServiceValidationTest {
         .getSessionManager()
         .startSession(
             UserSession.of(
-                "token",
-                "U-1",
-                "user01",
-                "user01@example.com",
-                roles,
-                "ACTIVE",
-                adminType));
+                "token", "U-1", "user01", "user01@example.com", roles, "ACTIVE", adminType));
   }
 
   private static void assertFutureFailsWithMessage(

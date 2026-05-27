@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Service gọi chatbot phía server và chuyển response thành dữ liệu hiển thị cho JavaFX client.
  *
- * <p>Chatbot server không yêu cầu đăng nhập, nên service này chỉ đảm bảo WebSocket đã kết nối
- * trước khi gửi request. Logic tìm FAQ và quyết định câu trả lời vẫn nằm hoàn toàn ở server.
+ * <p>Chatbot server không yêu cầu đăng nhập, nên service này chỉ đảm bảo WebSocket đã kết nối trước
+ * khi gửi request. Logic tìm FAQ và quyết định câu trả lời vẫn nằm hoàn toàn ở server.
  */
 public final class ChatbotService {
 
@@ -68,7 +68,8 @@ public final class ChatbotService {
       return AuctionServiceSupport.failedFuture("Vui lòng nhập câu hỏi cho OMNI.");
     }
 
-    Packet<?> packet = ClientRequestFactory.chatbotAsk(ChatbotAskRequestDTO.byQuery(normalizedQuery));
+    Packet<?> packet =
+        ClientRequestFactory.chatbotAsk(ChatbotAskRequestDTO.byQuery(normalizedQuery));
     return sendAskRequest(packet, "Không nhận được phản hồi từ OMNI.")
         .thenApply(ChatbotViewModelMapper::toBotMessage);
   }
@@ -85,7 +86,8 @@ public final class ChatbotService {
       return AuctionServiceSupport.failedFuture("Câu hỏi gợi ý không hợp lệ.");
     }
 
-    Packet<?> packet = ClientRequestFactory.chatbotAsk(ChatbotAskRequestDTO.byFaqId(normalizedFaqId));
+    Packet<?> packet =
+        ClientRequestFactory.chatbotAsk(ChatbotAskRequestDTO.byFaqId(normalizedFaqId));
     return sendAskRequest(packet, "Không tải được câu trả lời FAQ từ OMNI.")
         .thenApply(ChatbotViewModelMapper::toBotMessage);
   }
@@ -100,8 +102,7 @@ public final class ChatbotService {
     String normalizedCategory = normalizeCategory(category);
     ChatbotFaqListRequestDTO request = new ChatbotFaqListRequestDTO(normalizedCategory);
 
-    return AuctionServiceSupport
-        .sendRequest(
+    return AuctionServiceSupport.sendRequest(
             networkFacade,
             ClientRequestFactory.chatbotGetFaqList(request),
             PacketType.CHATBOT_FAQ_LIST_SUCCESS,
@@ -164,8 +165,7 @@ public final class ChatbotService {
         TIMEOUT_EXECUTOR.schedule(
             () ->
                 future.completeExceptionally(
-                    new NetworkClientException(
-                        "Server không phản hồi. " + fallbackErrorMessage)),
+                    new NetworkClientException("Server không phản hồi. " + fallbackErrorMessage)),
             REQUEST_TIMEOUT_SECONDS,
             TimeUnit.SECONDS);
 

@@ -42,7 +42,8 @@ class ChatbotMessageViewModelTest {
 
   @Test
   void omniFactoryShouldCreateOmniMessage() {
-    ChatbotMessageViewModel viewModel = ChatbotMessageViewModel.omni("You can join an open auction.");
+    ChatbotMessageViewModel viewModel =
+        ChatbotMessageViewModel.omni("You can join an open auction.");
 
     assertEquals("OMNI", viewModel.senderText());
     assertEquals("You can join an open auction.", viewModel.content());

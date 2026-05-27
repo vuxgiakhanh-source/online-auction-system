@@ -49,9 +49,7 @@ public final class ContentPreviewDialog {
 
     Label titleLabel = new Label(stage.getTitle());
     titleLabel.setStyle(
-        "-fx-font-size: 22px;"
-            + "-fx-font-weight: 900;"
-            + "-fx-text-fill: #ffffff;");
+        "-fx-font-size: 22px;" + "-fx-font-weight: 900;" + "-fx-text-fill: #ffffff;");
 
     Button closeButton = new Button("Đóng");
     closeButton.setDefaultButton(true);
@@ -126,8 +124,7 @@ public final class ContentPreviewDialog {
     }
   }
 
-  private static void copyStylesheets(
-      Iterable<String> stylesheets, Scene previewScene) {
+  private static void copyStylesheets(Iterable<String> stylesheets, Scene previewScene) {
     for (String stylesheet : stylesheets) {
       if (!previewScene.getStylesheets().contains(stylesheet)) {
         previewScene.getStylesheets().add(stylesheet);

@@ -1,8 +1,6 @@
 package com.group13.auction.viewmodel.admin;
 
-/**
- * View model hiển thị một tài khoản Staff Admin trong màn System Admin.
- */
+/** View model hiển thị một tài khoản Staff Admin trong màn System Admin. */
 public final class StaffAdminViewModel {
 
   private final String adminId;

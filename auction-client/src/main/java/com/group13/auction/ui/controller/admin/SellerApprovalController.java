@@ -23,236 +23,236 @@ import javafx.scene.control.cell.PropertyValueFactory;
  */
 public final class SellerApprovalController {
 
-    private final AdminUserService adminUserService = new AdminUserService();
+  private final AdminUserService adminUserService = new AdminUserService();
 
-    @FXML private TableView<SellerApprovalViewModel> sellerTable;
-    @FXML private TableColumn<SellerApprovalViewModel, String> userIdColumn;
-    @FXML private TableColumn<SellerApprovalViewModel, String> usernameColumn;
-    @FXML private TableColumn<SellerApprovalViewModel, String> emailColumn;
-    @FXML private TableColumn<SellerApprovalViewModel, String> roleColumn;
-    @FXML private TableColumn<SellerApprovalViewModel, String> noteColumn;
+  @FXML private TableView<SellerApprovalViewModel> sellerTable;
+  @FXML private TableColumn<SellerApprovalViewModel, String> userIdColumn;
+  @FXML private TableColumn<SellerApprovalViewModel, String> usernameColumn;
+  @FXML private TableColumn<SellerApprovalViewModel, String> emailColumn;
+  @FXML private TableColumn<SellerApprovalViewModel, String> roleColumn;
+  @FXML private TableColumn<SellerApprovalViewModel, String> noteColumn;
 
-    @FXML private Label statusLabel;
-    @FXML private Label emptyStateLabel;
-    @FXML private Label backendNoteLabel;
-    @FXML private ProgressIndicator loadingIndicator;
+  @FXML private Label statusLabel;
+  @FXML private Label emptyStateLabel;
+  @FXML private Label backendNoteLabel;
+  @FXML private ProgressIndicator loadingIndicator;
 
-    @FXML private Button refreshButton;
-    @FXML private Button approveButton;
-    @FXML private Button rejectButton;
-    @FXML private Button backButton;
+  @FXML private Button refreshButton;
+  @FXML private Button approveButton;
+  @FXML private Button rejectButton;
+  @FXML private Button backButton;
 
-    /** Khởi tạo bảng candidate duyệt quyền Seller và tải dữ liệu lần đầu. */
-    @FXML
-    private void initialize() {
-        configureTable();
-        configureSelectionBinding();
-        setBusy(false);
-        setApproveButtonDisabled(true);
-        configureBackendNote();
-        loadCandidates();
+  /** Khởi tạo bảng candidate duyệt quyền Seller và tải dữ liệu lần đầu. */
+  @FXML
+  private void initialize() {
+    configureTable();
+    configureSelectionBinding();
+    setBusy(false);
+    setApproveButtonDisabled(true);
+    configureBackendNote();
+    loadCandidates();
+  }
+
+  @FXML
+  private void handleRefresh() {
+    loadCandidates();
+  }
+
+  @FXML
+  private void handleApproveSeller() {
+    SellerApprovalViewModel selectedCandidate = getSelectedCandidate();
+    if (selectedCandidate == null) {
+      showStatus("Vui lòng chọn người dùng cần duyệt quyền Seller.");
+      return;
     }
 
-    @FXML
-    private void handleRefresh() {
-        loadCandidates();
+    if (!selectedCandidate.isApprovable()) {
+      showStatus("Người dùng này không thể duyệt Seller bằng API hiện tại.");
+      return;
     }
 
-    @FXML
-    private void handleApproveSeller() {
-        SellerApprovalViewModel selectedCandidate = getSelectedCandidate();
-        if (selectedCandidate == null) {
-            showStatus("Vui lòng chọn người dùng cần duyệt quyền Seller.");
-            return;
-        }
+    setBusy(true);
+    showStatus("Đang duyệt quyền Seller...");
 
-        if (!selectedCandidate.isApprovable()) {
-            showStatus("Người dùng này không thể duyệt Seller bằng API hiện tại.");
-            return;
-        }
+    adminUserService
+        .approveSellerRole(selectedCandidate.getUserId())
+        .whenComplete((updatedUser, throwable) -> handleMutationResult(throwable));
+  }
 
-        setBusy(true);
-        showStatus("Đang duyệt quyền Seller...");
+  @FXML
+  private void handleRejectSeller() {
+    showStatus("Backend hiện chưa hỗ trợ API từ chối yêu cầu Seller.");
+  }
 
-        adminUserService
-                .approveSellerRole(selectedCandidate.getUserId())
-                .whenComplete((updatedUser, throwable) -> handleMutationResult(throwable));
+  @FXML
+  private void handleBackToDashboard() {
+    Navigator.getInstance().goToAdminDashboard();
+  }
+
+  private void loadCandidates() {
+    setBusy(true);
+    showStatus("Đang tải danh sách candidate Seller...");
+    showEmptyState("");
+
+    adminUserService
+        .getSellerApprovalCandidates()
+        .whenComplete((candidates, throwable) -> handleCandidatesResult(candidates, throwable));
+  }
+
+  private void configureTable() {
+    if (userIdColumn != null) {
+      userIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
+    }
+    if (usernameColumn != null) {
+      usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
+    }
+    if (emailColumn != null) {
+      emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
+    }
+    if (roleColumn != null) {
+      roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
+    }
+    if (noteColumn != null) {
+      noteColumn.setCellValueFactory(new PropertyValueFactory<>("note"));
+    }
+  }
+
+  private void configureSelectionBinding() {
+    if (sellerTable == null) {
+      return;
     }
 
-    @FXML
-    private void handleRejectSeller() {
-        showStatus("Backend hiện chưa hỗ trợ API từ chối yêu cầu Seller.");
+    sellerTable
+        .getSelectionModel()
+        .selectedItemProperty()
+        .addListener(
+            (observable, oldValue, selectedCandidate) -> updateApproveButton(selectedCandidate));
+  }
+
+  private void configureBackendNote() {
+    if (backendNoteLabel != null) {
+      backendNoteLabel.setText(
+          "Backend hiện hỗ trợ duyệt quyền Seller. API lấy danh sách yêu cầu đang chờ và API từ "
+              + "chối yêu cầu Seller chưa được tách riêng.");
     }
-
-    @FXML
-    private void handleBackToDashboard() {
-        Navigator.getInstance().goToAdminDashboard();
+    if (rejectButton != null) {
+      rejectButton.setDisable(true);
     }
+  }
 
-    private void loadCandidates() {
-        setBusy(true);
-        showStatus("Đang tải danh sách candidate Seller...");
-        showEmptyState("");
+  private void handleCandidatesResult(
+      List<SellerApprovalViewModel> candidates, Throwable throwable) {
+    Platform.runLater(
+        () -> {
+          setBusy(false);
 
-        adminUserService
-                .getSellerApprovalCandidates()
-                .whenComplete((candidates, throwable) -> handleCandidatesResult(candidates, throwable));
-    }
-
-    private void configureTable() {
-        if (userIdColumn != null) {
-            userIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
-        }
-        if (usernameColumn != null) {
-            usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
-        }
-        if (emailColumn != null) {
-            emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
-        }
-        if (roleColumn != null) {
-            roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
-        }
-        if (noteColumn != null) {
-            noteColumn.setCellValueFactory(new PropertyValueFactory<>("note"));
-        }
-    }
-
-    private void configureSelectionBinding() {
-        if (sellerTable == null) {
-            return;
-        }
-
-        sellerTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener(
-                        (observable, oldValue, selectedCandidate) -> updateApproveButton(selectedCandidate));
-    }
-
-    private void configureBackendNote() {
-        if (backendNoteLabel != null) {
-            backendNoteLabel.setText(
-                    "Backend hiện hỗ trợ duyệt quyền Seller. API lấy danh sách yêu cầu đang chờ và API từ "
-                            + "chối yêu cầu Seller chưa được tách riêng.");
-        }
-        if (rejectButton != null) {
-            rejectButton.setDisable(true);
-        }
-    }
-
-    private void handleCandidatesResult(
-            List<SellerApprovalViewModel> candidates, Throwable throwable) {
-        Platform.runLater(
-                () -> {
-                    setBusy(false);
-
-                    if (throwable != null) {
-                        showStatus(errorMessage(throwable, "Không tải được danh sách candidate Seller."));
-                        showEmptyState("Không tải được danh sách candidate Seller.");
-                        setApproveButtonDisabled(true);
-                        return;
-                    }
-
-                    List<SellerApprovalViewModel> safeCandidates =
-                            candidates == null ? List.of() : candidates;
-                    if (sellerTable != null) {
-                        sellerTable.setItems(FXCollections.observableArrayList(safeCandidates));
-                    }
-
-                    if (safeCandidates.isEmpty()) {
-                        showStatus("Đã tải danh sách candidate Seller.");
-                        showEmptyState("Không có candidate Seller phù hợp với API hiện tại.");
-                    } else {
-                        showStatus("Tải danh sách candidate Seller thành công.");
-                        showEmptyState("");
-                    }
-
-                    updateApproveButton(getSelectedCandidate());
-                });
-    }
-
-    private void handleMutationResult(Throwable throwable) {
-        Platform.runLater(
-                () -> {
-                    if (throwable != null) {
-                        setBusy(false);
-                        showStatus(errorMessage(throwable, "Không duyệt được quyền Seller."));
-                        updateApproveButton(getSelectedCandidate());
-                        return;
-                    }
-
-                    showStatus("Duyệt quyền Seller thành công.");
-                    loadCandidates();
-                });
-    }
-
-    private void updateApproveButton(SellerApprovalViewModel selectedCandidate) {
-        if (approveButton != null) {
-            approveButton.setDisable(selectedCandidate == null || !selectedCandidate.isApprovable());
-        }
-    }
-
-    private void setApproveButtonDisabled(boolean disabled) {
-        if (approveButton != null) {
-            approveButton.setDisable(disabled);
-        }
-    }
-
-    private SellerApprovalViewModel getSelectedCandidate() {
-        if (sellerTable == null) {
-            return null;
-        }
-
-        return sellerTable.getSelectionModel().getSelectedItem();
-    }
-
-    private void setBusy(boolean busy) {
-        if (loadingIndicator != null) {
-            loadingIndicator.setVisible(busy);
-            loadingIndicator.setManaged(busy);
-        }
-        if (refreshButton != null) {
-            refreshButton.setDisable(busy);
-        }
-        if (backButton != null) {
-            backButton.setDisable(busy);
-        }
-        if (rejectButton != null) {
-            rejectButton.setDisable(true);
-        }
-
-        if (busy) {
+          if (throwable != null) {
+            showStatus(errorMessage(throwable, "Không tải được danh sách candidate Seller."));
+            showEmptyState("Không tải được danh sách candidate Seller.");
             setApproveButtonDisabled(true);
-        } else {
+            return;
+          }
+
+          List<SellerApprovalViewModel> safeCandidates =
+              candidates == null ? List.of() : candidates;
+          if (sellerTable != null) {
+            sellerTable.setItems(FXCollections.observableArrayList(safeCandidates));
+          }
+
+          if (safeCandidates.isEmpty()) {
+            showStatus("Đã tải danh sách candidate Seller.");
+            showEmptyState("Không có candidate Seller phù hợp với API hiện tại.");
+          } else {
+            showStatus("Tải danh sách candidate Seller thành công.");
+            showEmptyState("");
+          }
+
+          updateApproveButton(getSelectedCandidate());
+        });
+  }
+
+  private void handleMutationResult(Throwable throwable) {
+    Platform.runLater(
+        () -> {
+          if (throwable != null) {
+            setBusy(false);
+            showStatus(errorMessage(throwable, "Không duyệt được quyền Seller."));
             updateApproveButton(getSelectedCandidate());
-        }
+            return;
+          }
+
+          showStatus("Duyệt quyền Seller thành công.");
+          loadCandidates();
+        });
+  }
+
+  private void updateApproveButton(SellerApprovalViewModel selectedCandidate) {
+    if (approveButton != null) {
+      approveButton.setDisable(selectedCandidate == null || !selectedCandidate.isApprovable());
+    }
+  }
+
+  private void setApproveButtonDisabled(boolean disabled) {
+    if (approveButton != null) {
+      approveButton.setDisable(disabled);
+    }
+  }
+
+  private SellerApprovalViewModel getSelectedCandidate() {
+    if (sellerTable == null) {
+      return null;
     }
 
-    private void showStatus(String message) {
-        if (statusLabel != null) {
-            statusLabel.setText(message == null ? "" : message);
-        }
+    return sellerTable.getSelectionModel().getSelectedItem();
+  }
+
+  private void setBusy(boolean busy) {
+    if (loadingIndicator != null) {
+      loadingIndicator.setVisible(busy);
+      loadingIndicator.setManaged(busy);
+    }
+    if (refreshButton != null) {
+      refreshButton.setDisable(busy);
+    }
+    if (backButton != null) {
+      backButton.setDisable(busy);
+    }
+    if (rejectButton != null) {
+      rejectButton.setDisable(true);
     }
 
-    private void showEmptyState(String message) {
-        if (emptyStateLabel != null) {
-            boolean visible = message != null && !message.isBlank();
-            emptyStateLabel.setText(message == null ? "" : message);
-            emptyStateLabel.setVisible(visible);
-            emptyStateLabel.setManaged(visible);
-        }
+    if (busy) {
+      setApproveButtonDisabled(true);
+    } else {
+      updateApproveButton(getSelectedCandidate());
     }
+  }
 
-    private String errorMessage(Throwable throwable, String fallbackMessage) {
-        Throwable root = unwrap(throwable);
-        String message = root.getMessage();
-        return message == null || message.isBlank() ? fallbackMessage : message;
+  private void showStatus(String message) {
+    if (statusLabel != null) {
+      statusLabel.setText(message == null ? "" : message);
     }
+  }
 
-    private Throwable unwrap(Throwable throwable) {
-        if (throwable instanceof CompletionException && throwable.getCause() != null) {
-            return throwable.getCause();
-        }
-        return throwable;
+  private void showEmptyState(String message) {
+    if (emptyStateLabel != null) {
+      boolean visible = message != null && !message.isBlank();
+      emptyStateLabel.setText(message == null ? "" : message);
+      emptyStateLabel.setVisible(visible);
+      emptyStateLabel.setManaged(visible);
     }
+  }
+
+  private String errorMessage(Throwable throwable, String fallbackMessage) {
+    Throwable root = unwrap(throwable);
+    String message = root.getMessage();
+    return message == null || message.isBlank() ? fallbackMessage : message;
+  }
+
+  private Throwable unwrap(Throwable throwable) {
+    if (throwable instanceof CompletionException && throwable.getCause() != null) {
+      return throwable.getCause();
+    }
+    return throwable;
+  }
 }

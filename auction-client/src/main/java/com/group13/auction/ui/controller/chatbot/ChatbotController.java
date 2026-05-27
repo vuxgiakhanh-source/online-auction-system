@@ -37,26 +37,19 @@ public final class ChatbotController {
 
   private final ChatbotService chatbotService = new ChatbotService();
 
-  @FXML
-  private ComboBox<String> categoryComboBox;
+  @FXML private ComboBox<String> categoryComboBox;
 
-  @FXML
-  private ListView<ChatbotFaqViewModel> faqListView;
+  @FXML private ListView<ChatbotFaqViewModel> faqListView;
 
-  @FXML
-  private ScrollPane messageScrollPane;
+  @FXML private ScrollPane messageScrollPane;
 
-  @FXML
-  private VBox messageContainer;
+  @FXML private VBox messageContainer;
 
-  @FXML
-  private TextField messageField;
+  @FXML private TextField messageField;
 
-  @FXML
-  private Button sendButton;
+  @FXML private Button sendButton;
 
-  @FXML
-  private Label statusLabel;
+  @FXML private Label statusLabel;
 
   /** Khởi tạo màn chatbot và tải danh sách FAQ gợi ý. */
   @FXML
@@ -229,8 +222,9 @@ public final class ChatbotController {
     contentLabel.getStyleClass().add("chatbot-message-text");
 
     VBox bubble = new VBox(5.0, senderLabel, contentLabel);
-    bubble.getStyleClass().add(
-        message.userMessage() ? "chatbot-message-user" : "chatbot-message-bot");
+    bubble
+        .getStyleClass()
+        .add(message.userMessage() ? "chatbot-message-user" : "chatbot-message-bot");
 
     HBox row = new HBox(bubble);
     row.setAlignment(message.userMessage() ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);

@@ -16,79 +16,79 @@ import javafx.beans.property.SimpleObjectProperty;
  */
 public final class AppContext {
 
-    private static final AppContext INSTANCE = new AppContext();
+  private static final AppContext INSTANCE = new AppContext();
 
-    private final SessionManager sessionManager = new SessionManager();
-    private final ScreenStateStore screenStateStore = new ScreenStateStore();
-    private final ObjectProperty<ConnectionState> connectionState =
-            new SimpleObjectProperty<>(ConnectionState.DISCONNECTED);
+  private final SessionManager sessionManager = new SessionManager();
+  private final ScreenStateStore screenStateStore = new ScreenStateStore();
+  private final ObjectProperty<ConnectionState> connectionState =
+      new SimpleObjectProperty<>(ConnectionState.DISCONNECTED);
 
-    private Navigator navigator;
+  private Navigator navigator;
 
-    private AppContext() {}
+  private AppContext() {}
 
-    /**
-     * Lấy context dùng chung của client.
-     *
-     * @return singleton application context
-     */
-    public static AppContext getInstance() {
-        return INSTANCE;
+  /**
+   * Lấy context dùng chung của client.
+   *
+   * @return singleton application context
+   */
+  public static AppContext getInstance() {
+    return INSTANCE;
+  }
+
+  /**
+   * Gắn navigator sau khi JavaFX stage đã được khởi tạo.
+   *
+   * @param navigator navigator chính của ứng dụng
+   */
+  public void setNavigator(Navigator navigator) {
+    this.navigator = Objects.requireNonNull(navigator, "navigator must not be null");
+  }
+
+  /**
+   * Lấy navigator hiện tại.
+   *
+   * @return navigator chính
+   */
+  public Navigator getNavigator() {
+    if (navigator == null) {
+      throw new IllegalStateException("Navigator chưa được khởi tạo.");
     }
+    return navigator;
+  }
 
-    /**
-     * Gắn navigator sau khi JavaFX stage đã được khởi tạo.
-     *
-     * @param navigator navigator chính của ứng dụng
-     */
-    public void setNavigator(Navigator navigator) {
-        this.navigator = Objects.requireNonNull(navigator, "navigator must not be null");
-    }
+  /**
+   * Lấy session manager của client.
+   *
+   * @return session manager
+   */
+  public SessionManager getSessionManager() {
+    return sessionManager;
+  }
 
-    /**
-     * Lấy navigator hiện tại.
-     *
-     * @return navigator chính
-     */
-    public Navigator getNavigator() {
-        if (navigator == null) {
-            throw new IllegalStateException("Navigator chưa được khởi tạo.");
-        }
-        return navigator;
-    }
+  /**
+   * Lấy kho state tạm thời giữa các màn hình.
+   *
+   * @return screen state store
+   */
+  public ScreenStateStore getScreenStateStore() {
+    return screenStateStore;
+  }
 
-    /**
-     * Lấy session manager của client.
-     *
-     * @return session manager
-     */
-    public SessionManager getSessionManager() {
-        return sessionManager;
-    }
+  /**
+   * Property trạng thái kết nối để UI có thể bind hoặc lắng nghe thay đổi.
+   *
+   * @return connection state property
+   */
+  public ObjectProperty<ConnectionState> connectionStateProperty() {
+    return connectionState;
+  }
 
-    /**
-     * Lấy kho state tạm thời giữa các màn hình.
-     *
-     * @return screen state store
-     */
-    public ScreenStateStore getScreenStateStore() {
-        return screenStateStore;
-    }
+  public ConnectionState getConnectionState() {
+    return connectionState.get();
+  }
 
-    /**
-     * Property trạng thái kết nối để UI có thể bind hoặc lắng nghe thay đổi.
-     *
-     * @return connection state property
-     */
-    public ObjectProperty<ConnectionState> connectionStateProperty() {
-        return connectionState;
-    }
-
-    public ConnectionState getConnectionState() {
-        return connectionState.get();
-    }
-
-    public void setConnectionState(ConnectionState state) {
-        connectionState.set(Objects.requireNonNull(state, "state must not be null"));
-    }
+  public void setConnectionState(ConnectionState state) {
+    connectionState.set(Objects.requireNonNull(state, "state must not be null"));
+  }
 }

@@ -17,8 +17,7 @@ class PaymentServiceValidationTest {
     PaymentService service = createService();
 
     assertFutureFailsWithMessage(
-        service.requestPayment(null),
-        "Thiếu mã phiên đấu giá cần thanh toán.");
+        service.requestPayment(null), "Thiếu mã phiên đấu giá cần thanh toán.");
   }
 
   @Test
@@ -26,8 +25,7 @@ class PaymentServiceValidationTest {
     PaymentService service = createService();
 
     assertFutureFailsWithMessage(
-        service.requestPayment("   "),
-        "Thiếu mã phiên đấu giá cần thanh toán.");
+        service.requestPayment("   "), "Thiếu mã phiên đấu giá cần thanh toán.");
   }
 
   @Test
@@ -35,8 +33,7 @@ class PaymentServiceValidationTest {
     PaymentService service = createService();
 
     assertFutureFailsWithMessage(
-        service.confirmItemReceived("   "),
-        "Thiếu mã phiên đấu giá cần xác nhận.");
+        service.confirmItemReceived("   "), "Thiếu mã phiên đấu giá cần xác nhận.");
   }
 
   @Test
@@ -44,8 +41,7 @@ class PaymentServiceValidationTest {
     PaymentService service = createService();
 
     assertFutureFailsWithMessage(
-        service.acceptSecondChance("   "),
-        "Thiếu mã phiên đấu giá của Second Chance Offer.");
+        service.acceptSecondChance("   "), "Thiếu mã phiên đấu giá của Second Chance Offer.");
   }
 
   @Test
@@ -53,8 +49,7 @@ class PaymentServiceValidationTest {
     PaymentService service = createService();
 
     assertFutureFailsWithMessage(
-        service.declineSecondChance("   "),
-        "Thiếu mã phiên đấu giá của Second Chance Offer.");
+        service.declineSecondChance("   "), "Thiếu mã phiên đấu giá của Second Chance Offer.");
   }
 
   private static PaymentService createService() {

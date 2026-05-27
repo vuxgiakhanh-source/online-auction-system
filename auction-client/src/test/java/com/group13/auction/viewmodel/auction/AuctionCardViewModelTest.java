@@ -11,8 +11,7 @@ class AuctionCardViewModelTest {
 
   @Test
   void constructorShouldConvertNullImageUrlToEmptyString() {
-    AuctionCardViewModel viewModel =
-        createViewModel(null, true);
+    AuctionCardViewModel viewModel = createViewModel(null, true);
 
     assertEquals("", viewModel.primaryImageUrl());
     assertFalse(viewModel.hasImage());
@@ -20,16 +19,14 @@ class AuctionCardViewModelTest {
 
   @Test
   void hasImageShouldReturnFalseWhenImageUrlIsBlank() {
-    AuctionCardViewModel viewModel =
-        createViewModel("   ", true);
+    AuctionCardViewModel viewModel = createViewModel("   ", true);
 
     assertFalse(viewModel.hasImage());
   }
 
   @Test
   void hasImageShouldReturnTrueWhenImageUrlHasText() {
-    AuctionCardViewModel viewModel =
-        createViewModel("items/camera.png", true);
+    AuctionCardViewModel viewModel = createViewModel("items/camera.png", true);
 
     assertEquals("items/camera.png", viewModel.primaryImageUrl());
     assertTrue(viewModel.hasImage());

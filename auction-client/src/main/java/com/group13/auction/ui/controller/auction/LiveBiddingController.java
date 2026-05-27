@@ -330,8 +330,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    ContentPreviewDialog.show(
-        bidLineChart, "Biểu đồ giá realtime", createExpandedBidLineChart());
+    ContentPreviewDialog.show(bidLineChart, "Biểu đồ giá realtime", createExpandedBidLineChart());
   }
 
   /** Mở lịch sử bid ở dạng bảng lớn. */
@@ -342,8 +341,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    ContentPreviewDialog.show(
-        bidHistoryListView, "Lịch sử bid", createExpandedBidHistoryTable());
+    ContentPreviewDialog.show(bidHistoryListView, "Lịch sử bid", createExpandedBidHistoryTable());
   }
 
   @Override
@@ -509,9 +507,7 @@ public final class LiveBiddingController implements ClientEventListener {
     FxThreadUtil.runOnFxThread(
         () ->
             renderAuctionClosed(
-                update,
-                "Chưa đạt giá sàn",
-                "Phiên đấu giá đã kết thúc nhưng chưa đạt giá sàn."));
+                update, "Chưa đạt giá sàn", "Phiên đấu giá đã kết thúc nhưng chưa đạt giá sàn."));
   }
 
   @Override
@@ -545,9 +541,7 @@ public final class LiveBiddingController implements ClientEventListener {
           placeBidButton.setDisable(true);
           syncAutoBidButtons(false);
           setMessage(
-              update.getMessage() == null
-                  ? "Phiên đấu giá đã bị hủy."
-                  : update.getMessage());
+              update.getMessage() == null ? "Phiên đấu giá đã bị hủy." : update.getMessage());
         });
   }
 
@@ -654,10 +648,7 @@ public final class LiveBiddingController implements ClientEventListener {
         .exceptionally(
             throwable -> {
               FxThreadUtil.runOnFxThread(
-                  () ->
-                      setMessage(
-                          "Chưa tải được lịch sử bid: "
-                              + extractMessage(throwable)));
+                  () -> setMessage("Chưa tải được lịch sử bid: " + extractMessage(throwable)));
               return null;
             });
   }
@@ -668,16 +659,11 @@ public final class LiveBiddingController implements ClientEventListener {
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
-                    () ->
-                        renderAutoBidRegistration(
-                            registration,
-                            "Đã tải trạng thái auto-bid.")))
+                    () -> renderAutoBidRegistration(registration, "Đã tải trạng thái auto-bid.")))
         .exceptionally(
             throwable -> {
               FxThreadUtil.runOnFxThread(
-                  () ->
-                      setAutoBidStatusText(
-                          "Chưa tải được trạng thái auto-bid."));
+                  () -> setAutoBidStatusText("Chưa tải được trạng thái auto-bid."));
               return null;
             });
   }
@@ -793,8 +779,8 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   /**
-   * Cập nhật bounds của NumberAxis Y-axis dựa trên dữ liệu hiện có trong priceSeries.
-   * Gọi sau mỗi lần thêm/xóa data point để mốc giá trên trục Y không bị mất.
+   * Cập nhật bounds của NumberAxis Y-axis dựa trên dữ liệu hiện có trong priceSeries. Gọi sau mỗi
+   * lần thêm/xóa data point để mốc giá trên trục Y không bị mất.
    */
   private void updateChartYAxisBounds() {
     if (priceSeries.getData().isEmpty()) {
@@ -839,13 +825,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
     bidHistoryListView
         .getItems()
-        .add(
-            0,
-            point.timestampText()
-                + " • "
-                + point.bidderUsername()
-                + " • "
-                + point.priceText());
+        .add(0, point.timestampText() + " • " + point.bidderUsername() + " • " + point.priceText());
 
     currentPriceRaw = point.price();
     currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
@@ -863,15 +843,9 @@ public final class LiveBiddingController implements ClientEventListener {
     // Tính bounds từ historyPoints để mốc giá hiển thị đầy đủ
     if (!historyPoints.isEmpty()) {
       long min =
-          historyPoints.stream()
-              .mapToLong(BidHistoryPointViewModel::price)
-              .min()
-              .getAsLong();
+          historyPoints.stream().mapToLong(BidHistoryPointViewModel::price).min().getAsLong();
       long max =
-          historyPoints.stream()
-              .mapToLong(BidHistoryPointViewModel::price)
-              .max()
-              .getAsLong();
+          historyPoints.stream().mapToLong(BidHistoryPointViewModel::price).max().getAsLong();
       long range = Math.max(max - min, 100_000L);
       long padding = range / 8;
       yAxis.setLowerBound(Math.max(0, min - padding));
