@@ -212,6 +212,11 @@ public class QualityReportService implements IQualityReportService {
                   + "Điểm uy tín của bạn bị trừ. Trạng thái tài khoản: %s.",
               report.getAuctionId(), seller.getAccountStatus().name()));
     }
+    // FIX [Memory leak]: terminal — report đã APPROVED, không còn state transition. Dọn lock
+    // entry để tránh map growth khi nhiều report. Đặt SAU synchronized block để tránh xóa key
+    // trong khi vẫn đang giữ giá trị lock đó. Safe nếu ai đó vừa enter — họ sẽ thấy status đã
+    // APPROVED và throw IllegalStateException ngay.
+    reportLocks.remove(report.getId());
   }
 
   // ── Reject ────────────────────────────────────────────────────────────────
@@ -254,6 +259,8 @@ public class QualityReportService implements IQualityReportService {
               + report.getAuctionId()
               + ".");
     }
+    // FIX [Memory leak]: terminal — report REJECTED, không state transition tiếp.
+    reportLocks.remove(report.getId());
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
