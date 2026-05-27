@@ -18,18 +18,14 @@ class NotificationServiceValidationTest {
   void markNotificationReadShouldFailWhenNotificationIdIsNull() {
     NotificationService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.markNotificationRead(null),
-        "Thiếu mã thông báo.");
+    assertFutureFailsWithMessage(service.markNotificationRead(null), "Thiếu mã thông báo.");
   }
 
   @Test
   void markNotificationReadShouldFailWhenNotificationIdIsBlank() {
     NotificationService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.markNotificationRead("   "),
-        "Thiếu mã thông báo.");
+    assertFutureFailsWithMessage(service.markNotificationRead("   "), "Thiếu mã thông báo.");
   }
 
   @Test

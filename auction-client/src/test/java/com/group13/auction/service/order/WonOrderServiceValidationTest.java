@@ -23,9 +23,7 @@ class WonOrderServiceValidationTest {
   void getMyWonOrdersShouldFailWhenUserIsNotLoggedIn() {
     WonOrderService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getMyWonOrders(),
-        "Vui lòng đăng nhập để xem đơn hàng.");
+    assertFutureFailsWithMessage(service.getMyWonOrders(), "Vui lòng đăng nhập để xem đơn hàng.");
   }
 
   @Test
@@ -33,8 +31,7 @@ class WonOrderServiceValidationTest {
     WonOrderService service = createService();
 
     assertFutureFailsWithMessage(
-        service.payForOrder(null),
-        "Thiếu mã phiên đấu giá cần thanh toán.");
+        service.payForOrder(null), "Thiếu mã phiên đấu giá cần thanh toán.");
   }
 
   @Test
@@ -42,8 +39,7 @@ class WonOrderServiceValidationTest {
     WonOrderService service = createService();
 
     assertFutureFailsWithMessage(
-        service.payForOrder("   "),
-        "Thiếu mã phiên đấu giá cần thanh toán.");
+        service.payForOrder("   "), "Thiếu mã phiên đấu giá cần thanh toán.");
   }
 
   @Test
@@ -51,8 +47,7 @@ class WonOrderServiceValidationTest {
     WonOrderService service = createService();
 
     assertFutureFailsWithMessage(
-        service.confirmItemReceived(null),
-        "Thiếu mã phiên đấu giá cần xác nhận.");
+        service.confirmItemReceived(null), "Thiếu mã phiên đấu giá cần xác nhận.");
   }
 
   @Test
@@ -60,8 +55,7 @@ class WonOrderServiceValidationTest {
     WonOrderService service = createService();
 
     assertFutureFailsWithMessage(
-        service.confirmItemReceived("   "),
-        "Thiếu mã phiên đấu giá cần xác nhận.");
+        service.confirmItemReceived("   "), "Thiếu mã phiên đấu giá cần xác nhận.");
   }
 
   private static WonOrderService createService() {

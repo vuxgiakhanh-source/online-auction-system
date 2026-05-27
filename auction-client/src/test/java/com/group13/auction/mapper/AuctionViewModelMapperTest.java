@@ -50,7 +50,8 @@ class AuctionViewModelMapperTest {
     assertEquals("Đang đấu giá", viewModel.statusText());
     assertCurrencyTextContains(viewModel.currentPriceText(), "2.500.000");
     assertCurrencyTextContains(viewModel.startingPriceText(), "1.000.000");
-    assertEquals(DateTimeUtil.formatDateTime(auction.getExtendedEndTime()), viewModel.endTimeText());
+    assertEquals(
+        DateTimeUtil.formatDateTime(auction.getExtendedEndTime()), viewModel.endTimeText());
     assertEquals("Người bán: seller01", viewModel.sellerText());
     assertEquals("12 lượt truy cập", viewModel.viewerCountText());
     assertEquals("items/camera-1.png", viewModel.primaryImageUrl());
@@ -148,8 +149,8 @@ class AuctionViewModelMapperTest {
     assertSpecification(electronics, "Tình trạng", "Like new");
 
     AuctionDTOs.AuctionDTO art = createAuction("A-2", "OPEN", "ART");
-    art.getItem().setExtraFields(
-        Map.of("artist", "Van Gogh", "yearCreated", 1889, "medium", "Oil"));
+    art.getItem()
+        .setExtraFields(Map.of("artist", "Van Gogh", "yearCreated", 1889, "medium", "Oil"));
     assertSpecification(art, "Nghệ sĩ", "Van Gogh");
     assertSpecification(art, "Năm sáng tác", "1,889");
     assertSpecification(art, "Chất liệu", "Oil");
@@ -177,12 +178,16 @@ class AuctionViewModelMapperTest {
     assertEquals("COLLECTIBLE", viewModel.categoryText());
     assertTrue(
         viewModel.productSpecifications().stream()
-            .anyMatch(specification -> specification.label().equals("Serial Number")
-                && specification.value().equals("SN-001")));
+            .anyMatch(
+                specification ->
+                    specification.label().equals("Serial Number")
+                        && specification.value().equals("SN-001")));
     assertTrue(
         viewModel.productSpecifications().stream()
-            .anyMatch(specification -> specification.label().equals("Made in")
-                && specification.value().equals("Japan")));
+            .anyMatch(
+                specification ->
+                    specification.label().equals("Made in")
+                        && specification.value().equals("Japan")));
     assertFalse(
         viewModel.productSpecifications().stream()
             .anyMatch(specification -> specification.label().equals("Empty")));
@@ -211,11 +216,21 @@ class AuctionViewModelMapperTest {
 
   @Test
   void toModerationViewModelShouldAllowAdminCancelOnlyForOpenOrRunningAuctions() {
-    assertTrue(AuctionViewModelMapper.toModerationViewModel(createAuction("A-1", "OPEN", "ART")).isCancellable());
-    assertTrue(AuctionViewModelMapper.toModerationViewModel(createAuction("A-2", "RUNNING", "ART")).isCancellable());
-    assertFalse(AuctionViewModelMapper.toModerationViewModel(createAuction("A-3", "FINISHED", "ART")).isCancellable());
-    assertFalse(AuctionViewModelMapper.toModerationViewModel(createAuction("A-4", "PAID", "ART")).isCancellable());
-    assertFalse(AuctionViewModelMapper.toModerationViewModel(createAuction("A-5", "CANCELED", "ART")).isCancellable());
+    assertTrue(
+        AuctionViewModelMapper.toModerationViewModel(createAuction("A-1", "OPEN", "ART"))
+            .isCancellable());
+    assertTrue(
+        AuctionViewModelMapper.toModerationViewModel(createAuction("A-2", "RUNNING", "ART"))
+            .isCancellable());
+    assertFalse(
+        AuctionViewModelMapper.toModerationViewModel(createAuction("A-3", "FINISHED", "ART"))
+            .isCancellable());
+    assertFalse(
+        AuctionViewModelMapper.toModerationViewModel(createAuction("A-4", "PAID", "ART"))
+            .isCancellable());
+    assertFalse(
+        AuctionViewModelMapper.toModerationViewModel(createAuction("A-5", "CANCELED", "ART"))
+            .isCancellable());
   }
 
   @Test
@@ -225,7 +240,8 @@ class AuctionViewModelMapperTest {
 
     AuctionTimerViewModel futureTimer = AuctionViewModelMapper.toTimerViewModel(futureAuction);
 
-    assertEquals(DateTimeUtil.formatDateTime(futureAuction.getExtendedEndTime()), futureTimer.endTimeText());
+    assertEquals(
+        DateTimeUtil.formatDateTime(futureAuction.getExtendedEndTime()), futureTimer.endTimeText());
     assertFalse(futureTimer.ended());
 
     AuctionDTOs.AuctionDTO endedAuction = createAuction("A-2", "RUNNING", "ELECTRONICS");
@@ -277,8 +293,7 @@ class AuctionViewModelMapperTest {
     item.setSellerId("SELLER-1");
     item.setSellerUsername("seller01");
     item.setImageUrls(List.of("items/camera-1.png", "   ", "items/camera-2.png"));
-    item.setExtraFields(
-        Map.of("brand", "Sony", "warrantyMonths", 12, "condition", "Like new"));
+    item.setExtraFields(Map.of("brand", "Sony", "warrantyMonths", 12, "condition", "Like new"));
 
     AuctionDTOs.AuctionDTO auction = new AuctionDTOs.AuctionDTO();
     auction.setId(auctionId);

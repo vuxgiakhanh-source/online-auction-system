@@ -16,9 +16,7 @@ class BidServiceValidationTest {
   void placeBidShouldFailWhenAuctionIdIsBlank() {
     BidService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.placeBid("   ", "2500000"),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.placeBid("   ", "2500000"), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -26,8 +24,7 @@ class BidServiceValidationTest {
     BidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.placeBid("A-1", "   "),
-        "Giá đặt phải là số nguyên hợp lệ.");
+        service.placeBid("A-1", "   "), "Giá đặt phải là số nguyên hợp lệ.");
   }
 
   @Test
@@ -35,17 +32,14 @@ class BidServiceValidationTest {
     BidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.placeBid("A-1", "abc"),
-        "Giá đặt phải là số nguyên hợp lệ.");
+        service.placeBid("A-1", "abc"), "Giá đặt phải là số nguyên hợp lệ.");
   }
 
   @Test
   void placeBidShouldFailWhenAmountIsLowerThanMinimum() {
     BidService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.placeBid("A-1", "999"),
-        "Giá đặt tối thiểu là 1.000 ₫.");
+    assertFutureFailsWithMessage(service.placeBid("A-1", "999"), "Giá đặt tối thiểu là 1.000 ₫.");
   }
 
   @Test
@@ -53,8 +47,7 @@ class BidServiceValidationTest {
     BidService service = createService();
 
     assertFutureFailsWithMessage(
-        service.placeBid("A-1", "100000000001"),
-        "Giá đặt vượt quá giới hạn cho phép.");
+        service.placeBid("A-1", "100000000001"), "Giá đặt vượt quá giới hạn cho phép.");
   }
 
   private static BidService createService() {

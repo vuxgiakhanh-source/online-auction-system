@@ -17,18 +17,14 @@ class ProfileServiceValidationTest {
   void getUserProfileShouldFailWhenUserIdIsNull() {
     ProfileService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getUserProfile(null),
-        "Thiếu mã người dùng.");
+    assertFutureFailsWithMessage(service.getUserProfile(null), "Thiếu mã người dùng.");
   }
 
   @Test
   void getUserProfileShouldFailWhenUserIdIsBlank() {
     ProfileService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getUserProfile("   "),
-        "Thiếu mã người dùng.");
+    assertFutureFailsWithMessage(service.getUserProfile("   "), "Thiếu mã người dùng.");
   }
 
   private static ProfileService createService() {

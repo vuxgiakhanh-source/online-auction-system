@@ -16,16 +16,7 @@ class AuctionDetailViewModelTest {
   @Test
   void constructorShouldUseSafeDefaultsForNullableStatusAndLeaderFields() {
     AuctionDetailViewModel viewModel =
-        createViewModel(
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of(),
-            List.of(),
-            false,
-            false);
+        createViewModel(null, null, null, null, null, List.of(), List.of(), false, false);
 
     assertEquals("", viewModel.rawStatus());
     assertEquals("", viewModel.currentLeaderId());

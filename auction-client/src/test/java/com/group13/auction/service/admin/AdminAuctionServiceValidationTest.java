@@ -26,8 +26,7 @@ class AdminAuctionServiceValidationTest {
     AdminAuctionService service = createService();
 
     assertFutureFailsWithMessage(
-        service.getAllAuctionsForAdmin(),
-        "Tài khoản hiện tại không có quyền Admin.");
+        service.getAllAuctionsForAdmin(), "Tài khoản hiện tại không có quyền Admin.");
   }
 
   @Test
@@ -46,8 +45,7 @@ class AdminAuctionServiceValidationTest {
     AdminAuctionService service = createService();
 
     assertFutureFailsWithMessage(
-        service.cancelAuctionAsAdmin("   ", "POLICY_VIOLATION"),
-        "Thiếu mã phiên đấu giá cần hủy.");
+        service.cancelAuctionAsAdmin("   ", "POLICY_VIOLATION"), "Thiếu mã phiên đấu giá cần hủy.");
   }
 
   @Test
@@ -56,8 +54,7 @@ class AdminAuctionServiceValidationTest {
     AdminAuctionService service = createService();
 
     assertFutureFailsWithMessage(
-        service.cancelAuctionAsAdmin("A-1", "   "),
-        "Vui lòng chọn lý do hủy phiên đấu giá.");
+        service.cancelAuctionAsAdmin("A-1", "   "), "Vui lòng chọn lý do hủy phiên đấu giá.");
   }
 
   private static AdminAuctionService createService() {
