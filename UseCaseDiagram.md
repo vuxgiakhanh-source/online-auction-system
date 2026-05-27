@@ -1,93 +1,38 @@
 # Use Case Diagram
 
-## General Management Subsystem
+Góc nhìn nghiệp vụ (actor → capability), không thay sequence diagram.  
+Dùng để đối chiếu phạm vi sản phẩm với implementation.
+
+**Mục đích:** Tổng quan chức năng.  
+**Use case:** Review scope dự án, map use case → file sequence/class diagram bên dưới.  
+**Chi tiết kỹ thuật:** Các file `*SequenceDiagram.md`, `*ClassDiagram.md`.
+
+## Quản lý chung
 
 ```mermaid
 flowchart LR
-    User["Bidder / Seller"]
-    Staff["Staff Admin"]
-    SysAdmin["System Admin"]
-
-    subgraph General["General Management Subsystem"]
-        UCAuth["Register / Login"]
-        UCWallet["Manage Wallet"]
-        UCNotify["Receive Realtime<br/>and Inbox Updates"]
-        UCAdmin["Manage Users / Bans"]
-    end
-
-    User --> UCAuth
-    User --> UCWallet
-    User --> UCNotify
-    Staff --> UCAdmin
-    Staff --> UCNotify
-    SysAdmin --> UCAdmin
-    SysAdmin --> UCNotify
+    U["Bidder / Seller"] --> UC1["Auth"] & UC2["Wallet"] & UC3["Notifications"]
+    ADM["Admin"] --> UC4["User admin"]
 ```
 
-## Auction & Bidding Engine
+## Đấu giá
 
 ```mermaid
 flowchart LR
-    Bidder["Bidder / Buyer"]
-    Seller["Seller"]
-
-    subgraph Engine["Auction & Bidding Engine"]
-        UCBrowse["Browse / Watch Auctions"]
-        UCCreate["Create Auction"]
-        UCJoin["Join Auction<br/>(lock deposit)"]
-        UCBid["Place Bid"]
-        UCAutoBid["Manage Auto-Bid"]
-        UCLeave["Leave Auction"]
-        UCCancelReq["Request Auction Cancel"]
-    end
-
-    Bidder --> UCBrowse
-    Bidder --> UCJoin
-    Bidder --> UCBid
-    Bidder --> UCAutoBid
-    Bidder --> UCLeave
-    Seller --> UCCreate
-    Seller --> UCCancelReq
-
-    UCJoin -. include .-> UCBrowse
-    UCAutoBid -. include .-> UCBid
+    B["Bidder"] --> UC5["Browse"] & UC7["Join"] & UC8["Bid"] & UC9["Auto-bid"]
+    S["Seller"] --> UC6["Create auction"]
 ```
 
-## Post-Auction & Lifecycle Subsystem
+## Hậu mãi
 
 ```mermaid
 flowchart LR
-    Timer["AuctionTimerService"]
-    Winner["Winner"]
-    RunnerUp["Runner-up"]
-    Staff["Staff Admin"]
-
-    subgraph Lifecycle["Post-Auction & Lifecycle Subsystem"]
-        UCLifecycle["Start / Close Auction"]
-        UCRefund["Refund Losing Deposits"]
-        UCPay["Pay Winning Auction"]
-        UCSCO["Second Chance Offer"]
-        UCConfirm["Confirm Item Received"]
-        UCReport["Submit Quality Report"]
-        UCArbitrate["Arbitrate Quality Report"]
-        UCPayout["Release Seller Payout"]
-        UCJobs["Run Background Jobs"]
-    end
-
-    Timer --> UCJobs
-    Winner --> UCPay
-    Winner --> UCConfirm
-    Winner --> UCReport
-    RunnerUp --> UCSCO
-    Staff --> UCArbitrate
-
-    UCJobs -. include .-> UCLifecycle
-    UCLifecycle -. include .-> UCRefund
-    UCLifecycle -. extend .-> UCPay
-    UCPay -. extend .-> UCSCO
-    UCPay -. extend .-> UCConfirm
-    UCConfirm -. extend .-> UCReport
-    UCReport -. extend .-> UCArbitrate
-    UCJobs -. include .-> UCPayout
-    UCJobs -. include .-> UCSCO
+    T["AuctionTimerService"] --> UC10["Lifecycle jobs"]
+    W["Winner"] --> UC11["Pay"] & UC13["Confirm receipt"] & UC14["Quality report"]
 ```
+
+| Use case | Diagram |
+|----------|---------|
+| Bid | [PlaceBidSequenceDiagram.md](./PlaceBidSequenceDiagram.md) |
+| Lifecycle | [AuctionLifecycleSequenceDiagram.md](./AuctionLifecycleSequenceDiagram.md) |
+| Payment | [PaymentAndDepositEscrowSequenceDiagram.md](./PaymentAndDepositEscrowSequenceDiagram.md) |

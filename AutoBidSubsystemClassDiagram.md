@@ -1,93 +1,34 @@
 # Auto-Bid Subsystem Class Diagram
 
+Auto-bid: `AutoBidRegistry` (memory + DB), `AutoBidProcessor` (chuỗi async), `BidStrategy` / `AutoBidStrategy`, liên kết `BidHandler` và `BidService`.
+
+**Mục đích:** Hiểu cấu trúc auto-bid tách khỏi bid thủ công.  
+**Use case:** Debug counter-bid, đăng ký/hủy auto-bid, performance chain sau `PLACE_BID`.  
+**Trong code:** `com.group13.auction.strategy.AutoBid*`, `BidHandler` handlers REGISTER/UPDATE/CANCEL_AUTO_BID.
+
 ```mermaid
-classDiagram
-    direction LR
+flowchart LR
+    subgraph API
+        BH["BidHandler"]
+    end
+    subgraph Service
+        BS["BidService"]
+    end
+    subgraph Domain
+        REG["AutoBidRegistry"]
+        LOCK["AuctionLockRegistry"]
+    end
+    subgraph Infrastructure
+        ABP["AutoBidProcessor"]
+    end
+    subgraph Database
+        ADAO["AutoBidDAO"]
+    end
 
-    class BidHandler {
-        +handleRegisterAutoBid(...)
-        +handleUpdateAutoBid(...)
-        +handleCancelAutoBid(...)
-        +handlePlaceBid(...)
-    }
-    class AutoBidProcessor {
-        +submit(Auction, String)
-        +clearAuctionActivity(String)
-        -runChain(Auction, String)
-        -buildCandidates(Collection, String, Auction, AutoBidPhase)
-        -attemptBid(NormalUser, AutoBidEntry, Auction, AutoBidPhase, int) boolean
-        -calcSmartBid(long, long, AutoBidPhase) long
-    }
-    class AutoBidRegistry {
-        <<Singleton>>
-        +register(String, String, long)
-        +cancel(String, String) boolean
-        +clearAuction(String)
-        +getEntriesForAuction(String) Collection~AutoBidEntry~
-        +loadFromDatabase()
-    }
-    class AutoBidEntry {
-        +String userId
-        +String auctionId
-        +long maxBid
-        +LocalDateTime registeredAt
-        +calculateNextBid(long) long
-    }
-    class BidService {
-        +placeBid(NormalUser, Auction, long, BidStrategy)
-        +leaveAuction(User, Auction) LeaveResult
-    }
-    class BidStrategy {
-        <<interface>>
-        +isValidBid(Auction, long) boolean
-        +calculateNextBid(Auction) long
-        +describe() String
-    }
-    class StandardBidStrategy
-    class AutoBidStrategy {
-        +long maxBid
-    }
-    class AutoBidPhase {
-        <<enumeration>>
-        EARLY
-        MID
-        LATE
-        VERY_HOT
-        +detect(long, long, int) AutoBidPhase
-        +multiplier() double
-    }
-    class BidIncrementCalculator {
-        +calculate(long) long
-    }
-    class BidRateLimiter {
-        <<Singleton>>
-        +tryConsume(String) boolean
-        +cleanupIdle()
-    }
-    class AuctionLockRegistry {
-        <<Singleton>>
-        +getLock(String) ReentrantLock
-    }
-    class SessionManager {
-        +isOnline(String) boolean
-        +broadcastToAuctionAsync(String, Packet)
-        +sendToUser(String, Packet)
-    }
-
-    BidHandler --> AutoBidRegistry
-    BidHandler --> AutoBidProcessor
-    BidHandler --> BidRateLimiter
-    AutoBidProcessor --> AutoBidRegistry
-    AutoBidProcessor --> BidService
-    AutoBidProcessor --> SessionManager
-    AutoBidProcessor --> UserDAO
-    AutoBidProcessor --> AuctionManager
-    AutoBidProcessor --> AutoBidPhase
-    AutoBidProcessor --> BidIncrementCalculator
-    AutoBidRegistry --> AutoBidEntry
-    AutoBidRegistry --> AutoBidDAO
-    BidService --> BidStrategy
-    BidService --> AuctionLockRegistry
-    BidStrategy <|.. StandardBidStrategy
-    BidStrategy <|.. AutoBidStrategy
+    BH --> REG & ABP & BS
+    ABP --> REG & BS
+    REG --> ADAO
+    BS --> LOCK
 ```
+
+`BidStrategy` · `StandardBidStrategy` · `AutoBidStrategy` — sequence: [AutoBidSequenceDiagram.md](./AutoBidSequenceDiagram.md)

@@ -1,74 +1,50 @@
 # Auction Lifecycle Sequence Diagram
 
+Scheduler nền mở/đóng phiên: OPEN → RUNNING → FINISHED hoặc CANCELED, hoàn cọc, broadcast trạng thái.  
+`AuctionTimerService` quét mỗi 1 giây; bỏ qua close nếu anti-sniping vừa gia hạn `endTime`.
+
+**Mục đích:** Hiểu ai trigger chuyển trạng thái khi không có request client.  
+**Use case:** Phiên tự start/close đúng giờ, không winner, reserve không đạt, refund deposit.  
+**Trong code:** `AuctionTimerService.scanAndProcess` → `AuctionService.startAuction` / `closeAuction`.
+
+## Start OPEN → RUNNING
+
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant Timer as AuctionTimerService
-    participant Scheduler as TaskScheduler
-    participant Manager as AuctionManager
-    participant Lock as AuctionLockRegistry
-    participant AuctionSvc as AuctionService
-    participant Auction
-    participant AuctionDAO
-    participant WinnerDAO as AuctionWinnerDAO
-    participant TxDAO as FinancialTransactionDAO
-    participant Bank as SystemBank
-    participant PaymentSvc as PaymentService
-    participant Broadcast as ServerBroadcastNotifier
-    participant Sessions as SessionManager
-    participant AutoBid as AutoBid cleanup
-
-    Timer->>Scheduler: scheduleAtFixedRate(scanAndProcess, 1s)
-
-    loop open auctions
-        Timer->>Manager: getAuctionsByStatus(OPEN)
-        Timer->>Lock: tryLock(auctionId)
-        Timer->>AuctionSvc: startAuction(auction)
-        AuctionSvc->>Auction: transitionToRunning()
-        AuctionSvc->>AuctionDAO: updateAuctionStatus(RUNNING)
-        AuctionSvc->>AuctionSvc: notify(AUCTION_STARTED)
-        Timer->>Sessions: broadcastToAuction(AUCTION_STARTED_UPDATE)
-        Timer->>Lock: unlock(auctionId)
+    box Infrastructure
+        participant TMR as AuctionTimerService
+    end
+    box Service
+        participant AS as AuctionService
+    end
+    box API
+        participant SM as SessionManager
     end
 
-    loop running auctions
-        Timer->>Manager: getAuctionsByStatus(RUNNING)
-        opt 10 or 5 minutes left
-            Timer->>Broadcast: notifyAuctionUpcomingEnd(auction, minutes)
-        end
-
-        alt endTime reached
-            Timer->>Lock: tryLock(auctionId)
-            alt anti-sniping already extended
-                Timer->>Lock: unlock(auctionId)
-            else close due
-                Timer->>AuctionSvc: closeAuction(auction)
-
-                alt no current leader
-                    AuctionSvc->>AuctionSvc: notify(AUCTION_NO_WINNER)
-                    AuctionSvc->>Broadcast: notifyAuctionNoWinner(auction)
-                    AuctionSvc->>Auction: transitionToCancel()
-                    AuctionSvc->>AuctionDAO: updateAuctionStatus(CANCELED)
-                else reserve not met
-                    AuctionSvc->>AuctionSvc: notify(RESERVE_NOT_MET_CLOSED)
-                    AuctionSvc->>Broadcast: notifyAuctionReserveNotMet(auction)
-                    AuctionSvc->>Auction: transitionToCancel()
-                    AuctionSvc->>AuctionDAO: updateAuctionStatus(CANCELED)
-                else reserve met
-                    AuctionSvc->>WinnerDAO: saveWinner(AuctionWinner)
-                    AuctionSvc->>Auction: setWinner() and transitionToClose(true)
-                    AuctionSvc->>TxDAO: saveTransaction(winner deposit held)
-                    AuctionSvc->>Bank: receive(depositPaid)
-                    AuctionSvc->>AuctionSvc: notify(AUCTION_ENDED)
-                    AuctionSvc->>Broadcast: notifyAuctionEnded(auction)
-                end
-
-                AuctionSvc->>AuctionDAO: updateAuctionResult(auction)
-                Timer->>PaymentSvc: refundDeposits(auction)
-                Timer->>Sessions: broadcastToAuction(final auction update)
-                Timer->>AutoBid: clearAuction and clearAuctionActivity
-                Timer->>Lock: unlock and release(auctionId)
-            end
-        end
-    end
+    TMR->>AS: startAuction
+    TMR->>SM: broadcastUpdate AUCTION_STARTED
 ```
+
+## Close RUNNING
+
+```mermaid
+sequenceDiagram
+    box Infrastructure
+        participant TMR as AuctionTimerService
+        participant SBN as ServerBroadcastNotifier
+    end
+    box Service
+        participant AS as AuctionService
+        participant PS as PaymentService
+    end
+    box API
+        participant SM as SessionManager
+    end
+
+    TMR->>AS: closeAuction
+    AS->>SBN: notifyAuctionEnded / NoWinner / ReserveNotMet
+    TMR->>PS: refundDeposits
+    TMR->>SM: broadcastUpdate
+```
+
+Anti-sniping: nếu `endTime` vừa gia hạn, timer bỏ qua close. Trạng thái domain: [CoreDomainClassDiagram.md](./CoreDomainClassDiagram.md).
