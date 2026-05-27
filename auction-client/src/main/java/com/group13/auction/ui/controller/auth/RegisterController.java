@@ -20,119 +20,111 @@ import javafx.scene.control.TextField;
  */
 public final class RegisterController {
 
-    private final AuthService authService = new AuthService();
+  private final AuthService authService = new AuthService();
 
-    @FXML
-    private TextField emailField;
+  @FXML private TextField emailField;
 
-    @FXML
-    private TextField usernameField;
+  @FXML private TextField usernameField;
 
-    @FXML
-    private PasswordField passwordField;
+  @FXML private PasswordField passwordField;
 
-    @FXML
-    private PasswordField confirmPasswordField;
+  @FXML private PasswordField confirmPasswordField;
 
-    @FXML
-    private Button signUpButton;
+  @FXML private Button signUpButton;
 
-    @FXML
-    private Button backToLandingButton;
+  @FXML private Button backToLandingButton;
 
-    @FXML
-    private Button goToLoginTabButton;
+  @FXML private Button goToLoginTabButton;
 
-    @FXML
-    private Button goToLoginLinkButton;
+  @FXML private Button goToLoginLinkButton;
 
-    /** Chuyển về trang landing. */
-    @FXML
-    public void handleBackToLanding() {
-        Navigator.getInstance().goToLanding();
+  /** Chuyển về trang landing. */
+  @FXML
+  public void handleBackToLanding() {
+    Navigator.getInstance().goToLanding();
+  }
+
+  /** Chuyển về màn hình đăng nhập. */
+  @FXML
+  public void handleGoToLogin() {
+    Navigator.getInstance().goToLogin();
+  }
+
+  /** Gửi request đăng ký tới server. */
+  @FXML
+  public void handleSignUp() {
+    setFormDisabled(true);
+
+    RegisterFormState formState =
+        new RegisterFormState(
+            emailField.getText(),
+            usernameField.getText(),
+            passwordField.getText(),
+            confirmPasswordField.getText());
+
+    authService
+        .register(formState)
+        .thenAccept(this::handleRegisterSuccess)
+        .exceptionally(
+            throwable -> {
+              handleRegisterFailure(throwable);
+              return null;
+            });
+  }
+
+  /** Xóa dữ liệu đang nhập trong form đăng ký. */
+  @FXML
+  public void handleClearForm() {
+    emailField.clear();
+    usernameField.clear();
+    passwordField.clear();
+    confirmPasswordField.clear();
+    emailField.requestFocus();
+  }
+
+  private void handleRegisterSuccess(UserSession session) {
+    FxThreadUtil.runOnFxThread(
+        () -> {
+          setFormDisabled(false);
+          AlertUtil.showInfo("Đăng ký thành công. Xin chào " + session.getUsername() + "!");
+          Navigator.getInstance().goToMainLayout();
+        });
+  }
+
+  private void handleRegisterFailure(Throwable throwable) {
+    FxThreadUtil.runOnFxThread(
+        () -> {
+          setFormDisabled(false);
+          AlertUtil.showError(extractMessage(throwable));
+          passwordField.clear();
+          confirmPasswordField.clear();
+          passwordField.requestFocus();
+        });
+  }
+
+  private void setFormDisabled(boolean disabled) {
+    emailField.setDisable(disabled);
+    usernameField.setDisable(disabled);
+    passwordField.setDisable(disabled);
+    confirmPasswordField.setDisable(disabled);
+    signUpButton.setDisable(disabled);
+    backToLandingButton.setDisable(disabled);
+    goToLoginTabButton.setDisable(disabled);
+    goToLoginLinkButton.setDisable(disabled);
+    signUpButton.setText(disabled ? "Signing up..." : "Sign up");
+  }
+
+  private String extractMessage(Throwable throwable) {
+    Throwable current = throwable;
+    if (current instanceof CompletionException && current.getCause() != null) {
+      current = current.getCause();
     }
 
-    /** Chuyển về màn hình đăng nhập. */
-    @FXML
-    public void handleGoToLogin() {
-        Navigator.getInstance().goToLogin();
+    String message = current.getMessage();
+    if (message == null || message.isBlank()) {
+      return "Đăng ký thất bại.";
     }
 
-    /** Gửi request đăng ký tới server. */
-    @FXML
-    public void handleSignUp() {
-        setFormDisabled(true);
-
-        RegisterFormState formState =
-                new RegisterFormState(
-                        emailField.getText(),
-                        usernameField.getText(),
-                        passwordField.getText(),
-                        confirmPasswordField.getText());
-
-        authService
-                .register(formState)
-                .thenAccept(this::handleRegisterSuccess)
-                .exceptionally(
-                        throwable -> {
-                            handleRegisterFailure(throwable);
-                            return null;
-                        });
-    }
-
-    /** Xóa dữ liệu đang nhập trong form đăng ký. */
-    @FXML
-    public void handleClearForm() {
-        emailField.clear();
-        usernameField.clear();
-        passwordField.clear();
-        confirmPasswordField.clear();
-        emailField.requestFocus();
-    }
-
-    private void handleRegisterSuccess(UserSession session) {
-        FxThreadUtil.runOnFxThread(
-                () -> {
-                    setFormDisabled(false);
-                    AlertUtil.showInfo("Đăng ký thành công. Xin chào " + session.getUsername() + "!");
-                    Navigator.getInstance().goToMainLayout();
-                });
-    }
-
-    private void handleRegisterFailure(Throwable throwable) {
-        FxThreadUtil.runOnFxThread(
-                () -> {
-                    setFormDisabled(false);
-                    AlertUtil.showError(extractMessage(throwable));
-                    passwordField.clear();
-                    confirmPasswordField.clear();
-                    passwordField.requestFocus();
-                });
-    }
-
-    private void setFormDisabled(boolean disabled) {
-        emailField.setDisable(disabled);
-        usernameField.setDisable(disabled);
-        passwordField.setDisable(disabled);
-        confirmPasswordField.setDisable(disabled);
-        signUpButton.setDisable(disabled);
-        backToLandingButton.setDisable(disabled);
-        goToLoginTabButton.setDisable(disabled);
-        goToLoginLinkButton.setDisable(disabled);
-        signUpButton.setText(disabled ? "Signing up..." : "Sign up");
-    }
-
-    private String extractMessage(Throwable throwable) {
-        Throwable current = throwable;
-        if (current instanceof CompletionException && current.getCause() != null) {
-            current = current.getCause();
-        }
-
-        String message = current.getMessage();
-        if (message == null || message.isBlank()) {
-            return "Đăng ký thất bại.";
-        }
-
-        return message;
-    }
+    return message;
+  }
 }
