@@ -28,7 +28,7 @@
                 styleClass="background-layer">
         <VBox alignment="TOP_CENTER"
               spacing="80.0"
-              style="-fx-padding: 0 0 100 0;">
+              style="-fx-padding: 0 0 160 0;">
 
             <AnchorPane prefHeight="70.0">
                 <HBox alignment="CENTER_LEFT"
@@ -277,11 +277,12 @@
 
     <AnchorPane pickOnBounds="false">
         <VBox alignment="BOTTOM_RIGHT"
-              maxWidth="190.0"
+              maxHeight="-Infinity"
+              maxWidth="-Infinity"
               pickOnBounds="false"
               spacing="2.0"
-              AnchorPane.bottomAnchor="8.0"
-              AnchorPane.rightAnchor="16.0">
+              AnchorPane.bottomAnchor="28.0"
+              AnchorPane.rightAnchor="44.0">
 
             <fx:include source="../shared/chatbot-launcher.fxml"/>
 
