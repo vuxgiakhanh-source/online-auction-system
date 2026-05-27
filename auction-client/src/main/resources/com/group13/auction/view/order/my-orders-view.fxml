@@ -25,7 +25,7 @@
                 styleClass="page-scroll-pane">
         <VBox spacing="20.0" styleClass="order-page">
         <padding>
-            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+            <Insets top="32.0" right="44.0" bottom="132.0" left="44.0"/>
         </padding>
 
         <HBox alignment="CENTER_LEFT" spacing="16.0">
@@ -77,15 +77,22 @@
                         wrapText="true"
                         styleClass="status-label"/>
             </HBox>
-
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="2.0">
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
-
-                <Label styleClass="signature-label" text="by CKNT team"/>
-            </VBox>
         </HBox>
         </VBox>
     </ScrollPane>
+
+    <VBox alignment="CENTER_RIGHT"
+          maxHeight="-Infinity"
+          maxWidth="-Infinity"
+          pickOnBounds="false"
+          spacing="2.0"
+          StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets top="0.0" right="44.0" bottom="28.0" left="0.0"/>
+        </StackPane.margin>
+
+        <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+        <Label styleClass="signature-label" text="by CKNT team"/>
+    </VBox>
 </StackPane>

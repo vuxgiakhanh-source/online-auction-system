@@ -106,14 +106,15 @@
         </Button>
     </HBox>
 
-    <VBox alignment="BOTTOM_RIGHT"
-          maxWidth="190.0"
+    <VBox alignment="CENTER_RIGHT"
+          maxHeight="-Infinity"
+          maxWidth="-Infinity"
           pickOnBounds="false"
           spacing="2.0"
           StackPane.alignment="BOTTOM_RIGHT">
-        <padding>
-            <Insets bottom="8.0" right="16.0"/>
-        </padding>
+        <StackPane.margin>
+            <Insets top="0.0" right="44.0" bottom="28.0" left="0.0"/>
+        </StackPane.margin>
 
         <fx:include source="../shared/chatbot-launcher.fxml"/>
 

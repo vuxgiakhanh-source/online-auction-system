@@ -29,7 +29,7 @@
                 styleClass="page-scroll-pane">
         <VBox spacing="20.0" styleClass="admin-page">
         <padding>
-            <Insets top="32.0" right="44.0" bottom="32.0" left="44.0"/>
+            <Insets top="32.0" right="44.0" bottom="72.0" left="44.0"/>
         </padding>
 
         <HBox alignment="CENTER_LEFT" spacing="16.0">
@@ -148,13 +148,16 @@
                     wrapText="true"
                     styleClass="status-label"/>
         </HBox>
-
-        <!-- Signature -->
-        <HBox alignment="BOTTOM_RIGHT">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <Label styleClass="signature-label" text="by CKNT team"/>
-        </HBox>
         </VBox>
     </ScrollPane>
+    <Label styleClass="signature-label"
+           text="by CKNT team"
+           maxHeight="-Infinity"
+           maxWidth="-Infinity"
+           pickOnBounds="false"
+           StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets top="0.0" right="44.0" bottom="28.0" left="0.0"/>
+        </StackPane.margin>
+    </Label>
 </StackPane>

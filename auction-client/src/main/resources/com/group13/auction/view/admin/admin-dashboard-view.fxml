@@ -24,7 +24,7 @@
                 styleClass="page-scroll-pane">
         <VBox spacing="24.0" styleClass="admin-page">
         <padding>
-            <Insets top="36.0" right="48.0" bottom="36.0" left="48.0"/>
+            <Insets top="36.0" right="48.0" bottom="72.0" left="48.0"/>
         </padding>
 
         <HBox alignment="CENTER_LEFT" spacing="16.0">
@@ -143,13 +143,16 @@
                         onAction="#handleOpenReportReview"/>
             </VBox>
         </HBox>
-
-        <!-- Signature -->
-        <HBox alignment="BOTTOM_RIGHT">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <Label styleClass="signature-label" text="by CKNT team"/>
-        </HBox>
         </VBox>
     </ScrollPane>
+    <Label styleClass="signature-label"
+           text="by CKNT team"
+           maxHeight="-Infinity"
+           maxWidth="-Infinity"
+           pickOnBounds="false"
+           StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets top="0.0" right="44.0" bottom="28.0" left="0.0"/>
+        </StackPane.margin>
+    </Label>
 </StackPane>
