@@ -62,10 +62,10 @@ public final class SellerAuctionDetailController {
     @FXML
     public void initialize() {
         selectedAuction =
-                AppContext.getInstance()
-                        .getScreenStateStore()
-                        .get(ScreenStateKeys.SELECTED_SELLER_AUCTION_ROW, SellerAuctionRowViewModel.class)
-                        .orElse(null);
+            AppContext.getInstance()
+                .getScreenStateStore()
+                .get(ScreenStateKeys.SELECTED_SELLER_AUCTION_ROW, SellerAuctionRowViewModel.class)
+                .orElse(null);
 
         if (selectedAuction == null) {
             renderMissingState();
@@ -91,8 +91,8 @@ public final class SellerAuctionDetailController {
         }
 
         AppContext.getInstance()
-                .getScreenStateStore()
-                .put(ScreenStateKeys.SELECTED_SELLER_AUCTION_ROW, selectedAuction);
+            .getScreenStateStore()
+            .put(ScreenStateKeys.SELECTED_SELLER_AUCTION_ROW, selectedAuction);
         Navigator.getInstance().goToEditAuction();
     }
 
@@ -111,16 +111,19 @@ public final class SellerAuctionDetailController {
         DialogSoundUtil.installButtonClickSound(dialog);
 
         dialog
-                .showAndWait()
-                .ifPresent(
-                        reason -> {
-                            if (reason == null || reason.isBlank()) {
-                                AlertUtil.showWarning("Lý do hủy phiên không được để trống.");
-                                return;
-                            }
+            .showAndWait()
+            .ifPresent(
+                reason -> {
+                    // FIX [Qodana "Constant values"]: Optional.ifPresent() chỉ gọi lambda
+                    // khi value HIỆN DIỆN — reason không bao giờ null tại đây. Check
+                    // `reason == null` luôn false → dead code. Chỉ giữ check isBlank().
+                    if (reason.isBlank()) {
+                        AlertUtil.showWarning("Lý do hủy phiên không được để trống.");
+                        return;
+                    }
 
-                            sendCancelRequest(reason);
-                        });
+                    sendCancelRequest(reason);
+                });
     }
 
     private void renderAuctionDetail() {
@@ -204,7 +207,7 @@ public final class SellerAuctionDetailController {
 
     private void sendCancelRequest(String reason) {
         boolean confirmed =
-                AlertUtil.confirm("Xác nhận gửi yêu cầu hủy phiên đấu giá này?");
+            AlertUtil.confirm("Xác nhận gửi yêu cầu hủy phiên đấu giá này?");
 
         if (!confirmed) {
             return;
@@ -213,23 +216,23 @@ public final class SellerAuctionDetailController {
         setLoading(true, "Đang gửi yêu cầu hủy phiên...");
 
         sellerAuctionService
-                .requestCancelAuction(selectedAuction.auctionId(), reason)
-                .thenAccept(
-                        ignored ->
-                                FxThreadUtil.runOnFxThread(
-                                        () -> {
-                                            AlertUtil.showInfo("Yêu cầu hủy phiên đã được gửi thành công.");
-                                            Navigator.getInstance().goToSellerAuctionList();
-                                        }))
-                .exceptionally(
-                        throwable -> {
-                            FxThreadUtil.runOnFxThread(
-                                    () -> {
-                                        setLoading(false, "Không gửi được yêu cầu hủy phiên.");
-                                        AlertUtil.showError(extractMessage(throwable));
-                                    });
-                            return null;
+            .requestCancelAuction(selectedAuction.auctionId(), reason)
+            .thenAccept(
+                ignored ->
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            AlertUtil.showInfo("Yêu cầu hủy phiên đã được gửi thành công.");
+                            Navigator.getInstance().goToSellerAuctionList();
+                        }))
+            .exceptionally(
+                throwable -> {
+                    FxThreadUtil.runOnFxThread(
+                        () -> {
+                            setLoading(false, "Không gửi được yêu cầu hủy phiên.");
+                            AlertUtil.showError(extractMessage(throwable));
                         });
+                    return null;
+                });
     }
 
     private void setLoading(boolean loading, String message) {
@@ -238,7 +241,7 @@ public final class SellerAuctionDetailController {
 
         editButton.setDisable(loading || selectedAuction == null || !selectedAuction.editable());
         cancelButton.setDisable(
-                loading || selectedAuction == null || !selectedAuction.cancelRequestAllowed());
+            loading || selectedAuction == null || !selectedAuction.cancelRequestAllowed());
 
         messageLabel.setText(message);
     }

@@ -161,14 +161,17 @@ public class QualityReport extends Entity {
   public void approve() {
     this.status = ReportStatus.APPROVED;
     markUpdated();
-    // TODO: notificationDao.save() - báo cho seller, user
+    // (TODO cũ "notificationDao.save()" đã xóa: side effect persist notification thuộc Service
+    // layer. Đã được xử lý trong QualityReportService.approveReport() — persist DB +
+    // ServerBroadcastNotifier.notifyQualityReportApproved() cho realtime push.)
   }
 
   /** Admin reject report. Chỉ {@link com.group13.auction.service.QualityReportService} gọi. */
   public void reject() {
     this.status = ReportStatus.REJECTED;
     markUpdated();
-    // TODO: notificationDao.save() - báo cho user
+    // (TODO cũ "notificationDao.save()" đã xóa: persist notification do
+    // QualityReportService.rejectReport() đảm nhiệm.)
   }
 
   public void markRefundCompleted() {

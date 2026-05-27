@@ -56,10 +56,10 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -75,13 +75,18 @@ jobs:
 
       - name: Upload test reports (surefire + failsafe)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: surefire-reports
           path: |
             auction-server/target/surefire-reports/
             auction-server/target/failsafe-reports/
           retention-days: 14
+          # FIX: warning "No files were found" — surefire/failsafe-reports/ có thể không
+          # tồn tại nếu Maven compile-fail trước phase test. if-no-files-found=ignore để
+          # CI không gắn warning khi test chưa thực thi (build error là vấn đề thật sự,
+          # đã hiện ở step trước với exit code != 0).
+          if-no-files-found: ignore
 
   # ── Job 2: Docker build & push ─────────────────────────────────────────────
   docker:
@@ -99,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -142,7 +147,7 @@ jobs:
 
     steps:
       - name: Checkout source (để copy docker-compose.yml)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup SSH key
         run: |
