@@ -5,8 +5,6 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -54,185 +52,95 @@
                 hbarPolicy="NEVER"
                 VBox.vgrow="ALWAYS"
                 styleClass="profile-scroll-pane">
-            <VBox spacing="18.0" styleClass="profile-content">
+            <HBox spacing="18.0" styleClass="profile-content">
                 <padding>
                     <Insets top="2.0" right="4.0" bottom="4.0" left="4.0"/>
                 </padding>
 
-                <VBox spacing="14.0" styleClass="profile-section-card">
+                <VBox
+                        spacing="14.0"
+                        minWidth="0.0"
+                        maxWidth="Infinity"
+                        styleClass="profile-section-card"
+                        HBox.hgrow="ALWAYS">
                     <Label text="Thông tin tài khoản" styleClass="profile-section-title"/>
 
-                    <GridPane hgap="18.0" vgap="12.0" styleClass="profile-info-grid">
-                        <columnConstraints>
-                            <ColumnConstraints percentWidth="22.0"/>
-                            <ColumnConstraints percentWidth="28.0"/>
-                            <ColumnConstraints percentWidth="22.0"/>
-                            <ColumnConstraints percentWidth="28.0"/>
-                        </columnConstraints>
+                    <VBox spacing="12.0" styleClass="profile-info-list" VBox.vgrow="ALWAYS">
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Tên đăng nhập" styleClass="profile-field-title"/>
+                            <Label fx:id="usernameLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Tên đăng nhập"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="usernameLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="1"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Email" styleClass="profile-field-title"/>
+                            <Label fx:id="emailLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Email"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="2"/>
-                        <Label
-                                fx:id="emailLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="3"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Vai trò" styleClass="profile-field-title"/>
+                            <Label fx:id="rolesLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Vai trò"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="rolesLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="1"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Trạng thái" styleClass="profile-field-title"/>
+                            <Label fx:id="accountStatusLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Trạng thái"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="2"/>
-                        <Label
-                                fx:id="accountStatusLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="3"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Đánh giá" styleClass="profile-field-title"/>
+                            <Label fx:id="ratingLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Đánh giá"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="ratingLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="1"/>
-
-                        <Label
-                                text="Đã khôi phục"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="2"/>
-                        <Label
-                                fx:id="restoredLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="3"/>
-                    </GridPane>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Đã khôi phục" styleClass="profile-field-title"/>
+                            <Label fx:id="restoredLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
+                    </VBox>
                 </VBox>
 
-                <VBox spacing="14.0" styleClass="profile-section-card">
+                <VBox
+                        spacing="14.0"
+                        minWidth="0.0"
+                        maxWidth="Infinity"
+                        styleClass="profile-section-card"
+                        HBox.hgrow="ALWAYS">
                     <Label text="Ví tài khoản" styleClass="profile-section-title"/>
 
-                    <GridPane hgap="18.0" vgap="12.0" styleClass="profile-info-grid">
-                        <columnConstraints>
-                            <ColumnConstraints percentWidth="22.0"/>
-                            <ColumnConstraints percentWidth="28.0"/>
-                            <ColumnConstraints percentWidth="22.0"/>
-                            <ColumnConstraints percentWidth="28.0"/>
-                        </columnConstraints>
+                    <VBox spacing="12.0" styleClass="profile-info-list" VBox.vgrow="ALWAYS">
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Tổng số dư" styleClass="profile-field-title"/>
+                            <Label fx:id="balanceLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-money-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Tổng số dư"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="balanceLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="1"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Số dư khả dụng" styleClass="profile-field-title"/>
+                            <Label fx:id="availableBalanceLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Số dư khả dụng"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="2"/>
-                        <Label
-                                fx:id="availableBalanceLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="0"
-                                GridPane.columnIndex="3"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Đang giữ đặt cọc" styleClass="profile-field-title"/>
+                            <Label fx:id="lockedDepositLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Đang giữ đặt cọc"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="lockedDepositLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="1"/>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Ngày tạo tài khoản" styleClass="profile-field-title"/>
+                            <Label fx:id="createdAtLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
 
-                        <Label
-                                text="Ngày tạo tài khoản"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="2"/>
-                        <Label
-                                fx:id="createdAtLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="1"
-                                GridPane.columnIndex="3"/>
-
-                        <Label
-                                text="Cập nhật lần cuối"
-                                styleClass="profile-field-title"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="0"/>
-                        <Label
-                                fx:id="updatedAtLabel"
-                                text="--"
-                                wrapText="true"
-                                styleClass="profile-field-value"
-                                GridPane.rowIndex="2"
-                                GridPane.columnIndex="1"
-                                GridPane.columnSpan="3"/>
-                    </GridPane>
+                        <VBox spacing="4.0" styleClass="profile-field-row">
+                            <Label text="Cập nhật lần cuối" styleClass="profile-field-title"/>
+                            <Label fx:id="updatedAtLabel" text="--" maxWidth="Infinity" wrapText="true" styleClass="profile-field-value"/>
+                        </VBox>
+                    </VBox>
                 </VBox>
 
                 <VBox
                         fx:id="sellerRequestCard"
                         spacing="14.0"
-                        styleClass="profile-section-card">
+                        minWidth="0.0"
+                        maxWidth="Infinity"
+                        styleClass="profile-section-card"
+                        HBox.hgrow="ALWAYS">
                     <Label text="Quyền Seller" styleClass="profile-section-title"/>
 
                     <Label
@@ -240,6 +148,8 @@
                             text="Bạn có thể gửi yêu cầu mở quyền Seller cho tài khoản này."
                             wrapText="true"
                             styleClass="profile-muted-text"/>
+
+                    <Region VBox.vgrow="ALWAYS"/>
 
                     <HBox alignment="CENTER_LEFT" spacing="12.0">
                         <Button
@@ -249,7 +159,7 @@
                                 onAction="#handleRequestSellerRole"/>
                     </HBox>
                 </VBox>
-            </VBox>
+            </HBox>
         </ScrollPane>
 
         <VBox spacing="8.0">
