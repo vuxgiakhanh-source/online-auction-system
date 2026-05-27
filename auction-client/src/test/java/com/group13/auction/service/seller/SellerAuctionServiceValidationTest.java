@@ -23,9 +23,7 @@ class SellerAuctionServiceValidationTest {
     SellerAuctionService service =
         new SellerAuctionService(ClientNetworkFacade.getDefault(), new SessionManager());
 
-    assertFutureFailsWithMessage(
-        service.createAuction(validForm()),
-        "Người dùng chưa đăng nhập.");
+    assertFutureFailsWithMessage(service.createAuction(validForm()), "Người dùng chưa đăng nhập.");
   }
 
   @Test
@@ -34,8 +32,7 @@ class SellerAuctionServiceValidationTest {
         new SellerAuctionService(ClientNetworkFacade.getDefault(), bidderSessionManager());
 
     assertFutureFailsWithMessage(
-        service.createAuction(validForm()),
-        "Tài khoản hiện tại chưa có quyền Seller.");
+        service.createAuction(validForm()), "Tài khoản hiện tại chưa có quyền Seller.");
   }
 
   @Test
@@ -43,9 +40,7 @@ class SellerAuctionServiceValidationTest {
     SellerAuctionService service =
         new SellerAuctionService(ClientNetworkFacade.getDefault(), sellerSessionManager());
 
-    assertFutureFailsWithMessage(
-        service.createAuction(null),
-        "form must not be null");
+    assertFutureFailsWithMessage(service.createAuction(null), "form must not be null");
   }
 
   @Test
@@ -65,8 +60,7 @@ class SellerAuctionServiceValidationTest {
             List.of());
 
     assertFutureFailsWithMessage(
-        service.createAuction(invalidForm),
-        "Tên sản phẩm không được để trống.");
+        service.createAuction(invalidForm), "Tên sản phẩm không được để trống.");
   }
 
   @Test
@@ -85,8 +79,7 @@ class SellerAuctionServiceValidationTest {
         new SellerAuctionService(ClientNetworkFacade.getDefault(), sellerSessionManager());
 
     assertFutureFailsWithMessage(
-        service.updateOpenAuctionEndTime("   ", validEndTime()),
-        "Thiếu mã phiên đấu giá.");
+        service.updateOpenAuctionEndTime("   ", validEndTime()), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -115,8 +108,7 @@ class SellerAuctionServiceValidationTest {
         new SellerAuctionService(ClientNetworkFacade.getDefault(), sellerSessionManager());
 
     assertFutureFailsWithMessage(
-        service.requestCancelAuction("   ", "Sai lịch đấu giá."),
-        "Thiếu mã phiên đấu giá.");
+        service.requestCancelAuction("   ", "Sai lịch đấu giá."), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
@@ -125,8 +117,7 @@ class SellerAuctionServiceValidationTest {
         new SellerAuctionService(ClientNetworkFacade.getDefault(), sellerSessionManager());
 
     assertFutureFailsWithMessage(
-        service.requestCancelAuction("A-1", "   "),
-        "Lý do hủy phiên không được để trống.");
+        service.requestCancelAuction("A-1", "   "), "Lý do hủy phiên không được để trống.");
   }
 
   private static AuctionFormViewModel validForm() {
@@ -146,12 +137,7 @@ class SellerAuctionServiceValidationTest {
     SessionManager sessionManager = new SessionManager();
     sessionManager.startSession(
         UserSession.of(
-            "token",
-            "SELLER-1",
-            "seller01",
-            "seller01@example.com",
-            List.of("SELLER"),
-            "ACTIVE"));
+            "token", "SELLER-1", "seller01", "seller01@example.com", List.of("SELLER"), "ACTIVE"));
     return sessionManager;
   }
 
@@ -159,12 +145,7 @@ class SellerAuctionServiceValidationTest {
     SessionManager sessionManager = new SessionManager();
     sessionManager.startSession(
         UserSession.of(
-            "token",
-            "BIDDER-1",
-            "bidder01",
-            "bidder01@example.com",
-            List.of("BIDDER"),
-            "ACTIVE"));
+            "token", "BIDDER-1", "bidder01", "bidder01@example.com", List.of("BIDDER"), "ACTIVE"));
     return sessionManager;
   }
 

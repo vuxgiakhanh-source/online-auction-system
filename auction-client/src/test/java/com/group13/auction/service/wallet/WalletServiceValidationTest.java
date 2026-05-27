@@ -16,36 +16,28 @@ class WalletServiceValidationTest {
   void depositShouldFailWhenAmountIsZero() {
     WalletService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.deposit(0L),
-        "Số tiền nạp phải lớn hơn 0.");
+    assertFutureFailsWithMessage(service.deposit(0L), "Số tiền nạp phải lớn hơn 0.");
   }
 
   @Test
   void depositShouldFailWhenAmountIsNegative() {
     WalletService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.deposit(-1L),
-        "Số tiền nạp phải lớn hơn 0.");
+    assertFutureFailsWithMessage(service.deposit(-1L), "Số tiền nạp phải lớn hơn 0.");
   }
 
   @Test
   void withdrawShouldFailWhenAmountIsZero() {
     WalletService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.withdraw(0L),
-        "Số tiền rút phải lớn hơn 0.");
+    assertFutureFailsWithMessage(service.withdraw(0L), "Số tiền rút phải lớn hơn 0.");
   }
 
   @Test
   void withdrawShouldFailWhenAmountIsNegative() {
     WalletService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.withdraw(-1L),
-        "Số tiền rút phải lớn hơn 0.");
+    assertFutureFailsWithMessage(service.withdraw(-1L), "Số tiền rút phải lớn hơn 0.");
   }
 
   private static WalletService createService() {

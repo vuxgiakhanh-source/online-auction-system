@@ -1,4 +1,4 @@
 package com.group13.auction.service.support;
 
-public class ErrorHandlingService {
-}
+/** Placeholder for shared client error handling support. */
+public class ErrorHandlingService {}

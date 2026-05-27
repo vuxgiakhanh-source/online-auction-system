@@ -242,11 +242,7 @@ class AuctionFormViewModelTest {
             validStartTime(),
             validEndTime(),
             Map.of(),
-            List.of(
-                Path.of("1.png"),
-                Path.of("2.png"),
-                Path.of("3.png"),
-                Path.of("4.png")));
+            List.of(Path.of("1.png"), Path.of("2.png"), Path.of("3.png"), Path.of("4.png")));
 
     IllegalArgumentException exception =
         assertThrows(IllegalArgumentException.class, form::validateForCreate);
@@ -259,7 +255,8 @@ class AuctionFormViewModelTest {
     AuctionFormViewModel form = validForm();
 
     AuctionDTOs.CreateAuctionRequestDTO request =
-        form.toCreateRequest(Arrays.asList(" /uploads/items/1.png ", null, "   ", "/uploads/items/2.png"));
+        form.toCreateRequest(
+            Arrays.asList(" /uploads/items/1.png ", null, "   ", "/uploads/items/2.png"));
 
     assertEquals("Vintage Camera", request.getItemName());
     assertEquals("Camera film cổ.", request.getItemDescription());

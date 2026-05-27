@@ -13,23 +13,8 @@ class WonOrderViewModelTest {
   void constructorShouldUseFallbacksForBlankDisplayFields() {
     WonOrderViewModel viewModel =
         new WonOrderViewModel(
-            null,
-            "   ",
-            "   ",
-            "   ",
-            "   ",
-            null,
-            null,
-            "   ",
-            null,
-            null,
-            "   ",
-            "   ",
-            false,
-            false,
-            false,
-            false,
-            false);
+            null, "   ", "   ", "   ", "   ", null, null, "   ", null, null, "   ", "   ", false,
+            false, false, false, false);
 
     assertEquals("", viewModel.auctionId());
     assertEquals("Sản phẩm đấu giá", viewModel.itemName());

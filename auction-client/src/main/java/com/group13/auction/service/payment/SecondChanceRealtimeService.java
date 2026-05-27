@@ -22,108 +22,110 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class SecondChanceRealtimeService implements ClientEventListener {
 
-    private static final SecondChanceRealtimeService INSTANCE =
-            new SecondChanceRealtimeService(ClientNetworkFacade.getDefault());
+  private static final SecondChanceRealtimeService INSTANCE =
+      new SecondChanceRealtimeService(ClientNetworkFacade.getDefault());
 
-    private final ClientNetworkFacade networkFacade;
-    private final ConcurrentHashMap<String, PaymentDTOs.SecondChanceOfferDTO> pendingOffers =
-            new ConcurrentHashMap<>();
-    private final AtomicBoolean started = new AtomicBoolean(false);
+  private final ClientNetworkFacade networkFacade;
+  private final ConcurrentHashMap<String, PaymentDTOs.SecondChanceOfferDTO> pendingOffers =
+      new ConcurrentHashMap<>();
+  private final AtomicBoolean started = new AtomicBoolean(false);
 
-    private SecondChanceRealtimeService(ClientNetworkFacade networkFacade) {
-        this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+  private SecondChanceRealtimeService(ClientNetworkFacade networkFacade) {
+    this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+  }
+
+  /**
+   * Lấy singleton runtime service.
+   *
+   * @return singleton second chance realtime service
+   */
+  public static SecondChanceRealtimeService getInstance() {
+    return INSTANCE;
+  }
+
+  /** Đăng ký listener nhận realtime event từ server. */
+  public void start() {
+    if (started.compareAndSet(false, true)) {
+      networkFacade.addListener(this);
+    }
+  }
+
+  /**
+   * Lấy danh sách Second Chance Offer đang pending trong phiên chạy hiện tại.
+   *
+   * @return danh sách offer đã format cho UI
+   */
+  public List<SecondChanceOfferViewModel> getPendingOffers() {
+    removeExpiredOffers();
+
+    return pendingOffers.values().stream()
+        .sorted(Comparator.comparing(this::deadlineOrMax))
+        .map(PaymentViewModelMapper::toSecondChanceOfferViewModel)
+        .toList();
+  }
+
+  /**
+   * Xóa offer theo mã phiên đấu giá.
+   *
+   * @param auctionId mã phiên đấu giá
+   */
+  public void removeOfferByAuctionId(String auctionId) {
+    if (auctionId == null || auctionId.isBlank()) {
+      return;
     }
 
-    /**
-     * Lấy singleton runtime service.
-     *
-     * @return singleton second chance realtime service
-     */
-    public static SecondChanceRealtimeService getInstance() {
-        return INSTANCE;
+    pendingOffers.remove(auctionId);
+  }
+
+  /** Xóa toàn bộ offer runtime, thường dùng khi logout. */
+  public void clear() {
+    pendingOffers.clear();
+  }
+
+  @Override
+  public void onSecondChanceOffer(PaymentDTOs.SecondChanceOfferDTO offer) {
+    if (offer == null || offer.getAuctionId() == null || offer.getAuctionId().isBlank()) {
+      return;
     }
 
-    /** Đăng ký listener nhận realtime event từ server. */
-    public void start() {
-        if (started.compareAndSet(false, true)) {
-            networkFacade.addListener(this);
-        }
+    pendingOffers.put(offer.getAuctionId(), offer);
+  }
+
+  @Override
+  public void onSecondChanceAcceptSuccess(PaymentDTOs.PaymentResultDTO result) {
+    if (result != null) {
+      removeOfferByAuctionId(result.getAuctionId());
     }
+  }
 
-    /**
-     * Lấy danh sách Second Chance Offer đang pending trong phiên chạy hiện tại.
-     *
-     * @return danh sách offer đã format cho UI
-     */
-    public List<SecondChanceOfferViewModel> getPendingOffers() {
-        removeExpiredOffers();
+  @Override
+  public void onSecondChanceAcceptFailed(ErrorDTO error) {
+    // UI sẽ hiển thị lỗi từ request future. Không cần xử lý thêm ở runtime store.
+  }
 
-        return pendingOffers.values().stream()
-                .sorted(Comparator.comparing(this::deadlineOrMax))
-                .map(PaymentViewModelMapper::toSecondChanceOfferViewModel)
-                .toList();
-    }
+  @Override
+  public void onSecondChanceDeclineSuccess() {
+    // Packet success hiện không trả auctionId, controller sẽ xóa offer đang chọn sau khi request
+    // thành công.
+  }
 
-    /**
-     * Xóa offer theo mã phiên đấu giá.
-     *
-     * @param auctionId mã phiên đấu giá
-     */
-    public void removeOfferByAuctionId(String auctionId) {
-        if (auctionId == null || auctionId.isBlank()) {
-            return;
-        }
+  @Override
+  public void onSecondChanceExpiredNotify(String auctionId) {
+    removeOfferByAuctionId(auctionId);
+  }
 
-        pendingOffers.remove(auctionId);
-    }
+  private void removeExpiredOffers() {
+    LocalDateTime now = LocalDateTime.now();
+    pendingOffers
+        .entrySet()
+        .removeIf(
+            entry -> {
+              LocalDateTime deadline = entry.getValue().getDeadline();
+              return deadline != null && !deadline.isAfter(now);
+            });
+  }
 
-    /** Xóa toàn bộ offer runtime, thường dùng khi logout. */
-    public void clear() {
-        pendingOffers.clear();
-    }
-
-    @Override
-    public void onSecondChanceOffer(PaymentDTOs.SecondChanceOfferDTO offer) {
-        if (offer == null || offer.getAuctionId() == null || offer.getAuctionId().isBlank()) {
-            return;
-        }
-
-        pendingOffers.put(offer.getAuctionId(), offer);
-    }
-
-    @Override
-    public void onSecondChanceAcceptSuccess(PaymentDTOs.PaymentResultDTO result) {
-        if (result != null) {
-            removeOfferByAuctionId(result.getAuctionId());
-        }
-    }
-
-    @Override
-    public void onSecondChanceAcceptFailed(ErrorDTO error) {
-        // UI sẽ hiển thị lỗi từ request future. Không cần xử lý thêm ở runtime store.
-    }
-
-    @Override
-    public void onSecondChanceDeclineSuccess() {
-        // Packet success hiện không trả auctionId, controller sẽ xóa offer đang chọn sau khi request thành công.
-    }
-
-    @Override
-    public void onSecondChanceExpiredNotify(String auctionId) {
-        removeOfferByAuctionId(auctionId);
-    }
-
-    private void removeExpiredOffers() {
-        LocalDateTime now = LocalDateTime.now();
-        pendingOffers.entrySet()
-                .removeIf(
-                        entry -> {
-                            LocalDateTime deadline = entry.getValue().getDeadline();
-                            return deadline != null && !deadline.isAfter(now);
-                        });
-    }
-
-    private LocalDateTime deadlineOrMax(PaymentDTOs.SecondChanceOfferDTO offer) {
-        return offer.getDeadline() == null ? LocalDateTime.MAX : offer.getDeadline();
-    }
+  private LocalDateTime deadlineOrMax(PaymentDTOs.SecondChanceOfferDTO offer) {
+    return offer.getDeadline() == null ? LocalDateTime.MAX : offer.getDeadline();
+  }
 }

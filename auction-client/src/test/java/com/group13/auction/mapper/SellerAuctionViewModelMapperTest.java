@@ -20,16 +20,21 @@ class SellerAuctionViewModelMapperTest {
   @Test
   void toSellerRowsShouldReturnEmptyListWhenAuctionsOrSessionIsNull() {
     UserSession session =
-        UserSession.of("token", "SELLER-1", "seller01", "seller01@example.com", List.of("SELLER"), "ACTIVE");
+        UserSession.of(
+            "token", "SELLER-1", "seller01", "seller01@example.com", List.of("SELLER"), "ACTIVE");
 
     assertTrue(SellerAuctionViewModelMapper.toSellerRows(null, session).isEmpty());
-    assertTrue(SellerAuctionViewModelMapper.toSellerRows(List.of(createAuction("A-1", "OPEN", "ELECTRONICS")), null).isEmpty());
+    assertTrue(
+        SellerAuctionViewModelMapper.toSellerRows(
+                List.of(createAuction("A-1", "OPEN", "ELECTRONICS")), null)
+            .isEmpty());
   }
 
   @Test
   void toSellerRowsShouldFilterBySellerId() {
     UserSession session =
-        UserSession.of("token", "SELLER-1", "otherName", "seller01@example.com", List.of("SELLER"), "ACTIVE");
+        UserSession.of(
+            "token", "SELLER-1", "otherName", "seller01@example.com", List.of("SELLER"), "ACTIVE");
 
     AuctionDTOs.AuctionDTO owned = createAuction("A-1", "OPEN", "ELECTRONICS");
     owned.getItem().setSellerId("SELLER-1");
@@ -49,7 +54,8 @@ class SellerAuctionViewModelMapperTest {
   @Test
   void toSellerRowsShouldFilterBySellerUsernameIgnoringCaseWhenSellerIdDoesNotMatch() {
     UserSession session =
-        UserSession.of("token", "SELLER-X", "Seller01", "seller01@example.com", List.of("SELLER"), "ACTIVE");
+        UserSession.of(
+            "token", "SELLER-X", "Seller01", "seller01@example.com", List.of("SELLER"), "ACTIVE");
 
     AuctionDTOs.AuctionDTO ownedByUsername = createAuction("A-1", "OPEN", "ELECTRONICS");
     ownedByUsername.getItem().setSellerId(null);
@@ -153,8 +159,8 @@ class SellerAuctionViewModelMapperTest {
     assertSpecification(electronics, "Tình trạng", "Like new");
 
     AuctionDTOs.AuctionDTO art = createAuction("A-2", "OPEN", "ART");
-    art.getItem().setExtraFields(
-        Map.of("artist", "Van Gogh", "yearCreated", 1889, "medium", "Oil"));
+    art.getItem()
+        .setExtraFields(Map.of("artist", "Van Gogh", "yearCreated", 1889, "medium", "Oil"));
     assertSpecification(art, "Nghệ sĩ", "Van Gogh");
     assertSpecification(art, "Năm sáng tác", "1,889");
     assertSpecification(art, "Chất liệu", "Oil");
@@ -199,13 +205,28 @@ class SellerAuctionViewModelMapperTest {
 
   @Test
   void toRowShouldMapKnownStatusesToDisplayText() {
-    assertEquals("Sắp mở", SellerAuctionViewModelMapper.toRow(createAuction("A-1", "OPEN", "ART")).statusText());
-    assertEquals("Đang đấu giá", SellerAuctionViewModelMapper.toRow(createAuction("A-2", "RUNNING", "ART")).statusText());
-    assertEquals("Đã kết thúc", SellerAuctionViewModelMapper.toRow(createAuction("A-3", "FINISHED", "ART")).statusText());
-    assertEquals("Đã thanh toán", SellerAuctionViewModelMapper.toRow(createAuction("A-4", "PAID", "ART")).statusText());
-    assertEquals("Đã hủy", SellerAuctionViewModelMapper.toRow(createAuction("A-5", "CANCELED", "ART")).statusText());
-    assertEquals("Chưa đạt giá sàn", SellerAuctionViewModelMapper.toRow(createAuction("A-6", "RESERVE_NOT_MET", "ART")).statusText());
-    assertEquals("Không rõ", SellerAuctionViewModelMapper.toRow(createAuction("A-7", "UNKNOWN", "ART")).statusText());
+    assertEquals(
+        "Sắp mở",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-1", "OPEN", "ART")).statusText());
+    assertEquals(
+        "Đang đấu giá",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-2", "RUNNING", "ART")).statusText());
+    assertEquals(
+        "Đã kết thúc",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-3", "FINISHED", "ART")).statusText());
+    assertEquals(
+        "Đã thanh toán",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-4", "PAID", "ART")).statusText());
+    assertEquals(
+        "Đã hủy",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-5", "CANCELED", "ART")).statusText());
+    assertEquals(
+        "Chưa đạt giá sàn",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-6", "RESERVE_NOT_MET", "ART"))
+            .statusText());
+    assertEquals(
+        "Không rõ",
+        SellerAuctionViewModelMapper.toRow(createAuction("A-7", "UNKNOWN", "ART")).statusText());
   }
 
   private static void assertSpecification(
@@ -231,8 +252,7 @@ class SellerAuctionViewModelMapperTest {
     item.setSellerId("SELLER-1");
     item.setSellerUsername("seller01");
     item.setImageUrls(List.of("items/camera-1.png", "   ", "items/camera-2.png"));
-    item.setExtraFields(
-        Map.of("brand", "Sony", "warrantyMonths", 12, "condition", "Like new"));
+    item.setExtraFields(Map.of("brand", "Sony", "warrantyMonths", 12, "condition", "Like new"));
 
     AuctionDTOs.AuctionDTO auction = new AuctionDTOs.AuctionDTO();
     auction.setId(auctionId);

@@ -16,18 +16,14 @@ class BidHistoryServiceValidationTest {
   void getBidHistoryShouldFailWhenAuctionIdIsNull() {
     BidHistoryService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getBidHistory(null),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.getBidHistory(null), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
   void getBidHistoryShouldFailWhenAuctionIdIsBlank() {
     BidHistoryService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getBidHistory("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.getBidHistory("   "), "Thiếu mã phiên đấu giá.");
   }
 
   private static BidHistoryService createService() {

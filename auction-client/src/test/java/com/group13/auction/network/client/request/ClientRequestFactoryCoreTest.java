@@ -61,8 +61,7 @@ class ClientRequestFactoryCoreTest {
   @Test
   void walletRequestsShouldCreateExpectedPackets() {
     Packet<PaymentDTOs.DepositRequestDTO> depositPacket = ClientRequestFactory.deposit(1_000_000L);
-    Packet<PaymentDTOs.WithdrawRequestDTO> withdrawPacket =
-        ClientRequestFactory.withdraw(500_000L);
+    Packet<PaymentDTOs.WithdrawRequestDTO> withdrawPacket = ClientRequestFactory.withdraw(500_000L);
     Packet<Void> balancePacket = ClientRequestFactory.getWalletBalance();
 
     assertPacketType(depositPacket, PacketType.DEPOSIT);
@@ -113,8 +112,7 @@ class ClientRequestFactoryCoreTest {
     request.setStatusFilter("RUNNING");
     request.setScopeFilter("JOINED");
 
-    Packet<AuctionDTOs.AuctionListRequestDTO> packet =
-        ClientRequestFactory.getAuctionList(request);
+    Packet<AuctionDTOs.AuctionListRequestDTO> packet = ClientRequestFactory.getAuctionList(request);
 
     assertPacketType(packet, PacketType.GET_AUCTION_LIST);
     assertSame(request, packet.getPayload());
@@ -160,13 +158,11 @@ class ClientRequestFactoryCoreTest {
 
   @Test
   void cancelAuctionRequestsShouldWrapProvidedPayloads() {
-    AuctionDTOs.CancelAuctionRequestDTO sellerRequest =
-        new AuctionDTOs.CancelAuctionRequestDTO();
+    AuctionDTOs.CancelAuctionRequestDTO sellerRequest = new AuctionDTOs.CancelAuctionRequestDTO();
     sellerRequest.setAuctionId("A-1");
     sellerRequest.setReason("Wrong schedule");
 
-    AuctionDTOs.AdminCancelAuctionDTO adminRequest =
-        new AuctionDTOs.AdminCancelAuctionDTO();
+    AuctionDTOs.AdminCancelAuctionDTO adminRequest = new AuctionDTOs.AdminCancelAuctionDTO();
     adminRequest.setAuctionId("A-2");
     adminRequest.setReason("Policy violation");
 

@@ -16,36 +16,28 @@ class WatchAuctionServiceValidationTest {
   void watchAuctionShouldFailWhenAuctionIdIsNull() {
     WatchAuctionService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.watchAuction(null),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.watchAuction(null), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
   void watchAuctionShouldFailWhenAuctionIdIsBlank() {
     WatchAuctionService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.watchAuction("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.watchAuction("   "), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
   void joinAuctionShouldFailWhenAuctionIdIsBlank() {
     WatchAuctionService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.joinAuction("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.joinAuction("   "), "Thiếu mã phiên đấu giá.");
   }
 
   @Test
   void leaveAuctionShouldFailWhenAuctionIdIsBlank() {
     WatchAuctionService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.leaveAuction("   "),
-        "Thiếu mã phiên đấu giá.");
+    assertFutureFailsWithMessage(service.leaveAuction("   "), "Thiếu mã phiên đấu giá.");
   }
 
   private static WatchAuctionService createService() {

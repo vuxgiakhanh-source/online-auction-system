@@ -1,4 +1,4 @@
 package com.group13.auction.service.auction;
 
-public class AuctionCommandService {
-}
+/** Placeholder for future auction command operations. */
+public class AuctionCommandService {}

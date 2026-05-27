@@ -16,36 +16,28 @@ class ChatbotServiceValidationTest {
   void askByQueryShouldFailWhenQueryIsNull() {
     ChatbotService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.askByQuery(null),
-        "Vui lòng nhập câu hỏi cho OMNI.");
+    assertFutureFailsWithMessage(service.askByQuery(null), "Vui lòng nhập câu hỏi cho OMNI.");
   }
 
   @Test
   void askByQueryShouldFailWhenQueryIsBlank() {
     ChatbotService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.askByQuery("   "),
-        "Vui lòng nhập câu hỏi cho OMNI.");
+    assertFutureFailsWithMessage(service.askByQuery("   "), "Vui lòng nhập câu hỏi cho OMNI.");
   }
 
   @Test
   void askByFaqIdShouldFailWhenFaqIdIsNull() {
     ChatbotService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.askByFaqId(null),
-        "Câu hỏi gợi ý không hợp lệ.");
+    assertFutureFailsWithMessage(service.askByFaqId(null), "Câu hỏi gợi ý không hợp lệ.");
   }
 
   @Test
   void askByFaqIdShouldFailWhenFaqIdIsBlank() {
     ChatbotService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.askByFaqId("   "),
-        "Câu hỏi gợi ý không hợp lệ.");
+    assertFutureFailsWithMessage(service.askByFaqId("   "), "Câu hỏi gợi ý không hợp lệ.");
   }
 
   private static ChatbotService createService() {

@@ -37,8 +37,8 @@ public final class JoinedAuctionState {
   /**
    * Đánh dấu user hiện tại đã tham gia phiên đấu giá.
    *
-   * <p>Khi user join thành công, trạng thái LEFT cục bộ của phiên đó sẽ được xóa để tránh UI hiểu sai
-   * trong các trường hợp server cho phép join lại ở tương lai.
+   * <p>Khi user join thành công, trạng thái LEFT cục bộ của phiên đó sẽ được xóa để tránh UI hiểu
+   * sai trong các trường hợp server cho phép join lại ở tương lai.
    *
    * @param auctionId id phiên đấu giá
    */
@@ -63,8 +63,8 @@ public final class JoinedAuctionState {
   /**
    * Đánh dấu user hiện tại đã hủy tham gia phiên đấu giá.
    *
-   * <p>Cache LEFT giúp UI phản ánh đúng sau khi hủy tham gia; user vẫn có thể join lại nếu phiên OPEN
-   * (server xác thực cuối cùng).
+   * <p>Cache LEFT giúp UI phản ánh đúng sau khi hủy tham gia; user vẫn có thể join lại nếu phiên
+   * OPEN (server xác thực cuối cùng).
    *
    * @param auctionId id phiên đấu giá
    */
@@ -132,9 +132,7 @@ public final class JoinedAuctionState {
       return false;
     }
 
-    return joinedAuctionIdsByUser
-        .getOrDefault(userKey, Set.of())
-        .contains(auctionId.trim());
+    return joinedAuctionIdsByUser.getOrDefault(userKey, Set.of()).contains(auctionId.trim());
   }
 
   /**
@@ -153,9 +151,7 @@ public final class JoinedAuctionState {
       return false;
     }
 
-    return leftAuctionIdsByUser
-        .getOrDefault(userKey, Set.of())
-        .contains(auctionId.trim());
+    return leftAuctionIdsByUser.getOrDefault(userKey, Set.of()).contains(auctionId.trim());
   }
 
   /** Xóa toàn bộ cache, dùng khi logout nếu cần. */

@@ -69,8 +69,7 @@ class ChatbotViewModelMapperTest {
 
   @Test
   void toFaqViewModelsShouldReturnEmptyListWhenFaqsAreNull() {
-    ChatbotDTOs.ChatbotFaqListResponseDTO response =
-        new ChatbotDTOs.ChatbotFaqListResponseDTO();
+    ChatbotDTOs.ChatbotFaqListResponseDTO response = new ChatbotDTOs.ChatbotFaqListResponseDTO();
 
     assertTrue(ChatbotViewModelMapper.toFaqViewModels(response).isEmpty());
   }
@@ -87,8 +86,7 @@ class ChatbotViewModelMapperTest {
     biddingFaq.setCategory("BIDDING");
     biddingFaq.setQuestion("Làm sao để đặt giá?");
 
-    ChatbotDTOs.ChatbotFaqListResponseDTO response =
-        new ChatbotDTOs.ChatbotFaqListResponseDTO();
+    ChatbotDTOs.ChatbotFaqListResponseDTO response = new ChatbotDTOs.ChatbotFaqListResponseDTO();
     response.setFaqs(List.of(paymentFaq, biddingFaq));
 
     List<ChatbotFaqViewModel> viewModels = ChatbotViewModelMapper.toFaqViewModels(response);

@@ -69,9 +69,7 @@ public final class ImagePreviewDialog {
     scrollPane.setFitToHeight(true);
     scrollPane.setPannable(true);
     scrollPane.setStyle(
-        "-fx-background: transparent;"
-            + "-fx-background-color: transparent;"
-            + "-fx-padding: 0;");
+        "-fx-background: transparent;" + "-fx-background-color: transparent;" + "-fx-padding: 0;");
     VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
     Button closeButton = new Button("Đóng");

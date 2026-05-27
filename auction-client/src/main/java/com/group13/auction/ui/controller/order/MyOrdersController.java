@@ -320,9 +320,7 @@ public final class MyOrdersController {
       return;
     }
 
-    AppContext.getInstance()
-        .getScreenStateStore()
-        .put(ScreenStateKeys.SELECTED_WON_ORDER, order);
+    AppContext.getInstance().getScreenStateStore().put(ScreenStateKeys.SELECTED_WON_ORDER, order);
     AppContext.getInstance()
         .getScreenStateStore()
         .put(ScreenStateKeys.SELECTED_AUCTION_ID, order.auctionId());
