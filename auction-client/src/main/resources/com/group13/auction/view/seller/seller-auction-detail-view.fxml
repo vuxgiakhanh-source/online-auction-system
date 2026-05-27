@@ -34,7 +34,7 @@
                 AnchorPane.rightAnchor="0.0">
         <VBox spacing="24.0">
         <padding>
-            <Insets top="26.0" right="42.0" bottom="26.0" left="42.0"/>
+            <Insets top="26.0" right="42.0" bottom="132.0" left="42.0"/>
         </padding>
 
         <!-- Header -->
@@ -198,17 +198,17 @@
         </VBox>
 
         <Region VBox.vgrow="ALWAYS"/>
-
-        <!-- Chatbot launcher + signature -->
-        <HBox alignment="BOTTOM_RIGHT" spacing="8.0">
-            <Region HBox.hgrow="ALWAYS"/>
-
-            <VBox alignment="CENTER_RIGHT" spacing="2.0">
-                <fx:include source="../shared/chatbot-launcher.fxml"/>
-
-                <Label styleClass="signature-label" text="by CKNT team"/>
-            </VBox>
-        </HBox>
         </VBox>
     </ScrollPane>
+    <VBox alignment="CENTER_RIGHT"
+          maxHeight="-Infinity"
+          maxWidth="-Infinity"
+          pickOnBounds="false"
+          spacing="2.0"
+          AnchorPane.bottomAnchor="28.0"
+          AnchorPane.rightAnchor="44.0">
+        <fx:include source="../shared/chatbot-launcher.fxml"/>
+
+        <Label styleClass="signature-label" text="by CKNT team"/>
+    </VBox>
 </AnchorPane>
