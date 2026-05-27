@@ -10,7 +10,10 @@ import java.util.List;
 public abstract class Item extends Entity {
 
   public enum ItemCategory {
-    ART, ELECTRONICS, VEHICLE, OTHER
+    ART,
+    ELECTRONICS,
+    VEHICLE,
+    OTHER
   }
 
   /** Tối đa số ảnh được upload mỗi sản phẩm. */
@@ -26,81 +29,116 @@ public abstract class Item extends Entity {
   private final NormalUser seller;
 
   /**
-   * Danh sách URL ảnh của sản phẩm.
-   * Mỗi phần tử là URL dạng "/uploads/items/{uuid}.jpg" do ImageUploadServer cấp.
-   * Immutable sau khi tạo. Không bao giờ null.
+   * Danh sách URL ảnh của sản phẩm. Mỗi phần tử là URL dạng "/uploads/items/{uuid}.jpg" do
+   * ImageUploadServer cấp. Immutable sau khi tạo. Không bao giờ null.
    */
   private final List<String> imageUrls;
 
   // ── Constructors (khai sinh — không ảnh) ─────────────────────────────────
 
-  protected Item(String name, String description, long startingPrice,
-                 ItemCategory category, NormalUser seller) {
+  protected Item(
+      String name,
+      String description,
+      long startingPrice,
+      ItemCategory category,
+      NormalUser seller) {
     super();
-    this.name          = name;
-    this.description   = description;
+    this.name = name;
+    this.description = description;
     this.startingPrice = startingPrice;
-    this.category      = category;
-    this.seller        = seller;
-    this.imageUrls     = List.of();
+    this.category = category;
+    this.seller = seller;
+    this.imageUrls = List.of();
   }
 
   // ── Constructors (khai sinh — có ảnh) ────────────────────────────────────
 
-  protected Item(String name, String description, long startingPrice,
-                 ItemCategory category, NormalUser seller, List<String> imageUrls) {
+  protected Item(
+      String name,
+      String description,
+      long startingPrice,
+      ItemCategory category,
+      NormalUser seller,
+      List<String> imageUrls) {
     super();
-    this.name          = name;
-    this.description   = description;
+    this.name = name;
+    this.description = description;
     this.startingPrice = startingPrice;
-    this.category      = category;
-    this.seller        = seller;
-    this.imageUrls     = imageUrls != null
-            ? Collections.unmodifiableList(imageUrls) : List.of();
+    this.category = category;
+    this.seller = seller;
+    this.imageUrls = imageUrls != null ? Collections.unmodifiableList(imageUrls) : List.of();
   }
 
   // ── Constructors (hồi sinh — không ảnh) ──────────────────────────────────
 
-  protected Item(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                 String name, String description, long startingPrice,
-                 ItemCategory category, NormalUser seller) {
+  protected Item(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      ItemCategory category,
+      NormalUser seller) {
     super(id, createdAt, updatedAt);
-    this.name          = name;
-    this.description   = description;
+    this.name = name;
+    this.description = description;
     this.startingPrice = startingPrice;
-    this.category      = category;
-    this.seller        = seller;
-    this.imageUrls     = List.of();
+    this.category = category;
+    this.seller = seller;
+    this.imageUrls = List.of();
   }
 
   // ── Constructors (hồi sinh — có ảnh) ─────────────────────────────────────
 
-  protected Item(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                 String name, String description, long startingPrice,
-                 ItemCategory category, NormalUser seller, List<String> imageUrls) {
+  protected Item(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      ItemCategory category,
+      NormalUser seller,
+      List<String> imageUrls) {
     super(id, createdAt, updatedAt);
-    this.name          = name;
-    this.description   = description;
+    this.name = name;
+    this.description = description;
     this.startingPrice = startingPrice;
-    this.category      = category;
-    this.seller        = seller;
-    this.imageUrls     = imageUrls != null
-            ? Collections.unmodifiableList(imageUrls) : List.of();
+    this.category = category;
+    this.seller = seller;
+    this.imageUrls = imageUrls != null ? Collections.unmodifiableList(imageUrls) : List.of();
   }
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  public String getName()            { return name; }
-  public String getDescription()     { return description; }
-  public long getStartingPrice()     { return startingPrice; }
-  public ItemCategory getCategory()  { return category; }
-  public NormalUser getSeller()      { return seller; }
+  public String getName() {
+    return name;
+  }
 
-  /**
-   * Danh sách URL ảnh. Trả về list rỗng nếu chưa có ảnh, không bao giờ null.
-   */
-  public List<String> getImageUrls() { return imageUrls; }
+  public String getDescription() {
+    return description;
+  }
+
+  public long getStartingPrice() {
+    return startingPrice;
+  }
+
+  public ItemCategory getCategory() {
+    return category;
+  }
+
+  public NormalUser getSeller() {
+    return seller;
+  }
+
+  /** Danh sách URL ảnh. Trả về list rỗng nếu chưa có ảnh, không bao giờ null. */
+  public List<String> getImageUrls() {
+    return imageUrls;
+  }
 
   /** true nếu sản phẩm có ít nhất 1 ảnh. */
-  public boolean hasImages()         { return !imageUrls.isEmpty(); }
+  public boolean hasImages() {
+    return !imageUrls.isEmpty();
+  }
 }

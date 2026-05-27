@@ -8,10 +8,11 @@ public class AuctionClosedException extends RuntimeException {
   private final AuctionStatus currentStatus;
 
   public AuctionClosedException(AuctionStatus currentStatus) {
-    super("Phiên đấu giá không thể nhận bid - trạng thái hiện tại: "
-            + currentStatus);
+    super("Phiên đấu giá không thể nhận bid - trạng thái hiện tại: " + currentStatus);
     this.currentStatus = currentStatus;
   }
 
-  public AuctionStatus getCurrentStatus() { return currentStatus; }
+  public AuctionStatus getCurrentStatus() {
+    return currentStatus;
+  }
 }

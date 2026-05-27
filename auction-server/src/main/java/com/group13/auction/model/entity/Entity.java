@@ -7,8 +7,8 @@ import java.util.UUID;
 /**
  * Lớp abstract gốc — mọi thực thể đều có id UUID và timestamp
  *
- * <p>Dùng static factory method để khởi tạo
- * {@code create()} cho object mới, {@code reconstitute()} cho object từ DB
+ * <p>Dùng static factory method để khởi tạo {@code create()} cho object mới, {@code reconstitute()}
+ * cho object từ DB
  */
 public abstract class Entity {
 
@@ -24,9 +24,8 @@ public abstract class Entity {
   }
 
   /**
-   * Hồi sinh — giữ nguyên id và timestamp từ DB.
-   * Chỉ được gọi từ static factory method {@code reconstitute()} của lớp con,
-   * và chỉ DAO mới được gọi reconstitute().
+   * Hồi sinh — giữ nguyên id và timestamp từ DB. Chỉ được gọi từ static factory method {@code
+   * reconstitute()} của lớp con, và chỉ DAO mới được gọi reconstitute().
    */
   protected Entity(String id, LocalDateTime createdAt, LocalDateTime updatedAt) {
     this.id = id;
@@ -40,19 +39,31 @@ public abstract class Entity {
   }
 
   // Getters
-  public String getId() { return id; }
-  public LocalDateTime getCreatedAt() { return createdAt; }
-  public LocalDateTime getUpdatedAt() { return updatedAt; }
+  public String getId() {
+    return id;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 
   /**
-   * Hai entity bằng nhau khi và chỉ khi cùng {@code id}.
-   * Tránh lỗi khi cùng một entity được load từ DB thành nhiều instance khác nhau
-   * {@code observers.contains(observer)}, {@code joinedAuctionIds.contains(id)}.
+   * Hai entity bằng nhau khi và chỉ khi cùng {@code id}. Tránh lỗi khi cùng một entity được load từ
+   * DB thành nhiều instance khác nhau {@code observers.contains(observer)}, {@code
+   * joinedAuctionIds.contains(id)}.
    */
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Entity)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Entity)) {
+      return false;
+    }
     Entity other = (Entity) o;
     return Objects.equals(this.id, other.id);
   }

@@ -18,72 +18,142 @@ public class Electronics extends Item {
   // ── Static factory methods ────────────────────────────────────────────────
 
   /** Khai sinh — không ảnh (backward-compatible). */
-  protected static Electronics create(String name, String description, long startingPrice,
-                                      NormalUser seller,
-                                      String brand, int warrantyMonths, String condition) {
-    return new Electronics(name, description, startingPrice, seller,
-            brand, warrantyMonths, condition, List.of());
+  protected static Electronics create(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition) {
+    return new Electronics(
+        name, description, startingPrice, seller, brand, warrantyMonths, condition, List.of());
   }
 
   /** Khai sinh — có ảnh. */
-  protected static Electronics create(String name, String description, long startingPrice,
-                                      NormalUser seller,
-                                      String brand, int warrantyMonths, String condition,
-                                      List<String> imageUrls) {
-    return new Electronics(name, description, startingPrice, seller,
-            brand, warrantyMonths, condition, imageUrls);
+  protected static Electronics create(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition,
+      List<String> imageUrls) {
+    return new Electronics(
+        name, description, startingPrice, seller, brand, warrantyMonths, condition, imageUrls);
   }
 
   /** Hồi sinh từ DB — không ảnh (backward-compatible, TestFixture dùng). */
-  public static Electronics reconstitute(String id, LocalDateTime createdAt,
-                                         LocalDateTime updatedAt,
-                                         String name, String description, long startingPrice,
-                                         NormalUser seller,
-                                         String brand, int warrantyMonths, String condition) {
-    return new Electronics(id, createdAt, updatedAt, name, description, startingPrice,
-            seller, brand, warrantyMonths, condition, List.of());
+  public static Electronics reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition) {
+    return new Electronics(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        seller,
+        brand,
+        warrantyMonths,
+        condition,
+        List.of());
   }
 
   /** Hồi sinh từ DB — có ảnh (ItemDAO dùng). */
-  public static Electronics reconstitute(String id, LocalDateTime createdAt,
-                                         LocalDateTime updatedAt,
-                                         String name, String description, long startingPrice,
-                                         NormalUser seller,
-                                         String brand, int warrantyMonths, String condition,
-                                         List<String> imageUrls) {
-    return new Electronics(id, createdAt, updatedAt, name, description, startingPrice,
-            seller, brand, warrantyMonths, condition, imageUrls);
+  public static Electronics reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition,
+      List<String> imageUrls) {
+    return new Electronics(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        seller,
+        brand,
+        warrantyMonths,
+        condition,
+        imageUrls);
   }
 
   // ── Private constructors ──────────────────────────────────────────────────
 
-  private Electronics(String name, String description, long startingPrice,
-                      NormalUser seller,
-                      String brand, int warrantyMonths, String condition,
-                      List<String> imageUrls) {
+  private Electronics(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition,
+      List<String> imageUrls) {
     super(name, description, startingPrice, ItemCategory.ELECTRONICS, seller, imageUrls);
-    this.brand          = brand;
+    this.brand = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition      = condition;
+    this.condition = condition;
   }
 
-  private Electronics(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                      String name, String description, long startingPrice,
-                      NormalUser seller,
-                      String brand, int warrantyMonths, String condition,
-                      List<String> imageUrls) {
-    super(id, createdAt, updatedAt, name, description, startingPrice,
-            ItemCategory.ELECTRONICS, seller, imageUrls);
-    this.brand          = brand;
+  private Electronics(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String brand,
+      int warrantyMonths,
+      String condition,
+      List<String> imageUrls) {
+    super(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        ItemCategory.ELECTRONICS,
+        seller,
+        imageUrls);
+    this.brand = brand;
     this.warrantyMonths = warrantyMonths;
-    this.condition      = condition;
+    this.condition = condition;
   }
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  public String getBrand()       { return brand; }
-  public int getWarrantyMonths() { return warrantyMonths; }
-  public String getCondition()   { return condition; }
+  public String getBrand() {
+    return brand;
+  }
+
+  public int getWarrantyMonths() {
+    return warrantyMonths;
+  }
+
+  public String getCondition() {
+    return condition;
+  }
 
   @Override
   public void printInfo() {

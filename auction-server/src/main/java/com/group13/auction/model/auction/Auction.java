@@ -1,13 +1,8 @@
 package com.group13.auction.model.auction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.group13.auction.model.entity.Entity;
 import com.group13.auction.model.item.Item;
 import com.group13.auction.model.user.NormalUser;
-import com.group13.auction.observer.AuctionObserver;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,30 +10,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Phiên đấu giá - chỉ lưu data và trạng thái.
  *
- * ═══════════════════════════════════════════════════════════
- * Thread safety cho shared mutable state:
+ * <p>═══════════════════════════════════════════════════════════ Thread safety cho shared mutable
+ * state:
  *
- * currentPrice, currentLeader — volatile:
- *   BidService giữ ReentrantLock khi WRITE. volatile đảm bảo
- *   visibility sau khi release lock (Java Memory Model).
- *   READ không cần lock vì volatile đủ cho primitive long / reference.
+ * <p>currentPrice, currentLeader — volatile: BidService giữ ReentrantLock khi WRITE. volatile đảm
+ * bảo visibility sau khi release lock (Java Memory Model). READ không cần lock vì volatile đủ cho
+ * primitive long / reference.
  *
- * endTime — AtomicReference<LocalDateTime>:
- *   extendEndTime() là read-modify-write. volatile không đủ
- *   (non-atomic: read → compute → write). AtomicReference.updateAndGet()
- *   là truly atomic, loại bỏ Qodana "Non-atomic operation on volatile".
+ * <p>endTime — AtomicReference<LocalDateTime>: extendEndTime() là read-modify-write. volatile không
+ * đủ (non-atomic: read → compute → write). AtomicReference.updateAndGet() là truly atomic, loại bỏ
+ * Qodana "Non-atomic operation on volatile".
  *
- * state, winner — AtomicReference:
- *   Compound write (set + side-effect). AtomicReference đảm bảo
- *   visibility ngay cả khi không có lock phía caller.
+ * <p>state, winner — AtomicReference: Compound write (set + side-effect). AtomicReference đảm bảo
+ * visibility ngay cả khi không có lock phía caller.
  *
- * bidTransactionIds — Collections.synchronizedList:
- *   addBidTransactionId() gọi trong lock, getBidTransactionIds() gọi ngoài.
- * ═══════════════════════════════════════════════════════════
+ * <p>bidTransactionIds — Collections.synchronizedList: addBidTransactionId() gọi trong lock,
+ * getBidTransactionIds() gọi ngoài. ═══════════════════════════════════════════════════════════
  */
 public class Auction extends Entity {
 
@@ -63,8 +56,8 @@ public class Auction extends Entity {
   private final long reservePrice;
 
   /**
-   * FIX #3: volatile — đảm bảo thread đọc currentPrice sau lock release
-   * luôn thấy giá trị mới nhất từ auction.updateBid().
+   * FIX #3: volatile — đảm bảo thread đọc currentPrice sau lock release luôn thấy giá trị mới nhất
+   * từ auction.updateBid().
    */
   private volatile long currentPrice;
 
@@ -75,26 +68,28 @@ public class Auction extends Entity {
    * FIX #3: synchronizedList — addBidTransactionId() gọi trong lock của BidService,
    * getBidTransactionIds() (unmodifiable view) gọi ngoài lock.
    */
-  private final List<String> bidTransactionIds =
-      Collections.synchronizedList(new ArrayList<>());
+  private final List<String> bidTransactionIds = Collections.synchronizedList(new ArrayList<>());
 
   /**
-   * FIX: AtomicReference thay volatile — transitionToRunning/Close/Cancel/Paid có thể gọi
-   * từ AuctionService trên thread khác với thread đang bid. AtomicReference đảm bảo
-   * cả read lẫn write là atomic (không có race condition read-modify-write).
+   * FIX: AtomicReference thay volatile — transitionToRunning/Close/Cancel/Paid có thể gọi từ
+   * AuctionService trên thread khác với thread đang bid. AtomicReference đảm bảo cả read lẫn write
+   * là atomic (không có race condition read-modify-write).
    */
   private final AtomicReference<AuctionState> state = new AtomicReference<>();
 
   /**
    * FIX: AtomicReference thay volatile — setWinner() là compound operation (write + markUpdated).
    * volatile chỉ đảm bảo visibility của phép ghi đơn lẻ, không đủ cho compound write + side-effect.
-   * AtomicReference.set() + markUpdated() vẫn không atomic với nhau, nhưng winner chỉ được set
-   * một lần duy nhất bởi AuctionService sau khi đấu giá kết thúc (không có concurrent writers),
-   * nên AtomicReference đảm bảo visibility an toàn hơn volatile và loại bỏ cảnh báo IDE/SpotBugs.
+   * AtomicReference.set() + markUpdated() vẫn không atomic với nhau, nhưng winner chỉ được set một
+   * lần duy nhất bởi AuctionService sau khi đấu giá kết thúc (không có concurrent writers), nên
+   * AtomicReference đảm bảo visibility an toàn hơn volatile và loại bỏ cảnh báo IDE/SpotBugs.
    */
   private final AtomicReference<AuctionWinner> winner = new AtomicReference<>(null);
 
-  /** FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu dùng volatile. */
+  /**
+   * FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu
+   * dùng volatile.
+   */
   private final AtomicInteger viewerCount = new AtomicInteger(0);
 
   // =========================================================================
@@ -102,16 +97,13 @@ public class Auction extends Entity {
   // =========================================================================
 
   public static Auction create(
-      Item item,
-      LocalDateTime startTime,
-      LocalDateTime endTime,
-      long reservePrice) {
+      Item item, LocalDateTime startTime, LocalDateTime endTime, long reservePrice) {
     return new Auction(item, startTime, endTime, reservePrice);
   }
 
   /**
-   * Hồi sinh Auction từ DB (không có viewerCount — dùng khi DB không lưu viewer_count).
-   * viewerCount sẽ được khởi tạo = 0.
+   * Hồi sinh Auction từ DB (không có viewerCount — dùng khi DB không lưu viewer_count). viewerCount
+   * sẽ được khởi tạo = 0.
    */
   public static Auction reconstitute(
       String id,
@@ -130,11 +122,10 @@ public class Auction extends Entity {
   /**
    * FIX: Hồi sinh Auction từ DB kèm viewer_count đã lưu.
    *
-   * <p>Overload này dùng khi AuctionDAO đọc được cột {@code viewer_count} từ ResultSet.
-   * Trước đây {@link #reconstitute(String, LocalDateTime, LocalDateTime, Item,
-   * LocalDateTime, LocalDateTime, long, AuctionStatus, long)} không nhận viewerCount,
-   * nên mỗi lần server restart thì viewerCount trong memory bị reset = 0 dù DB vẫn
-   * lưu đúng giá trị.
+   * <p>Overload này dùng khi AuctionDAO đọc được cột {@code viewer_count} từ ResultSet. Trước đây
+   * {@link #reconstitute(String, LocalDateTime, LocalDateTime, Item, LocalDateTime, LocalDateTime,
+   * long, AuctionStatus, long)} không nhận viewerCount, nên mỗi lần server restart thì viewerCount
+   * trong memory bị reset = 0 dù DB vẫn lưu đúng giá trị.
    *
    * @param savedViewerCount giá trị viewer_count đọc từ DB (phải >= 0; âm sẽ bị clamp về 0)
    */
@@ -149,8 +140,9 @@ public class Auction extends Entity {
       AuctionStatus status,
       long reservePrice,
       int savedViewerCount) {
-    Auction auction = new Auction(
-        id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
+    Auction auction =
+        new Auction(
+            id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
     auction.viewerCount.set(Math.max(0, savedViewerCount));
     return auction;
   }
@@ -194,11 +186,16 @@ public class Auction extends Entity {
 
   private static AuctionState resolveState(AuctionStatus status) {
     switch (status) {
-      case OPEN:     return OpenState.INSTANCE;
-      case RUNNING:  return RunningState.INSTANCE;
-      case FINISHED: return FinishedState.INSTANCE;
-      case PAID:     return PaidState.INSTANCE;
-      case CANCELED: return CanceledState.INSTANCE;
+      case OPEN:
+        return OpenState.INSTANCE;
+      case RUNNING:
+        return RunningState.INSTANCE;
+      case FINISHED:
+        return FinishedState.INSTANCE;
+      case PAID:
+        return PaidState.INSTANCE;
+      case CANCELED:
+        return CanceledState.INSTANCE;
       default:
         throw new IllegalArgumentException("AuctionStatus không được hỗ trợ: " + status);
     }
@@ -208,16 +205,45 @@ public class Auction extends Entity {
   // Getters
   // =========================================================================
 
-  public Item getItem()                    { return item; }
-  public LocalDateTime getStartTime()      { return startTime; }
-  public LocalDateTime getEndTime()        { return endTime.get(); }
-  public LocalDateTime getOriginalEndTime(){ return originalEndTime; }
-  public long getCurrentPrice()            { return currentPrice; }
-  public NormalUser getCurrentLeader()     { return currentLeader; }
-  public AuctionStatus getStatus()         { return state.get().getStatus(); }
-  public AuctionWinner getWinner()         { return winner.get(); }
-  public long getReservePrice()            { return reservePrice; }
-  public int getViewerCount()              { return viewerCount.get(); }
+  public Item getItem() {
+    return item;
+  }
+
+  public LocalDateTime getStartTime() {
+    return startTime;
+  }
+
+  public LocalDateTime getEndTime() {
+    return endTime.get();
+  }
+
+  public LocalDateTime getOriginalEndTime() {
+    return originalEndTime;
+  }
+
+  public long getCurrentPrice() {
+    return currentPrice;
+  }
+
+  public NormalUser getCurrentLeader() {
+    return currentLeader;
+  }
+
+  public AuctionStatus getStatus() {
+    return state.get().getStatus();
+  }
+
+  public AuctionWinner getWinner() {
+    return winner.get();
+  }
+
+  public long getReservePrice() {
+    return reservePrice;
+  }
+
+  public int getViewerCount() {
+    return viewerCount.get();
+  }
 
   public boolean isAcceptingBids() {
     return state.get().getStatus() == AuctionStatus.RUNNING;
@@ -262,8 +288,8 @@ public class Auction extends Entity {
   /**
    * Cập nhật giá và leader.
    *
-   * Thread safety: gọi bên trong per-auction synchronized block của BidService.
-   * volatile trên currentPrice/currentLeader publish giá trị ra ngoài lock.
+   * <p>Thread safety: gọi bên trong per-auction synchronized block của BidService. volatile trên
+   * currentPrice/currentLeader publish giá trị ra ngoài lock.
    */
   public void updateBid(long newPrice, NormalUser newLeader) {
     this.currentPrice = newPrice;
@@ -272,22 +298,21 @@ public class Auction extends Entity {
   }
 
   /**
-   * Reset trạng thái leader khi người dẫn đầu tự rời phiên.
-   * Được gọi trong lock của BidService.leaveAuction() sau khi bid bị huỷ.
+   * Reset trạng thái leader khi người dẫn đầu tự rời phiên. Được gọi trong lock của
+   * BidService.leaveAuction() sau khi bid bị huỷ.
    *
-   * @param newPrice    giá của người kế tiếp, hoặc 0 nếu không còn ai
-   * @param newLeader   người kế tiếp, hoặc null nếu không còn ai
+   * @param newPrice giá của người kế tiếp, hoặc 0 nếu không còn ai
+   * @param newLeader người kế tiếp, hoặc null nếu không còn ai
    */
   public void resetLeader(long newPrice, NormalUser newLeader) {
-    this.currentPrice  = newPrice;
+    this.currentPrice = newPrice;
     this.currentLeader = newLeader;
     markUpdated();
   }
 
   /**
-   * Gia hạn phiên (anti-sniping).
-   * Dùng AtomicReference.updateAndGet() — truly atomic read-modify-write,
-   * loại bỏ "Non-atomic operation on volatile" (Qodana/SpotBugs).
+   * Gia hạn phiên (anti-sniping). Dùng AtomicReference.updateAndGet() — truly atomic
+   * read-modify-write, loại bỏ "Non-atomic operation on volatile" (Qodana/SpotBugs).
    */
   public synchronized void extendEndTime(Duration extension) {
     if (extension == null || extension.isZero() || extension.isNegative()) {
@@ -315,9 +340,8 @@ public class Auction extends Entity {
   /**
    * FIX: Giảm viewerCount khi user rời phiên (LEAVE hoặc disconnect).
    *
-   * <p>Trước đây chỉ có {@link #incrementViewerCount()} mà không có decrement,
-   * khiến viewer_count trong DB chỉ tăng không giảm và không bao giờ phản ánh
-   * đúng số người đang thực sự xem.
+   * <p>Trước đây chỉ có {@link #incrementViewerCount()} mà không có decrement, khiến viewer_count
+   * trong DB chỉ tăng không giảm và không bao giờ phản ánh đúng số người đang thực sự xem.
    *
    * <p>Dùng CAS loop để đảm bảo atomic và không bao giờ xuống dưới 0.
    */
@@ -325,7 +349,9 @@ public class Auction extends Entity {
     int current;
     do {
       current = viewerCount.get();
-      if (current <= 0) return; // clamp tại 0, không âm
+      if (current <= 0) {
+        return; // clamp tại 0, không âm
+      }
     } while (!viewerCount.compareAndSet(current, current - 1));
   }
 

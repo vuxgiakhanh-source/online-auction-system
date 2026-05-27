@@ -13,27 +13,33 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Lớp abstract người dùng — chỉ lưu data, không chứa nghiệp vụ.
  *
- * <p>Rating được thay đổi, quản lý bởi {@link com.group13.auction.service.RatingService}
- * Không có setter public cho rating.
- * Chỉ {@code RatingService} mới được điều chỉnh rating qua
- * {@code adjustRating(double)}.
+ * <p>Rating được thay đổi, quản lý bởi {@link com.group13.auction.service.RatingService} Không có
+ * setter public cho rating. Chỉ {@code RatingService} mới được điều chỉnh rating qua {@code
+ * adjustRating(double)}.
  *
- * <p>Một User bình thường (non-admin) có thể mang nhiều role:
- * BIDDER và SELLER cùng lúc.
- * Admin không được mang thêm role khác
+ * <p>Một User bình thường (non-admin) có thể mang nhiều role: BIDDER và SELLER cùng lúc. Admin
+ * không được mang thêm role khác
  */
 public abstract class User extends Entity {
 
-  public enum UserRole { BIDDER, SELLER, ADMIN }
-  public enum AccountStatus { ACTIVE, BANNED, SUSPENDED }
+  public enum UserRole {
+    BIDDER,
+    SELLER,
+    ADMIN
+  }
+
+  public enum AccountStatus {
+    ACTIVE,
+    BANNED,
+    SUSPENDED
+  }
 
   private static final double RATING_DEFAULT = 3.0;
   private static final double RATING_MIN = 0.0;
   private static final double RATING_MAX = 5.0;
 
   /**
-   * Ngưỡng rating bị đình chỉ tự động.
-   * Khi rating <= ngưỡng này tài khoản chuyển sang SUSPENDED.
+   * Ngưỡng rating bị đình chỉ tự động. Khi rating <= ngưỡng này tài khoản chuyển sang SUSPENDED.
    */
   public static final double RATING_SUSPEND_THRESHOLD = 1.5;
 
@@ -45,15 +51,17 @@ public abstract class User extends Entity {
   private double rating;
 
   /**
-   * Thời điểm tài khoản bị đình chỉ gần nhất.
-   * Dùng để tính 6 tháng auto-restore rating.
-   * null nếu chưa từng bị suspend.
+   * Thời điểm tài khoản bị đình chỉ gần nhất. Dùng để tính 6 tháng auto-restore rating. null nếu
+   * chưa từng bị suspend.
    */
   private LocalDateTime suspendedAt;
 
   private Set<String> joinedAuctionIds;
   private List<String> watchListAuctionIds;
-  /** Tập auction user đã rời — không được join lại. Thread-safe nhờ ConcurrentHashMap.newKeySet(). */
+
+  /**
+   * Tập auction user đã rời — không được join lại. Thread-safe nhờ ConcurrentHashMap.newKeySet().
+   */
   private Set<String> leftAuctionIds;
 
   // Constructor khai sinh
@@ -75,10 +83,7 @@ public abstract class User extends Entity {
 
   // Constructor hồi sinh
 
-  /**
-   * Hồi sinh từ DB — password đã hash
-   * Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con
-   */
+  /** Hồi sinh từ DB — password đã hash Chỉ DAO gọi thông qua {@code reconstitute()} của lớp con */
   protected User(
       String id,
       LocalDateTime createdAt,
@@ -111,7 +116,9 @@ public abstract class User extends Entity {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] bytes = digest.digest(password.getBytes());
       StringBuilder hex = new StringBuilder();
-      for (byte b : bytes) hex.append(String.format("%02x", b));
+      for (byte b : bytes) {
+        hex.append(String.format("%02x", b));
+      }
       return hex.toString();
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("SHA-256 không khả dụng.", e);
@@ -120,20 +127,37 @@ public abstract class User extends Entity {
 
   // Getters
 
-  public String getUsername() { return username; }
-  public String getEmail() { return email; }
-  public UserRole getPrimaryRole() { return primaryRole; }
-  public AccountStatus getAccountStatus() { return accountStatus; }
+  public String getUsername() {
+    return username;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public UserRole getPrimaryRole() {
+    return primaryRole;
+  }
+
+  public AccountStatus getAccountStatus() {
+    return accountStatus;
+  }
+
   /**
-   * Trả về rating trong miền [RATING_MIN, RATING_MAX].
-   * Clamping được thực hiện tại đây thay vì trong adjustRating(),
-   * để tích lũy concurrent delta không bị mất do per-step clamping.
+   * Trả về rating trong miền [RATING_MIN, RATING_MAX]. Clamping được thực hiện tại đây thay vì
+   * trong adjustRating(), để tích lũy concurrent delta không bị mất do per-step clamping.
    */
   public synchronized double getRating() {
     return Math.max(RATING_MIN, Math.min(RATING_MAX, rating));
   }
-  public String getHashedPassword() { return hashedPassword; }
-  public LocalDateTime getSuspendedAt() { return suspendedAt; }
+
+  public String getHashedPassword() {
+    return hashedPassword;
+  }
+
+  public LocalDateTime getSuspendedAt() {
+    return suspendedAt;
+  }
 
   public Set<String> getJoinedAuctionIds() {
     return Collections.unmodifiableSet(joinedAuctionIds);
@@ -154,8 +178,8 @@ public abstract class User extends Entity {
   }
 
   /**
-   * Đánh dấu user đã join phiên.
-   * Chỉ {@link com.group13.auction.service.BidService} gọi — sau khi cọc đã được xử lý.
+   * Đánh dấu user đã join phiên. Chỉ {@link com.group13.auction.service.BidService} gọi — sau khi
+   * cọc đã được xử lý.
    *
    * @param auctionId id phiên
    */
@@ -164,27 +188,26 @@ public abstract class User extends Entity {
   }
 
   /**
-   * Atomic check-and-mark: thêm auctionId vào joinedAuctionIds nếu chưa có.
-   * Dùng tính chất của ConcurrentHashMap.newKeySet() — {@code add()} là atomic.
+   * Atomic check-and-mark: thêm auctionId vào joinedAuctionIds nếu chưa có. Dùng tính chất của
+   * ConcurrentHashMap.newKeySet() — {@code add()} là atomic.
    *
-   * @return {@code true} nếu đây là lần đầu join (chưa có trước đó),
-   *         {@code false} nếu đã join rồi (duplicate — caller nên bỏ qua).
+   * @return {@code true} nếu đây là lần đầu join (chưa có trước đó), {@code false} nếu đã join rồi
+   *     (duplicate — caller nên bỏ qua).
    */
   public boolean tryMarkJoined(String auctionId) {
     return joinedAuctionIds.add(auctionId);
   }
 
   /**
-   * Rollback tryMarkJoined() khi join thất bại (ineligible, insufficient deposit, v.v.).
-   * Cho phép user thử join lại sau khi lỗi được giải quyết.
+   * Rollback tryMarkJoined() khi join thất bại (ineligible, insufficient deposit, v.v.). Cho phép
+   * user thử join lại sau khi lỗi được giải quyết.
    */
   public void removeJoinedAuction(String auctionId) {
     joinedAuctionIds.remove(auctionId);
   }
 
   /**
-   * Thêm phiên vào watchList (idempotent).
-   * Chỉ {@link com.group13.auction.service.BidService} gọi.
+   * Thêm phiên vào watchList (idempotent). Chỉ {@link com.group13.auction.service.BidService} gọi.
    *
    * @param auctionId id phiên
    */
@@ -195,9 +218,8 @@ public abstract class User extends Entity {
   }
 
   /**
-   * FIX: Xóa phiên khỏi watchList khi user rời phiên (LEAVE hoặc disconnect).
-   * Thread-safe nhờ CopyOnWriteArrayList.
-   * Chỉ {@link com.group13.auction.service.BidService} gọi.
+   * FIX: Xóa phiên khỏi watchList khi user rời phiên (LEAVE hoặc disconnect). Thread-safe nhờ
+   * CopyOnWriteArrayList. Chỉ {@link com.group13.auction.service.BidService} gọi.
    *
    * @param auctionId id phiên cần xóa khỏi watchlist
    */
@@ -206,23 +228,21 @@ public abstract class User extends Entity {
   }
 
   /**
-   * Đánh dấu user đã rời/hủy tham gia phiên (in-memory, cùng phiên app / sau load DB).
-   * Gọi trong BidService.leaveAuction() sau khi rời thành công.
+   * Đánh dấu user đã rời/hủy tham gia phiên (in-memory, cùng phiên app / sau load DB). Gọi trong
+   * BidService.leaveAuction() sau khi rời thành công.
    */
   public void addLeftAuction(String auctionId) {
     leftAuctionIds.add(auctionId);
   }
 
-  /**
-   * Xóa dấu đã rời khi user join lại phiên còn mở.
-   */
+  /** Xóa dấu đã rời khi user join lại phiên còn mở. */
   public void clearLeftAuction(String auctionId) {
     leftAuctionIds.remove(auctionId);
   }
 
   /**
-   * User đã rời và chưa join lại trong phiên hiện tại.
-   * Dùng cho UI/DTO — không chặn rejoin khi phiên vẫn OPEN.
+   * User đã rời và chưa join lại trong phiên hiện tại. Dùng cho UI/DTO — không chặn rejoin khi
+   * phiên vẫn OPEN.
    */
   public boolean hasLeft(String auctionId) {
     return leftAuctionIds.contains(auctionId) && !hasJoined(auctionId);
@@ -256,17 +276,13 @@ public abstract class User extends Entity {
    * @param ids danh sách id từ DB
    */
   public void setWatchListAuctionIds(List<String> ids) {
-    this.watchListAuctionIds = ids != null
-        ? new CopyOnWriteArrayList<>(ids)
-        : new CopyOnWriteArrayList<>();
+    this.watchListAuctionIds =
+        ids != null ? new CopyOnWriteArrayList<>(ids) : new CopyOnWriteArrayList<>();
   }
 
   // Setter AccountStatus - chỉ AccountService / RatingService gọi
 
-  /**
-   * Cập nhật trạng thái tài khoản.
-   * Khi chuyển sang SUSPENDED, ghi nhận thời điểm suspend.
-   */
+  /** Cập nhật trạng thái tài khoản. Khi chuyển sang SUSPENDED, ghi nhận thời điểm suspend. */
   public void setAccountStatus(AccountStatus status) {
     if (status == null) {
       throw new NullPointerException("Status không được null.");
@@ -281,11 +297,12 @@ public abstract class User extends Entity {
   // Rating - KHÔNG có setter public. Chỉ RatingService gọi
 
   /**
-   * Điều chỉnh rating theo delta (> 0 = tăng, < 0 = giảm)
-   * Đảm bảo nằm trong miền MIN, MAX (0.0, 5.0)
+   * Điều chỉnh rating theo delta (> 0 = tăng, < 0 = giảm) Đảm bảo nằm trong miền MIN, MAX (0.0,
+   * 5.0)
    *
-   * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
-   * Tránh gian lận người dùng tự chỉnh Rating.
+   * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b> Tránh gian
+   * lận người dùng tự chỉnh Rating.
+   *
    * <p>Admin rating cố định 5.0.
    *
    * @param delta lượng thay đổi (có thể âm)
@@ -293,11 +310,10 @@ public abstract class User extends Entity {
   /**
    * Điều chỉnh rating theo delta (> 0 = tăng, < 0 = giảm).
    *
-   * <p>Raw accumulation — không clamp tại đây.
-   * Clamping chỉ thực hiện khi đọc qua {@link #getRating()}.
-   * Cách này đảm bảo rằng trong môi trường concurrent, tổng net delta
-   * từ tất cả các thread được phản ánh chính xác, thay vì bị mất
-   * do per-step boundary clamping (lost-update tại biên).
+   * <p>Raw accumulation — không clamp tại đây. Clamping chỉ thực hiện khi đọc qua {@link
+   * #getRating()}. Cách này đảm bảo rằng trong môi trường concurrent, tổng net delta từ tất cả các
+   * thread được phản ánh chính xác, thay vì bị mất do per-step boundary clamping (lost-update tại
+   * biên).
    *
    * <p><b>Chỉ {@link com.group13.auction.service.RatingService} được gọi method này.</b>
    */
@@ -307,19 +323,18 @@ public abstract class User extends Entity {
   }
 
   /**
-   * Kiểm tra user có role nào đó không
-   * Admin chỉ có role ADMIN. Bidder có thể là Seller và ngược lại
-   * nhưng phải thêm điều kiện trong quá trình đấu giá
+   * Kiểm tra user có role nào đó không Admin chỉ có role ADMIN. Bidder có thể là Seller và ngược
+   * lại nhưng phải thêm điều kiện trong quá trình đấu giá
    */
   public boolean hasRole(UserRole role) {
     return primaryRole == role;
   }
 
-
   /**
    * Thêm role cho user bình thường (admin không).
-   * <p>Chỉ UserService / AccountService gọi — sau khi hệ thống phê duyệt.
-   * Admin không được addRole thêm.
+   *
+   * <p>Chỉ UserService / AccountService gọi — sau khi hệ thống phê duyệt. Admin không được addRole
+   * thêm.
    *
    * @param role role cần thêm
    */

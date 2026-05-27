@@ -6,11 +6,11 @@ import com.group13.auction.model.auction.Auction;
 public interface BidStrategy {
 
   /**
-   * Kiểm tra bid có hợp lệ về mặt số tiền không (không xét reserve price).
-   * Reserve price được kiểm tra riêng ở BidService.
+   * Kiểm tra bid có hợp lệ về mặt số tiền không (không xét reserve price). Reserve price được kiểm
+   * tra riêng ở BidService.
    *
    * @param auction phiên đấu giá
-   * @param amount  số tiền muốn đặt
+   * @param amount số tiền muốn đặt
    * @return true nếu hợp lệ
    */
   boolean isValidBid(Auction auction, long amount);

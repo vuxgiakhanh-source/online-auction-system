@@ -4,9 +4,7 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
-/**
- * Hợp đồng quản lý tài khoản: ban, deposit, withdraw, tạo admin STAFF, quản lý role.
- */
+/** Hợp đồng quản lý tài khoản: ban, deposit, withdraw, tạo admin STAFF, quản lý role. */
 public interface IAccountService {
 
   /**
@@ -19,8 +17,7 @@ public interface IAccountService {
   void banUser(Admin admin, User target, Admin.BanReason reason);
 
   /**
-   * SystemAdmin tạo tài khoản Admin STAFF mới.
-   * Chỉ SystemAdmin (MASTER) mới được tạo admin.
+   * SystemAdmin tạo tài khoản Admin STAFF mới. Chỉ SystemAdmin (MASTER) mới được tạo admin.
    * AdminFactory tuyệt đối chỉ được cấp bởi System.
    *
    * @param username username admin mới

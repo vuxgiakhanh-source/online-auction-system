@@ -7,33 +7,33 @@ package com.group13.auction.model.auction;
  */
 public class PaidState implements AuctionState {
 
-    /** Instance dùng chung */
-    public static final PaidState INSTANCE = new PaidState();
+  /** Instance dùng chung */
+  public static final PaidState INSTANCE = new PaidState();
 
-    private PaidState() {}
+  private PaidState() {}
 
-    @Override
-    public AuctionState start() {
-        throw new IllegalStateException("Phiên đã PAID - không thể thay đổi trạng thái.");
-    }
+  @Override
+  public AuctionState start() {
+    throw new IllegalStateException("Phiên đã PAID - không thể thay đổi trạng thái.");
+  }
 
-    @Override
-    public AuctionState close(boolean hasWinner) {
-        throw new IllegalStateException("Phiên đã PAID - không thể thay đổi trạng thái.");
-    }
+  @Override
+  public AuctionState close(boolean hasWinner) {
+    throw new IllegalStateException("Phiên đã PAID - không thể thay đổi trạng thái.");
+  }
 
-    @Override
-    public AuctionState cancel() {
-        throw new IllegalStateException("Phiên đã PAID - không thể hủy.");
-    }
+  @Override
+  public AuctionState cancel() {
+    throw new IllegalStateException("Phiên đã PAID - không thể hủy.");
+  }
 
-    @Override
-    public AuctionState markPaid() {
-        throw new IllegalStateException("Phiên đã PAID - không thể đánh dấu lại.");
-    }
+  @Override
+  public AuctionState markPaid() {
+    throw new IllegalStateException("Phiên đã PAID - không thể đánh dấu lại.");
+  }
 
-    @Override
-    public Auction.AuctionStatus getStatus() {
-        return Auction.AuctionStatus.PAID;
-    }
+  @Override
+  public Auction.AuctionStatus getStatus() {
+    return Auction.AuctionStatus.PAID;
+  }
 }

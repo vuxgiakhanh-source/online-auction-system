@@ -7,20 +7,19 @@ import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.AuthenticationException.Reason;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.user.Admin;
-import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
+import com.group13.auction.model.user.User;
 import com.group13.auction.model.user.User.AccountStatus;
 import com.group13.auction.service.iservice.IUserService;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 /**
- * Xử lý xác thực người dùng (authentication).
- * Trách nhiệm duy nhất: verify danh tính người dùng từ DB.
+ * Xử lý xác thực người dùng (authentication). Trách nhiệm duy nhất: verify danh tính người dùng từ
+ * DB.
  */
 public class UserService implements IUserService {
 

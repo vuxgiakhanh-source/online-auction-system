@@ -6,10 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Đánh dấu test class cần Docker daemon (Testcontainers).
- * Không có condition check — Docker phải đang chạy khi chạy test.
+ * Đánh dấu test class cần Docker daemon (Testcontainers). Không có condition check — Docker phải
+ * đang chạy khi chạy test.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequiresDocker {
-}
+public @interface RequiresDocker {}

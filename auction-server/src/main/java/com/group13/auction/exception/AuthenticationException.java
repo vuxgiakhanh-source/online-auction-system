@@ -35,5 +35,7 @@ public class AuthenticationException extends RuntimeException {
     }
   }
 
-  public Reason getReason() { return reason; }
+  public Reason getReason() {
+    return reason;
+  }
 }
