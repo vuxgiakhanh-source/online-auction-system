@@ -1,35 +1,32 @@
-.profile-title {
-    -fx-font-size: 36px;
+/* PROFILE PAGE TEXT */
+
+.profile-page .page-title {
+    -fx-font-size: 34px;
     -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
 }
 
-.profile-subtitle,
+.profile-page .page-subtitle,
 .profile-muted-text {
     -fx-font-size: 15px;
+    -fx-font-weight: 600;
     -fx-text-fill: rgba(255, 255, 255, 0.72);
 }
 
-.profile-card {
-    -fx-background-color: rgba(255, 255, 255, 0.09);
-    -fx-background-radius: 26;
-    -fx-padding: 24;
-    -fx-pref-width: 365px;
-    -fx-pref-height: 395px;
-}
-
 .profile-section-title {
-    -fx-font-size: 23px;
+    -fx-font-size: 22px;
     -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
 }
 
 .profile-field-title {
     -fx-font-size: 13px;
     -fx-font-weight: 800;
-    -fx-text-fill: rgba(255, 255, 255, 0.56);
+    -fx-text-fill: rgba(255, 255, 255, 0.64);
 }
 
 .profile-field-value {
-    -fx-font-size: 16px;
+    -fx-font-size: 15px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
 }
@@ -40,65 +37,158 @@
     -fx-text-fill: #67b8ea;
 }
 
-.profile-page {
+.status-label {
+    -fx-text-fill: rgba(255, 255, 255, 0.86);
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+
+/* PROFILE LAYOUT */
+
+.profile-page,
+.profile-content {
     -fx-background-color: transparent;
 }
 
 .profile-scroll-pane {
     -fx-background-color: transparent;
     -fx-background: transparent;
+    -fx-background-insets: 0;
     -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .profile-scroll-pane > .viewport {
     -fx-background-color: transparent;
 }
 
-.profile-content {
+.profile-scroll-pane .scroll-bar:vertical {
     -fx-background-color: transparent;
+    -fx-pref-width: 10px;
+    -fx-padding: 6 4 6 2;
 }
+
+.profile-scroll-pane .scroll-bar:vertical .track {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-background-radius: 999;
+    -fx-border-color: transparent;
+}
+
+.profile-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(103, 184, 234, 0.38);
+    -fx-background-insets: 2;
+    -fx-background-radius: 999;
+}
+
+.profile-scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: rgba(103, 184, 234, 0.62);
+}
+
+.profile-scroll-pane .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+
+.profile-scroll-pane .scroll-bar .increment-button,
+.profile-scroll-pane .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+    -fx-max-width: 0;
+    -fx-max-height: 0;
+}
+
+.profile-scroll-pane .scroll-bar .increment-arrow,
+.profile-scroll-pane .scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
+}
+
+
+/* PROFILE CARDS */
 
 .profile-section-card {
-    -fx-background-color: rgba(255, 255, 255, 0.94);
-    -fx-background-radius: 22px;
-    -fx-border-color: rgba(255, 255, 255, 0.55);
-    -fx-border-radius: 22px;
-    -fx-padding: 22px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.22, 0, 8);
+    -fx-background-color: rgba(255, 255, 255, 0.09);
+    -fx-background-radius: 26;
+
+    -fx-border-color: rgba(255, 255, 255, 0.11);
+    -fx-border-radius: 26;
+    -fx-border-width: 1;
+
+    -fx-padding: 22;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
 }
 
-.profile-section-title {
-    -fx-text-fill: #0f253c;
-    -fx-font-size: 20px;
-    -fx-font-weight: 900;
+.profile-info-list {
+    -fx-background-color: rgba(255, 255, 255, 0.055);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 14;
 }
 
-.profile-info-grid {
-    -fx-background-color: rgba(15, 37, 60, 0.04);
-    -fx-background-radius: 16px;
-    -fx-padding: 16px;
+.profile-field-row {
+    -fx-padding: 10 12 10 12;
+    -fx-background-color: rgba(255, 255, 255, 0.055);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.07);
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
 }
 
-.profile-field-title {
-    -fx-text-fill: rgba(15, 37, 60, 0.68);
-    -fx-font-size: 13px;
+
+/* PROFILE BUTTONS */
+
+.profile-page .primary-button,
+.profile-page .secondary-button {
+    -fx-cursor: hand;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-font-size: 15px;
     -fx-font-weight: 800;
+    -fx-padding: 10 20 10 20;
 }
 
-.profile-field-value {
+.profile-page .primary-button {
+    -fx-background-color: #67b8ea;
     -fx-text-fill: #0f253c;
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
 }
 
-.profile-muted-text {
-    -fx-text-fill: rgba(15, 37, 60, 0.72);
-    -fx-font-size: 14px;
-    -fx-font-weight: 600;
+.profile-page .primary-button:hover {
+    -fx-background-color: #7cc8f5;
 }
 
-.status-label {
-    -fx-text-fill: rgba(255, 255, 255, 0.86);
-    -fx-font-size: 13px;
-    -fx-font-weight: 700;
+.profile-page .secondary-button {
+    -fx-background-color: rgba(255, 255, 255, 0.14);
+    -fx-border-color: rgba(255, 255, 255, 0.20);
+    -fx-border-width: 1;
+    -fx-text-fill: #ffffff;
+}
+
+.profile-page .secondary-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.19);
+}
+
+.profile-page .primary-button:pressed,
+.profile-page .secondary-button:pressed {
+    -fx-opacity: 0.82;
+}
+
+.profile-page .primary-button:disabled,
+.profile-page .secondary-button:disabled {
+    -fx-opacity: 0.55;
+    -fx-cursor: default;
+}
+
+.progress-indicator {
+    -fx-progress-color: #67b8ea;
 }
