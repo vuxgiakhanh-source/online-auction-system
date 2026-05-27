@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,19 +45,54 @@ public class AccountBanDAO {
         (id, user_id, admin_id, banned_by_username, reason, note, banned_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
+    try {
+      return executeInsertBan(userId, adminId, bannedByUsername, reason, note, false, sql);
+    } catch (SQLException e) {
+      if (hasAdminId(adminId) && isForeignKeyViolationOnColumn(e, "admin_id")) {
+        log.warn(
+            "Insert account ban failed because admin_id is stale, "
+                + "retrying with null admin_id: userId={}, adminId={}",
+            userId,
+            adminId);
+        try {
+          return executeInsertBan(userId, adminId, bannedByUsername, reason, note, true, sql);
+        } catch (SQLException retryEx) {
+          log.error(
+              "Failed to insert account ban after retry null admin_id: userId={}, reason={}",
+              userId,
+              reason,
+              retryEx);
+          return false;
+        }
+      }
+      log.error("Failed to insert account ban: userId={}, reason={}", userId, reason, e);
+      return false;
+    }
+  }
+
+  private boolean executeInsertBan(
+      String userId,
+      String adminId,
+      String bannedByUsername,
+      String reason,
+      String note,
+      boolean forceNullAdminId,
+      String sql)
+      throws SQLException {
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, UUID.randomUUID().toString());
       ps.setString(2, userId);
-      ps.setString(3, adminId);
+      if (forceNullAdminId) {
+        ps.setNull(3, Types.VARCHAR);
+      } else {
+        ps.setString(3, adminId);
+      }
       ps.setString(4, bannedByUsername);
       ps.setString(5, reason);
       ps.setString(6, note);
       ps.setTimestamp(7, Timestamp.valueOf(LocalDateTime.now()));
       return ps.executeUpdate() > 0;
-    } catch (SQLException e) {
-      log.error("Failed to insert account ban: userId={}, reason={}", userId, reason, e);
-      return false;
     }
   }
 
@@ -151,5 +187,18 @@ public class AccountBanDAO {
         bannedAt != null ? bannedAt.toLocalDateTime() : null,
         unbannedAt != null ? unbannedAt.toLocalDateTime() : null,
         rs.getString("unbanned_by_username"));
+  }
+
+  private static boolean isForeignKeyViolationOnColumn(SQLException e, String columnName) {
+    String sqlState = e.getSQLState();
+    String msg = e.getMessage();
+    return "23503".equals(sqlState)
+        || (msg != null
+            && msg.toLowerCase().contains("foreign key")
+            && msg.toLowerCase().contains(columnName.toLowerCase()));
+  }
+
+  private static boolean hasAdminId(String adminId) {
+    return adminId != null && !adminId.isBlank();
   }
 }

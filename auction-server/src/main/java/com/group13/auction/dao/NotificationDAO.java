@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -40,23 +41,27 @@ public class NotificationDAO {
     String sql =
         "INSERT INTO notifications (id, user_id, auction_id, notification_type, title, body,"
             + " is_read, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-      pstmt.setString(1, notification.getId());
-      pstmt.setString(2, notification.getUserId());
-      pstmt.setString(3, notification.getAuctionId());
-      pstmt.setString(4, notification.getNotificationType());
-      pstmt.setString(5, notification.getTitle());
-      pstmt.setString(6, notification.getBody());
-      pstmt.setBoolean(7, notification.isRead());
-      pstmt.setTimestamp(8, Timestamp.valueOf(notification.getCreatedAt()));
-      pstmt.setTimestamp(9, Timestamp.valueOf(notification.getUpdatedAt()));
-
-      return pstmt.executeUpdate() > 0;
+    try {
+      return executeSaveWithTypeColumn(notification, false, sql);
     } catch (SQLException e) {
       if (isUnknownColumn(e, "notification_type")) {
         return false;
+      }
+      if (hasAuctionId(notification) && isForeignKeyViolationOnColumn(e, "auction_id")) {
+        log.warn(
+            "Notification save failed because auction_id is stale, retrying with null auction_id: id={}, auctionId={}",
+            notification.getId(),
+            notification.getAuctionId());
+        try {
+          return executeSaveWithTypeColumn(notification, true, sql);
+        } catch (SQLException retryEx) {
+          log.error(
+              "Lỗi lưu notification sau retry null auction_id: userId={}, title={}",
+              notification.getUserId(),
+              notification.getTitle(),
+              retryEx);
+          return false;
+        }
       }
       log.error(
           "Lỗi lưu notification: userId={}, title={}",
@@ -67,25 +72,54 @@ public class NotificationDAO {
     }
   }
 
-  private boolean saveLegacyWithoutTypeColumn(Notification notification) {
-    String sql =
-        "INSERT INTO notifications "
-            + "(id, user_id, auction_id, title, body, is_read, created_at, updated_at) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+  private boolean executeSaveWithTypeColumn(
+      Notification notification, boolean forceNullAuctionId, String sql) throws SQLException {
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
       pstmt.setString(1, notification.getId());
       pstmt.setString(2, notification.getUserId());
-      pstmt.setString(3, notification.getAuctionId());
-      pstmt.setString(4, notification.getTitle());
-      pstmt.setString(5, notification.getBody());
-      pstmt.setBoolean(6, notification.isRead());
-      pstmt.setTimestamp(7, Timestamp.valueOf(notification.getCreatedAt()));
-      pstmt.setTimestamp(8, Timestamp.valueOf(notification.getUpdatedAt()));
+      if (forceNullAuctionId) {
+        pstmt.setNull(3, Types.VARCHAR);
+      } else {
+        pstmt.setString(3, notification.getAuctionId());
+      }
+      pstmt.setString(4, notification.getNotificationType());
+      pstmt.setString(5, notification.getTitle());
+      pstmt.setString(6, notification.getBody());
+      pstmt.setBoolean(7, notification.isRead());
+      pstmt.setTimestamp(8, Timestamp.valueOf(notification.getCreatedAt()));
+      pstmt.setTimestamp(9, Timestamp.valueOf(notification.getUpdatedAt()));
 
       return pstmt.executeUpdate() > 0;
+    }
+  }
+
+  private boolean saveLegacyWithoutTypeColumn(Notification notification) {
+    String sql =
+        "INSERT INTO notifications "
+            + "(id, user_id, auction_id, title, body, is_read, created_at, updated_at) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    try {
+      return executeSaveLegacy(notification, false, sql);
     } catch (SQLException e) {
+      if (hasAuctionId(notification) && isForeignKeyViolationOnColumn(e, "auction_id")) {
+        log.warn(
+            "Legacy notification save failed because auction_id is stale, "
+                + "retrying with null auction_id: id={}, auctionId={}",
+            notification.getId(),
+            notification.getAuctionId());
+        try {
+          return executeSaveLegacy(notification, true, sql);
+        } catch (SQLException retryEx) {
+          log.error(
+              "Lỗi lưu notification (legacy) sau retry null auction_id: userId={}, title={}",
+              notification.getUserId(),
+              notification.getTitle(),
+              retryEx);
+          return false;
+        }
+      }
       log.error(
           "Lỗi lưu notification (legacy schema): userId={}, title={}",
           notification.getUserId(),
@@ -95,9 +129,45 @@ public class NotificationDAO {
     }
   }
 
+  private boolean executeSaveLegacy(
+      Notification notification, boolean forceNullAuctionId, String sql) throws SQLException {
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, notification.getId());
+      pstmt.setString(2, notification.getUserId());
+      if (forceNullAuctionId) {
+        pstmt.setNull(3, Types.VARCHAR);
+      } else {
+        pstmt.setString(3, notification.getAuctionId());
+      }
+      pstmt.setString(4, notification.getTitle());
+      pstmt.setString(5, notification.getBody());
+      pstmt.setBoolean(6, notification.isRead());
+      pstmt.setTimestamp(7, Timestamp.valueOf(notification.getCreatedAt()));
+      pstmt.setTimestamp(8, Timestamp.valueOf(notification.getUpdatedAt()));
+
+      return pstmt.executeUpdate() > 0;
+    }
+  }
+
   private static boolean isUnknownColumn(SQLException e, String columnName) {
     String msg = e.getMessage();
     return msg != null && msg.toLowerCase().contains(columnName.toLowerCase());
+  }
+
+  private static boolean isForeignKeyViolationOnColumn(SQLException e, String columnName) {
+    String sqlState = e.getSQLState();
+    String msg = e.getMessage();
+    return "23503".equals(sqlState)
+        || (msg != null
+            && msg.toLowerCase().contains("foreign key")
+            && msg.toLowerCase().contains(columnName.toLowerCase()));
+  }
+
+  private static boolean hasAuctionId(Notification notification) {
+    String auctionId = notification.getAuctionId();
+    return auctionId != null && !auctionId.isBlank();
   }
 
   /** Load tất cả notification của user, mới nhất trước. */
