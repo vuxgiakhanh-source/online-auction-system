@@ -7,11 +7,11 @@ package com.group13.auction.network.client.support;
  */
 public class NetworkClientException extends RuntimeException {
 
-    public NetworkClientException(String message) {
-        super(message);
-    }
+  public NetworkClientException(String message) {
+    super(message);
+  }
 
-    public NetworkClientException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public NetworkClientException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
