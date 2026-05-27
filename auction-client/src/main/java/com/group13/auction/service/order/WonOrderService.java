@@ -57,8 +57,7 @@ public final class WonOrderService {
 
     CompletableFuture<List<AuctionDTOs.AuctionDTO>> finishedAuctions =
         getAuctionsByStatus(STATUS_FINISHED);
-    CompletableFuture<List<AuctionDTOs.AuctionDTO>> paidAuctions =
-        getAuctionsByStatus(STATUS_PAID);
+    CompletableFuture<List<AuctionDTOs.AuctionDTO>> paidAuctions = getAuctionsByStatus(STATUS_PAID);
 
     return finishedAuctions.thenCombine(
         paidAuctions,
@@ -107,8 +106,7 @@ public final class WonOrderService {
     request.setPage(0);
     request.setPageSize(PAGE_SIZE);
 
-    return AuctionServiceSupport
-        .sendRequest(
+    return AuctionServiceSupport.sendRequest(
             networkFacade,
             ClientRequestFactory.getAuctionList(request),
             PacketType.GET_AUCTION_LIST_SUCCESS,

@@ -1,4 +1,4 @@
 package com.group13.auction.service.auction;
 
-public class AuctionRealtimeService {
-}
+/** Placeholder for future auction realtime operations. */
+public class AuctionRealtimeService {}
