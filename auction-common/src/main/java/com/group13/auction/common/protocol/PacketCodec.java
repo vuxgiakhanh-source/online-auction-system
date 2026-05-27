@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 
@@ -15,6 +14,7 @@ import java.time.LocalDateTime;
  * <p>Sử dụng Gson. LocalDateTime được serialize dưới dạng ISO-8601 string.
  *
  * <p>Cách dùng:
+ *
  * <pre>
  *   // Encode
  *   String json = PacketCodec.encode(Packet.of(PacketType.PING, null));
@@ -29,113 +29,119 @@ import java.time.LocalDateTime;
  */
 public final class PacketCodec {
 
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .serializeNulls()
-            .create();
+  private static final Gson GSON =
+      new GsonBuilder()
+          .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+          .serializeNulls()
+          .create();
 
-    private PacketCodec() {}
+  private PacketCodec() {}
 
-    /**
-     * Serialize Packet thành JSON string.
-     *
-     * @param packet packet cần encode
-     * @return JSON string
-     */
-    public static String encode(Packet<?> packet) {
-        return GSON.toJson(packet);
+  /**
+   * Serialize Packet thành JSON string.
+   *
+   * @param packet packet cần encode
+   * @return JSON string
+   */
+  public static String encode(Packet<?> packet) {
+    return GSON.toJson(packet);
+  }
+
+  /**
+   * Deserialize JSON string thành Packet với payload kiểu {@code T}.
+   *
+   * @param json JSON string nhận được từ WebSocket
+   * @param payloadClass kiểu class của payload
+   * @param <T> kiểu payload
+   * @return Packet đã giải mã
+   */
+  public static <T> Packet<T> decode(String json, Class<T> payloadClass) {
+    JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+
+    PacketType type = PacketType.valueOf(obj.get("type").getAsString());
+    String requestId =
+        obj.has("requestId") && !obj.get("requestId").isJsonNull()
+            ? obj.get("requestId").getAsString()
+            : null;
+    long timestamp =
+        obj.has("timestamp") ? obj.get("timestamp").getAsLong() : System.currentTimeMillis();
+
+    T payload = null;
+    if (obj.has("payload") && !obj.get("payload").isJsonNull() && payloadClass != Void.class) {
+      payload = GSON.fromJson(obj.get("payload"), payloadClass);
     }
 
-    /**
-     * Deserialize JSON string thành Packet với payload kiểu {@code T}.
-     *
-     * @param json   JSON string nhận được từ WebSocket
-     * @param payloadClass kiểu class của payload
-     * @param <T>    kiểu payload
-     * @return Packet đã giải mã
-     */
-    public static <T> Packet<T> decode(String json, Class<T> payloadClass) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+    Packet<T> packet = new Packet<>(type, payload, requestId);
+    packet.setTimestamp(timestamp);
+    return packet;
+  }
 
-        PacketType type = PacketType.valueOf(obj.get("type").getAsString());
-        String requestId = obj.has("requestId") && !obj.get("requestId").isJsonNull()
-                ? obj.get("requestId").getAsString() : null;
-        long timestamp = obj.has("timestamp") ? obj.get("timestamp").getAsLong()
-                : System.currentTimeMillis();
+  /**
+   * Deserialize JSON string thành Packet với payload kiểu {@link Type} (dùng cho generic).
+   *
+   * @param json JSON string
+   * @param type kiểu {@link Type} của payload (ví dụ: {@code new
+   *     TypeToken<List<UserDTO>>(){}.getType()})
+   * @param <T> kiểu payload
+   * @return Packet đã giải mã
+   */
+  public static <T> Packet<T> decode(String json, Type type) {
+    JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
 
-        T payload = null;
-        if (obj.has("payload") && !obj.get("payload").isJsonNull() && payloadClass != Void.class) {
-            payload = GSON.fromJson(obj.get("payload"), payloadClass);
-        }
+    PacketType packetType = PacketType.valueOf(obj.get("type").getAsString());
+    String requestId =
+        obj.has("requestId") && !obj.get("requestId").isJsonNull()
+            ? obj.get("requestId").getAsString()
+            : null;
+    long timestamp =
+        obj.has("timestamp") ? obj.get("timestamp").getAsLong() : System.currentTimeMillis();
 
-        Packet<T> packet = new Packet<>(type, payload, requestId);
-        packet.setTimestamp(timestamp);
-        return packet;
+    T payload = null;
+    if (obj.has("payload") && !obj.get("payload").isJsonNull()) {
+      payload = GSON.fromJson(obj.get("payload"), type);
     }
 
-    /**
-     * Deserialize JSON string thành Packet với payload kiểu {@link Type} (dùng cho generic).
-     *
-     * @param json JSON string
-     * @param type kiểu {@link Type} của payload (ví dụ: {@code new TypeToken<List<UserDTO>>(){}.getType()})
-     * @param <T>  kiểu payload
-     * @return Packet đã giải mã
-     */
-    public static <T> Packet<T> decode(String json, Type type) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+    Packet<T> packet = new Packet<>(packetType, payload, requestId);
+    packet.setTimestamp(timestamp);
+    return packet;
+  }
 
-        PacketType packetType = PacketType.valueOf(obj.get("type").getAsString());
-        String requestId = obj.has("requestId") && !obj.get("requestId").isJsonNull()
-                ? obj.get("requestId").getAsString() : null;
-        long timestamp = obj.has("timestamp") ? obj.get("timestamp").getAsLong()
-                : System.currentTimeMillis();
+  /**
+   * Lấy nhanh {@link PacketType} từ JSON mà không cần deserialize toàn bộ.
+   *
+   * @param json JSON string
+   * @return PacketType
+   */
+  public static PacketType peekType(String json) {
+    JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+    return PacketType.valueOf(obj.get("type").getAsString());
+  }
 
-        T payload = null;
-        if (obj.has("payload") && !obj.get("payload").isJsonNull()) {
-            payload = GSON.fromJson(obj.get("payload"), type);
-        }
+  /**
+   * Lấy raw payload element để xử lý tự chọn kiểu sau.
+   *
+   * @param json JSON string
+   * @return JsonElement payload (có thể null/JsonNull)
+   */
+  public static JsonElement peekPayload(String json) {
+    JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+    return obj.has("payload") ? obj.get("payload") : null;
+  }
 
-        Packet<T> packet = new Packet<>(packetType, payload, requestId);
-        packet.setTimestamp(timestamp);
-        return packet;
-    }
+  /**
+   * Deserialize JsonElement thành kiểu cụ thể (dùng sau {@link #peekPayload}).
+   *
+   * @param element JsonElement payload
+   * @param clazz kiểu target
+   * @param <T> kiểu
+   * @return object đã deserialize
+   */
+  public static <T> T fromElement(JsonElement element, Class<T> clazz) {
+    return GSON.fromJson(element, clazz);
+  }
 
-    /**
-     * Lấy nhanh {@link PacketType} từ JSON mà không cần deserialize toàn bộ.
-     *
-     * @param json JSON string
-     * @return PacketType
-     */
-    public static PacketType peekType(String json) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-        return PacketType.valueOf(obj.get("type").getAsString());
-    }
-
-    /**
-     * Lấy raw payload element để xử lý tự chọn kiểu sau.
-     *
-     * @param json JSON string
-     * @return JsonElement payload (có thể null/JsonNull)
-     */
-    public static JsonElement peekPayload(String json) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-        return obj.has("payload") ? obj.get("payload") : null;
-    }
-
-    /**
-     * Deserialize JsonElement thành kiểu cụ thể (dùng sau {@link #peekPayload}).
-     *
-     * @param element JsonElement payload
-     * @param clazz   kiểu target
-     * @param <T>     kiểu
-     * @return object đã deserialize
-     */
-    public static <T> T fromElement(JsonElement element, Class<T> clazz) {
-        return GSON.fromJson(element, clazz);
-    }
-
-    /** Expose GSON instance nếu cần dùng ngoài. */
-    public static Gson gson() {
-        return GSON;
-    }
+  /** Expose GSON instance nếu cần dùng ngoài. */
+  public static Gson gson() {
+    return GSON;
+  }
 }

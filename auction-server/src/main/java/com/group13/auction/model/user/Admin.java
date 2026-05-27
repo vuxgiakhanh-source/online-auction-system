@@ -1,27 +1,28 @@
 package com.group13.auction.model.user;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Quản trị viên.
  *
  * <p>Level:
+ *
  * <ul>
- * <li>{@value #LEVEL_MASTER} - SystemAdmin duy nhất, được seed sẵn trong DB.
- * Không thể tạo thêm MASTER qua Factory. Toàn bộ automation cơ bản thuộc về đây.</li>
- * <li>{@value #LEVEL_STAFF} - do SystemAdmin tạo ra qua AdminFactory; không tạo được admin khác.</li>
+ *   <li>{@value #LEVEL_MASTER} - SystemAdmin duy nhất, được seed sẵn trong DB. Không thể tạo thêm
+ *       MASTER qua Factory. Toàn bộ automation cơ bản thuộc về đây.
+ *   <li>{@value #LEVEL_STAFF} - do SystemAdmin tạo ra qua AdminFactory; không tạo được admin khác.
  * </ul>
  *
  * <p>Rating Admin luôn là 5.0.
  *
- * <p>Staff Admin tự động là staffObserver trong AuctionManager (nhận các thông báo lỗi, gian lận, ..).
- * SystemAdmin tự động là globalObserver.
- * Khi admin joinAuction sẽ nhận thêm notify theo phiên như người bình thường.
+ * <p>Staff Admin tự động là staffObserver trong AuctionManager (nhận các thông báo lỗi, gian lận,
+ * ..). SystemAdmin tự động là globalObserver. Khi admin joinAuction sẽ nhận thêm notify theo phiên
+ * như người bình thường.
  */
 public class Admin extends User {
 
@@ -33,9 +34,7 @@ public class Admin extends User {
   /** Rating cố định cho Admin - không thay đổi. */
   private static final double ADMIN_FIXED_RATING = 5.0;
 
-  /**
-   * Lý do ban tài khoản.
-   */
+  /** Lý do ban tài khoản. */
   public enum BanReason {
     /** Gian lận / hành vi gian lận. */
     FRAUD,
@@ -63,14 +62,14 @@ public class Admin extends User {
     }
   }
 
-  /** @see BanReason#parse(String) */
+  /**
+   * @see BanReason#parse(String)
+   */
   public static BanReason parseBanReason(String raw) {
     return BanReason.parse(raw);
   }
 
-  /**
-   * Lý do hủy phiên.
-   */
+  /** Lý do hủy phiên. */
   public enum CancelReason {
     /** Phiên kết thúc không có ai đặt giá. */
     NO_WINNER,
@@ -92,8 +91,7 @@ public class Admin extends User {
   // Static factory methods
 
   /**
-   * Khai sinh Admin mới (STAFF).
-   * Chỉ được gọi từ AdminFactory — không được gọi trực tiếp.
+   * Khai sinh Admin mới (STAFF). Chỉ được gọi từ AdminFactory — không được gọi trực tiếp.
    *
    * @param username tên đăng nhập
    * @param password mật khẩu thô
@@ -105,12 +103,28 @@ public class Admin extends User {
     return new Admin(username, password, email, adminLevel);
   }
 
-  public static Admin reconstitute(String id, LocalDateTime createdAt,
-                                   LocalDateTime updatedAt, String username, String hashedPassword,
-                                   String email, AccountStatus accountStatus, double rating,
-                                   String adminLevel, LocalDateTime suspendedAt) {
-    return new Admin(id, createdAt, updatedAt, username, hashedPassword,
-            email, accountStatus, rating, adminLevel, suspendedAt);
+  public static Admin reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String username,
+      String hashedPassword,
+      String email,
+      AccountStatus accountStatus,
+      double rating,
+      String adminLevel,
+      LocalDateTime suspendedAt) {
+    return new Admin(
+        id,
+        createdAt,
+        updatedAt,
+        username,
+        hashedPassword,
+        email,
+        accountStatus,
+        rating,
+        adminLevel,
+        suspendedAt);
   }
 
   // Constructors, chỉ được new khi tạo SystemAdmin (trong test)
@@ -122,20 +136,35 @@ public class Admin extends User {
     // Admin luôn được set rating = 5.0 ngay khi tạo
   }
 
-  private Admin(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                String username, String hashedPassword, String email,
-                AccountStatus accountStatus, double rating,
-                String adminLevel, LocalDateTime suspendedAt) {
-    super(id, createdAt, updatedAt, username, hashedPassword, email,
-            UserRole.ADMIN, accountStatus, rating, suspendedAt);
+  private Admin(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String username,
+      String hashedPassword,
+      String email,
+      AccountStatus accountStatus,
+      double rating,
+      String adminLevel,
+      LocalDateTime suspendedAt) {
+    super(
+        id,
+        createdAt,
+        updatedAt,
+        username,
+        hashedPassword,
+        email,
+        UserRole.ADMIN,
+        accountStatus,
+        rating,
+        suspendedAt);
     this.adminLevel = adminLevel;
     this.actionLog = new ArrayList<>();
   }
 
   @Override
   public void addRole(UserRole role) {
-    throw new UnsupportedOperationException(
-            "Admin không thể thêm role. Admin chỉ có role ADMIN.");
+    throw new UnsupportedOperationException("Admin không thể thêm role. Admin chỉ có role ADMIN.");
   }
 
   // Getters
@@ -146,15 +175,19 @@ public class Admin extends User {
 
   @Override
   public double getRating() {
-    return ADMIN_FIXED_RATING;  // luôn trả 5.0, bất kể field rating trong User
+    return ADMIN_FIXED_RATING; // luôn trả 5.0, bất kể field rating trong User
   }
 
-  /** @return true nếu SystemAdmin. */
+  /**
+   * @return true nếu SystemAdmin.
+   */
   public boolean isMaster() {
     return LEVEL_MASTER.equals(adminLevel);
   }
 
-  /** @return true nếu admin STAFF. */
+  /**
+   * @return true nếu admin STAFF.
+   */
   public boolean isStaff() {
     return LEVEL_STAFF.equals(adminLevel);
   }
@@ -168,15 +201,16 @@ public class Admin extends User {
   }
 
   /**
-   * Rating Admin luôn cố định 5.0.
-   * Không tăng, không giảm, kệ.
+   * Rating Admin luôn cố định 5.0. Không tăng, không giảm, kệ.
    *
    * @param delta (có như không).
    */
   @Override
   public void adjustRating(double delta) {}
 
-  public boolean isSystem() { return false; }
+  public boolean isSystem() {
+    return false;
+  }
 
   @Override
   public void printInfo() {

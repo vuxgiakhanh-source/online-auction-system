@@ -3,11 +3,9 @@ package com.group13.auction.service.iservice;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 
-import java.time.LocalDateTime;
-
 /**
- * Hợp đồng quản lý rating — chỉ hệ thống mới được thay đổi rating.
- * Không expose setter rating ra ngoài.
+ * Hợp đồng quản lý rating — chỉ hệ thống mới được thay đổi rating. Không expose setter rating ra
+ * ngoài.
  */
 public interface IRatingService {
 
@@ -19,9 +17,7 @@ public interface IRatingService {
    */
   boolean isEligible(User user);
 
-  /**
-   * Cho phép nạp/rút/xem ví: ACTIVE đủ điều kiện hoặc BANNED/SUSPENDED (restricted login).
-   */
+  /** Cho phép nạp/rút/xem ví: ACTIVE đủ điều kiện hoặc BANNED/SUSPENDED (restricted login). */
   boolean isWalletOperationAllowed(User user);
 
   /**
@@ -47,8 +43,7 @@ public interface IRatingService {
   void rewardSeller(User seller);
 
   /**
-   * Phạt Bidder khi không thanh toán đúng hạn.
-   * Tự động suspend/ban nếu rating xuống dưới ngưỡng.
+   * Phạt Bidder khi không thanh toán đúng hạn. Tự động suspend/ban nếu rating xuống dưới ngưỡng.
    *
    * @param bidder bidder bị phạt
    */
@@ -62,18 +57,16 @@ public interface IRatingService {
   void penalizeSeller(User seller);
 
   /**
-   * Phạt Bidder khi rời phiên đang dẫn đầu hoặc rời sau khi đã qua 2/3 thời gian.
-   * Trừ 1.0 rating, tự động suspend/ban nếu xuống dưới ngưỡng.
+   * Phạt Bidder khi rời phiên đang dẫn đầu hoặc rời sau khi đã qua 2/3 thời gian. Trừ 1.0 rating,
+   * tự động suspend/ban nếu xuống dưới ngưỡng.
    *
    * @param bidder bidder bị phạt
    */
   void penalizeEarlyLeave(NormalUser bidder);
 
   /**
-   *
-   * <p>Cơ chế chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi NormalUser.
-   * Sau khi được restore, tài khoản không được auto-restore thêm lần nữa
-   * dù bị SUSPENDED lại sau đó.
+   * Cơ chế chỉ xảy ra <b>1 lần duy nhất</b> trên mỗi NormalUser. Sau khi được restore, tài khoản
+   * không được auto-restore thêm lần nữa dù bị SUSPENDED lại sau đó.
    *
    * <p>Gọi bởi scheduler định kỳ (ví dụ: mỗi ngày lúc 0h).
    *

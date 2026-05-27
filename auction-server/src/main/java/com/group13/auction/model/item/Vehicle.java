@@ -18,72 +18,142 @@ public class Vehicle extends Item {
   // ── Static factory methods ────────────────────────────────────────────────
 
   /** Khai sinh — không ảnh (backward-compatible). */
-  protected static Vehicle create(String name, String description, long startingPrice,
-                                  NormalUser seller,
-                                  String manufacturer, int year, double mileage) {
-    return new Vehicle(name, description, startingPrice, seller,
-            manufacturer, year, mileage, List.of());
+  protected static Vehicle create(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage) {
+    return new Vehicle(
+        name, description, startingPrice, seller, manufacturer, year, mileage, List.of());
   }
 
   /** Khai sinh — có ảnh. */
-  protected static Vehicle create(String name, String description, long startingPrice,
-                                  NormalUser seller,
-                                  String manufacturer, int year, double mileage,
-                                  List<String> imageUrls) {
-    return new Vehicle(name, description, startingPrice, seller,
-            manufacturer, year, mileage, imageUrls);
+  protected static Vehicle create(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage,
+      List<String> imageUrls) {
+    return new Vehicle(
+        name, description, startingPrice, seller, manufacturer, year, mileage, imageUrls);
   }
 
   /** Hồi sinh từ DB — không ảnh (backward-compatible, TestFixture dùng). */
-  public static Vehicle reconstitute(String id, LocalDateTime createdAt,
-                                     LocalDateTime updatedAt,
-                                     String name, String description, long startingPrice,
-                                     NormalUser seller,
-                                     String manufacturer, int year, double mileage) {
-    return new Vehicle(id, createdAt, updatedAt, name, description, startingPrice,
-            seller, manufacturer, year, mileage, List.of());
+  public static Vehicle reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage) {
+    return new Vehicle(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        seller,
+        manufacturer,
+        year,
+        mileage,
+        List.of());
   }
 
   /** Hồi sinh từ DB — có ảnh (ItemDAO dùng). */
-  public static Vehicle reconstitute(String id, LocalDateTime createdAt,
-                                     LocalDateTime updatedAt,
-                                     String name, String description, long startingPrice,
-                                     NormalUser seller,
-                                     String manufacturer, int year, double mileage,
-                                     List<String> imageUrls) {
-    return new Vehicle(id, createdAt, updatedAt, name, description, startingPrice,
-            seller, manufacturer, year, mileage, imageUrls);
+  public static Vehicle reconstitute(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage,
+      List<String> imageUrls) {
+    return new Vehicle(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        seller,
+        manufacturer,
+        year,
+        mileage,
+        imageUrls);
   }
 
   // ── Private constructors ──────────────────────────────────────────────────
 
-  private Vehicle(String name, String description, long startingPrice,
-                  NormalUser seller,
-                  String manufacturer, int year, double mileage,
-                  List<String> imageUrls) {
+  private Vehicle(
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage,
+      List<String> imageUrls) {
     super(name, description, startingPrice, ItemCategory.VEHICLE, seller, imageUrls);
     this.manufacturer = manufacturer;
-    this.year         = year;
-    this.mileage      = mileage;
+    this.year = year;
+    this.mileage = mileage;
   }
 
-  private Vehicle(String id, LocalDateTime createdAt, LocalDateTime updatedAt,
-                  String name, String description, long startingPrice,
-                  NormalUser seller,
-                  String manufacturer, int year, double mileage,
-                  List<String> imageUrls) {
-    super(id, createdAt, updatedAt, name, description, startingPrice,
-            ItemCategory.VEHICLE, seller, imageUrls);
+  private Vehicle(
+      String id,
+      LocalDateTime createdAt,
+      LocalDateTime updatedAt,
+      String name,
+      String description,
+      long startingPrice,
+      NormalUser seller,
+      String manufacturer,
+      int year,
+      double mileage,
+      List<String> imageUrls) {
+    super(
+        id,
+        createdAt,
+        updatedAt,
+        name,
+        description,
+        startingPrice,
+        ItemCategory.VEHICLE,
+        seller,
+        imageUrls);
     this.manufacturer = manufacturer;
-    this.year         = year;
-    this.mileage      = mileage;
+    this.year = year;
+    this.mileage = mileage;
   }
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  public String getManufacturer() { return manufacturer; }
-  public int getYear()            { return year; }
-  public double getMileage()      { return mileage; }
+  public String getManufacturer() {
+    return manufacturer;
+  }
+
+  public int getYear() {
+    return year;
+  }
+
+  public double getMileage() {
+    return mileage;
+  }
 
   @Override
   public void printInfo() {

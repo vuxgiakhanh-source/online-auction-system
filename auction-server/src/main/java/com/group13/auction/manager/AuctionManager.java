@@ -8,9 +8,6 @@ import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,13 +15,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Singleton điều phối kỹ thuật toàn bộ hệ thống đấu giá.
  *
  * <h3>Cải tiến v2:</h3>
+ *
  * <ul>
- *   <li>Logging chuẩn SLF4J (xóa System.out.println).</li>
+ *   <li>Logging chuẩn SLF4J (xóa System.out.println).
  * </ul>
  */
 public class AuctionManager {
@@ -37,17 +37,17 @@ public class AuctionManager {
   private final UserDAO userDAO;
 
   private final Map<String, Auction> allAuctions;
-  private final Map<String, User>    allUsers;
+  private final Map<String, User> allUsers;
   private final List<AuctionObserver> globalObservers;
   private final List<AuctionObserver> staffObservers;
 
   private AuctionManager() {
     this.auctionDAO = new AuctionDAO();
-    this.userDAO    = new UserDAO();
-    this.allAuctions    = new ConcurrentHashMap<>();
-    this.allUsers       = new ConcurrentHashMap<>();
+    this.userDAO = new UserDAO();
+    this.allAuctions = new ConcurrentHashMap<>();
+    this.allUsers = new ConcurrentHashMap<>();
     this.globalObservers = new CopyOnWriteArrayList<>();
-    this.staffObservers  = new CopyOnWriteArrayList<>();
+    this.staffObservers = new CopyOnWriteArrayList<>();
   }
 
   public static AuctionManager getInstance() {
@@ -58,15 +58,20 @@ public class AuctionManager {
   public void loadDataFromDatabase() {
     List<Auction> dbAuctions = auctionDAO.findAll();
     if (dbAuctions != null) {
-      for (Auction a : dbAuctions) allAuctions.put(a.getId(), a);
+      for (Auction a : dbAuctions) {
+        allAuctions.put(a.getId(), a);
+      }
     }
     List<User> dbUsers = userDAO.findAll();
     if (dbUsers != null) {
-      for (User u : dbUsers) allUsers.put(u.getId(), u);
+      for (User u : dbUsers) {
+        allUsers.put(u.getId(), u);
+      }
     }
 
     // FIX Bug #1 (winner restore): Sau server restart, auction.getWinner() = null dù DB có winner.
-    // Load lại AuctionWinner cho các phiên đã FINISHED/PAID/RUNNING để PaymentHandler không báo "chưa có winner".
+    // Load lại AuctionWinner cho các phiên đã FINISHED/PAID/RUNNING để PaymentHandler không báo
+    // "chưa có winner".
     // RUNNING cũng cần restore vì server có thể crash ngay sau khi closeAuction() set winner nhưng
     // trước khi status được flush xuống DB đúng.
     AuctionWinnerDAO auctionWinnerDAO = new AuctionWinnerDAO();
@@ -82,25 +87,39 @@ public class AuctionManager {
             if (winner != null) {
               a.setWinner(winner);
               restoredCount++;
-              log.debug("Winner restored: auctionId={}, winnerId={}, status={}",
-                  a.getId(), winner.getWinner().getId(), a.getStatus());
+              log.debug(
+                  "Winner restored: auctionId={}, winnerId={}, status={}",
+                  a.getId(),
+                  winner.getWinner().getId(),
+                  a.getStatus());
             } else {
               missingWinnerCount++;
-              log.warn("No winner in DB for {} auction: auctionId={} — payment flow bị ảnh hưởng",
-                  a.getStatus(), a.getId());
+              log.warn(
+                  "No winner in DB for {} auction: auctionId={} — payment flow bị ảnh hưởng",
+                  a.getStatus(),
+                  a.getId());
             }
           } catch (Exception e) {
-            log.error("Failed to restore winner: auctionId={}, status={} — skipping",
-                a.getId(), a.getStatus(), e);
+            log.error(
+                "Failed to restore winner: auctionId={}, status={} — skipping",
+                a.getId(),
+                a.getStatus(),
+                e);
           }
         }
       }
     }
 
-    log.info("Đã đồng bộ dữ liệu từ Database: auctions={} users={} winners_restored={} missing_winners={}",
-        allAuctions.size(), allUsers.size(), restoredCount, missingWinnerCount);
+    log.info(
+        "Đã đồng bộ dữ liệu từ Database: auctions={} users={} winners_restored={}"
+            + " missing_winners={}",
+        allAuctions.size(),
+        allUsers.size(),
+        restoredCount,
+        missingWinnerCount);
     if (missingWinnerCount > 0) {
-      log.warn("{} phiên FINISHED/PAID/RUNNING không có winner trong DB — kiểm tra bảng auction_winners",
+      log.warn(
+          "{} phiên FINISHED/PAID/RUNNING không có winner trong DB — kiểm tra bảng auction_winners",
           missingWinnerCount);
     }
   }
@@ -109,34 +128,42 @@ public class AuctionManager {
 
   /** Thêm user vào in-memory mà KHÔNG persist DB. */
   public void addToUserList(User user) {
-    if (user == null) return;
+    if (user == null) {
+      return;
+    }
     allUsers.putIfAbsent(user.getId(), user);
   }
 
   /**
-   * Ghi đè user trong bộ nhớ bằng bản mới từ DB (login, reload profile).
-   * Khác {@link #addToUserList}: luôn cập nhật roles/balance thay vì giữ object cũ.
+   * Ghi đè user trong bộ nhớ bằng bản mới từ DB (login, reload profile). Khác {@link
+   * #addToUserList}: luôn cập nhật roles/balance thay vì giữ object cũ.
    */
   public void refreshUser(User user) {
-    if (user == null) return;
+    if (user == null) {
+      return;
+    }
     allUsers.put(user.getId(), user);
   }
 
   /** Đăng ký user mới (persist DB + in-memory). */
   public void registerUser(User user) {
-    if (user == null) throw new IllegalArgumentException("User không được null.");
+    if (user == null) {
+      throw new IllegalArgumentException("User không được null.");
+    }
     userDAO.save(user);
     allUsers.putIfAbsent(user.getId(), user);
     log.info("User registered: username={}", user.getUsername());
   }
 
   /**
-   * Tìm user theo username CHỈ trong bộ nhớ (không truy vấn DB).
-   * Dùng bởi UserService.login() để kiểm tra in-memory trước khi hit DB.
+   * Tìm user theo username CHỈ trong bộ nhớ (không truy vấn DB). Dùng bởi UserService.login() để
+   * kiểm tra in-memory trước khi hit DB.
    */
   public User findUserByUsernameInMemoryOnly(String username) {
     for (User u : allUsers.values()) {
-      if (u.getUsername().equals(username)) return u;
+      if (u.getUsername().equals(username)) {
+        return u;
+      }
     }
     return null;
   }
@@ -148,7 +175,9 @@ public class AuctionManager {
       return dbUser;
     }
     for (User u : allUsers.values()) {
-      if (u.getUsername().equals(username)) return u;
+      if (u.getUsername().equals(username)) {
+        return u;
+      }
     }
     return null;
   }
@@ -156,7 +185,9 @@ public class AuctionManager {
   // ── Auction management ────────────────────────────────────────────────────
 
   public void registerAuction(Auction auction) {
-    if (auction == null) throw new IllegalArgumentException("Auction không được null.");
+    if (auction == null) {
+      throw new IllegalArgumentException("Auction không được null.");
+    }
     allAuctions.putIfAbsent(auction.getId(), auction);
     log.info("Auction registered: auctionId={}", auction.getId());
   }
@@ -164,7 +195,9 @@ public class AuctionManager {
   // ── Observer management ───────────────────────────────────────────────────
 
   public void addGlobalObserver(AuctionObserver observer) {
-    if (observer != null && !globalObservers.contains(observer)) globalObservers.add(observer);
+    if (observer != null && !globalObservers.contains(observer)) {
+      globalObservers.add(observer);
+    }
   }
 
   public void removeGlobalObserver(AuctionObserver observer) {
@@ -172,23 +205,36 @@ public class AuctionManager {
   }
 
   public void addStaffObserver(AuctionObserver observer) {
-    if (observer != null && !staffObservers.contains(observer)) staffObservers.add(observer);
+    if (observer != null && !staffObservers.contains(observer)) {
+      staffObservers.add(observer);
+    }
   }
 
   public void notifyGlobalObservers(AuctionEvent event) {
-    if (event == null) return;
-    for (AuctionObserver observer : globalObservers) dispatchEvent(observer, event);
+    if (event == null) {
+      return;
+    }
+    for (AuctionObserver observer : globalObservers) {
+      dispatchEvent(observer, event);
+    }
   }
 
   public void notifyStaffObservers(AuctionEvent event) {
-    if (event == null) return;
+    if (event == null) {
+      return;
+    }
     AuctionEvent.AuctionEventType type = event.getEventType();
-    boolean isStaffRelevant = type == AuctionEvent.AuctionEventType.AUCTION_CANCELED
-        || type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
-        || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
-        || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST;
-    if (!isStaffRelevant) return;
-    for (AuctionObserver observer : staffObservers) dispatchEvent(observer, event);
+    boolean isStaffRelevant =
+        type == AuctionEvent.AuctionEventType.AUCTION_CANCELED
+            || type == AuctionEvent.AuctionEventType.FRAUD_DETECTED
+            || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
+            || type == AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST;
+    if (!isStaffRelevant) {
+      return;
+    }
+    for (AuctionObserver observer : staffObservers) {
+      dispatchEvent(observer, event);
+    }
   }
 
   private void dispatchEvent(AuctionObserver observer, AuctionEvent event) {
@@ -215,7 +261,9 @@ public class AuctionManager {
   }
 
   public Auction findAuctionById(String id) {
-    if (id == null) return null;
+    if (id == null) {
+      return null;
+    }
     return allAuctions.get(id);
   }
 

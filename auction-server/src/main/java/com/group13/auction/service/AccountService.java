@@ -21,9 +21,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Quản lý trạng thái tài khoản: ban, deposit, tạo admin STAFF, quản lý role.
  *
- * <p>Chỉ SystemAdmin (MASTER) mới được tạo admin STAFF qua
- * {@link #createStaffAdmin}.
- * MASTER duy nhất là {@link SystemAdmin}, được seed sẵn khi bootstrap.
+ * <p>Chỉ SystemAdmin (MASTER) mới được tạo admin STAFF qua {@link #createStaffAdmin}. MASTER duy
+ * nhất là {@link SystemAdmin}, được seed sẵn khi bootstrap.
  *
  * <p>Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
  */
@@ -31,17 +30,17 @@ public class AccountService implements IAccountService {
 
   private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
-  private final IRatingService  ratingService;
-  private final AdminFactory    adminFactory;
-  private final WalletService   walletService;
+  private final IRatingService ratingService;
+  private final AdminFactory adminFactory;
+  private final WalletService walletService;
 
-  private final UserDAO          userDAO;
-  private final SellerDAO        sellerDAO;
-  private final AdminDAO         adminDAO;
-  private final AuctionDAO       auctionDAO;
+  private final UserDAO userDAO;
+  private final SellerDAO sellerDAO;
+  private final AdminDAO adminDAO;
+  private final AuctionDAO auctionDAO;
   private final AuctionWinnerDAO auctionWinnerDAO;
-  private final NotificationDAO  notificationDAO;
-  private final AccountBanDAO    accountBanDAO;
+  private final NotificationDAO notificationDAO;
+  private final AccountBanDAO accountBanDAO;
 
   public AccountService(
       IRatingService ratingService,
@@ -50,8 +49,15 @@ public class AccountService implements IAccountService {
       AdminDAO adminDAO,
       AuctionDAO auctionDAO,
       AuctionWinnerDAO auctionWinnerDAO) {
-    this(ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
-        auctionWinnerDAO, new NotificationDAO(), new AccountBanDAO());
+    this(
+        ratingService,
+        userDAO,
+        sellerDAO,
+        adminDAO,
+        auctionDAO,
+        auctionWinnerDAO,
+        new NotificationDAO(),
+        new AccountBanDAO());
   }
 
   public AccountService(
@@ -62,8 +68,15 @@ public class AccountService implements IAccountService {
       AuctionDAO auctionDAO,
       AuctionWinnerDAO auctionWinnerDAO,
       NotificationDAO notificationDAO) {
-    this(ratingService, userDAO, sellerDAO, adminDAO, auctionDAO,
-        auctionWinnerDAO, notificationDAO, new AccountBanDAO());
+    this(
+        ratingService,
+        userDAO,
+        sellerDAO,
+        adminDAO,
+        auctionDAO,
+        auctionWinnerDAO,
+        notificationDAO,
+        new AccountBanDAO());
   }
 
   public AccountService(
@@ -75,16 +88,16 @@ public class AccountService implements IAccountService {
       AuctionWinnerDAO auctionWinnerDAO,
       NotificationDAO notificationDAO,
       AccountBanDAO accountBanDAO) {
-    this.ratingService    = ratingService;
-    this.adminFactory     = new AdminFactory();
-    this.userDAO          = userDAO;
-    this.sellerDAO        = sellerDAO;
-    this.adminDAO         = adminDAO;
-    this.auctionDAO       = auctionDAO;
+    this.ratingService = ratingService;
+    this.adminFactory = new AdminFactory();
+    this.userDAO = userDAO;
+    this.sellerDAO = sellerDAO;
+    this.adminDAO = adminDAO;
+    this.auctionDAO = auctionDAO;
     this.auctionWinnerDAO = auctionWinnerDAO;
-    this.notificationDAO  = notificationDAO;
-    this.accountBanDAO    = accountBanDAO;
-    this.walletService    = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
+    this.notificationDAO = notificationDAO;
+    this.accountBanDAO = accountBanDAO;
+    this.walletService = new WalletService(new FinancialTransactionDAO(), userDAO, ratingService);
   }
 
   public void deposit(NormalUser user, long amount) {
@@ -97,31 +110,31 @@ public class AccountService implements IAccountService {
 
   // ── Ban ───────────────────────────────────────────────────────────────────
 
-  /**
-   * Ban tài khoản với lý do cụ thể — chỉ Admin gọi.
-   */
+  /** Ban tài khoản với lý do cụ thể — chỉ Admin gọi. */
   @Override
   public void banUser(Admin admin, User target, Admin.BanReason reason) {
     if (reason == null) {
       throw new IllegalArgumentException("Lí do ban không được null");
     }
     target.setAccountStatus(AccountStatus.BANNED);
-    String entry = String.format("[ACCOUNT] %s ban %s | Lý do: %s",
-        admin.getUsername(), target.getUsername(), reason);
+    String entry =
+        String.format(
+            "[ACCOUNT] %s ban %s | Lý do: %s", admin.getUsername(), target.getUsername(), reason);
     admin.addActionLog(entry);
-    log.info("Ban user: admin={} target={} reason={}",
-        admin.getUsername(), target.getUsername(), reason);
+    log.info(
+        "Ban user: admin={} target={} reason={}",
+        admin.getUsername(),
+        target.getUsername(),
+        reason);
 
     userDAO.updateAccountStatus(target.getId(), AccountStatus.BANNED.name());
 
     accountBanDAO.insertBan(
-        target.getId(),
-        admin.getId(),
-        admin.getUsername(),
-        reason.name(),
-        null);
+        target.getId(), admin.getId(), admin.getUsername(), reason.name(), null);
 
-    saveNotification(target.getId(), null,
+    saveNotification(
+        target.getId(),
+        null,
         "Tài khoản bị khoá",
         String.format("Tài khoản của bạn đã bị khoá bởi quản trị viên. Lý do: %s.", reason));
 
@@ -131,9 +144,7 @@ public class AccountService implements IAccountService {
     }
   }
 
-  /**
-   * Mở khóa tài khoản — chỉ Admin gọi; đóng bản ghi {@code account_bans} active.
-   */
+  /** Mở khóa tài khoản — chỉ Admin gọi; đóng bản ghi {@code account_bans} active. */
   public void unbanUser(Admin admin, User target) {
     if (admin == null || target == null) {
       throw new IllegalArgumentException("Admin và target không được null");
@@ -142,12 +153,14 @@ public class AccountService implements IAccountService {
     userDAO.updateAccountStatus(target.getId(), AccountStatus.ACTIVE.name());
     accountBanDAO.closeActiveBans(target.getId(), admin.getId(), admin.getUsername());
 
-    String entry = String.format("[ACCOUNT] %s unban %s",
-        admin.getUsername(), target.getUsername());
+    String entry =
+        String.format("[ACCOUNT] %s unban %s", admin.getUsername(), target.getUsername());
     admin.addActionLog(entry);
     log.info("Unban user: admin={} target={}", admin.getUsername(), target.getUsername());
 
-    saveNotification(target.getId(), null,
+    saveNotification(
+        target.getId(),
+        null,
         "Tài khoản được mở khóa",
         "Tài khoản của bạn đã được quản trị viên mở khóa.");
   }
@@ -157,12 +170,7 @@ public class AccountService implements IAccountService {
     if (target == null || reason == null) {
       return;
     }
-    accountBanDAO.insertBan(
-        target.getId(),
-        null,
-        "SYSTEM",
-        reason.name(),
-        null);
+    accountBanDAO.insertBan(target.getId(), null, "SYSTEM", reason.name(), null);
   }
 
   public AccountBanDAO accountBanDAO() {
@@ -171,21 +179,20 @@ public class AccountService implements IAccountService {
 
   // ── Admin STAFF ───────────────────────────────────────────────────────────
 
-  /**
-   * Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này.
-   */
+  /** Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này. */
   @Override
   public Admin createStaffAdmin(String username, String password, String email) {
     SystemAdmin system = SystemAdmin.getInstance();
 
     Admin newAdmin = (Admin) adminFactory.createUser(username, password, email);
 
-    boolean success = adminDAO.createAdmin(
-        newAdmin.getId(),
-        newAdmin.getUsername(),
-        newAdmin.getHashedPassword(),
-        newAdmin.getEmail(),
-        "STAFF");
+    boolean success =
+        adminDAO.createAdmin(
+            newAdmin.getId(),
+            newAdmin.getUsername(),
+            newAdmin.getHashedPassword(),
+            newAdmin.getEmail(),
+            "STAFF");
 
     if (!success) {
       throw new RuntimeException("Hệ thống lỗi: Không thể tạo Admin trong cơ sở dữ liệu.");
@@ -203,9 +210,7 @@ public class AccountService implements IAccountService {
 
   // ── Seller role ───────────────────────────────────────────────────────────
 
-  /**
-   * Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.
-   */
+  /** Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating. */
   @Override
   public void autoApproveSellerRole(NormalUser user) {
     if (!ratingService.isEligible(user)) {
@@ -222,22 +227,24 @@ public class AccountService implements IAccountService {
     }
 
     user.addRole(User.UserRole.SELLER);
-    String entry = String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
+    String entry =
+        String.format("[SYSTEM AUTO-APPROVE] Duyệt role Seller cho: %s", user.getUsername());
     SystemAdmin.getInstance().addActionLog(entry);
     log.info("Auto-approve role Seller: user={}", user.getUsername());
 
     sellerDAO.approveSellerRole(user.getId());
 
-    saveNotification(user.getId(), null,
+    saveNotification(
+        user.getId(),
+        null,
         "Đăng ký Seller thành công",
-        "Yêu cầu trở thành Seller của bạn đã được duyệt. Bạn có thể tạo phiên đấu giá ngay bây giờ.");
+        "Yêu cầu trở thành Seller của bạn đã được duyệt. Bạn có thể tạo phiên đấu giá ngay bây"
+            + " giờ.");
   }
 
   // ── Seller cancel request ─────────────────────────────────────────────────
 
-  /**
-   * Seller gửi yêu cầu hủy phiên đấu giá lên hệ thống.
-   */
+  /** Seller gửi yêu cầu hủy phiên đấu giá lên hệ thống. */
   public void requestCancelAuction(NormalUser seller, Auction auction, String reason) {
     if (!seller.hasRole(User.UserRole.SELLER)) {
       throw new IllegalArgumentException("Chỉ Seller mới có thể yêu cầu hủy phiên.");
@@ -252,15 +259,21 @@ public class AccountService implements IAccountService {
           "Phiên đấu giá không thể yêu cầu hủy ở trạng thái: " + auction.getStatus());
     }
 
-    AuctionEvent cancelRequestEvent = new AuctionEvent(
-        AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
-        auction, null, 0L,
-        String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
+    AuctionEvent cancelRequestEvent =
+        new AuctionEvent(
+            AuctionEvent.AuctionEventType.SELLER_CANCEL_REQUEST,
+            auction,
+            null,
+            0L,
+            String.format("Seller %s yêu cầu hủy: %s", seller.getUsername(), reason));
     AuctionManager.getInstance().notifyStaffObservers(cancelRequestEvent);
     AuctionManager.getInstance().notifyGlobalObservers(cancelRequestEvent);
 
-    log.info("Seller gửi yêu cầu hủy phiên: seller={} auctionId={} reason={}",
-        seller.getUsername(), auction.getId(), reason);
+    log.info(
+        "Seller gửi yêu cầu hủy phiên: seller={} auctionId={} reason={}",
+        seller.getUsername(),
+        auction.getId(),
+        reason);
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

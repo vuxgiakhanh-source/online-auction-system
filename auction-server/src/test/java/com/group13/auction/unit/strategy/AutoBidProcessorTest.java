@@ -1,6 +1,9 @@
 package com.group13.auction.unit.strategy;
 
-import com.group13.auction.unit.TestFixture;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.manager.AuctionManager;
@@ -10,42 +13,41 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.BidService;
 import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
+import com.group13.auction.unit.TestFixture;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
-import java.time.LocalDateTime;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests cho {@link AutoBidProcessor}.
  *
  * <h3>Chiến lược test:</h3>
+ *
  * <p>{@code AutoBidProcessor} phụ thuộc vào 3 external dependency cần mock:
+ *
  * <ul>
- *   <li>{@link BidService} — đặt giá, có side effect lên Auction domain object</li>
- *   <li>{@link SessionManager} — broadcast/notify qua network</li>
- *   <li>{@link UserDAO} — fallback DB lookup</li>
+ *   <li>{@link BidService} — đặt giá, có side effect lên Auction domain object
+ *   <li>{@link SessionManager} — broadcast/notify qua network
+ *   <li>{@link UserDAO} — fallback DB lookup
  * </ul>
  *
- * <p>{@link AutoBidRegistry} là Singleton có state thật → dùng instance thật,
- * reset sạch trong {@code @BeforeEach} / {@code @AfterEach} để đảm bảo isolation.
+ * <p>{@link AutoBidRegistry} là Singleton có state thật → dùng instance thật, reset sạch trong
+ * {@code @BeforeEach} / {@code @AfterEach} để đảm bảo isolation.
  *
- * <p>{@link AuctionManager} là Singleton có state thật → inject user vào in-memory
- * để {@code findNormalUserById} hoạt động đúng.
+ * <p>{@link AuctionManager} là Singleton có state thật → inject user vào in-memory để {@code
+ * findNormalUserById} hoạt động đúng.
  *
  * <p>Domain model ({@link Auction}, {@link NormalUser}) dùng object thật.
  *
  * <h3>Side effect của bidService.placeBid():</h3>
- * <p>Method này trong production cập nhật {@code auction.updateBid(amount, leader)}.
- * Khi mock, phải dùng {@code doAnswer} để simulate side effect đó, đảm bảo
- * {@code auction.getCurrentLeader()} và {@code auction.getCurrentPrice()} nhất quán.
+ *
+ * <p>Method này trong production cập nhật {@code auction.updateBid(amount, leader)}. Khi mock, phải
+ * dùng {@code doAnswer} để simulate side effect đó, đảm bảo {@code auction.getCurrentLeader()} và
+ * {@code auction.getCurrentPrice()} nhất quán.
  *
  * <p>Không DB, không network, không filesystem, không Thread.sleep().
  */
@@ -53,919 +55,933 @@ import static org.mockito.Mockito.*;
 @DisplayName("AutoBidProcessor")
 class AutoBidProcessorTest {
 
-    // =========================================================================
-    // Constants — tier thấp: increment = 50_000
-    // =========================================================================
+  // =========================================================================
+  // Constants — tier thấp: increment = 50_000
+  // =========================================================================
 
-    private static final long STARTING_PRICE = 500_000L;
-    private static final long INCREMENT_LOW  =  50_000L;
+  private static final long STARTING_PRICE = 500_000L;
+  private static final long INCREMENT_LOW = 50_000L;
 
-    // =========================================================================
-    // Mocks — chỉ external dependency
-    // =========================================================================
+  // =========================================================================
+  // Mocks — chỉ external dependency
+  // =========================================================================
 
-    @Mock private BidService     bidService;
-    @Mock private SessionManager sessionManager;
-    @Mock private UserDAO        userDAO;
+  @Mock private BidService bidService;
+  @Mock private SessionManager sessionManager;
+  @Mock private UserDAO userDAO;
 
-    // =========================================================================
-    // SUT
-    // =========================================================================
+  // =========================================================================
+  // SUT
+  // =========================================================================
 
-    private AutoBidProcessor sut;
+  private AutoBidProcessor sut;
 
-    // =========================================================================
-    // Fixtures thật
-    // =========================================================================
+  // =========================================================================
+  // Fixtures thật
+  // =========================================================================
 
-    /** Singleton thật, reset trước/sau mỗi test */
-    private AutoBidRegistry registry;
+  /** Singleton thật, reset trước/sau mỗi test */
+  private AutoBidRegistry registry;
 
-    private NormalUser seller;
-    private NormalUser bidderA;
-    private NormalUser bidderB;
-    private Auction    runningAuction;
+  private NormalUser seller;
+  private NormalUser bidderA;
+  private NormalUser bidderB;
+  private Auction runningAuction;
 
-    // =========================================================================
-    // Setup / Teardown
-    // =========================================================================
+  // =========================================================================
+  // Setup / Teardown
+  // =========================================================================
 
-    @BeforeEach
-    void setUp() throws Exception {
-        sut = new AutoBidProcessor(bidService, sessionManager);
-        injectUserDAOMock(sut, userDAO);
+  @BeforeEach
+  void setUp() throws Exception {
+    sut = new AutoBidProcessor(bidService, sessionManager);
+    injectUserDAOMock(sut, userDAO);
 
-        // Registry Singleton thật — phải reset để test isolation
-        registry = AutoBidRegistry.getInstance();
-        clearInternalRegistry();
+    // Registry Singleton thật — phải reset để test isolation
+    registry = AutoBidRegistry.getInstance();
+    clearInternalRegistry();
 
-        // Domain fixtures thật
-        seller   = TestFixture.normalSeller("sellerUser01");
-        bidderA  = TestFixture.bidderWithBalance("bidderAUser", 10_000_000L);
-        bidderB  = TestFixture.bidderWithBalance("bidderBUser", 10_000_000L);
+    // Domain fixtures thật
+    seller = TestFixture.normalSeller("sellerUser01");
+    bidderA = TestFixture.bidderWithBalance("bidderAUser", 10_000_000L);
+    bidderB = TestFixture.bidderWithBalance("bidderBUser", 10_000_000L);
 
-        // Đưa user vào AuctionManager in-memory để findNormalUserById tìm thấy
-        AuctionManager.getInstance().addToUserList(bidderA);
-        AuctionManager.getInstance().addToUserList(bidderB);
+    // Đưa user vào AuctionManager in-memory để findNormalUserById tìm thấy
+    AuctionManager.getInstance().addToUserList(bidderA);
+    AuctionManager.getInstance().addToUserList(bidderB);
 
-        // Auction đang chạy với giá khởi điểm tier thấp
-        runningAuction = TestFixture.runningAuction(seller, STARTING_PRICE);
+    // Auction đang chạy với giá khởi điểm tier thấp
+    runningAuction = TestFixture.runningAuction(seller, STARTING_PRICE);
 
-        // Đảm bảo bidder đã join phiên
-        bidderA.addJoinedAuction(runningAuction.getId());
-        bidderB.addJoinedAuction(runningAuction.getId());
+    // Đảm bảo bidder đã join phiên
+    bidderA.addJoinedAuction(runningAuction.getId());
+    bidderB.addJoinedAuction(runningAuction.getId());
 
-        // Mặc định: sessionManager không làm gì
-        lenient().doNothing().when(sessionManager).sendToUser(anyString(), any());
-        lenient().doNothing().when(sessionManager).broadcastToAuction(anyString(), any());
+    // Mặc định: sessionManager không làm gì
+    lenient().doNothing().when(sessionManager).sendToUser(anyString(), any());
+    lenient().doNothing().when(sessionManager).broadcastToAuction(anyString(), any());
+  }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    clearInternalRegistry();
+    // FIX: recentBidTimes đã được đổi sang bidActivityRings + các map mới.
+    // Xóa tất cả static ConcurrentHashMap để tránh state rò rỉ giữa test.
+    for (String fieldName :
+        new String[] {
+          "bidActivityRings",
+          "chainRunning",
+          "chainNeedsRecheck",
+          "lastAutoBidMs",
+          "auctionExecutors"
+        }) {
+      Field f = AutoBidProcessor.class.getDeclaredField(fieldName);
+      f.setAccessible(true);
+      ((java.util.concurrent.ConcurrentHashMap<?, ?>) f.get(null)).clear();
+    }
+  }
+
+  // =========================================================================
+  // Reflection helpers
+  // =========================================================================
+
+  /** Inject UserDAO mock vào field private trong AutoBidProcessor */
+  private static void injectUserDAOMock(AutoBidProcessor processor, UserDAO mockDao)
+      throws Exception {
+    Field field = AutoBidProcessor.class.getDeclaredField("userDAO");
+    field.setAccessible(true);
+    field.set(processor, mockDao);
+  }
+
+  /** Reset ConcurrentHashMap nội bộ của Singleton AutoBidRegistry */
+  @SuppressWarnings("unchecked")
+  private void clearInternalRegistry() throws Exception {
+    Field mapField = AutoBidRegistry.class.getDeclaredField("registry");
+    mapField.setAccessible(true);
+    ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry> map =
+        (ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry>) mapField.get(registry);
+    map.clear();
+    // Null-out autoBidDAO để tránh kết nối DB trong unit test
+    Field daoField = AutoBidRegistry.class.getDeclaredField("autoBidDAO");
+    daoField.setAccessible(true);
+    daoField.set(registry, null);
+  }
+
+  // =========================================================================
+  // Stub helpers
+  // =========================================================================
+
+  /**
+   * Khi bidService.placeBid() được gọi, simulate side effect thật: auction.updateBid(amount,
+   * bidder) — đúng như production. Không simulate thì auction.getCurrentLeader() vẫn null → loop
+   * sai.
+   */
+  private void stubPlaceBidWithSideEffect(Auction auction) {
+    doAnswer(
+            invocation -> {
+              NormalUser bidder = invocation.getArgument(0);
+              Auction auc = invocation.getArgument(1);
+              long amount = invocation.getArgument(2);
+              auc.updateBid(amount, bidder);
+              return null;
+            })
+        .when(bidService)
+        .placeBid(any(NormalUser.class), eq(auction), anyLong(), any());
+  }
+
+  /** Simulate placeBid ném exception — dùng cho test exhausted/cancel path */
+  private void stubPlaceBidThrows(Auction auction, RuntimeException ex) {
+    doThrow(ex).when(bidService).placeBid(any(), eq(auction), anyLong(), any());
+  }
+
+  // =========================================================================
+  // 1. No auto-bidder registered
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Không có auto-bid nào được đăng ký")
+  class NoAutoBidder {
+
+    @Test
+    @DisplayName("process() không gọi bidService khi registry trống")
+    void process_emptyRegistry_noBidServiceCall() {
+      // Arrange: không register auto-bid nào
+
+      // Act
+      sut.submit(runningAuction, bidderA.getId());
+
+      // Assert
+      verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
     }
 
-    @AfterEach
-    void tearDown() throws Exception {
-        clearInternalRegistry();
-        // FIX: recentBidTimes đã được đổi sang bidActivityRings + các map mới.
-        // Xóa tất cả static ConcurrentHashMap để tránh state rò rỉ giữa test.
-        for (String fieldName : new String[]{
-            "bidActivityRings", "chainRunning", "chainNeedsRecheck",
-            "lastAutoBidMs", "auctionExecutors"}) {
-            Field f = AutoBidProcessor.class.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            ((java.util.concurrent.ConcurrentHashMap<?, ?>) f.get(null)).clear();
-        }
+    @Test
+    @DisplayName("process() không gửi notification khi registry trống")
+    void process_emptyRegistry_noNotificationSent() {
+      // Arrange: registry trống
+
+      // Act
+      sut.submit(runningAuction, bidderA.getId());
+
+      // Assert
+      verify(sessionManager, never()).sendToUser(anyString(), any());
+      verify(sessionManager, never()).broadcastToAuction(anyString(), any());
     }
 
-    // =========================================================================
-    // Reflection helpers
-    // =========================================================================
+    @Test
+    @DisplayName("process() không ném exception khi registry trống")
+    void process_emptyRegistry_doesNotThrow() {
+      // Act & Assert
+      assertDoesNotThrow(() -> sut.submit(runningAuction, bidderA.getId()));
+    }
+  }
 
-    /** Inject UserDAO mock vào field private trong AutoBidProcessor */
-    private static void injectUserDAOMock(AutoBidProcessor processor, UserDAO mockDao)
-        throws Exception {
-        Field field = AutoBidProcessor.class.getDeclaredField("userDAO");
-        field.setAccessible(true);
-        field.set(processor, mockDao);
+  // =========================================================================
+  // 2. Single auto-bidder — không phải current leader
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Một auto-bidder bị vượt — có thể counter")
+  class SingleAutoBidder {
+
+    @Test
+    @DisplayName("bidderA bị vượt, còn budget → tự counter ít nhất 1 lần")
+    void process_singleBidderExceeded_counterBidOnce() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
     }
 
-    /** Reset ConcurrentHashMap nội bộ của Singleton AutoBidRegistry */
-    @SuppressWarnings("unchecked")
-    private void clearInternalRegistry() throws Exception {
-        Field mapField = AutoBidRegistry.class.getDeclaredField("registry");
-        mapField.setAccessible(true);
-        ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry> map =
-            (ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry>)
-                mapField.get(registry);
-        map.clear();
-        // Null-out autoBidDAO để tránh kết nối DB trong unit test
-        Field daoField = AutoBidRegistry.class.getDeclaredField("autoBidDAO");
-        daoField.setAccessible(true);
-        daoField.set(registry, null);
+    @Test
+    @DisplayName("counter bid amount = currentPrice + increment")
+    void process_singleBidder_counterBidAmountIsCurrentPlusIncrement() {
+      // Arrange
+      long expectedNextBid = STARTING_PRICE + INCREMENT_LOW;
+      registry.register(bidderA.getId(), runningAuction.getId(), expectedNextBid);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      verify(bidService).placeBid(eq(bidderA), eq(runningAuction), eq(expectedNextBid), any());
     }
 
-    // =========================================================================
-    // Stub helpers
-    // =========================================================================
+    @Test
+    @DisplayName("sau khi counter thành công, bidderA trở thành leader")
+    void process_singleBidder_counterBid_bidderBecomesLeader() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertEquals(bidderA, runningAuction.getCurrentLeader());
+    }
+
+    @Test
+    @DisplayName("bidderA là current leader → không tự counter")
+    void process_singleBidder_alreadyLeading_noCounter() {
+      // Arrange: đặt bidderA làm leader thủ công
+      runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderA);
+      registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
+
+      // Act
+      sut.submit(runningAuction, bidderA.getId());
+
+      // Assert: không gọi bidService vì bidderA đã dẫn đầu
+      verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
+    }
+  }
+
+  // =========================================================================
+  // 3. maxBid exhausted — không đủ counter
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Auto-bidder hết budget (maxBid cạn)")
+  class MaxBidExhausted {
+
+    @Test
+    @DisplayName("maxBid không đủ counter → bidService không được gọi")
+    void process_maxBidTooLow_noBidServiceCall() {
+      // Arrange: maxBidA = currentPrice → calculateNextBid = -1
+      long insufficientMax = STARTING_PRICE;
+      registry.register(bidderA.getId(), runningAuction.getId(), insufficientMax);
+
+      // Act
+      sut.submit(runningAuction, bidderB.getId());
+
+      // Assert
+      verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("placeBid ném exception → entry bị xóa khỏi registry")
+    void process_placeBidThrows_entryRemovedFromRegistry() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      stubPlaceBidThrows(runningAuction, new RuntimeException("maxBid exceeded"));
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+    }
+
+    @Test
+    @DisplayName("maxBid cạn sau khi bidderB vượt → AUTO_BID_EXHAUSTED_NOTIFY gửi cho bidderA")
+    void process_exhaustedBidder_exhaustedNotifySent() {
+      // Arrange: bidderB bid vượt maxBidA → bidderA hết budget
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      long priceAboveMaxA = maxBidA + INCREMENT_LOW;
+      runningAuction.updateBid(priceAboveMaxA, bidderB);
+
+      // Act
+      sut.submit(runningAuction, bidderB.getId());
+
+      // Assert
+      verify(sessionManager).sendToUser(eq(bidderA.getId()), any());
+    }
+
+    @Test
+    @DisplayName("maxBid cạn → entry bị xóa khỏi registry")
+    void process_exhaustedBidder_entryRemovedFromRegistry() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      long priceAboveMaxA = maxBidA + INCREMENT_LOW;
+      runningAuction.updateBid(priceAboveMaxA, bidderB);
+
+      // Act
+      sut.submit(runningAuction, bidderB.getId());
+
+      // Assert
+      assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+    }
+  }
+
+  // =========================================================================
+  // 4. Two competing auto-bidders — different maxBid
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Hai auto-bidder cạnh tranh — maxBid khác nhau")
+  class TwoCompetingBiddersDifferentMaxBid {
+
+    @Test
+    @DisplayName("bidderA (maxBid cao hơn) thắng sau chuỗi escalation")
+    void process_twoCompeting_higherMaxBidWins() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5; // 750_000
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2; // 600_000
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertEquals(
+          bidderA, runningAuction.getCurrentLeader(), "bidderA có maxBid cao hơn phải thắng");
+    }
+
+    @Test
+    @DisplayName("bidderB (maxBid thấp hơn) bị loại → entry bị xóa")
+    void process_twoCompeting_lowerMaxBidderEntryRemoved() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
+    }
+
+    @Test
+    @DisplayName("bidderA (maxBid cao hơn) entry vẫn tồn tại trong registry")
+    void process_twoCompeting_winnerEntryStillInRegistry() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+    }
+
+    @Test
+    @DisplayName("giá cuối phải vượt maxBidB (bidderA vượt được bidderB)")
+    void process_twoCompeting_finalPriceExceedsLowerMaxBid() {
+      // Arrange
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2; // 600_000
+      long maxBidA = maxBidB + INCREMENT_LOW; // 650_000
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertTrue(runningAuction.getCurrentPrice() >= maxBidB, "Giá cuối phải vượt maxBidB");
+    }
+  }
+
+  // =========================================================================
+  // 5. Tie: same maxBid — tie-breaking theo registeredAt
+  //    (dùng AutoBidEntry constructor trực tiếp để kiểm soát registeredAt
+  //     mà không cần Thread.sleep)
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Tie: hai auto-bidder cùng maxBid — tie-breaking theo registeredAt")
+  class SameMaxBidTieBreaking {
+
+    @Test
+    @DisplayName("bidderA đăng ký trước (registeredAt nhỏ hơn) cùng maxBid → bidderA thắng tie")
+    void process_sameMaxBid_earlierRegistrationWins() throws Exception {
+      // Arrange: inject entry trực tiếp với registeredAt kiểm soát được
+      long sameMaxBid = STARTING_PRICE + INCREMENT_LOW * 3;
+      LocalDateTime earlier = LocalDateTime.now().minusSeconds(10);
+      LocalDateTime later = LocalDateTime.now();
+
+      injectEntry(bidderA.getId(), runningAuction.getId(), sameMaxBid, earlier);
+      injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid, later);
+
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert: bidderA (đăng ký sớm hơn) dẫn đầu
+      assertEquals(
+          bidderA,
+          runningAuction.getCurrentLeader(),
+          "Với cùng maxBid, người đăng ký trước phải thắng tie");
+    }
+
+    @Test
+    @DisplayName("bidderB đăng ký trước (registeredAt nhỏ hơn) cùng maxBid → bidderB thắng tie")
+    void process_sameMaxBid_laterRegistrationLoses() throws Exception {
+      // Arrange
+      long sameMaxBid = STARTING_PRICE + INCREMENT_LOW * 3;
+      LocalDateTime earlier = LocalDateTime.now().minusSeconds(10);
+      LocalDateTime later = LocalDateTime.now();
+
+      injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid, earlier);
+      injectEntry(bidderA.getId(), runningAuction.getId(), sameMaxBid, later);
+
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert
+      assertEquals(
+          bidderB, runningAuction.getCurrentLeader(), "bidderB đăng ký trước phải thắng tie");
+    }
+
+    @Test
+    @DisplayName("tie: cùng maxBid 1 increment → escalation terminate, không infinite loop")
+    void process_sameMaxBid_escalationTerminates() throws Exception {
+      // Arrange: chỉ 1 người bid được (ai đăng ký trước thắng)
+      long sameMaxBid = STARTING_PRICE + INCREMENT_LOW;
+      injectEntry(
+          bidderA.getId(), runningAuction.getId(), sameMaxBid, LocalDateTime.now().minusSeconds(5));
+      injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid, LocalDateTime.now());
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act & Assert: không infinite loop
+      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+    }
 
     /**
-     * Khi bidService.placeBid() được gọi, simulate side effect thật:
-     * auction.updateBid(amount, bidder) — đúng như production.
-     * Không simulate thì auction.getCurrentLeader() vẫn null → loop sai.
+     * Inject AutoBidEntry trực tiếp vào registry map để kiểm soát registeredAt mà không cần
+     * Thread.sleep() (tuân thủ nguyên tắc FIRST).
      */
-    private void stubPlaceBidWithSideEffect(Auction auction) {
-        doAnswer(invocation -> {
-            NormalUser bidder = invocation.getArgument(0);
-            Auction    auc    = invocation.getArgument(1);
-            long       amount = invocation.getArgument(2);
-            auc.updateBid(amount, bidder);
-            return null;
-        }).when(bidService).placeBid(any(NormalUser.class), eq(auction), anyLong(), any());
+    @SuppressWarnings("unchecked")
+    private void injectEntry(
+        String userId, String auctionId, long maxBid, LocalDateTime registeredAt) throws Exception {
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry(userId, auctionId, maxBid, registeredAt);
+      Field mapField = AutoBidRegistry.class.getDeclaredField("registry");
+      mapField.setAccessible(true);
+      ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry> map =
+          (ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry>) mapField.get(registry);
+      map.put(userId + ":" + auctionId, entry);
+    }
+  }
+
+  // =========================================================================
+  // 6. Escalation chain termination — không infinite loop
+  // =========================================================================
+
+  @Nested
+  @DisplayName("Chuỗi escalation phải terminate đúng")
+  class EscalationTermination {
+
+    @Test
+    @DisplayName("3 auto-bidder khác maxBid → escalation terminate, bidderA (cao nhất) thắng")
+    void process_threeCompeting_escalationTerminates() {
+      // Arrange
+      NormalUser bidderC = TestFixture.bidderWithBalance("bidderCUser", 10_000_000L);
+      bidderC.addJoinedAuction(runningAuction.getId());
+      AuctionManager.getInstance().addToUserList(bidderC);
+
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 6; // 800_000 — cao nhất
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 3; // 650_000
+      long maxBidC = STARTING_PRICE + INCREMENT_LOW * 1; // 550_000 — thấp nhất
+
+      registry.register(bidderC.getId(), runningAuction.getId(), maxBidC);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+
+      // Assert
+      assertEquals(bidderA, runningAuction.getCurrentLeader());
     }
 
-    /** Simulate placeBid ném exception — dùng cho test exhausted/cancel path */
-    private void stubPlaceBidThrows(Auction auction, RuntimeException ex) {
-        doThrow(ex).when(bidService).placeBid(any(), eq(auction), anyLong(), any());
+    @Test
+    @DisplayName("bidService được gọi số lần hữu hạn ≤ giới hạn an toàn")
+    void process_escalation_bidServiceCallsAreBounded() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      // Act
+      sut.submit(runningAuction, seller.getId());
+
+      // Assert: 2 auto-bidder → maxIterations = 2*2+2 = 6, số counter thực tế << 6
+      verify(bidService, atMost(20)).placeBid(any(), eq(runningAuction), anyLong(), any());
     }
 
-    // =========================================================================
-    // 1. No auto-bidder registered
-    // =========================================================================
+    @Test
+    @DisplayName("sau escalation, bidderB bị loại → chỉ bidderA còn trong registry")
+    void process_oneExhaustedOneRemaining_loopEnds() {
+      // Arrange
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 4;
+      long maxBidB = STARTING_PRICE + INCREMENT_LOW;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-    @Nested
-    @DisplayName("Không có auto-bid nào được đăng ký")
-    class NoAutoBidder {
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("process() không gọi bidService khi registry trống")
-        void process_emptyRegistry_noBidServiceCall() {
-            // Arrange: không register auto-bid nào
+      // Assert
+      assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+      assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
+    }
+  }
 
-            // Act
-            sut.submit(runningAuction, bidderA.getId());
+  // =========================================================================
+  // 7. User không tìm thấy — fallback DB trả về null
+  // =========================================================================
 
-            // Assert
-            verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
-        }
+  @Nested
+  @DisplayName("User không tìm thấy — fallback DB trả về null")
+  class UserNotFound {
 
-        @Test
-        @DisplayName("process() không gửi notification khi registry trống")
-        void process_emptyRegistry_noNotificationSent() {
-            // Arrange: registry trống
+    @Test
+    @DisplayName("user không tồn tại → entry bị cancel khỏi registry")
+    void process_userNotFound_entryCancelled() {
+      // Arrange
+      String ghostUserId = "ghost-user-id-9999";
+      registry.register(ghostUserId, runningAuction.getId(), 2_000_000L);
+      when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
 
-            // Act
-            sut.submit(runningAuction, bidderA.getId());
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-            // Assert
-            verify(sessionManager, never()).sendToUser(anyString(), any());
-            verify(sessionManager, never()).broadcastToAuction(anyString(), any());
-        }
-
-        @Test
-        @DisplayName("process() không ném exception khi registry trống")
-        void process_emptyRegistry_doesNotThrow() {
-            // Act & Assert
-            assertDoesNotThrow(() -> sut.submit(runningAuction, bidderA.getId()));
-        }
+      // Assert
+      assertFalse(registry.hasActiveBid(ghostUserId, runningAuction.getId()));
     }
 
-    // =========================================================================
-    // 2. Single auto-bidder — không phải current leader
-    // =========================================================================
+    @Test
+    @DisplayName("user không tìm thấy → bidService không được gọi")
+    void process_userNotFound_noBidServiceCall() {
+      // Arrange
+      String ghostUserId = "ghost-user-id-8888";
+      registry.register(ghostUserId, runningAuction.getId(), 2_000_000L);
+      when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
 
-    @Nested
-    @DisplayName("Một auto-bidder bị vượt — có thể counter")
-    class SingleAutoBidder {
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("bidderA bị vượt, còn budget → tự counter ít nhất 1 lần")
-        void process_singleBidderExceeded_counterBidOnce() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            verify(bidService, atLeastOnce())
-                .placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("counter bid amount = currentPrice + increment")
-        void process_singleBidder_counterBidAmountIsCurrentPlusIncrement() {
-            // Arrange
-            long expectedNextBid = STARTING_PRICE + INCREMENT_LOW;
-            registry.register(bidderA.getId(), runningAuction.getId(), expectedNextBid);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            verify(bidService).placeBid(
-                eq(bidderA), eq(runningAuction), eq(expectedNextBid), any());
-        }
-
-        @Test
-        @DisplayName("sau khi counter thành công, bidderA trở thành leader")
-        void process_singleBidder_counterBid_bidderBecomesLeader() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertEquals(bidderA, runningAuction.getCurrentLeader());
-        }
-
-        @Test
-        @DisplayName("bidderA là current leader → không tự counter")
-        void process_singleBidder_alreadyLeading_noCounter() {
-            // Arrange: đặt bidderA làm leader thủ công
-            runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderA);
-            registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
-
-            // Act
-            sut.submit(runningAuction, bidderA.getId());
-
-            // Assert: không gọi bidService vì bidderA đã dẫn đầu
-            verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
-        }
+      // Assert
+      verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
     }
 
-    // =========================================================================
-    // 3. maxBid exhausted — không đủ counter
-    // =========================================================================
+    @Test
+    @DisplayName("ghost user bị skip, valid user vẫn counter bình thường")
+    void process_ghostUserSkipped_validUserStillCounters() {
+      // Arrange
+      String ghostId = "ghost-user-id-7777";
+      registry.register(ghostId, runningAuction.getId(), 3_000_000L);
+      registry.register(
+          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 2);
 
-    @Nested
-    @DisplayName("Auto-bidder hết budget (maxBid cạn)")
-    class MaxBidExhausted {
+      when(userDAO.findNormalUserById(ghostId)).thenReturn(null);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-        @Test
-        @DisplayName("maxBid không đủ counter → bidService không được gọi")
-        void process_maxBidTooLow_noBidServiceCall() {
-            // Arrange: maxBidA = currentPrice → calculateNextBid = -1
-            long insufficientMax = STARTING_PRICE;
-            registry.register(bidderA.getId(), runningAuction.getId(), insufficientMax);
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-            // Act
-            sut.submit(runningAuction, bidderB.getId());
+      // Assert: bidderA vẫn counter dù ghost user bị skip
+      verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
+    }
+  }
 
-            // Assert
-            verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
-        }
+  // =========================================================================
+  // 8. Race condition — InvalidBidException không được cancel auto-bid entry
+  // =========================================================================
 
-        @Test
-        @DisplayName("placeBid ném exception → entry bị xóa khỏi registry")
-        void process_placeBidThrows_entryRemovedFromRegistry() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            stubPlaceBidThrows(runningAuction, new RuntimeException("maxBid exceeded"));
+  @Nested
+  @DisplayName("Race condition: InvalidBidException → entry KHÔNG bị cancel")
+  class RaceConditionHandling {
 
-            // Act
-            sut.submit(runningAuction, seller.getId());
+    @Test
+    @DisplayName("placeBid ném InvalidBidException (stale price) → entry vẫn còn trong registry")
+    void process_invalidBidException_entryNotCancelled() {
+      // Arrange: giả lập giá vừa bị đẩy lên (stale price race)
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      doThrow(new InvalidBidException("Giá đặt thấp hơn mức tối thiểu", 0L, 0L))
+          .when(bidService)
+          .placeBid(any(), eq(runningAuction), anyLong(), any());
 
-            // Assert
-            assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
-        }
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("maxBid cạn sau khi bidderB vượt → AUTO_BID_EXHAUSTED_NOTIFY gửi cho bidderA")
-        void process_exhaustedBidder_exhaustedNotifySent() {
-            // Arrange: bidderB bid vượt maxBidA → bidderA hết budget
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            long priceAboveMaxA = maxBidA + INCREMENT_LOW;
-            runningAuction.updateBid(priceAboveMaxA, bidderB);
-
-            // Act
-            sut.submit(runningAuction, bidderB.getId());
-
-            // Assert
-            verify(sessionManager).sendToUser(eq(bidderA.getId()), any());
-        }
-
-        @Test
-        @DisplayName("maxBid cạn → entry bị xóa khỏi registry")
-        void process_exhaustedBidder_entryRemovedFromRegistry() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            long priceAboveMaxA = maxBidA + INCREMENT_LOW;
-            runningAuction.updateBid(priceAboveMaxA, bidderB);
-
-            // Act
-            sut.submit(runningAuction, bidderB.getId());
-
-            // Assert
-            assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
-        }
+      // Assert: entry KHÔNG bị xóa — đây là lỗi tạm thời do race, không phải lỗi nghiêm trọng
+      assertTrue(
+          registry.hasActiveBid(bidderA.getId(), runningAuction.getId()),
+          "InvalidBidException là race condition tạm thời — không được cancel entry");
     }
 
-    // =========================================================================
-    // 4. Two competing auto-bidders — different maxBid
-    // =========================================================================
+    @Test
+    @DisplayName("AuctionClosedException → entry bị cancel và loop dừng")
+    void process_auctionClosedException_loopBreaks() {
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      doThrow(
+              new com.group13.auction.exception.AuctionClosedException(
+                  Auction.AuctionStatus.FINISHED))
+          .when(bidService)
+          .placeBid(any(), eq(runningAuction), anyLong(), any());
 
-    @Nested
-    @DisplayName("Hai auto-bidder cạnh tranh — maxBid khác nhau")
-    class TwoCompetingBiddersDifferentMaxBid {
+      // Act — không ném exception
+      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
 
-        @Test
-        @DisplayName("bidderA (maxBid cao hơn) thắng sau chuỗi escalation")
-        void process_twoCompeting_higherMaxBidWins() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5; // 750_000
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2; // 600_000
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertEquals(bidderA, runningAuction.getCurrentLeader(),
-                "bidderA có maxBid cao hơn phải thắng");
-        }
-
-        @Test
-        @DisplayName("bidderB (maxBid thấp hơn) bị loại → entry bị xóa")
-        void process_twoCompeting_lowerMaxBidderEntryRemoved() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
-        }
-
-        @Test
-        @DisplayName("bidderA (maxBid cao hơn) entry vẫn tồn tại trong registry")
-        void process_twoCompeting_winnerEntryStillInRegistry() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
-        }
-
-        @Test
-        @DisplayName("giá cuối phải vượt maxBidB (bidderA vượt được bidderB)")
-        void process_twoCompeting_finalPriceExceedsLowerMaxBid() {
-            // Arrange
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 2; // 600_000
-            long maxBidA = maxBidB + INCREMENT_LOW;             // 650_000
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertTrue(runningAuction.getCurrentPrice() >= maxBidB,
-                "Giá cuối phải vượt maxBidB");
-        }
+      // Assert: bidService chỉ được gọi đúng 1 lần (loop break ngay sau AuctionClosed)
+      verify(bidService, times(1)).placeBid(any(), any(), anyLong(), any());
     }
 
-    // =========================================================================
-    // 5. Tie: same maxBid — tie-breaking theo registeredAt
-    //    (dùng AutoBidEntry constructor trực tiếp để kiểm soát registeredAt
-    //     mà không cần Thread.sleep)
-    // =========================================================================
+    @Test
+    @DisplayName("RuntimeException khác → entry bị cancel (lỗi nghiêm trọng)")
+    void process_unexpectedException_entryCancelled() {
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+      doThrow(new RuntimeException("Lỗi không mong muốn"))
+          .when(bidService)
+          .placeBid(any(), eq(runningAuction), anyLong(), any());
 
-    @Nested
-    @DisplayName("Tie: hai auto-bidder cùng maxBid — tie-breaking theo registeredAt")
-    class SameMaxBidTieBreaking {
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("bidderA đăng ký trước (registeredAt nhỏ hơn) cùng maxBid → bidderA thắng tie")
-        void process_sameMaxBid_earlierRegistrationWins() throws Exception {
-            // Arrange: inject entry trực tiếp với registeredAt kiểm soát được
-            long sameMaxBid = STARTING_PRICE + INCREMENT_LOW * 3;
-            LocalDateTime earlier = LocalDateTime.now().minusSeconds(10);
-            LocalDateTime later   = LocalDateTime.now();
+      assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
+    }
+  }
 
-            injectEntry(bidderA.getId(), runningAuction.getId(), sameMaxBid, earlier);
-            injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid, later);
+  // =========================================================================
+  // 9. Auction ở trạng thái không hợp lệ
+  // =========================================================================
 
-            stubPlaceBidWithSideEffect(runningAuction);
+  @Nested
+  @DisplayName("Auction ở trạng thái không hợp lệ")
+  class InvalidAuctionState {
 
-            // Act
-            sut.submit(runningAuction, seller.getId());
+    @Test
+    @DisplayName("auction FINISHED → placeBid ném exception → entry bị cancel")
+    void process_finishedAuction_entryRemovedOnException() {
+      // Arrange
+      NormalUser winner = TestFixture.bidderWithBalance("winnerUser1", 5_000_000L);
+      winner.addJoinedAuction(runningAuction.getId());
+      Auction finishedAuction =
+          TestFixture.finishedAuction(
+              seller, winner, STARTING_PRICE, STARTING_PRICE + INCREMENT_LOW);
 
-            // Assert: bidderA (đăng ký sớm hơn) dẫn đầu
-            assertEquals(bidderA, runningAuction.getCurrentLeader(),
-                "Với cùng maxBid, người đăng ký trước phải thắng tie");
-        }
+      long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
+      registry.register(bidderA.getId(), finishedAuction.getId(), maxBidA);
 
-        @Test
-        @DisplayName("bidderB đăng ký trước (registeredAt nhỏ hơn) cùng maxBid → bidderB thắng tie")
-        void process_sameMaxBid_laterRegistrationLoses() throws Exception {
-            // Arrange
-            long sameMaxBid = STARTING_PRICE + INCREMENT_LOW * 3;
-            LocalDateTime earlier = LocalDateTime.now().minusSeconds(10);
-            LocalDateTime later   = LocalDateTime.now();
+      doThrow(
+              new com.group13.auction.exception.AuctionClosedException(
+                  Auction.AuctionStatus.FINISHED))
+          .when(bidService)
+          .placeBid(any(), eq(finishedAuction), anyLong(), any());
 
-            injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid, earlier);
-            injectEntry(bidderA.getId(), runningAuction.getId(), sameMaxBid, later);
+      AuctionManager.getInstance().addToUserList(bidderA);
+      bidderA.addJoinedAuction(finishedAuction.getId());
 
-            stubPlaceBidWithSideEffect(runningAuction);
+      // Act
+      sut.submit(finishedAuction, seller.getId());
 
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertEquals(bidderB, runningAuction.getCurrentLeader(),
-                "bidderB đăng ký trước phải thắng tie");
-        }
-
-        @Test
-        @DisplayName("tie: cùng maxBid 1 increment → escalation terminate, không infinite loop")
-        void process_sameMaxBid_escalationTerminates() throws Exception {
-            // Arrange: chỉ 1 người bid được (ai đăng ký trước thắng)
-            long sameMaxBid = STARTING_PRICE + INCREMENT_LOW;
-            injectEntry(bidderA.getId(), runningAuction.getId(), sameMaxBid,
-                LocalDateTime.now().minusSeconds(5));
-            injectEntry(bidderB.getId(), runningAuction.getId(), sameMaxBid,
-                LocalDateTime.now());
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act & Assert: không infinite loop
-            assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
-        }
-
-        /**
-         * Inject AutoBidEntry trực tiếp vào registry map để kiểm soát registeredAt
-         * mà không cần Thread.sleep() (tuân thủ nguyên tắc FIRST).
-         */
-        @SuppressWarnings("unchecked")
-        private void injectEntry(String userId, String auctionId,
-                                 long maxBid, LocalDateTime registeredAt) throws Exception {
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                userId, auctionId, maxBid, registeredAt);
-            Field mapField = AutoBidRegistry.class.getDeclaredField("registry");
-            mapField.setAccessible(true);
-            ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry> map =
-                (ConcurrentHashMap<String, AutoBidRegistry.AutoBidEntry>)
-                    mapField.get(registry);
-            map.put(userId + ":" + auctionId, entry);
-        }
+      // Assert
+      assertFalse(registry.hasActiveBid(bidderA.getId(), finishedAuction.getId()));
     }
 
-    // =========================================================================
-    // 6. Escalation chain termination — không infinite loop
-    // =========================================================================
+    @Test
+    @DisplayName("auction CANCELED → placeBid ném exception → process không crash")
+    void process_canceledAuction_processDoesNotThrow() {
+      // Arrange
+      Auction canceledAuction = TestFixture.canceledFromRunningAuction(seller, STARTING_PRICE);
+      registry.register(bidderA.getId(), canceledAuction.getId(), STARTING_PRICE + INCREMENT_LOW);
 
-    @Nested
-    @DisplayName("Chuỗi escalation phải terminate đúng")
-    class EscalationTermination {
+      AuctionManager.getInstance().addToUserList(bidderA);
+      bidderA.addJoinedAuction(canceledAuction.getId());
 
-        @Test
-        @DisplayName("3 auto-bidder khác maxBid → escalation terminate, bidderA (cao nhất) thắng")
-        void process_threeCompeting_escalationTerminates() {
-            // Arrange
-            NormalUser bidderC = TestFixture.bidderWithBalance("bidderCUser", 10_000_000L);
-            bidderC.addJoinedAuction(runningAuction.getId());
-            AuctionManager.getInstance().addToUserList(bidderC);
+      doThrow(
+              new com.group13.auction.exception.AuctionClosedException(
+                  Auction.AuctionStatus.CANCELED))
+          .when(bidService)
+          .placeBid(any(), eq(canceledAuction), anyLong(), any());
 
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 6; // 800_000 — cao nhất
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 3; // 650_000
-            long maxBidC = STARTING_PRICE + INCREMENT_LOW * 1; // 550_000 — thấp nhất
+      // Act & Assert
+      assertDoesNotThrow(() -> sut.submit(canceledAuction, seller.getId()));
+    }
+  }
 
-            registry.register(bidderC.getId(), runningAuction.getId(), maxBidC);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
+  // =========================================================================
+  // 10. triggeredByUserId edge case
+  // =========================================================================
 
-            stubPlaceBidWithSideEffect(runningAuction);
+  @Nested
+  @DisplayName("triggeredByUserId edge case")
+  class TriggeredByEdgeCase {
 
-            // Act
-            assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+    @Test
+    @DisplayName("triggeredBy = auto-bidder đang dẫn đầu → không self-counter")
+    void process_triggeredByIsCurrentLeader_noSelfCounter() {
+      // Arrange: bidderA đang dẫn đầu và có auto-bid
+      runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderA);
+      registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
 
-            // Assert
-            assertEquals(bidderA, runningAuction.getCurrentLeader());
-        }
+      // Act
+      sut.submit(runningAuction, bidderA.getId());
 
-        @Test
-        @DisplayName("bidService được gọi số lần hữu hạn ≤ giới hạn an toàn")
-        void process_escalation_bidServiceCallsAreBounded() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 5;
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert: 2 auto-bidder → maxIterations = 2*2+2 = 6, số counter thực tế << 6
-            verify(bidService, atMost(20))
-                .placeBid(any(), eq(runningAuction), anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("sau escalation, bidderB bị loại → chỉ bidderA còn trong registry")
-        void process_oneExhaustedOneRemaining_loopEnds() {
-            // Arrange
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 4;
-            long maxBidB = STARTING_PRICE + INCREMENT_LOW;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            registry.register(bidderB.getId(), runningAuction.getId(), maxBidB);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
-            assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
-        }
+      // Assert: bidderA là leader → bị skip → không gọi bidService
+      verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
     }
 
-    // =========================================================================
-    // 7. User không tìm thấy — fallback DB trả về null
-    // =========================================================================
+    @Test
+    @DisplayName("triggeredBy = bidderB, bidderA có auto-bid và không phải leader → counter")
+    void process_triggeredByDifferentUser_autoBidderCounters() {
+      // Arrange: bidderB vừa bid, bidderA có auto-bid, bidderA không phải leader
+      runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderB);
+      registry.register(
+          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 3);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-    @Nested
-    @DisplayName("User không tìm thấy — fallback DB trả về null")
-    class UserNotFound {
+      // Act
+      sut.submit(runningAuction, bidderB.getId());
 
-        @Test
-        @DisplayName("user không tồn tại → entry bị cancel khỏi registry")
-        void process_userNotFound_entryCancelled() {
-            // Arrange
-            String ghostUserId = "ghost-user-id-9999";
-            registry.register(ghostUserId, runningAuction.getId(), 2_000_000L);
-            when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
+      // Assert: bidderA counter
+      verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
+    }
+  }
 
-            // Act
-            sut.submit(runningAuction, seller.getId());
+  // =========================================================================
+  // 11. Notification correctness
+  // =========================================================================
 
-            // Assert
-            assertFalse(registry.hasActiveBid(ghostUserId, runningAuction.getId()));
-        }
+  @Nested
+  @DisplayName("Notification: autobid counter broadcast, không gửi TRIGGERED notify")
+  class NotificationCorrectness {
 
-        @Test
-        @DisplayName("user không tìm thấy → bidService không được gọi")
-        void process_userNotFound_noBidServiceCall() {
-            // Arrange
-            String ghostUserId = "ghost-user-id-8888";
-            registry.register(ghostUserId, runningAuction.getId(), 2_000_000L);
-            when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
+    @Test
+    @DisplayName("sau khi counter thành công, không gửi AUTO_BID_TRIGGERED_NOTIFY riêng cho user")
+    void process_successfulCounter_noTriggeredNotifySent() {
+      // Arrange
+      registry.register(
+          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 3);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-            // Act
-            sut.submit(runningAuction, seller.getId());
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-            // Assert
-            verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("ghost user bị skip, valid user vẫn counter bình thường")
-        void process_ghostUserSkipped_validUserStillCounters() {
-            // Arrange
-            String ghostId = "ghost-user-id-7777";
-            registry.register(ghostId, runningAuction.getId(), 3_000_000L);
-            registry.register(bidderA.getId(), runningAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW * 2);
-
-            when(userDAO.findNormalUserById(ghostId)).thenReturn(null);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert: bidderA vẫn counter dù ghost user bị skip
-            verify(bidService, atLeastOnce())
-                .placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
-        }
+      // Assert — chỉ broadcast BID_UPDATE, không push TRIGGERED tới user
+      verify(sessionManager, never())
+          .sendToUser(
+              eq(bidderA.getId()),
+              argThat(
+                  packet ->
+                      packet != null
+                          && packet.getType()
+                              == com.group13.auction.common.protocol.PacketType
+                                  .AUTO_BID_TRIGGERED_NOTIFY));
     }
 
-    // =========================================================================
-    // 8. Race condition — InvalidBidException không được cancel auto-bid entry
-    // =========================================================================
+    @Test
+    @DisplayName("sau khi counter thành công, broadcastToAuction được gọi đúng auctionId")
+    void process_successfulCounter_broadcastSentToCorrectAuction() {
+      // Arrange
+      String auctionId = runningAuction.getId();
+      registry.register(bidderA.getId(), auctionId, STARTING_PRICE + INCREMENT_LOW * 3);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-    @Nested
-    @DisplayName("Race condition: InvalidBidException → entry KHÔNG bị cancel")
-    class RaceConditionHandling {
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("placeBid ném InvalidBidException (stale price) → entry vẫn còn trong registry")
-        void process_invalidBidException_entryNotCancelled() {
-            // Arrange: giả lập giá vừa bị đẩy lên (stale price race)
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            doThrow(new InvalidBidException("Giá đặt thấp hơn mức tối thiểu", 0L, 0L))
-                .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert: entry KHÔNG bị xóa — đây là lỗi tạm thời do race, không phải lỗi nghiêm trọng
-            assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()),
-                "InvalidBidException là race condition tạm thời — không được cancel entry");
-        }
-
-        @Test
-        @DisplayName("AuctionClosedException → entry bị cancel và loop dừng")
-        void process_auctionClosedException_loopBreaks() {
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            doThrow(new com.group13.auction.exception.AuctionClosedException(
-                Auction.AuctionStatus.FINISHED))
-                .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
-
-            // Act — không ném exception
-            assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
-
-            // Assert: bidService chỉ được gọi đúng 1 lần (loop break ngay sau AuctionClosed)
-            verify(bidService, times(1)).placeBid(any(), any(), anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("RuntimeException khác → entry bị cancel (lỗi nghiêm trọng)")
-        void process_unexpectedException_entryCancelled() {
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), runningAuction.getId(), maxBidA);
-            doThrow(new RuntimeException("Lỗi không mong muốn"))
-                .when(bidService).placeBid(any(), eq(runningAuction), anyLong(), any());
-
-            sut.submit(runningAuction, seller.getId());
-
-            assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
-        }
+      // Assert
+      verify(sessionManager, atLeastOnce()).broadcastToAuction(eq(auctionId), any());
     }
 
-    // =========================================================================
-    // 9. Auction ở trạng thái không hợp lệ
-    // =========================================================================
+    @Test
+    @DisplayName("không có counter nào xảy ra → không gửi BID_UPDATE broadcast")
+    void process_noCounter_noBidUpdateBroadcast() {
+      // Arrange: không ai đăng ký auto-bid
 
-    @Nested
-    @DisplayName("Auction ở trạng thái không hợp lệ")
-    class InvalidAuctionState {
+      // Act
+      sut.submit(runningAuction, seller.getId());
 
-        @Test
-        @DisplayName("auction FINISHED → placeBid ném exception → entry bị cancel")
-        void process_finishedAuction_entryRemovedOnException() {
-            // Arrange
-            NormalUser winner = TestFixture.bidderWithBalance("winnerUser1", 5_000_000L);
-            winner.addJoinedAuction(runningAuction.getId());
-            Auction finishedAuction = TestFixture.finishedAuction(
-                seller, winner, STARTING_PRICE, STARTING_PRICE + INCREMENT_LOW);
+      // Assert
+      verify(sessionManager, never()).broadcastToAuction(anyString(), any());
+    }
+  }
 
-            long maxBidA = STARTING_PRICE + INCREMENT_LOW * 3;
-            registry.register(bidderA.getId(), finishedAuction.getId(), maxBidA);
+  // =========================================================================
+  // 12. Repeated processing consistency
+  // =========================================================================
 
-            doThrow(new com.group13.auction.exception.AuctionClosedException(
-                Auction.AuctionStatus.FINISHED))
-                .when(bidService).placeBid(any(), eq(finishedAuction), anyLong(), any());
+  @Nested
+  @DisplayName("Repeated processing: gọi process() nhiều lần")
+  class RepeatedProcessing {
 
-            AuctionManager.getInstance().addToUserList(bidderA);
-            bidderA.addJoinedAuction(finishedAuction.getId());
+    @Test
+    @DisplayName("sau khi bidderA đã là leader, gọi process() lần 2 không thay đổi leader")
+    void process_calledTwice_leaderRemainsAfterFirstProcess() {
+      // Arrange
+      registry.register(
+          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 5);
+      registry.register(
+          bidderB.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 2);
+      stubPlaceBidWithSideEffect(runningAuction);
 
-            // Act
-            sut.submit(finishedAuction, seller.getId());
+      // Act: lần 1
+      sut.submit(runningAuction, seller.getId());
+      NormalUser leaderAfterFirst = runningAuction.getCurrentLeader();
 
-            // Assert
-            assertFalse(registry.hasActiveBid(bidderA.getId(), finishedAuction.getId()));
-        }
+      // Act: lần 2 (bidderA đang dẫn đầu, bidderB đã bị loại)
+      sut.submit(runningAuction, seller.getId());
+      NormalUser leaderAfterSecond = runningAuction.getCurrentLeader();
 
-        @Test
-        @DisplayName("auction CANCELED → placeBid ném exception → process không crash")
-        void process_canceledAuction_processDoesNotThrow() {
-            // Arrange
-            Auction canceledAuction = TestFixture.canceledFromRunningAuction(
-                seller, STARTING_PRICE);
-            registry.register(bidderA.getId(), canceledAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW);
+      // Assert: leader không thay đổi
+      assertEquals(leaderAfterFirst, leaderAfterSecond);
+    }
+  }
 
-            AuctionManager.getInstance().addToUserList(bidderA);
-            bidderA.addJoinedAuction(canceledAuction.getId());
+  // =========================================================================
+  // 13. AutoBidEntry.calculateNextBid — unit test pure logic
+  // =========================================================================
 
-            doThrow(new com.group13.auction.exception.AuctionClosedException(
-                Auction.AuctionStatus.CANCELED))
-                .when(bidService).placeBid(any(), eq(canceledAuction), anyLong(), any());
+  @Nested
+  @DisplayName("AutoBidEntry.calculateNextBid — pure logic (không qua process())")
+  class AutoBidEntryCalculateNextBid {
 
-            // Act & Assert
-            assertDoesNotThrow(() -> sut.submit(canceledAuction, seller.getId()));
-        }
+    @Test
+    @DisplayName("tier thấp (currentPrice=500_000) → nextBid = 550_000")
+    void calculateNextBid_lowTier_returnsCurrentPlusLowIncrement() {
+      // Arrange
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 1_000_000L, LocalDateTime.now());
+
+      // Act & Assert
+      assertEquals(550_000L, entry.calculateNextBid(500_000L));
     }
 
-    // =========================================================================
-    // 10. triggeredByUserId edge case
-    // =========================================================================
+    @Test
+    @DisplayName("tier trung (currentPrice=1_000_000) → nextBid = 1_200_000")
+    void calculateNextBid_midTier_returnsCurrentPlusMidIncrement() {
+      // Arrange
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 3_000_000L, LocalDateTime.now());
 
-    @Nested
-    @DisplayName("triggeredByUserId edge case")
-    class TriggeredByEdgeCase {
-
-        @Test
-        @DisplayName("triggeredBy = auto-bidder đang dẫn đầu → không self-counter")
-        void process_triggeredByIsCurrentLeader_noSelfCounter() {
-            // Arrange: bidderA đang dẫn đầu và có auto-bid
-            runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderA);
-            registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
-
-            // Act
-            sut.submit(runningAuction, bidderA.getId());
-
-            // Assert: bidderA là leader → bị skip → không gọi bidService
-            verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
-        }
-
-        @Test
-        @DisplayName("triggeredBy = bidderB, bidderA có auto-bid và không phải leader → counter")
-        void process_triggeredByDifferentUser_autoBidderCounters() {
-            // Arrange: bidderB vừa bid, bidderA có auto-bid, bidderA không phải leader
-            runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderB);
-            registry.register(bidderA.getId(), runningAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW * 3);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, bidderB.getId());
-
-            // Assert: bidderA counter
-            verify(bidService, atLeastOnce())
-                .placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
-        }
+      // Act & Assert
+      assertEquals(1_200_000L, entry.calculateNextBid(1_000_000L));
     }
 
-    // =========================================================================
-    // 11. Notification correctness
-    // =========================================================================
+    @Test
+    @DisplayName("nextBid > maxBid → trả về -1 (exhausted)")
+    void calculateNextBid_exceedsMaxBid_returnsMinusOne() {
+      // Arrange: maxBid=549_999 < nextBid=550_000
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 549_999L, LocalDateTime.now());
 
-    @Nested
-    @DisplayName("Notification: autobid counter broadcast, không gửi TRIGGERED notify")
-    class NotificationCorrectness {
-
-        @Test
-        @DisplayName("sau khi counter thành công, không gửi AUTO_BID_TRIGGERED_NOTIFY riêng cho user")
-        void process_successfulCounter_noTriggeredNotifySent() {
-            // Arrange
-            registry.register(bidderA.getId(), runningAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW * 3);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert — chỉ broadcast BID_UPDATE, không push TRIGGERED tới user
-            verify(sessionManager, never()).sendToUser(eq(bidderA.getId()),
-                argThat(packet -> packet != null
-                    && packet.getType() == com.group13.auction.common.protocol.PacketType.AUTO_BID_TRIGGERED_NOTIFY));
-        }
-
-        @Test
-        @DisplayName("sau khi counter thành công, broadcastToAuction được gọi đúng auctionId")
-        void process_successfulCounter_broadcastSentToCorrectAuction() {
-            // Arrange
-            String auctionId = runningAuction.getId();
-            registry.register(bidderA.getId(), auctionId,
-                STARTING_PRICE + INCREMENT_LOW * 3);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            verify(sessionManager, atLeastOnce()).broadcastToAuction(eq(auctionId), any());
-        }
-
-        @Test
-        @DisplayName("không có counter nào xảy ra → không gửi BID_UPDATE broadcast")
-        void process_noCounter_noBidUpdateBroadcast() {
-            // Arrange: không ai đăng ký auto-bid
-
-            // Act
-            sut.submit(runningAuction, seller.getId());
-
-            // Assert
-            verify(sessionManager, never()).broadcastToAuction(anyString(), any());
-        }
+      // Act & Assert
+      assertEquals(-1L, entry.calculateNextBid(500_000L));
     }
 
-    // =========================================================================
-    // 12. Repeated processing consistency
-    // =========================================================================
+    @Test
+    @DisplayName("nextBid == maxBid → trả về nextBid (biên trên inclusive)")
+    void calculateNextBid_nextBidExactlyEqualsMaxBid_returnsNextBid() {
+      // Arrange: maxBid=550_000 == nextBid=550_000
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 550_000L, LocalDateTime.now());
 
-    @Nested
-    @DisplayName("Repeated processing: gọi process() nhiều lần")
-    class RepeatedProcessing {
-
-        @Test
-        @DisplayName("sau khi bidderA đã là leader, gọi process() lần 2 không thay đổi leader")
-        void process_calledTwice_leaderRemainsAfterFirstProcess() {
-            // Arrange
-            registry.register(bidderA.getId(), runningAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW * 5);
-            registry.register(bidderB.getId(), runningAuction.getId(),
-                STARTING_PRICE + INCREMENT_LOW * 2);
-            stubPlaceBidWithSideEffect(runningAuction);
-
-            // Act: lần 1
-            sut.submit(runningAuction, seller.getId());
-            NormalUser leaderAfterFirst = runningAuction.getCurrentLeader();
-
-            // Act: lần 2 (bidderA đang dẫn đầu, bidderB đã bị loại)
-            sut.submit(runningAuction, seller.getId());
-            NormalUser leaderAfterSecond = runningAuction.getCurrentLeader();
-
-            // Assert: leader không thay đổi
-            assertEquals(leaderAfterFirst, leaderAfterSecond);
-        }
+      // Act & Assert
+      assertEquals(550_000L, entry.calculateNextBid(500_000L));
     }
 
-    // =========================================================================
-    // 13. AutoBidEntry.calculateNextBid — unit test pure logic
-    // =========================================================================
+    @Test
+    @DisplayName("currentPrice=0 → nextBid = increment thấp nhất (50_000)")
+    void calculateNextBid_zeroPriceCurrentPrice_returnsLowIncrement() {
+      // Arrange
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 100_000L, LocalDateTime.now());
 
-    @Nested
-    @DisplayName("AutoBidEntry.calculateNextBid — pure logic (không qua process())")
-    class AutoBidEntryCalculateNextBid {
-
-        @Test
-        @DisplayName("tier thấp (currentPrice=500_000) → nextBid = 550_000")
-        void calculateNextBid_lowTier_returnsCurrentPlusLowIncrement() {
-            // Arrange
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 1_000_000L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(550_000L, entry.calculateNextBid(500_000L));
-        }
-
-        @Test
-        @DisplayName("tier trung (currentPrice=1_000_000) → nextBid = 1_200_000")
-        void calculateNextBid_midTier_returnsCurrentPlusMidIncrement() {
-            // Arrange
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 3_000_000L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(1_200_000L, entry.calculateNextBid(1_000_000L));
-        }
-
-        @Test
-        @DisplayName("nextBid > maxBid → trả về -1 (exhausted)")
-        void calculateNextBid_exceedsMaxBid_returnsMinusOne() {
-            // Arrange: maxBid=549_999 < nextBid=550_000
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 549_999L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(-1L, entry.calculateNextBid(500_000L));
-        }
-
-        @Test
-        @DisplayName("nextBid == maxBid → trả về nextBid (biên trên inclusive)")
-        void calculateNextBid_nextBidExactlyEqualsMaxBid_returnsNextBid() {
-            // Arrange: maxBid=550_000 == nextBid=550_000
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 550_000L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(550_000L, entry.calculateNextBid(500_000L));
-        }
-
-        @Test
-        @DisplayName("currentPrice=0 → nextBid = increment thấp nhất (50_000)")
-        void calculateNextBid_zeroPriceCurrentPrice_returnsLowIncrement() {
-            // Arrange
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 100_000L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(50_000L, entry.calculateNextBid(0L));
-        }
-
-        @Test
-        @DisplayName("tier cao (currentPrice=11_000_000) → nextBid = 11_500_000")
-        void calculateNextBid_highTier_returnsCurrentPlusHighIncrement() {
-            // Arrange
-            AutoBidRegistry.AutoBidEntry entry = new AutoBidRegistry.AutoBidEntry(
-                "u1", "a1", 20_000_000L, LocalDateTime.now());
-
-            // Act & Assert
-            assertEquals(11_500_000L, entry.calculateNextBid(11_000_000L));
-        }
+      // Act & Assert
+      assertEquals(50_000L, entry.calculateNextBid(0L));
     }
+
+    @Test
+    @DisplayName("tier cao (currentPrice=11_000_000) → nextBid = 11_500_000")
+    void calculateNextBid_highTier_returnsCurrentPlusHighIncrement() {
+      // Arrange
+      AutoBidRegistry.AutoBidEntry entry =
+          new AutoBidRegistry.AutoBidEntry("u1", "a1", 20_000_000L, LocalDateTime.now());
+
+      // Act & Assert
+      assertEquals(11_500_000L, entry.calculateNextBid(11_000_000L));
+    }
+  }
 }

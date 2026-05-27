@@ -1,79 +1,89 @@
 package com.group13.auction.dao;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.group13.auction.model.bid.FinancialTransaction;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FinancialTransactionDAO {
-    private static final Logger log = LoggerFactory.getLogger(FinancialTransactionDAO.class);
+  private static final Logger log = LoggerFactory.getLogger(FinancialTransactionDAO.class);
 
+  public FinancialTransactionDAO() {}
 
-    public FinancialTransactionDAO() {}
+  /** Lưu một giao dịch tài chính vào hệ thống để phục vụ đối soát. */
+  public boolean saveTransaction(FinancialTransaction tx) {
+    String sql =
+        "INSERT INTO financial_transactions (id, sender_id, receiver_id, amount, transaction_type,"
+            + " auction_id) VALUES (?, ?, ?, ?, ?, ?)";
 
-    /**
-     * Lưu một giao dịch tài chính vào hệ thống để phục vụ đối soát.
-     */
-    public boolean saveTransaction(FinancialTransaction tx) {
-        String sql = "INSERT INTO financial_transactions (id, sender_id, receiver_id, amount, transaction_type, auction_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setString(1, tx.getId());
+      pstmt.setString(2, tx.getFromUserId());
+      pstmt.setString(3, tx.getToUserId());
+      pstmt.setLong(4, tx.getAmount());
+      pstmt.setString(5, tx.getType().name());
+      pstmt.setString(6, tx.getAuctionId());
 
-            pstmt.setString(1, tx.getId());
-            pstmt.setString(2, tx.getFromUserId());
-            pstmt.setString(3, tx.getToUserId());
-            pstmt.setLong(4, tx.getAmount());
-            pstmt.setString(5, tx.getType().name());
-            pstmt.setString(6, tx.getAuctionId());
-
-            boolean result = pstmt.executeUpdate() > 0;
-            if (result) {
-                log.debug("Financial transaction saved: txId={}, type={}, amount={}, auctionId={}, from={}, to={}",
-                        tx.getId(), tx.getType(), tx.getAmount(), tx.getAuctionId(), tx.getFromUserId(), tx.getToUserId());
-            }
-            return result;
-        } catch (SQLException e) {
-            log.error("Failed to save financial transaction: txId={}, type={}, auctionId={}",
-                    tx.getId(), tx.getType(), tx.getAuctionId(), e);
-            return false;
-        }
+      boolean result = pstmt.executeUpdate() > 0;
+      if (result) {
+        log.debug(
+            "Financial transaction saved: txId={}, type={}, amount={}, auctionId={}, from={},"
+                + " to={}",
+            tx.getId(),
+            tx.getType(),
+            tx.getAmount(),
+            tx.getAuctionId(),
+            tx.getFromUserId(),
+            tx.getToUserId());
+      }
+      return result;
+    } catch (SQLException e) {
+      log.error(
+          "Failed to save financial transaction: txId={}, type={}, auctionId={}",
+          tx.getId(),
+          tx.getType(),
+          tx.getAuctionId(),
+          e);
+      return false;
     }
+  }
 
-    /**
-     * Lấy số tiền cọc đã lock của một user cho một auction (từ audit trail).
-     *
-     * <p>Dựa trên financial_transactions (transaction_type = 'DEPOSIT_LOCK').
-     * Nếu có nhiều bản ghi (retry/bug), trả về tổng (SUM).
-     *
-     * @return tổng tiền cọc đã lock, hoặc 0 nếu không có.
-     */
-    public long findLockedDepositAmount(String userId, String auctionId) {
-        String sql = "SELECT COALESCE(SUM(amount), 0) AS total " +
-                "FROM financial_transactions " +
-                "WHERE sender_id = ? AND auction_id = ? AND transaction_type = 'DEPOSIT_LOCK'";
+  /**
+   * Lấy số tiền cọc đã lock của một user cho một auction (từ audit trail).
+   *
+   * <p>Dựa trên financial_transactions (transaction_type = 'DEPOSIT_LOCK'). Nếu có nhiều bản ghi
+   * (retry/bug), trả về tổng (SUM).
+   *
+   * @return tổng tiền cọc đã lock, hoặc 0 nếu không có.
+   */
+  public long findLockedDepositAmount(String userId, String auctionId) {
+    String sql =
+        "SELECT COALESCE(SUM(amount), 0) AS total "
+            + "FROM financial_transactions "
+            + "WHERE sender_id = ? AND auction_id = ? AND transaction_type = 'DEPOSIT_LOCK'";
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, userId);
-            pstmt.setString(2, auctionId);
+      pstmt.setString(1, userId);
+      pstmt.setString(2, auctionId);
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    long total = rs.getLong("total");
-                    log.debug("Locked deposit found: userId={}, auctionId={}, total={}", userId, auctionId, total);
-                    return total;
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Failed to find locked deposit: userId={}, auctionId={}", userId, auctionId, e);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          long total = rs.getLong("total");
+          log.debug(
+              "Locked deposit found: userId={}, auctionId={}, total={}", userId, auctionId, total);
+          return total;
         }
-        return 0L;
+      }
+    } catch (SQLException e) {
+      log.error("Failed to find locked deposit: userId={}, auctionId={}", userId, auctionId, e);
     }
+    return 0L;
+  }
 }
