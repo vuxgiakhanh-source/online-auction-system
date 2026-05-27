@@ -119,6 +119,55 @@
     -fx-background-color: rgba(255, 255, 255, 0.03);
 }
 
+.report-page .report-table {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+}
+
+.report-page .report-table .column-header-background {
+    -fx-background-color: rgba(103, 184, 234, 0.18);
+    -fx-background-radius: 18 18 0 0;
+}
+
+.report-page .report-table .column-header,
+.report-page .report-table .filler {
+    -fx-background-color: transparent;
+    -fx-size: 42px;
+}
+
+.report-page .report-table .column-header .label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #ffffff;
+}
+
+.report-page .report-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.06);
+    -fx-border-width: 0 0 1 0;
+}
+
+.report-page .report-table .table-row-cell:filled:selected {
+    -fx-background-color: rgba(103, 184, 234, 0.22);
+}
+
+.report-page .report-table .table-cell {
+    -fx-padding: 10 12 10 12;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255, 255, 255, 0.88);
+    -fx-border-color: transparent;
+}
+
+.report-page .report-table .placeholder .label {
+    -fx-text-fill: rgba(255, 255, 255, 0.70);
+    -fx-font-weight: 700;
+}
+
 .report-page .image-list {
     -fx-background-color: rgba(255, 255, 255, 0.10);
     -fx-background-radius: 18;
@@ -261,6 +310,7 @@
 .report-text-area {
     -fx-background-color: rgba(15, 37, 60, 0.06);
     -fx-background-radius: 16px;
+    -fx-control-inner-background: transparent;
     -fx-border-color: rgba(15, 37, 60, 0.12);
     -fx-border-radius: 16px;
     -fx-text-fill: #0f253c;

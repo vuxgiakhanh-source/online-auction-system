@@ -59,10 +59,12 @@
             <Button fx:id="refreshButton"
                     mnemonicParsing="false"
                     onAction="#handleRefresh"
+                    styleClass="notification-secondary-button"
                     text="Làm mới"/>
 
             <Button mnemonicParsing="false"
                     onAction="#handleBackToHome"
+                    styleClass="notification-secondary-button"
                     text="Dashboard"/>
         </HBox>
 
@@ -99,14 +101,16 @@
                     <ListView fx:id="secondChanceListView"
                               prefHeight="142.0"
                               visible="false"
-                              managed="false"/>
+                              managed="false"
+                              styleClass="notification-list"/>
 
                     <Label styleClass="notification-field-title" text="Lịch sử thông báo Second Chance"/>
 
                     <ListView fx:id="secondChanceInboxListView"
                               prefHeight="120.0"
                               visible="false"
-                              managed="false"/>
+                              managed="false"
+                              styleClass="notification-list"/>
                 </VBox>
 
                 <Label styleClass="notification-section-title" text="Danh sách thông báo"/>
@@ -131,7 +135,8 @@
                 <ListView fx:id="notificationListView"
                           visible="false"
                           managed="false"
-                          VBox.vgrow="ALWAYS"/>
+                          VBox.vgrow="ALWAYS"
+                          styleClass="notification-list"/>
             </VBox>
 
             <VBox spacing="14.0" styleClass="notification-detail-card">

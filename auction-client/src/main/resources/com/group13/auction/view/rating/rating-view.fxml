@@ -56,7 +56,9 @@
                 <Label text="Gửi đánh giá" styleClass="section-title"/>
 
                 <Label text="Loại người được đánh giá" styleClass="form-label"/>
-                <ChoiceBox fx:id="targetTypeChoiceBox" maxWidth="Infinity"/>
+                <ChoiceBox fx:id="targetTypeChoiceBox"
+                           maxWidth="Infinity"
+                           styleClass="form-choice-box"/>
 
                 <Label text="Mã người được đánh giá" styleClass="form-label"/>
                 <TextField
@@ -71,7 +73,9 @@
                         styleClass="form-field"/>
 
                 <Label text="Điểm đánh giá" styleClass="form-label"/>
-                <ChoiceBox fx:id="ratingChoiceBox" maxWidth="Infinity"/>
+                <ChoiceBox fx:id="ratingChoiceBox"
+                           maxWidth="Infinity"
+                           styleClass="form-choice-box"/>
 
                 <Label text="Nhận xét" styleClass="form-label"/>
                 <TextArea

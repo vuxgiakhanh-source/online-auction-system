@@ -63,7 +63,9 @@
                        text="Chưa có báo cáo."
                        styleClass="muted-label"/>
 
-                <TableView fx:id="reportTable" VBox.vgrow="ALWAYS">
+                <TableView fx:id="reportTable"
+                           VBox.vgrow="ALWAYS"
+                           styleClass="report-table">
                     <columns>
                         <TableColumn fx:id="itemColumn" text="Sản phẩm" prefWidth="220.0"/>
                         <TableColumn fx:id="counterpartyColumn" text="Đối tác" prefWidth="140.0"/>
@@ -80,7 +82,8 @@
                           editable="false"
                           wrapText="true"
                           prefRowCount="18"
-                          VBox.vgrow="ALWAYS"/>
+                          VBox.vgrow="ALWAYS"
+                          styleClass="form-area"/>
             </VBox>
         </HBox>
 

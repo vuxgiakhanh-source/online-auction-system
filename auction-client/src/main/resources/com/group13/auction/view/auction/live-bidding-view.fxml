@@ -194,7 +194,7 @@
                     <VBox spacing="10.0"
                           VBox.vgrow="ALWAYS"
                           onMouseClicked="#handleOpenBidHistoryPreview"
-                          styleClass="auction-info-box, live-previewable-card">
+                          styleClass="auction-info-box live-previewable-card">
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                             <Label text="Lịch sử bid mới nhất"
                                    styleClass="auction-section-title"/>
@@ -218,7 +218,7 @@
                 <VBox spacing="12.0"
                       HBox.hgrow="ALWAYS"
                       onMouseClicked="#handleOpenChartPreview"
-                      styleClass="auction-info-box, live-previewable-card">
+                      styleClass="auction-info-box live-previewable-card">
                     <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <Label text="Biểu đồ giá realtime"
                                styleClass="auction-section-title"/>

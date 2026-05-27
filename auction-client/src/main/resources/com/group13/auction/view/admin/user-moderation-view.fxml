@@ -61,7 +61,9 @@
                 <Region HBox.hgrow="ALWAYS"/>
 
                 <Label text="Lý do khóa" styleClass="form-label"/>
-                <ChoiceBox fx:id="banReasonChoiceBox" prefWidth="180.0"/>
+                <ChoiceBox fx:id="banReasonChoiceBox"
+                           prefWidth="180.0"
+                           styleClass="form-choice-box"/>
 
                 <Button
                         fx:id="refreshButton"

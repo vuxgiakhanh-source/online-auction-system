@@ -54,6 +54,7 @@
 .auth-input {
     -fx-background-color: transparent;
     -fx-background-radius: 999;
+    -fx-control-inner-background: transparent;
 
     -fx-border-color: rgba(255, 255, 255, 0.92);
     -fx-border-radius: 999;

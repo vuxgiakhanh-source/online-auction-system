@@ -100,7 +100,8 @@
     -fx-background-color: rgba(255, 255, 255, 0.03);
 }
 
-.rating-page .choice-box {
+.rating-page .choice-box,
+.rating-page .form-choice-box {
     -fx-background-color: rgba(255, 255, 255, 0.12);
     -fx-background-radius: 999;
     -fx-background-insets: 0;
@@ -112,17 +113,20 @@
     -fx-padding: 2 8 2 8;
 }
 
-.rating-page .choice-box .label {
+.rating-page .choice-box .label,
+.rating-page .form-choice-box .label {
     -fx-font-size: 14px;
     -fx-font-weight: 700;
     -fx-text-fill: #ffffff;
 }
 
-.rating-page .choice-box .arrow {
+.rating-page .choice-box .arrow,
+.rating-page .form-choice-box .arrow {
     -fx-background-color: #ffffff;
 }
 
-.rating-page .choice-box-popup .list-view {
+.rating-page .choice-box-popup .list-view,
+.choice-box-popup .list-view {
     -fx-background-color: #2b425b;
     -fx-background-radius: 14;
     -fx-border-color: rgba(255, 255, 255, 0.14);
@@ -131,7 +135,8 @@
     -fx-padding: 4;
 }
 
-.rating-page .choice-box-popup .list-cell {
+.rating-page .choice-box-popup .list-cell,
+.choice-box-popup .list-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #ffffff;
     -fx-font-size: 13px;
@@ -139,11 +144,13 @@
     -fx-padding: 8 10 8 10;
 }
 
-.rating-page .choice-box-popup .list-cell:hover {
+.rating-page .choice-box-popup .list-cell:hover,
+.choice-box-popup .list-cell:hover {
     -fx-background-color: rgba(255, 255, 255, 0.08);
 }
 
-.rating-page .choice-box-popup .list-cell:filled:selected {
+.rating-page .choice-box-popup .list-cell:filled:selected,
+.choice-box-popup .list-cell:filled:selected {
     -fx-background-color: #1aa2df;
     -fx-text-fill: #ffffff;
 }
