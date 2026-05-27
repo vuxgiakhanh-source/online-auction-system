@@ -2,7 +2,7 @@
 
 Chỉ mục toàn bộ diagram kỹ thuật của **auction-server**, kèm sơ đồ wiring API handlers.
 
-**Mục đích:** Điều hướng developer tới đúng diagram theo chủ đề (domain, payment, bid, realtime…).  
+**Mục đích:** Điều hướng tới đúng diagram theo chủ đề (domain, payment, bid, realtime…).  
 **Use case:** Onboarding, review kiến trúc, tra cứu nhanh trước khi đọc code.  
 **Trong code:** `ServerMain` khởi động WebSocket **8080**, image HTTP **8081**, `AuctionTimerService` mỗi 1 giây.
 
