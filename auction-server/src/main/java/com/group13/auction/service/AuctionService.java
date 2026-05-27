@@ -321,6 +321,16 @@ public class AuctionService implements IAuctionService {
 
     // FIX: bỏ lệnh updateAuctionStatus thừa phía dưới (đã persist ở trên)
     cleanupObservers(auction.getId());
+    // FIX [Memory/Thread leak]: cancelAuction trước đây chỉ cleanupObservers — nhưng auction
+    // bị cancel cũng phải dọn AutoBid state. Nếu không:
+    //   - AutoBidRegistry vẫn giữ entries cho user đã đăng ký auto-bid của phiên này.
+    //   - AutoBidProcessor giữ executor (single-thread per auction) + 4 ConcurrentHashMap
+    //     state — thread leak.
+    //   - Worst: auto-bid logic có thể tiếp tục submit task vào auction đã CANCELED → các
+    //     bid sau đó throw IllegalStateException hoặc bid lên auction "ma".
+    // Bug này áp dụng cho mọi đường gọi cancelAuction: SystemAdmin, PaymentService.expirePayment,
+    // PaymentService.expireSecondChanceOfferIfDue, autoHandleCancelRequest.
+    cleanupAutoBidState(auction.getId());
   }
 
   /**
@@ -370,6 +380,8 @@ public class AuctionService implements IAuctionService {
             new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
 
     cleanupObservers(auction.getId());
+    // FIX [Memory/Thread leak]: xem giải thích ở cancelAuction(Auction, Admin.CancelReason).
+    cleanupAutoBidState(auction.getId());
   }
 
   /**
@@ -553,5 +565,37 @@ public class AuctionService implements IAuctionService {
     }
     // FIX: dọn lock entry để tránh memory leak khi nhiều phiên kết thúc
     observerLocks.remove(auctionId);
+  }
+
+  /**
+   * Dọn AutoBid state khi phiên đóng (cancel/end).
+   *
+   * <p>FIX [Memory/Thread leak]: Trước đây mọi đường cancelAuction đều thiếu cleanup này — chỉ
+   * {@code AuctionTimerService.closeAuctionsDueByTime} mới gọi qua chuỗi
+   * {@code autoBidRegistry.clearAuction() + AutoBidProcessor.clearAuctionActivity()}. Vậy khi
+   * SystemAdmin / Staff / PaymentService cancel auction:
+   *
+   * <ul>
+   *   <li>AutoBidRegistry vẫn giữ entries user đăng ký auto-bid → DB row rác, RAM rác.
+   *   <li>AutoBidProcessor giữ executor single-thread per auction + 4 ConcurrentHashMap state
+   *       — thread leak: server long-running tích lũy hàng nghìn executor zombie.
+   *   <li>Chain auto-bid có thể đang queued tiếp tục trigger bid vào auction CANCELED →
+   *       BidService phát hiện status sai, log error spam.
+   * </ul>
+   *
+   * <p>Cô lập trong helper để mọi cancel path đều dùng chung — tránh quên đồng bộ logic.
+   * Try/catch defensive: cleanup không được làm fail cancel flow chính.
+   */
+  private void cleanupAutoBidState(String auctionId) {
+    try {
+      com.group13.auction.strategy.AutoBidRegistry.getInstance().clearAuction(auctionId);
+    } catch (Exception e) {
+      log.warn("Cleanup AutoBidRegistry failed: auctionId={}", auctionId, e);
+    }
+    try {
+      com.group13.auction.strategy.AutoBidProcessor.clearAuctionActivity(auctionId);
+    } catch (Exception e) {
+      log.warn("Cleanup AutoBidProcessor failed: auctionId={}", auctionId, e);
+    }
   }
 }

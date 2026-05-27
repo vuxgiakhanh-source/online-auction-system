@@ -140,7 +140,8 @@ public class SecondChanceOffer extends Entity {
    * </ol>
    */
   public boolean isExpired() {
-    // TODO: notificationDao.save()
+    // (TODO cũ "notificationDao.save()" đã xóa: side effect notification thuộc Service layer,
+    // không thuộc Model. Đã có PaymentService.expireSecondChanceOfferIfDue() + persist DB.)
     return LocalDateTime.now().isAfter(deadline) && status == OfferStatus.PENDING;
   }
 
