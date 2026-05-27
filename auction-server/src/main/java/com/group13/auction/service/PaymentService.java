@@ -347,11 +347,19 @@ public class PaymentService implements IPaymentService {
   public void refundDeposits(Auction auction) {
     String winnerId = auction.getWinner() != null ? auction.getWinner().getWinner().getId() : null;
 
-    List<NormalUser> participants = bidTransactionDAO.findBiddersByAuction(auction.getId());
+    // Hoàn cọc theo tập người đang JOINED (đã khóa cọc), không dựa vào lịch sử bid.
+    // Trước đây dùng findBiddersByAuction() khiến user join nhưng chưa có bid hợp lệ bị bỏ sót.
+    List<NormalUser> participants = new java.util.ArrayList<>();
+    for (String userId : userDAO.findJoinedUserIdsByAuctionId(auction.getId())) {
+      NormalUser user = userDAO.findNormalUserById(userId);
+      if (user != null) {
+        participants.add(user);
+      }
+    }
     long depositAmount = auction.getItem().getStartingPrice() * 3 / 10;
 
     log.info(
-        "[PAYMENT] Bắt đầu hoàn cọc: auctionId={}, status={}, tổng bidder={}, winner={},"
+        "[PAYMENT] Bắt đầu hoàn cọc: auctionId={}, status={}, tổng joined={}, winner={},"
             + " depositPerBidder={}",
         auction.getId(),
         auction.getStatus(),

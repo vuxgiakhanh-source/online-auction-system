@@ -11,6 +11,7 @@ import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.service.WalletService;
+import java.util.LinkedHashSet;
 import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IRatingService;
 import java.util.ArrayList;
@@ -108,8 +109,12 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
 
     Auction auction = buildRunningAuction();
 
-    // Mock DAO trả về danh sách bidders
-    when(mockBidTransactionDAO.findBiddersByAuction(auction.getId())).thenReturn(bidders);
+    LinkedHashSet<String> joinedIds = new LinkedHashSet<>();
+    for (NormalUser bidder : bidders) {
+      joinedIds.add(bidder.getId());
+      when(mockUserDAO.findNormalUserById(bidder.getId())).thenReturn(bidder);
+    }
+    when(mockUserDAO.findJoinedUserIdsByAuctionId(auction.getId())).thenReturn(joinedIds);
 
     CountDownLatch gate = new CountDownLatch(1);
     CountDownLatch done = new CountDownLatch(2);
@@ -169,7 +174,12 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     }
 
     Auction auction = buildRunningAuction();
-    when(mockBidTransactionDAO.findBiddersByAuction(auction.getId())).thenReturn(bidders);
+    LinkedHashSet<String> joinedIds = new LinkedHashSet<>();
+    for (NormalUser bidder : bidders) {
+      joinedIds.add(bidder.getId());
+      when(mockUserDAO.findNormalUserById(bidder.getId())).thenReturn(bidder);
+    }
+    when(mockUserDAO.findJoinedUserIdsByAuctionId(auction.getId())).thenReturn(joinedIds);
 
     CountDownLatch gate = new CountDownLatch(1);
     CountDownLatch done = new CountDownLatch(2);
@@ -212,7 +222,6 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
       "R3: forfeitDeposit() concurrent 2 lần cùng winner — deposit chỉ trừ 1 lần, không âm")
   @Timeout(value = 5)
   void forfeitDeposit_concurrent_depositDeductedOnce() throws InterruptedException {
-    long finalPrice = STARTING_PRICE;
     long depositPaid = DEPOSIT_AMOUNT;
 
     NormalUser winner = buildUser("winner-R3", USER_BALANCE);
@@ -290,7 +299,12 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
         AuctionWinner.create(winner, auction.getId(), STARTING_PRICE, DEPOSIT_AMOUNT, false);
     auction.setWinner(aw);
 
-    when(mockBidTransactionDAO.findBiddersByAuction(auction.getId())).thenReturn(allParticipants);
+    LinkedHashSet<String> joinedIds = new LinkedHashSet<>();
+    for (NormalUser participant : allParticipants) {
+      joinedIds.add(participant.getId());
+      when(mockUserDAO.findNormalUserById(participant.getId())).thenReturn(participant);
+    }
+    when(mockUserDAO.findJoinedUserIdsByAuctionId(auction.getId())).thenReturn(joinedIds);
 
     paymentService.refundDeposits(auction);
 

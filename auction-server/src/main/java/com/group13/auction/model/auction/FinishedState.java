@@ -28,7 +28,7 @@ public class FinishedState implements AuctionState {
 
   @Override
   public AuctionState cancel() {
-    throw new IllegalStateException("Phiên đã FINISHED — không thể cancel. Chỉ có thể PAID.");
+    return CanceledState.INSTANCE;
   }
 
   @Override

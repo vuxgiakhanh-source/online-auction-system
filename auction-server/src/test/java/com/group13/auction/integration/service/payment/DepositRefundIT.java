@@ -114,6 +114,7 @@ class DepositRefundIT extends IntegrationTestBase {
 
     for (NormalUser b : List.of(b1, b2, b3)) {
       b.addJoinedAuction(auction.getId());
+      userDAO.saveUserAuctionActivity(b.getId(), auction.getId(), "JOINED");
       walletService.lockDeposit(b, deposit, auction.getId());
       // Cần có BidTransaction ACCEPTED để findBiddersByAuction() trả về
       BidTransaction tx =
@@ -163,6 +164,7 @@ class DepositRefundIT extends IntegrationTestBase {
 
     for (NormalUser b : List.of(winner, loser)) {
       b.addJoinedAuction(auction.getId());
+      userDAO.saveUserAuctionActivity(b.getId(), auction.getId(), "JOINED");
       walletService.lockDeposit(b, deposit, auction.getId());
     }
 
@@ -215,6 +217,7 @@ class DepositRefundIT extends IntegrationTestBase {
     long deposit = auction.getItem().getStartingPrice() * 3 / 10;
 
     bidder.addJoinedAuction(auction.getId());
+    userDAO.saveUserAuctionActivity(bidder.getId(), auction.getId(), "JOINED");
     walletService.lockDeposit(bidder, deposit, auction.getId());
     bidTransactionDAO.saveTransaction(
         BidTransaction.create(
