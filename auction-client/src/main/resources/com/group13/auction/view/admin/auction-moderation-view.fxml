@@ -61,7 +61,9 @@
                 <Region HBox.hgrow="ALWAYS"/>
 
                 <Label text="Lý do hủy" styleClass="form-label"/>
-                <ChoiceBox fx:id="cancelReasonChoiceBox" prefWidth="210.0"/>
+                <ChoiceBox fx:id="cancelReasonChoiceBox"
+                           prefWidth="210.0"
+                           styleClass="form-choice-box"/>
 
                 <Button
                         fx:id="refreshButton"
