@@ -1,4 +1,4 @@
 package com.group13.auction.service.support;
 
-public class PermissionService {
-}
+/** Placeholder for shared client permission support. */
+public class PermissionService {}

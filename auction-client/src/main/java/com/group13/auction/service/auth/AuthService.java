@@ -30,226 +30,222 @@ import java.util.concurrent.TimeUnit;
  */
 public final class AuthService {
 
-    private static final long AUTH_TIMEOUT_SECONDS = 12L;
+  private static final long AUTH_TIMEOUT_SECONDS = 12L;
 
-    private static final ScheduledExecutorService TIMEOUT_EXECUTOR =
-            Executors.newSingleThreadScheduledExecutor(
-                    runnable -> {
-                        Thread thread = new Thread(runnable, "auth-timeout");
-                        thread.setDaemon(true);
-                        return thread;
-                    });
+  private static final ScheduledExecutorService TIMEOUT_EXECUTOR =
+      Executors.newSingleThreadScheduledExecutor(
+          runnable -> {
+            Thread thread = new Thread(runnable, "auth-timeout");
+            thread.setDaemon(true);
+            return thread;
+          });
 
-    private final ClientNetworkFacade networkFacade;
-    private final SessionManager sessionManager;
+  private final ClientNetworkFacade networkFacade;
+  private final SessionManager sessionManager;
 
-    /** Tạo auth service dùng dependency mặc định của ứng dụng. */
-    public AuthService() {
-        this(ClientNetworkFacade.getDefault(), AppContext.getInstance().getSessionManager());
+  /** Tạo auth service dùng dependency mặc định của ứng dụng. */
+  public AuthService() {
+    this(ClientNetworkFacade.getDefault(), AppContext.getInstance().getSessionManager());
+  }
+
+  /**
+   * Tạo auth service với dependency truyền vào, hữu ích cho test.
+   *
+   * @param networkFacade facade tầng network
+   * @param sessionManager manager lưu session client
+   */
+  public AuthService(ClientNetworkFacade networkFacade, SessionManager sessionManager) {
+    this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
+    this.sessionManager = Objects.requireNonNull(sessionManager, "sessionManager must not be null");
+  }
+
+  /**
+   * Đăng nhập bằng username và password.
+   *
+   * @param username tên đăng nhập
+   * @param password mật khẩu
+   * @return future chứa session nếu đăng nhập thành công
+   */
+  public CompletableFuture<UserSession> login(String username, String password) {
+    return login(new LoginFormState(username, password));
+  }
+
+  /**
+   * Đăng nhập bằng form state.
+   *
+   * @param formState dữ liệu form đăng nhập
+   * @return future chứa session nếu đăng nhập thành công
+   */
+  public CompletableFuture<UserSession> login(LoginFormState formState) {
+    Objects.requireNonNull(formState, "formState must not be null");
+
+    Optional<String> validationError = formState.validate();
+    if (validationError.isPresent()) {
+      return failedFuture(validationError.get());
     }
 
-    /**
-     * Tạo auth service với dependency truyền vào, hữu ích cho test.
-     *
-     * @param networkFacade facade tầng network
-     * @param sessionManager manager lưu session client
-     */
-    public AuthService(ClientNetworkFacade networkFacade, SessionManager sessionManager) {
-        this.networkFacade = Objects.requireNonNull(networkFacade, "networkFacade must not be null");
-        this.sessionManager = Objects.requireNonNull(sessionManager, "sessionManager must not be null");
+    Packet<?> packet =
+        ClientRequestFactory.login(formState.normalizedUsername(), formState.password());
+    return sendAuthRequest(packet, PacketType.LOGIN_SUCCESS, "Đăng nhập thất bại.");
+  }
+
+  /**
+   * Đăng ký tài khoản mới.
+   *
+   * @param username tên đăng nhập
+   * @param password mật khẩu
+   * @param email email người dùng
+   * @return future chứa session nếu đăng ký thành công
+   */
+  public CompletableFuture<UserSession> register(String username, String password, String email) {
+    return register(new RegisterFormState(email, username, password));
+  }
+
+  /**
+   * Đăng ký bằng form state.
+   *
+   * @param formState dữ liệu form đăng ký
+   * @return future chứa session nếu đăng ký thành công
+   */
+  public CompletableFuture<UserSession> register(RegisterFormState formState) {
+    Objects.requireNonNull(formState, "formState must not be null");
+
+    Optional<String> validationError = formState.validate();
+    if (validationError.isPresent()) {
+      return failedFuture(validationError.get());
     }
 
-    /**
-     * Đăng nhập bằng username và password.
-     *
-     * @param username tên đăng nhập
-     * @param password mật khẩu
-     * @return future chứa session nếu đăng nhập thành công
-     */
-    public CompletableFuture<UserSession> login(String username, String password) {
-        return login(new LoginFormState(username, password));
+    Packet<?> packet =
+        ClientRequestFactory.register(
+            formState.normalizedUsername(), formState.password(), formState.normalizedEmail());
+    return sendAuthRequest(packet, PacketType.REGISTER_SUCCESS, "Đăng ký thất bại.");
+  }
+
+  /**
+   * Đăng xuất khỏi client.
+   *
+   * <p>Client gửi packet logout theo kiểu fire-and-forget rồi xóa session local.
+   */
+  public void logout() {
+    if (networkFacade.isConnected()) {
+      networkFacade.logout();
+    }
+    sessionManager.clearSession();
+  }
+
+  private CompletableFuture<UserSession> sendAuthRequest(
+      Packet<?> packet, PacketType successType, String fallbackErrorMessage) {
+    CompletableFuture<UserSession> future = new CompletableFuture<>();
+
+    try {
+      ensureConnected();
+
+      networkFacade.sendAndExpect(
+          packet,
+          (responseType, payload) -> {
+            if (responseType == successType) {
+              completeAuthSuccess(payload, future);
+              return;
+            }
+
+            String message = extractErrorMessage(payload, fallbackErrorMessage);
+            future.completeExceptionally(new NetworkClientException(message));
+          });
+
+      ScheduledFuture<?> timeoutTask =
+          TIMEOUT_EXECUTOR.schedule(
+              () ->
+                  future.completeExceptionally(
+                      new NetworkClientException(
+                          "Server không phản hồi. Kiểm tra server đã chạy chưa.")),
+              AUTH_TIMEOUT_SECONDS,
+              TimeUnit.SECONDS);
+
+      future.whenComplete((session, throwable) -> timeoutTask.cancel(false));
+    } catch (RuntimeException exception) {
+      future.completeExceptionally(exception);
     }
 
-    /**
-     * Đăng nhập bằng form state.
-     *
-     * @param formState dữ liệu form đăng nhập
-     * @return future chứa session nếu đăng nhập thành công
-     */
-    public CompletableFuture<UserSession> login(LoginFormState formState) {
-        Objects.requireNonNull(formState, "formState must not be null");
+    return future;
+  }
 
-        Optional<String> validationError = formState.validate();
-        if (validationError.isPresent()) {
-            return failedFuture(validationError.get());
-        }
-
-        Packet<?> packet = ClientRequestFactory.login(
-                formState.normalizedUsername(), formState.password());
-        return sendAuthRequest(packet, PacketType.LOGIN_SUCCESS, "Đăng nhập thất bại.");
+  private void ensureConnected() {
+    if (networkFacade.isConnected()) {
+      return;
     }
 
-    /**
-     * Đăng ký tài khoản mới.
-     *
-     * @param username tên đăng nhập
-     * @param password mật khẩu
-     * @param email email người dùng
-     * @return future chứa session nếu đăng ký thành công
-     */
-    public CompletableFuture<UserSession> register(String username, String password, String email) {
-        return register(new RegisterFormState(email, username, password));
+    boolean connected = networkFacade.connectBlocking();
+    if (!connected) {
+      throw new NetworkClientException(
+          "Không kết nối được tới server: " + networkFacade.getServerUri());
+    }
+  }
+
+  private void completeAuthSuccess(JsonElement payload, CompletableFuture<UserSession> future) {
+    try {
+      LoginResponseDTO response = PacketCodec.fromElement(payload, LoginResponseDTO.class);
+      UserSession session = UserSession.from(response);
+      sessionManager.startSession(session);
+      future.complete(session);
+    } catch (RuntimeException exception) {
+      future.completeExceptionally(
+          new NetworkClientException("Response đăng nhập/đăng ký không hợp lệ.", exception));
+    }
+  }
+
+  private String extractErrorMessage(JsonElement payload, String fallbackMessage) {
+    if (payload == null || payload.isJsonNull()) {
+      return fallbackMessage;
     }
 
-    /**
-     * Đăng ký bằng form state.
-     *
-     * @param formState dữ liệu form đăng ký
-     * @return future chứa session nếu đăng ký thành công
-     */
-    public CompletableFuture<UserSession> register(RegisterFormState formState) {
-        Objects.requireNonNull(formState, "formState must not be null");
-
-        Optional<String> validationError = formState.validate();
-        if (validationError.isPresent()) {
-            return failedFuture(validationError.get());
-        }
-
-        Packet<?> packet = ClientRequestFactory.register(
-                formState.normalizedUsername(),
-                formState.password(),
-                formState.normalizedEmail());
-        return sendAuthRequest(packet, PacketType.REGISTER_SUCCESS, "Đăng ký thất bại.");
+    try {
+      ErrorDTO error = PacketCodec.fromElement(payload, ErrorDTO.class);
+      return toUserFriendlyAuthMessage(error, fallbackMessage);
+    } catch (RuntimeException ignored) {
+      // Dùng fallback nếu payload lỗi không parse được.
     }
 
-    /**
-     * Đăng xuất khỏi client.
-     *
-     * <p>Client gửi packet logout theo kiểu fire-and-forget rồi xóa session local.
-     */
-    public void logout() {
-        if (networkFacade.isConnected()) {
-            networkFacade.logout();
-        }
-        sessionManager.clearSession();
+    return fallbackMessage;
+  }
+
+  private String toUserFriendlyAuthMessage(ErrorDTO error, String fallbackMessage) {
+    if (error == null) {
+      return fallbackMessage;
     }
 
-    private CompletableFuture<UserSession> sendAuthRequest(
-            Packet<?> packet, PacketType successType, String fallbackErrorMessage) {
-        CompletableFuture<UserSession> future = new CompletableFuture<>();
+    String code = normalize(error.getCode());
+    String serverMessage = clean(error.getMessage());
 
-        try {
-            ensureConnected();
+    return switch (code) {
+      case ErrorDTO.USER_NOT_FOUND ->
+          "Không tìm thấy tài khoản với tên đăng nhập này. Vui lòng kiểm tra lại hoặc đăng ký tài"
+              + " khoản mới.";
+      case ErrorDTO.WRONG_PASSWORD -> "Mật khẩu chưa đúng. Vui lòng nhập lại mật khẩu.";
+      case ErrorDTO.ACCOUNT_BANNED ->
+          "Tài khoản này đã bị khóa. Vui lòng liên hệ Admin để được hỗ trợ.";
+      case ErrorDTO.ACCOUNT_SUSPENDED ->
+          "Tài khoản này đang bị tạm ngưng. Vui lòng thử lại sau hoặc liên hệ Admin.";
+      case ErrorDTO.DUPLICATE_USERNAME ->
+          "Tên đăng nhập này đã tồn tại. Vui lòng chọn tên đăng nhập khác.";
+      case ErrorDTO.DUPLICATE_EMAIL ->
+          "Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.";
+      case ErrorDTO.VALIDATION_ERROR -> serverMessage.isBlank() ? fallbackMessage : serverMessage;
+      case ErrorDTO.INTERNAL_ERROR -> fallbackMessage + " Vui lòng thử lại sau.";
+      default -> serverMessage.isBlank() ? fallbackMessage : serverMessage;
+    };
+  }
 
-            networkFacade.sendAndExpect(
-                    packet,
-                    (responseType, payload) -> {
-                        if (responseType == successType) {
-                            completeAuthSuccess(payload, future);
-                            return;
-                        }
+  private String normalize(String value) {
+    return value == null ? "" : value.trim().toUpperCase();
+  }
 
-                        String message = extractErrorMessage(payload, fallbackErrorMessage);
-                        future.completeExceptionally(new NetworkClientException(message));
-                    });
+  private String clean(String value) {
+    return value == null ? "" : value.trim();
+  }
 
-            ScheduledFuture<?> timeoutTask =
-                    TIMEOUT_EXECUTOR.schedule(
-                            () ->
-                                    future.completeExceptionally(
-                                            new NetworkClientException(
-                                                    "Server không phản hồi. Kiểm tra server đã chạy chưa.")),
-                            AUTH_TIMEOUT_SECONDS,
-                            TimeUnit.SECONDS);
-
-            future.whenComplete((session, throwable) -> timeoutTask.cancel(false));
-        } catch (RuntimeException exception) {
-            future.completeExceptionally(exception);
-        }
-
-        return future;
-    }
-
-    private void ensureConnected() {
-        if (networkFacade.isConnected()) {
-            return;
-        }
-
-        boolean connected = networkFacade.connectBlocking();
-        if (!connected) {
-            throw new NetworkClientException(
-                    "Không kết nối được tới server: " + networkFacade.getServerUri());
-        }
-    }
-
-    private void completeAuthSuccess(JsonElement payload, CompletableFuture<UserSession> future) {
-        try {
-            LoginResponseDTO response = PacketCodec.fromElement(payload, LoginResponseDTO.class);
-            UserSession session = UserSession.from(response);
-            sessionManager.startSession(session);
-            future.complete(session);
-        } catch (RuntimeException exception) {
-            future.completeExceptionally(
-                    new NetworkClientException("Response đăng nhập/đăng ký không hợp lệ.", exception));
-        }
-    }
-
-    private String extractErrorMessage(JsonElement payload, String fallbackMessage) {
-        if (payload == null || payload.isJsonNull()) {
-            return fallbackMessage;
-        }
-
-        try {
-            ErrorDTO error = PacketCodec.fromElement(payload, ErrorDTO.class);
-            return toUserFriendlyAuthMessage(error, fallbackMessage);
-        } catch (RuntimeException ignored) {
-            // Dùng fallback nếu payload lỗi không parse được.
-        }
-
-        return fallbackMessage;
-    }
-
-    private String toUserFriendlyAuthMessage(ErrorDTO error, String fallbackMessage) {
-        if (error == null) {
-            return fallbackMessage;
-        }
-
-        String code = normalize(error.getCode());
-        String serverMessage = clean(error.getMessage());
-
-        return switch (code) {
-            case ErrorDTO.USER_NOT_FOUND ->
-                    "Không tìm thấy tài khoản với tên đăng nhập này. Vui lòng kiểm tra lại hoặc đăng ký tài khoản mới.";
-            case ErrorDTO.WRONG_PASSWORD ->
-                    "Mật khẩu chưa đúng. Vui lòng nhập lại mật khẩu.";
-            case ErrorDTO.ACCOUNT_BANNED ->
-                    "Tài khoản này đã bị khóa. Vui lòng liên hệ Admin để được hỗ trợ.";
-            case ErrorDTO.ACCOUNT_SUSPENDED ->
-                    "Tài khoản này đang bị tạm ngưng. Vui lòng thử lại sau hoặc liên hệ Admin.";
-            case ErrorDTO.DUPLICATE_USERNAME ->
-                    "Tên đăng nhập này đã tồn tại. Vui lòng chọn tên đăng nhập khác.";
-            case ErrorDTO.DUPLICATE_EMAIL ->
-                    "Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.";
-            case ErrorDTO.VALIDATION_ERROR ->
-                    serverMessage.isBlank() ? fallbackMessage : serverMessage;
-            case ErrorDTO.INTERNAL_ERROR ->
-                    fallbackMessage + " Vui lòng thử lại sau.";
-            default ->
-                    serverMessage.isBlank() ? fallbackMessage : serverMessage;
-        };
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.trim().toUpperCase();
-    }
-
-    private String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
-
-    private CompletableFuture<UserSession> failedFuture(String message) {
-        CompletableFuture<UserSession> future = new CompletableFuture<>();
-        future.completeExceptionally(new IllegalArgumentException(message));
-        return future;
-    }
+  private CompletableFuture<UserSession> failedFuture(String message) {
+    CompletableFuture<UserSession> future = new CompletableFuture<>();
+    future.completeExceptionally(new IllegalArgumentException(message));
+    return future;
+  }
 }
