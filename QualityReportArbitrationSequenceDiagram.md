@@ -1,57 +1,54 @@
 # Quality Report Arbitration Sequence Diagram
 
+Winner gửi báo cáo chất lượng (sau ITEM_RECEIVED); admin approve → hoàn tiền winner từ bank, phạt seller; reject → thông báo từ chối.  
+Toàn bộ qua WebSocket `UserAdminHandler`, không gọi service trực tiếp từ client.
+
+**Mục đích:** Trace khiếu nại hàng không đúng mô tả và quyết định admin.  
+**Use case:** Submit report có ảnh, admin duyệt/refund, seller bị trừ rating/ban.  
+**Trong code:** `SUBMIT_QUALITY_REPORT`, `ADMIN_APPROVE_QUALITY_REPORT`, `QualityReportService`.
+
+## Submit
+
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Winner
-    actor Admin
-    participant ReportSvc as QualityReportService
-    participant Manager as AuctionManager
-    participant Report as QualityReport
-    participant ReportDAO as QualityReportDAO
-    participant PaySvc as PaymentService
-    participant Bank as SystemBank
-    participant WinnerUser as Winner NormalUser
-    participant UserDAO
-    participant Rating as RatingService
-    participant SystemAdmin
-    participant NotifyDAO as NotificationDAO
-    participant Staff as Staff and System Observers
-
-    Winner->>ReportSvc: submitReport(report)
-    ReportSvc->>Manager: findAuctionById(auctionId)
-    alt reporter is not winner or item not confirmed
-        ReportSvc-->>Winner: reject submit
-    else first valid report
-        ReportSvc->>ReportDAO: existsByAuctionAndReporter()
-        ReportSvc->>ReportDAO: saveReport(PENDING)
-        ReportSvc->>NotifyDAO: save reporter notification
-        ReportSvc-->>Winner: report accepted
+    box Client
+        actor W as Winner
+    end
+    box API
+        participant UAH as UserAdminHandler
+        participant SM as SessionManager
+    end
+    box Service
+        participant QR as QualityReportService
     end
 
-    Admin->>ReportSvc: approveReport(admin, report, auction)
-    ReportSvc->>ReportSvc: lock reportId
-    alt report not PENDING
-        ReportSvc-->>Admin: invalid state
-    else approved
-        ReportSvc->>Report: approve()
-        ReportSvc->>Rating: penalizeSeller(seller)
-        ReportSvc->>SystemAdmin: autoBanIfNeeded(seller)
-        ReportSvc->>PaySvc: refundToWinnerFromBank(auction)
-        PaySvc->>Bank: refundToWinner(finalPrice)
-        PaySvc->>WinnerUser: addBalance(finalPrice)
-        PaySvc->>UserDAO: updateBalances(winnerId, balance, lockedDeposit)
-        ReportSvc->>Report: markRefundCompleted()
-        ReportSvc->>ReportDAO: updateReport(report)
-        ReportSvc->>UserDAO: updateAccountStatus(sellerId, status)
-        ReportSvc->>Staff: notify QUALITY_REPORT_APPROVED
-        ReportSvc->>NotifyDAO: save winner and seller notifications
+    W->>UAH: SUBMIT_QUALITY_REPORT
+    UAH->>QR: submitReport
+    UAH->>W: SUCCESS
+    UAH->>SM: QUALITY_REPORT_RECEIVED_NOTIFY → seller
+```
+
+## Admin approve
+
+```mermaid
+sequenceDiagram
+    box Client
+        actor A as Admin
+    end
+    box API
+        participant UAH as UserAdminHandler
+    end
+    box Service
+        participant QR as QualityReportService
+        participant PS as PaymentService
+    end
+    box Domain
+        participant BANK as SystemBank
     end
 
-    opt admin rejects instead
-        Admin->>ReportSvc: rejectReport(admin, report)
-        ReportSvc->>Report: reject()
-        ReportSvc->>ReportDAO: updateReport(report)
-        ReportSvc->>NotifyDAO: save winner rejection notification
-    end
+    A->>UAH: ADMIN_APPROVE_QUALITY_REPORT
+    UAH->>QR: approveReport
+    QR->>PS: refundToWinnerFromBank
+    PS->>BANK: refundToWinner
+    UAH->>A: SUCCESS
 ```

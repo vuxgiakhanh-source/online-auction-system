@@ -1,42 +1,27 @@
-# Kiến trúc Chatbot
+# Chatbot Architecture
+
+FAQ qua WebSocket: `CHATBOT_ASK`, `CHATBOT_GET_FAQ_LIST`. Handler mỏng; tìm kiếm trong `ChatbotProvider` (load `faq_data.json` một lần).  
+Không yêu cầu đăng nhập.
+
+**Mục đích:** Hiểu module chatbot tách khỏi auction/payment.  
+**Use case:** User hỏi FAQ trên app, tra cứu theo category, relevance scoring theo query.  
+**Trong code:** `ChatbotHandler`, `ChatbotProvider`, `PacketRouter`.
 
 ```mermaid
-graph TD
-    %% Định nghĩa Style
-    classDef client fill:#424242,stroke:#333,stroke-width:2px,color:#fff;
-    classDef router fill:#0d47a1,stroke:#333,stroke-width:1px,color:#fff;
-    classDef handler fill:#004d40,stroke:#333,stroke-width:1px,color:#fff;
-    classDef provider fill:#4527a0,stroke:#333,stroke-width:1px,color:#fff;
-    classDef data fill:#3e2723,stroke:#333,stroke-width:1px,color:#fff;
+flowchart LR
+    subgraph Client
+        C["AuctionWebSocketClient"]
+    end
+    subgraph API
+        R["PacketRouter"]
+        H["ChatbotHandler"]
+    end
+    subgraph Domain
+        P["ChatbotProvider"]
+        J["faq_data.json"]
+    end
 
-    %% Các thành phần
-    Client["🖥️ Client (WebSocket)<br/>Gửi JSON packet & requestId"]:::client
-    
-    Router["⚙️ PacketRouter<br/>Decode JSON ➔ peekType() ➔ Dispatch"]:::router
-    
-    MainHandler["📦 ChatbotHandler<br/>Supports: CHATBOT_ASK, GET_FAQ_LIST<br/>(Parse ➔ Dispatch ➔ Serialize)"]:::handler
-
-    AskSub["🔍 handleChatbotAsk()<br/>faqId → getAnswerByQuestionId()<br/>query → searchByQuery()"]:::handler
-    
-    ListSub["📋 handleGetFaqList()<br/>getFaqsByCategory()<br/>buildFaqSummaryArray()"]:::handler
-
-    Provider["🧠 ChatbotProvider (Singleton)<br/>HashMap O(1) | Relevance Scoring<br/>Immutable FAQ Data"]:::provider
-
-    JsonDB["📄 faq_data.json (classpath)<br/>10 FAQ · 5 Category · Keywords"]:::data
-
-    %% Luồng dữ liệu
-    Client -- "CHATBOT_ASK / GET_FAQ_LIST" --> Router
-    Router --> MainHandler
-    
-    MainHandler -- "faqId / query?" --> AskSub
-    MainHandler -- "category?" --> ListSub
-    
-    AskSub --> Provider
-    ListSub --> Provider
-    
-    Provider -.->|Load once| JsonDB
-    
-    %% Phản hồi
-    Provider -- "Data" --> MainHandler
-    MainHandler -- "CHATBOT_ANSWER / FAQ_LIST_SUCCESS" --> Client
+    C -->|CHATBOT_ASK · GET_FAQ_LIST| R --> H --> P
+    P -.-> J
+    H --> C
 ```
