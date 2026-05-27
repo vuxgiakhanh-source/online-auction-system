@@ -531,11 +531,18 @@ public class PaymentService implements IPaymentService {
     if (offer == null || offer.getStatus() != SecondChanceOffer.OfferStatus.PENDING) {
       return;
     }
-    SecondChanceOffer pending = secondChanceOfferDAO.findPendingOfferByAuctionId(auction.getId());
-    if (pending == null || !pending.isExpired()) {
+    if (!offer.isExpired()) {
       return;
     }
-    offer = pending;
+    // FIX: trước đây có thêm bước query DB:
+    //   SecondChanceOffer pending = secondChanceOfferDAO.findPendingOfferByAuctionId(...);
+    //   if (pending == null || !pending.isExpired()) return;
+    //   offer = pending;
+    // → Vấn đề: khi caller (acceptSecondChanceOffer hoặc test) cầm 1 offer trong memory
+    //   (chưa persist xuống DB), findPendingOfferByAuctionId() trả null → early return →
+    //   status không bao giờ chuyển sang EXPIRED, auction không bị CANCELED.
+    //   Lookup này là defensive thừa thãi: caller đã verify offer cần finalize, chúng ta
+    //   tin tham số. Caller {@link #expireSecondChanceOfferIfDue} đã tự fetch từ DB rồi truyền vào.
 
     offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
