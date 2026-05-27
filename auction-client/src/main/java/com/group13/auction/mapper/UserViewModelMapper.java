@@ -2,15 +2,15 @@ package com.group13.auction.mapper;
 
 import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.user.UserDTO;
-import com.group13.auction.viewmodel.admin.AccountBanViewModel;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
-import com.group13.auction.viewmodel.profile.UserProfileViewModel;
+import com.group13.auction.viewmodel.admin.AccountBanViewModel;
 import com.group13.auction.viewmodel.admin.SellerApprovalViewModel;
-import com.group13.auction.viewmodel.admin.UserModerationViewModel;
 import com.group13.auction.viewmodel.admin.StaffAdminViewModel;
-import java.util.Arrays;
+import com.group13.auction.viewmodel.admin.UserModerationViewModel;
+import com.group13.auction.viewmodel.profile.UserProfileViewModel;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -18,330 +18,306 @@ import java.util.Locale;
 /** Mapper chuyển user DTO từ {@code auction-common} sang view model phía client. */
 public final class UserViewModelMapper {
 
-    private UserViewModelMapper() {
-        // Utility class.
+  private UserViewModelMapper() {
+    // Utility class.
+  }
+
+  /**
+   * Chuyển user DTO sang profile view model.
+   *
+   * @param dto dữ liệu user server trả về
+   * @return view model hồ sơ người dùng
+   */
+  public static UserProfileViewModel toProfileViewModel(UserDTO dto) {
+    if (dto == null) {
+      return emptyProfile();
     }
 
-    /**
-     * Chuyển user DTO sang profile view model.
-     *
-     * @param dto dữ liệu user server trả về
-     * @return view model hồ sơ người dùng
-     */
-    public static UserProfileViewModel toProfileViewModel(UserDTO dto) {
-        if (dto == null) {
-            return emptyProfile();
-        }
+    List<String> roles = safeRoles(dto.getRoles());
+    boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
+    boolean seller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
+    boolean bidder = hasRole(roles, "BIDDER") || hasRole(roles, "BIDDER_SELLER");
 
-        List<String> roles = safeRoles(dto.getRoles());
-        boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
-        boolean seller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
-        boolean bidder = hasRole(roles, "BIDDER") || hasRole(roles, "BIDDER_SELLER");
+    return new UserProfileViewModel(
+        fallback(dto.getId()),
+        fallback(dto.getUsername()),
+        fallback(dto.getEmail()),
+        rolesText(roles),
+        primaryRoleText(roles, dto.getAdminType()),
+        accountStatusText(dto.getAccountStatus()),
+        String.format(Locale.US, "%.1f / 5.0", dto.getRating()),
+        formatMoney(dto.getBalance()),
+        formatMoney(dto.getLockedDeposit()),
+        formatMoney(dto.getAvailableBalance()),
+        DateTimeUtil.formatDateTime(dto.getCreatedAt()),
+        DateTimeUtil.formatDateTime(dto.getUpdatedAt()),
+        restoredText(dto.getTimesRestored()),
+        bidder,
+        seller,
+        admin,
+        canRequestSellerRole(dto, roles, admin, seller),
+        dto.isHasEverBeenPenalized());
+  }
 
-        return new UserProfileViewModel(
-                fallback(dto.getId()),
-                fallback(dto.getUsername()),
-                fallback(dto.getEmail()),
-                rolesText(roles),
-                primaryRoleText(roles, dto.getAdminType()),
-                accountStatusText(dto.getAccountStatus()),
-                String.format(Locale.US, "%.1f / 5.0", dto.getRating()),
-                formatMoney(dto.getBalance()),
-                formatMoney(dto.getLockedDeposit()),
-                formatMoney(dto.getAvailableBalance()),
-                DateTimeUtil.formatDateTime(dto.getCreatedAt()),
-                DateTimeUtil.formatDateTime(dto.getUpdatedAt()),
-                restoredText(dto.getTimesRestored()),
-                bidder,
-                seller,
-                admin,
-                canRequestSellerRole(dto, roles, admin, seller),
-                dto.isHasEverBeenPenalized());
+  /**
+   * Chuyển mảng user DTO sang danh sách view model quản lý người dùng.
+   *
+   * @param users mảng user DTO server trả về
+   * @return danh sách user moderation view model
+   */
+  public static List<UserModerationViewModel> toModerationViewModels(UserDTO[] users) {
+    if (users == null) {
+      return List.of();
     }
 
-    /**
-     * Chuyển mảng user DTO sang danh sách view model quản lý người dùng.
-     *
-     * @param users mảng user DTO server trả về
-     * @return danh sách user moderation view model
-     */
-    public static List<UserModerationViewModel> toModerationViewModels(UserDTO[] users) {
-        if (users == null) {
-            return List.of();
-        }
+    return Arrays.stream(users).map(UserViewModelMapper::toModerationViewModel).toList();
+  }
 
-        return Arrays.stream(users)
-                .map(UserViewModelMapper::toModerationViewModel)
-                .toList();
+  /**
+   * Chuyển danh sách user DTO sang danh sách view model quản lý người dùng.
+   *
+   * @param users danh sách user DTO server trả về
+   * @return danh sách user moderation view model
+   */
+  public static List<UserModerationViewModel> toModerationViewModels(List<UserDTO> users) {
+    if (users == null) {
+      return List.of();
     }
 
-    /**
-     * Chuyển danh sách user DTO sang danh sách view model quản lý người dùng.
-     *
-     * @param users danh sách user DTO server trả về
-     * @return danh sách user moderation view model
-     */
-    public static List<UserModerationViewModel> toModerationViewModels(List<UserDTO> users) {
-        if (users == null) {
-            return List.of();
-        }
+    return users.stream().map(UserViewModelMapper::toModerationViewModel).toList();
+  }
 
-        return users.stream()
-                .map(UserViewModelMapper::toModerationViewModel)
-                .toList();
+  /**
+   * Chuyển một user DTO sang view model quản lý người dùng.
+   *
+   * @param dto user DTO
+   * @return user moderation view model
+   */
+  public static UserModerationViewModel toModerationViewModel(UserDTO dto) {
+    if (dto == null) {
+      return new UserModerationViewModel("--", "--", "--", "--", "--", false, "--", "--", "--");
     }
 
-    /**
-     * Chuyển một user DTO sang view model quản lý người dùng.
-     *
-     * @param dto user DTO
-     * @return user moderation view model
-     */
-    public static UserModerationViewModel toModerationViewModel(UserDTO dto) {
-        if (dto == null) {
-            return new UserModerationViewModel(
-                    "--", "--", "--", "--", "--", false, "--", "--", "--");
-        }
+    List<String> roles = safeRoles(dto.getRoles());
+    String status = accountStatusText(dto.getAccountStatus());
 
-        List<String> roles = safeRoles(dto.getRoles());
-        String status = accountStatusText(dto.getAccountStatus());
+    return new UserModerationViewModel(
+        fallback(dto.getId()),
+        fallback(dto.getUsername()),
+        fallback(dto.getEmail()),
+        rolesText(roles),
+        status,
+        isBanned(dto),
+        banReasonText(dto.getActiveBanReason()),
+        fallback(dto.getBannedByUsername()),
+        DateTimeUtil.formatDateTime(dto.getBannedAt()));
+  }
 
-        return new UserModerationViewModel(
-                fallback(dto.getId()),
-                fallback(dto.getUsername()),
-                fallback(dto.getEmail()),
-                rolesText(roles),
-                status,
-                isBanned(dto),
-                banReasonText(dto.getActiveBanReason()),
-                fallback(dto.getBannedByUsername()),
-                DateTimeUtil.formatDateTime(dto.getBannedAt()));
+  public static List<AccountBanViewModel> toAccountBanViewModels(AdminDTOs.AccountBanDTO[] bans) {
+    if (bans == null) {
+      return List.of();
+    }
+    return Arrays.stream(bans).map(UserViewModelMapper::toAccountBanViewModel).toList();
+  }
+
+  public static AccountBanViewModel toAccountBanViewModel(AdminDTOs.AccountBanDTO dto) {
+    if (dto == null) {
+      return new AccountBanViewModel("--", "--", "--", "--", "--", "--");
+    }
+    return new AccountBanViewModel(
+        fallback(dto.getUserId()),
+        fallback(dto.getUsername()),
+        fallback(dto.getEmail()),
+        banReasonText(dto.getReason()),
+        fallback(dto.getBannedByUsername()),
+        DateTimeUtil.formatDateTime(dto.getBannedAt()));
+  }
+
+  /**
+   * Chuyển mảng user DTO sang danh sách Staff Admin view model.
+   *
+   * @param staffAdmins mảng Staff Admin DTO server trả về
+   * @return danh sách view model Staff Admin
+   */
+  public static List<StaffAdminViewModel> toStaffAdminViewModels(UserDTO[] staffAdmins) {
+    if (staffAdmins == null) {
+      return List.of();
     }
 
-    public static List<AccountBanViewModel> toAccountBanViewModels(AdminDTOs.AccountBanDTO[] bans) {
-        if (bans == null) {
-            return List.of();
-        }
-        return Arrays.stream(bans)
-                .map(UserViewModelMapper::toAccountBanViewModel)
-                .toList();
+    return Arrays.stream(staffAdmins).map(UserViewModelMapper::toStaffAdminViewModel).toList();
+  }
+
+  /**
+   * Chuyển một user DTO sang view model Staff Admin.
+   *
+   * @param dto Staff Admin DTO
+   * @return Staff Admin view model
+   */
+  public static StaffAdminViewModel toStaffAdminViewModel(UserDTO dto) {
+    if (dto == null) {
+      return new StaffAdminViewModel("--", "--", "--", "--", "--");
     }
 
-    public static AccountBanViewModel toAccountBanViewModel(AdminDTOs.AccountBanDTO dto) {
-        if (dto == null) {
-            return new AccountBanViewModel("--", "--", "--", "--", "--", "--");
-        }
-        return new AccountBanViewModel(
-                fallback(dto.getUserId()),
-                fallback(dto.getUsername()),
-                fallback(dto.getEmail()),
-                banReasonText(dto.getReason()),
-                fallback(dto.getBannedByUsername()),
-                DateTimeUtil.formatDateTime(dto.getBannedAt()));
+    return new StaffAdminViewModel(
+        fallback(dto.getId()),
+        fallback(dto.getUsername()),
+        fallback(dto.getEmail()),
+        fallback(dto.getAdminType()),
+        accountStatusText(dto.getAccountStatus()));
+  }
+
+  /**
+   * Chuyển mảng user DTO sang danh sách candidate duyệt Seller.
+   *
+   * <p>Backend hiện có API approve seller role, nhưng chưa có API riêng để list pending seller
+   * request. Vì vậy client lọc từ danh sách user hiện có và chỉ hiển thị candidate phù hợp.
+   *
+   * @param users mảng user DTO server trả về
+   * @return danh sách seller approval view model
+   */
+  public static List<SellerApprovalViewModel> toSellerApprovalViewModels(UserDTO[] users) {
+    if (users == null) {
+      return List.of();
     }
 
-    /**
-     * Chuyển mảng user DTO sang danh sách Staff Admin view model.
-     *
-     * @param staffAdmins mảng Staff Admin DTO server trả về
-     * @return danh sách view model Staff Admin
-     */
-    public static List<StaffAdminViewModel> toStaffAdminViewModels(UserDTO[] staffAdmins) {
-        if (staffAdmins == null) {
-            return List.of();
-        }
+    return Arrays.stream(users)
+        .map(UserViewModelMapper::toSellerApprovalViewModel)
+        .filter(SellerApprovalViewModel::isApprovable)
+        .toList();
+  }
 
-        return Arrays.stream(staffAdmins)
-            .map(UserViewModelMapper::toStaffAdminViewModel)
-            .toList();
+  /**
+   * Chuyển một user DTO sang candidate duyệt Seller.
+   *
+   * @param dto user DTO
+   * @return seller approval view model
+   */
+  public static SellerApprovalViewModel toSellerApprovalViewModel(UserDTO dto) {
+    if (dto == null) {
+      return new SellerApprovalViewModel("--", "--", "--", "--", "--", false);
     }
 
-    /**
-     * Chuyển một user DTO sang view model Staff Admin.
-     *
-     * @param dto Staff Admin DTO
-     * @return Staff Admin view model
-     */
-    public static StaffAdminViewModel toStaffAdminViewModel(UserDTO dto) {
-        if (dto == null) {
-            return new StaffAdminViewModel("--", "--", "--", "--", "--");
-        }
+    List<String> roles = safeRoles(dto.getRoles());
+    boolean alreadySeller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
+    boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
+    boolean active =
+        dto.getAccountStatus() != null && dto.getAccountStatus().equalsIgnoreCase("ACTIVE");
+    boolean approvable = !alreadySeller && !admin && active && !dto.isHasEverBeenPenalized();
 
-        return new StaffAdminViewModel(
-            fallback(dto.getId()),
-            fallback(dto.getUsername()),
-            fallback(dto.getEmail()),
-            fallback(dto.getAdminType()),
-            accountStatusText(dto.getAccountStatus()));
+    String note;
+    if (alreadySeller) {
+      note = "Người dùng đã có quyền Seller.";
+    } else if (admin) {
+      note = "Tài khoản Admin không cần duyệt Seller.";
+    } else if (!active) {
+      note = "Chỉ tài khoản ACTIVE mới có thể duyệt Seller.";
+    } else if (dto.isHasEverBeenPenalized()) {
+      note = "Tài khoản từng bị phạt, không auto-approve Seller.";
+    } else {
+      note = "Có thể duyệt quyền Seller bằng API hiện có.";
     }
 
-    /**
-     * Chuyển mảng user DTO sang danh sách candidate duyệt Seller.
-     *
-     * <p>Backend hiện có API approve seller role, nhưng chưa có API riêng để list pending seller
-     * request. Vì vậy client lọc từ danh sách user hiện có và chỉ hiển thị candidate phù hợp.
-     *
-     * @param users mảng user DTO server trả về
-     * @return danh sách seller approval view model
-     */
-    public static List<SellerApprovalViewModel> toSellerApprovalViewModels(UserDTO[] users) {
-        if (users == null) {
-            return List.of();
-        }
+    return new SellerApprovalViewModel(
+        fallback(dto.getId()),
+        fallback(dto.getUsername()),
+        fallback(dto.getEmail()),
+        rolesText(roles),
+        note,
+        approvable);
+  }
 
-        return Arrays.stream(users)
-                .map(UserViewModelMapper::toSellerApprovalViewModel)
-                .filter(SellerApprovalViewModel::isApprovable)
-                .toList();
+  private static boolean isBanned(UserDTO dto) {
+    return dto != null
+        && dto.getAccountStatus() != null
+        && dto.getAccountStatus().equalsIgnoreCase("BANNED");
+  }
+
+  private static UserProfileViewModel emptyProfile() {
+    return new UserProfileViewModel(
+        "--", "--", "--", "--", "--", "--", "--", "--", "--", "--", "--", "--", "--", false, false,
+        false, false, false);
+  }
+
+  private static List<String> safeRoles(List<String> roles) {
+    return roles == null ? Collections.emptyList() : roles;
+  }
+
+  private static boolean hasRole(List<String> roles, String expectedRole) {
+    return roles.stream().anyMatch(role -> expectedRole.equalsIgnoreCase(role));
+  }
+
+  private static String rolesText(List<String> roles) {
+    if (roles.isEmpty()) {
+      return "Chưa có vai trò";
+    }
+    return String.join(", ", roles);
+  }
+
+  private static String primaryRoleText(List<String> roles, String adminType) {
+    if (adminType != null && !adminType.isBlank()) {
+      return "Admin " + adminType;
+    }
+    if (hasRole(roles, "BIDDER_SELLER")) {
+      return "Bidder / Seller";
+    }
+    if (hasRole(roles, "SELLER")) {
+      return "Seller";
+    }
+    if (hasRole(roles, "BIDDER")) {
+      return "Bidder";
+    }
+    return "User";
+  }
+
+  private static String banReasonText(String reason) {
+    if (reason == null || reason.isBlank()) {
+      return "--";
+    }
+    return switch (reason.toUpperCase(Locale.ROOT)) {
+      case "FRAUD" -> "Gian lận";
+      case "LOW_RATING" -> "Rating thấp";
+      case "POLICY_VIOLATION" -> "Vi phạm chính sách";
+      case "SELLER_REFUND_DEFAULT" -> "Seller không hoàn tiền";
+      case "SYSTEM_AUTO" -> "Hệ thống tự khóa";
+      case "OTHER" -> "Khác";
+      default -> reason;
+    };
+  }
+
+  private static String accountStatusText(String status) {
+    if (status == null || status.isBlank()) {
+      return "--";
     }
 
-    /**
-     * Chuyển một user DTO sang candidate duyệt Seller.
-     *
-     * @param dto user DTO
-     * @return seller approval view model
-     */
-    public static SellerApprovalViewModel toSellerApprovalViewModel(UserDTO dto) {
-        if (dto == null) {
-            return new SellerApprovalViewModel("--", "--", "--", "--", "--", false);
-        }
+    return switch (status.toUpperCase(Locale.ROOT)) {
+      case "ACTIVE" -> "Đang hoạt động";
+      case "SUSPENDED" -> "Tạm khóa";
+      case "BANNED" -> "Bị cấm";
+      case "DELETED" -> "Đã xóa";
+      default -> status;
+    };
+  }
 
-        List<String> roles = safeRoles(dto.getRoles());
-        boolean alreadySeller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
-        boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
-        boolean active = dto.getAccountStatus() != null && dto.getAccountStatus().equalsIgnoreCase("ACTIVE");
-        boolean approvable = !alreadySeller && !admin && active && !dto.isHasEverBeenPenalized();
-
-        String note;
-        if (alreadySeller) {
-            note = "Người dùng đã có quyền Seller.";
-        } else if (admin) {
-            note = "Tài khoản Admin không cần duyệt Seller.";
-        } else if (!active) {
-            note = "Chỉ tài khoản ACTIVE mới có thể duyệt Seller.";
-        } else if (dto.isHasEverBeenPenalized()) {
-            note = "Tài khoản từng bị phạt, không auto-approve Seller.";
-        } else {
-            note = "Có thể duyệt quyền Seller bằng API hiện có.";
-        }
-
-        return new SellerApprovalViewModel(
-                fallback(dto.getId()),
-                fallback(dto.getUsername()),
-                fallback(dto.getEmail()),
-                rolesText(roles),
-                note,
-                approvable);
+  private static boolean canRequestSellerRole(
+      UserDTO dto, List<String> roles, boolean admin, boolean seller) {
+    if (dto == null || admin || seller || dto.isHasEverBeenPenalized()) {
+      return false;
     }
 
-    private static boolean isBanned(UserDTO dto) {
-        return dto != null
-                && dto.getAccountStatus() != null
-                && dto.getAccountStatus().equalsIgnoreCase("BANNED");
-    }
+    String status = dto.getAccountStatus();
+    return status != null && status.equalsIgnoreCase("ACTIVE");
+  }
 
-    private static UserProfileViewModel emptyProfile() {
-        return new UserProfileViewModel(
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                "--",
-                false,
-                false,
-                false,
-                false,
-                false);
-    }
+  private static String restoredText(int timesRestored) {
+    int safeTimes = Math.max(0, timesRestored);
+    return safeTimes + " lần";
+  }
 
-    private static List<String> safeRoles(List<String> roles) {
-        return roles == null ? Collections.emptyList() : roles;
-    }
+  private static String formatMoney(long amount) {
+    return CurrencyUtil.formatVnd(BigDecimal.valueOf(amount));
+  }
 
-    private static boolean hasRole(List<String> roles, String expectedRole) {
-        return roles.stream().anyMatch(role -> expectedRole.equalsIgnoreCase(role));
-    }
-
-    private static String rolesText(List<String> roles) {
-        if (roles.isEmpty()) {
-            return "Chưa có vai trò";
-        }
-        return String.join(", ", roles);
-    }
-
-    private static String primaryRoleText(List<String> roles, String adminType) {
-        if (adminType != null && !adminType.isBlank()) {
-            return "Admin " + adminType;
-        }
-        if (hasRole(roles, "BIDDER_SELLER")) {
-            return "Bidder / Seller";
-        }
-        if (hasRole(roles, "SELLER")) {
-            return "Seller";
-        }
-        if (hasRole(roles, "BIDDER")) {
-            return "Bidder";
-        }
-        return "User";
-    }
-
-    private static String banReasonText(String reason) {
-        if (reason == null || reason.isBlank()) {
-            return "--";
-        }
-        return switch (reason.toUpperCase(Locale.ROOT)) {
-            case "FRAUD" -> "Gian lận";
-            case "LOW_RATING" -> "Rating thấp";
-            case "POLICY_VIOLATION" -> "Vi phạm chính sách";
-            case "SELLER_REFUND_DEFAULT" -> "Seller không hoàn tiền";
-            case "SYSTEM_AUTO" -> "Hệ thống tự khóa";
-            case "OTHER" -> "Khác";
-            default -> reason;
-        };
-    }
-
-    private static String accountStatusText(String status) {
-        if (status == null || status.isBlank()) {
-            return "--";
-        }
-
-        return switch (status.toUpperCase(Locale.ROOT)) {
-            case "ACTIVE" -> "Đang hoạt động";
-            case "SUSPENDED" -> "Tạm khóa";
-            case "BANNED" -> "Bị cấm";
-            case "DELETED" -> "Đã xóa";
-            default -> status;
-        };
-    }
-
-    private static boolean canRequestSellerRole(
-            UserDTO dto, List<String> roles, boolean admin, boolean seller) {
-        if (dto == null || admin || seller || dto.isHasEverBeenPenalized()) {
-            return false;
-        }
-
-        String status = dto.getAccountStatus();
-        return status != null && status.equalsIgnoreCase("ACTIVE");
-    }
-
-    private static String restoredText(int timesRestored) {
-        int safeTimes = Math.max(0, timesRestored);
-        return safeTimes + " lần";
-    }
-
-    private static String formatMoney(long amount) {
-        return CurrencyUtil.formatVnd(BigDecimal.valueOf(amount));
-    }
-
-    private static String fallback(String value) {
-        return value == null || value.isBlank() ? "--" : value;
-    }
+  private static String fallback(String value) {
+    return value == null || value.isBlank() ? "--" : value;
+  }
 }

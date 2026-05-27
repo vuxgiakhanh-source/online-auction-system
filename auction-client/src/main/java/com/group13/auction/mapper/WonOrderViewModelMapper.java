@@ -45,14 +45,12 @@ public final class WonOrderViewModelMapper {
     boolean pendingPayment =
         !expired
             && (finished
-            || PAYMENT_STATUS_PENDING.equals(normalizedPaymentStatus)
-            || (paid && normalizedPaymentStatus.isBlank()));
+                || PAYMENT_STATUS_PENDING.equals(normalizedPaymentStatus)
+                || (paid && normalizedPaymentStatus.isBlank()));
 
     boolean canPay = pendingPayment;
-    boolean canConfirmReceipt =
-        paid && PAYMENT_STATUS_FUNDS_HELD.equals(normalizedPaymentStatus);
-    boolean canSubmitReport =
-        paid && PAYMENT_STATUS_ITEM_RECEIVED.equals(normalizedPaymentStatus);
+    boolean canConfirmReceipt = paid && PAYMENT_STATUS_FUNDS_HELD.equals(normalizedPaymentStatus);
+    boolean canSubmitReport = paid && PAYMENT_STATUS_ITEM_RECEIVED.equals(normalizedPaymentStatus);
     boolean completed = paid && PAYMENT_STATUS_COMPLETED.equals(normalizedPaymentStatus);
 
     return new WonOrderViewModel(
@@ -81,9 +79,7 @@ public final class WonOrderViewModelMapper {
       return List.of();
     }
 
-    return auctions.stream()
-        .map(WonOrderViewModelMapper::toViewModel)
-        .toList();
+    return auctions.stream().map(WonOrderViewModelMapper::toViewModel).toList();
   }
 
   private static String itemName(AuctionDTOs.ItemDTO item) {
