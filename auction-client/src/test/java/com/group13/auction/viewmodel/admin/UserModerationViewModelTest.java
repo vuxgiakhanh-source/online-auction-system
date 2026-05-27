@@ -38,15 +38,7 @@ class UserModerationViewModelTest {
   void bannedShouldReturnFalseForActiveUser() {
     UserModerationViewModel viewModel =
         new UserModerationViewModel(
-            "U-2",
-            "seller01",
-            "seller01@example.com",
-            "SELLER",
-            "ACTIVE",
-            false,
-            "",
-            "",
-            "");
+            "U-2", "seller01", "seller01@example.com", "SELLER", "ACTIVE", false, "", "", "");
 
     assertFalse(viewModel.isBanned());
     assertEquals("", viewModel.getBanReason());

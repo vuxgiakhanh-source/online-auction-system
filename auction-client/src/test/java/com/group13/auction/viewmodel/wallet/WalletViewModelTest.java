@@ -11,12 +11,7 @@ class WalletViewModelTest {
   void gettersShouldReturnWalletAmountsAndDisplayTexts() {
     WalletViewModel viewModel =
         new WalletViewModel(
-            10_000_000L,
-            2_000_000L,
-            8_000_000L,
-            "10.000.000 ₫",
-            "2.000.000 ₫",
-            "8.000.000 ₫");
+            10_000_000L, 2_000_000L, 8_000_000L, "10.000.000 ₫", "2.000.000 ₫", "8.000.000 ₫");
 
     assertEquals(10_000_000L, viewModel.balance());
     assertEquals(2_000_000L, viewModel.lockedDeposit());

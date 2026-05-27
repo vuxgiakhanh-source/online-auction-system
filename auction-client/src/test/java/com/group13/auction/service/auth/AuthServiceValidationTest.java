@@ -17,18 +17,14 @@ class AuthServiceValidationTest {
   void loginShouldFailWhenUsernameIsBlank() {
     AuthService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.login("   ", "secret"),
-        "Bạn chưa nhập tên đăng nhập.");
+    assertFutureFailsWithMessage(service.login("   ", "secret"), "Bạn chưa nhập tên đăng nhập.");
   }
 
   @Test
   void loginShouldFailWhenPasswordIsBlank() {
     AuthService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.login("bidder01", "   "),
-        "Bạn chưa nhập mật khẩu.");
+    assertFutureFailsWithMessage(service.login("bidder01", "   "), "Bạn chưa nhập mật khẩu.");
   }
 
   @Test
@@ -36,8 +32,7 @@ class AuthServiceValidationTest {
     AuthService service = createService();
 
     assertFutureFailsWithMessage(
-        service.register("bidder01", "secret1", "   "),
-        "Bạn chưa nhập email.");
+        service.register("bidder01", "secret1", "   "), "Bạn chưa nhập email.");
   }
 
   @Test
@@ -45,8 +40,7 @@ class AuthServiceValidationTest {
     AuthService service = createService();
 
     assertFutureFailsWithMessage(
-        service.register("bidder01", "secret1", "beo.example.com"),
-        "Email chưa đúng định dạng.");
+        service.register("bidder01", "secret1", "beo.example.com"), "Email chưa đúng định dạng.");
   }
 
   @Test

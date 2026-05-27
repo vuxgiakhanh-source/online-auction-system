@@ -12,44 +12,44 @@ import javafx.scene.control.DialogEvent;
 /** Sound hooks for JavaFX dialogs, whose buttons are outside the main scene graph. */
 public final class DialogSoundUtil {
 
-    private static final String INSTALLED_KEY = DialogSoundUtil.class.getName() + ".installed";
+  private static final String INSTALLED_KEY = DialogSoundUtil.class.getName() + ".installed";
 
-    private DialogSoundUtil() {
-        // Utility class.
+  private DialogSoundUtil() {
+    // Utility class.
+  }
+
+  public static void installButtonClickSound(Dialog<?> dialog) {
+    if (dialog == null) {
+      return;
     }
 
-    public static void installButtonClickSound(Dialog<?> dialog) {
-        if (dialog == null) {
-            return;
-        }
+    installDialogButtons(dialog);
 
-        installDialogButtons(dialog);
+    EventHandler<DialogEvent> existingHandler = dialog.getOnShown();
+    dialog.setOnShown(
+        event -> {
+          if (existingHandler != null) {
+            existingHandler.handle(event);
+          }
+          installDialogButtons(dialog);
+        });
+  }
 
-        EventHandler<DialogEvent> existingHandler = dialog.getOnShown();
-        dialog.setOnShown(
-                event -> {
-                    if (existingHandler != null) {
-                        existingHandler.handle(event);
-                    }
-                    installDialogButtons(dialog);
-                });
+  private static void installDialogButtons(Dialog<?> dialog) {
+    for (ButtonType buttonType : dialog.getDialogPane().getButtonTypes()) {
+      Node button = dialog.getDialogPane().lookupButton(buttonType);
+      if (button instanceof ButtonBase buttonBase) {
+        installButton(buttonBase);
+      }
+    }
+  }
+
+  private static void installButton(ButtonBase button) {
+    if (Boolean.TRUE.equals(button.getProperties().get(INSTALLED_KEY))) {
+      return;
     }
 
-    private static void installDialogButtons(Dialog<?> dialog) {
-        for (ButtonType buttonType : dialog.getDialogPane().getButtonTypes()) {
-            Node button = dialog.getDialogPane().lookupButton(buttonType);
-            if (button instanceof ButtonBase buttonBase) {
-                installButton(buttonBase);
-            }
-        }
-    }
-
-    private static void installButton(ButtonBase button) {
-        if (Boolean.TRUE.equals(button.getProperties().get(INSTALLED_KEY))) {
-            return;
-        }
-
-        button.addEventFilter(ActionEvent.ACTION, event -> AudioManager.playClickSound());
-        button.getProperties().put(INSTALLED_KEY, Boolean.TRUE);
-    }
+    button.addEventFilter(ActionEvent.ACTION, event -> AudioManager.playClickSound());
+    button.getProperties().put(INSTALLED_KEY, Boolean.TRUE);
+  }
 }

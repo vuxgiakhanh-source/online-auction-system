@@ -17,8 +17,7 @@ class RatingServiceValidationTest {
     RatingService service = createService();
 
     assertFutureFailsWithMessage(
-        service.rateSeller("   ", "A-1", 5.0, "Good seller."),
-        "Thiếu mã người được đánh giá.");
+        service.rateSeller("   ", "A-1", 5.0, "Good seller."), "Thiếu mã người được đánh giá.");
   }
 
   @Test
@@ -62,8 +61,7 @@ class RatingServiceValidationTest {
     RatingService service = createService();
 
     assertFutureFailsWithMessage(
-        service.rateBidder("   ", "A-1", 5.0, "Fast payment."),
-        "Thiếu mã người được đánh giá.");
+        service.rateBidder("   ", "A-1", 5.0, "Fast payment."), "Thiếu mã người được đánh giá.");
   }
 
   @Test
@@ -88,9 +86,7 @@ class RatingServiceValidationTest {
   void getRatingsShouldFailWhenUserIdIsBlank() {
     RatingService service = createService();
 
-    assertFutureFailsWithMessage(
-        service.getRatings("   "),
-        "Thiếu mã người dùng cần xem rating.");
+    assertFutureFailsWithMessage(service.getRatings("   "), "Thiếu mã người dùng cần xem rating.");
   }
 
   private static RatingService createService() {

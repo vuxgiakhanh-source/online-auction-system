@@ -21,8 +21,7 @@ class RegisterFormStateTest {
 
   @Test
   void threeArgumentConstructorShouldUsePasswordAsConfirmPassword() {
-    RegisterFormState formState =
-        new RegisterFormState("beo@example.com", "bidder01", "secret1");
+    RegisterFormState formState = new RegisterFormState("beo@example.com", "bidder01", "secret1");
 
     assertEquals("secret1", formState.confirmPassword());
   }
@@ -53,7 +52,8 @@ class RegisterFormStateTest {
 
   @Test
   void validateShouldReturnErrorWhenUsernameIsTooShort() {
-    RegisterFormState formState = new RegisterFormState("beo@example.com", "bo", "secret1", "secret1");
+    RegisterFormState formState =
+        new RegisterFormState("beo@example.com", "bo", "secret1", "secret1");
 
     assertEquals(Optional.of("Tên đăng nhập cần có ít nhất 3 ký tự."), formState.validate());
   }

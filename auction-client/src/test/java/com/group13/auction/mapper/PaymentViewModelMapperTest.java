@@ -111,8 +111,7 @@ class PaymentViewModelMapperTest {
     dto.setDepositRequired(480_000L);
     dto.setDeadline(LocalDateTime.now().plusDays(1));
 
-    SecondChanceOfferViewModel viewModel =
-        PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
+    SecondChanceOfferViewModel viewModel = PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
 
     assertEquals("SCO-1", viewModel.offerId());
     assertEquals("A-1", viewModel.auctionId());
@@ -127,8 +126,7 @@ class PaymentViewModelMapperTest {
     PaymentDTOs.SecondChanceOfferDTO dto = new PaymentDTOs.SecondChanceOfferDTO();
     dto.setDeadline(LocalDateTime.now().minusMinutes(1));
 
-    SecondChanceOfferViewModel viewModel =
-        PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
+    SecondChanceOfferViewModel viewModel = PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
 
     assertTrue(viewModel.expired());
   }
@@ -141,8 +139,7 @@ class PaymentViewModelMapperTest {
     dto.setAuctionItemName("");
     dto.setDeadline(null);
 
-    SecondChanceOfferViewModel viewModel =
-        PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
+    SecondChanceOfferViewModel viewModel = PaymentViewModelMapper.toSecondChanceOfferViewModel(dto);
 
     assertEquals("--", viewModel.offerId());
     assertEquals("--", viewModel.auctionId());
