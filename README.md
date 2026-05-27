@@ -88,8 +88,8 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 
   > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
-* __Đấu giá Realtime & Thông báo__: Tích hợp cập nhật giá thầu tức thì (Realtime) trên toàn bộ client. Hệ thống thông báo giúp người dùng cập nhật trạng thái thắng / thua thầu ngay cả khi đang offline / online.
-  > Tham khảo __Real-time BroadCast via Observer Sequence Diagram__ [tại đây](./RealtimeBroadcastViaObserverSequenceDiagram.md)  
+* __Đấu giá Realtime & Thông báo__: Cập nhật giá qua WebSocket (`BidHandler` → `SessionManager`); inbox và lifecycle events qua `AuctionService.notify` + `ServerBroadcastNotifier`.
+  > Tham khảo __Realtime Broadcast via Observer__ [tại đây](./RealtimeBroadcastViaObserverSequenceDiagram.md)  
   > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
@@ -127,7 +127,7 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 
 ## ✨ Đặc điểm kĩ thuật nổi bật
 Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
-* __Real-time Engine__: Sử dụng mô hình __Observer Pattern__ kết hợp với __Socket__ để cập nhật biến động giá ngay lập tức tới tất cả các client mà không cần tải lại trang.
+* __Real-time Engine__: Bid realtime qua `BidHandler` → `SessionManager`; domain events qua `AuctionService.notify` (xem [RealtimeBroadcastViaObserverSequenceDiagram.md](./RealtimeBroadcastViaObserverSequenceDiagram.md)).
   > Add ảnh mô tả luồng hoạt động của 1 Bidder (Bidder → Server → BroadCast tới các Bidders khác) (GIF)
 
 
@@ -143,38 +143,34 @@ Hệ thống được phát triển với các tiêu chuẩn kỹ thuật:
 ---
 
 ## 🏗️ Kiến trúc hệ thống
-Hệ thống được thiết kế theo kiến trúc __Layered Architecture__ kết hợp __Event-Driven Architecture__ mạnh mẽ trên mô hình __Client-Server__
+Hệ thống theo __Layered Client-Server__: JavaFX client ↔ WebSocket server ↔ MySQL.
+
 ### 🏛️ Kiến trúc tổng quan
 ```mermaid
-graph TD
+flowchart LR
+    subgraph Client
+        FX["JavaFX"]
+        WSC["AuctionWebSocketClient"]
+    end
+    subgraph API
+        WS["AuctionWebSocketServer"]
+        HD["PacketHandlers"]
+    end
+    subgraph Service
+        SVC["Services"]
+    end
+    subgraph Domain
+        AM["AuctionManager"]
+    end
+    subgraph Database
+        DB[("MySQL")]
+    end
 
-%% Nodes
-Client["🖥️ Client JavaFX + WebSocket"]
-Server["⚙️ AuctionWebSocketServer"]
-Handlers["📦 Packet Handlers\nAuthHandler · BidHandler · PaymentHandler..."]
-Service["🔧 Service Layer\nAuctionService · BidService · PaymentService..."]
-Models["🧩 Domain Models\nAuction · Item · User · BidTransaction"]
-DAO["🗄️ DAO Layer\nMySQL · JDBC"]
-Observer["📡 Observer Pattern\nRealtime Notification Engine"]
-
-%% Connections
-Client <-->|WebSocket| Server
-    Server --> Handlers
-    Handlers --> Service
-    Service --> Models
-    Service <--> DAO
-    Service --> Observer
-    Observer -->|Broadcast| Client
-
-%% Styling
-style Client fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style Server fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style Handlers fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style Service fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style Models fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style DAO fill:#242424,stroke:#666,stroke-width:1px,color:#fff
-style Observer fill:#242424,stroke:#666,stroke-width:1px,color:#fff
+    FX --> WSC <-->|8080| WS --> HD --> SVC --> AM --> DB
 ```
+
+> Bid WS: `BidHandler` → `SessionManager` · Domain notify: `AuctionService.notify` → [RealtimeBroadcastViaObserverSequenceDiagram.md](./RealtimeBroadcastViaObserverSequenceDiagram.md)  
+> Diagrams: [ClassDiagram.md](./ClassDiagram.md)
 
 ### 🤖 Kiến trúc chatbot
 
@@ -198,9 +194,9 @@ online-auction-system/
 │
 ├── auction-server/                  # Module Server
 │   └── src/main/java/
+│       ├── bank/                    # SystemBank
+│       ├── chatbot/                 # ChatbotHandler, ChatbotProvider, FAQ
 │       ├── model/
-│       │   ├── bank/                # SystemBank
-│       │   ├── chatbot/             # ChatbotHandler, ChatbotResponse, FAQ,...
 │       │   ├── entity/              # Entity (abstract base)
 │       │   ├── user/                # User → NormalUser, Admin, SystemAdmin + Factories
 │       │   ├── item/                # Item → Electronics, Art, Vehicle + Factories
@@ -225,7 +221,7 @@ online-auction-system/
 | Pattern            | Implementation                                                                              | Mục đích hệ thống |
 |--------------------|---------------------------------------------------------------------------------------------|----------------------------------|
 | **State**          | `AuctionState` → `OpenState`, `RunningState`, `FinishedState`, `PaidState`, `CanceledState` | Quản lý logic chuyển đổi trạng thái phiên đấu giá (Mở → Chạy → Kết thúc) một cách tự động và rõ ràng. |
-| **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, `AdminObserver`, `StaffObserver`    | Đẩy thông báo thay đổi giá và trạng thái đến toàn bộ người tham gia ngay lập tức (Realtime). |
+| **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, … + `SystemAdminObserver`           | Domain events & inbox; bid WebSocket riêng qua `BidHandler` (xem RealtimeBroadcastViaObserverSequenceDiagram). |
 | **Strategy**       | `BidStrategy`                                                                               | Linh hoạt giữa các chế độ đặt giá thủ công và Auto-Bidding. |
 | **Factory Method** | `ItemFactory`, `UserFactory`                                                                | Chuẩn hóa việc tạo các loại Item (Electronics, Art, Vehicle...) và User. |
 | **Singleton**      | `AuctionManager`, `DatabaseConnection`, `ChatbotProvider`                                    | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |

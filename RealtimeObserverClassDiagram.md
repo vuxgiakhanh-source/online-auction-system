@@ -1,77 +1,38 @@
 # Realtime Observer Class Diagram
 
+Quan hệ `AuctionObserver`, `AuctionService.notify`, `ServerBroadcastNotifier`, `SessionManager` và `BidHandler` (WS bid).  
+Làm rõ observer in-memory (thường `ConsoleNotifier`) khác kênh WebSocket bid.
+
+**Mục đích:** Tránh nhầm Observer pattern = broadcast giá realtime.  
+**Use case:** Sửa thông báo inbox, outbid, lifecycle WS; thêm event mới.  
+**Trong code:** `com.group13.auction.observer.*`, `ServerBroadcastNotifier`, `BidHandler`.
+
 ```mermaid
-classDiagram
-    direction LR
+flowchart LR
+    subgraph Service
+        AS["AuctionService"]
+    end
+    subgraph Domain
+        Obs["AuctionObserver"]
+        AM["AuctionManager"]
+    end
+    subgraph Infrastructure
+        SBN["ServerBroadcastNotifier"]
+    end
+    subgraph API
+        BH["BidHandler"]
+        SM["SessionManager"]
+    end
+    subgraph Database
+        NDAO["NotificationDAO"]
+    end
 
-    class AuctionObserver {
-        <<interface>>
-        +onBidPlaced(AuctionEvent)
-        +onAuctionEnded(AuctionEvent)
-    }
-    class AuctionEvent {
-        +AuctionEventType eventType
-        +Auction auction
-        +NormalUser bidder
-        +long bidAmount
-        +String message
-    }
-    class BidderObserver
-    class SellerObserver
-    class AdminObserver
-    class StaffObserver
-    class SystemAdminObserver
-    class INotifier {
-        <<interface>>
-        +notify(String, String, String)
-    }
-    class ConsoleNotifier
-    class CompositeNotifier
-    class AuctionService {
-        +addObserver(String, AuctionObserver)
-        +notify(Auction, AuctionEventType, NormalUser, long, String)
-    }
-    class AuctionManager {
-        <<Singleton>>
-        +addGlobalObserver(AuctionObserver)
-        +addStaffObserver(AuctionObserver)
-        +notifyGlobalObservers(AuctionEvent)
-        +notifyStaffObservers(AuctionEvent)
-    }
-    class ServerBroadcastNotifier {
-        <<Singleton>>
-        +notifyJoinedParticipantsForEvent(AuctionEvent)
-        +notifyOutbid(NormalUser, Auction, NormalUser, long, long)
-        +notifyAuctionEnded(Auction)
-        +notifyPaymentSuccess(Auction, PaymentResultDTO)
-        +notifySecondChanceOffered(Auction, NormalUser, SecondChanceOffer)
-    }
-    class SessionManager {
-        <<Singleton>>
-        +broadcastToAuction(String, Packet)
-        +broadcastToAuctionAsync(String, Packet)
-        +sendToUser(String, Packet)
-        +broadcastToAdmins(Packet)
-    }
-    class NotificationDAO
-    class UserDAO
-
-    AuctionObserver <|.. BidderObserver
-    AuctionObserver <|.. SellerObserver
-    AuctionObserver <|.. AdminObserver
-    AuctionObserver <|.. StaffObserver
-    AuctionObserver <|.. SystemAdminObserver
-    INotifier <|.. ConsoleNotifier
-    INotifier <|.. CompositeNotifier
-    BidderObserver --> INotifier
-    SellerObserver --> INotifier
-    AdminObserver --> NotificationDAO
-    AuctionService --> AuctionObserver : per-auction observers
-    AuctionService --> AuctionManager : global and staff observers
-    AuctionService --> ServerBroadcastNotifier : inbox for joined users
-    AuctionManager --> AuctionObserver
-    ServerBroadcastNotifier --> SessionManager
-    ServerBroadcastNotifier --> NotificationDAO
-    ServerBroadcastNotifier --> UserDAO
-    AuctionEvent --> Auction
+    AS --> Obs & AM & SBN
+    SBN --> NDAO & SM
+    BH --> SM
 ```
+
+- **Path A:** `AuctionService.notify` → inbox / observers  
+- **Path B:** `BidHandler` → `SessionManager` (bid WS)  
+
+Chi tiết: [RealtimeBroadcastViaObserverSequenceDiagram.md](./RealtimeBroadcastViaObserverSequenceDiagram.md)

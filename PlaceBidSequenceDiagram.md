@@ -1,80 +1,72 @@
 # Place Bid Sequence Diagram
 
+Luồng packet `PLACE_BID`: validate → lock per auction → ghi DB → notify → broadcast WS → kích hoạt auto-bid.  
+Lock nằm trong `BidService`, không phải `BidHandler`.
+
+**Mục đích:** Trace end-to-end một lượt đặt giá hợp lệ.  
+**Use case:** Bidder đặt giá, anti-sniping gia hạn phiên, outbid, race condition / lost update.  
+**Trong code:** `BidHandler.handlePlaceBid` → `BidService.placeBid` → `BidTransactionDAO.saveTransactionAndUpdatePrice`.  
+WS bid: [RealtimeBroadcastViaObserverSequenceDiagram.md](./RealtimeBroadcastViaObserverSequenceDiagram.md) (Path B).
+
+## Tổng quan
+
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Bidder
-    participant WS as AuctionWebSocketServer
-    participant Router as PacketRouter
-    participant Handler as BidHandler
-    participant Rate as BidRateLimiter
-    participant Manager as AuctionManager
-    participant BidSvc as BidService
-    participant Rating as RatingService
-    participant Wallet as WalletService
-    participant Lock as AuctionLockRegistry
-    participant Strategy as StandardBidStrategy
-    participant Auction
-    participant BidDAO as BidTransactionDAO
-    participant AuctionDAO
-    participant Notify as AuctionService
-    participant Broadcast as ServerBroadcastNotifier
-    participant Sessions as SessionManager
-    participant AutoBid as AutoBidProcessor
+    box Client
+        actor C as Client
+    end
+    box API
+        participant BH as BidHandler
+        participant SM as SessionManager
+    end
+    box Service
+        participant BS as BidService
+        participant AS as AuctionService
+    end
+    box Infrastructure
+        participant ABP as AutoBidProcessor
+    end
 
-    Bidder->>WS: PLACE_BID {auctionId, amount}
-    WS->>Router: route(raw packet)
-    Router->>Handler: handle(PLACE_BID)
-    Handler->>Rate: tryConsume(userId)
-    Handler->>Manager: findAuctionById(auctionId)
+    C->>BH: PLACE_BID
+    BH->>BS: placeBid()
+    BS->>AS: notify()
+    BH->>C: PLACE_BID_SUCCESS
+    BH->>SM: broadcastToAuctionAsync
+    BH->>ABP: submit()
+```
 
-    alt invalid payload or rate limited
-        Handler-->>Bidder: PLACE_BID_FAILED
-    else accepted for service processing
-        Handler->>BidSvc: placeBid(bidder, auction, amount, StandardBidStrategy)
-        BidSvc->>Rating: isEligible(bidder)
-        BidSvc->>Auction: isAcceptingBids() and hasJoined()
+## Chi tiết — `BidService`
 
-        alt manipulative bid
-            BidSvc->>Wallet: forfeitDeposit(...)
-        end
+Lock per auction chỉ trong service; persist và notify chạy sau khi unlock.
 
-        BidSvc->>Lock: getLock(auctionId)
-        activate Lock
-        BidSvc->>Strategy: isValidBid(auction, amount)
-        
-        alt invalid or auction closed
-            BidSvc-->>Handler: throw business exception
-            Handler-->>Bidder: PLACE_BID_FAILED
-        else valid bid
-            BidSvc->>Auction: updateBid(amount, bidder)
-            opt bid in anti-sniping window
-                BidSvc->>Auction: extendEndTime(60s)
-            end
-            BidSvc->>Auction: addBidTransactionId(tx.id)
-        end
-        
-        deactivate Lock
-        
-        alt valid bid
-            BidSvc->>BidDAO: saveTransactionAndUpdatePrice(tx, auctionId, amount, bidderId)
-            BidSvc->>Notify: notify(BID_PLACED or BID_RESERVE_NOT_MET)
-            Notify->>Broadcast: notifyJoinedParticipantsForEvent(event)
-            opt previous leader exists
-                BidSvc->>Broadcast: notifyOutbid(previousLeader, auction, bidder, amount)
-            end
-            opt auction extended
-                BidSvc->>AuctionDAO: updateEndTime(auctionId, newEndTime)
-                BidSvc->>Notify: notify(AUCTION_EXTENDED)
-            end
+```mermaid
+sequenceDiagram
+    box Service
+        participant BS as BidService
+        participant AS as AuctionService
+    end
+    box Domain
+        participant LOCK as AuctionLockRegistry
+        participant AUC as Auction
+    end
+    box Infrastructure
+        participant SBN as ServerBroadcastNotifier
+    end
+    box Database
+        participant DAO as BidTransactionDAO
+    end
 
-            Handler-->>Bidder: PLACE_BID_SUCCESS
-            Handler->>Sessions: broadcastToAuctionAsync(BID_UPDATE)
-            Handler->>Sessions: broadcastToAuctionAsync(BID_CHART_POINT_UPDATE)
-            opt auction extended
-                Handler->>Sessions: broadcastToAuctionAsync(AUCTION_EXTENDED_NOTIFY)
-            end
-            Handler->>AutoBid: submit(auction, bidderId)
-        end
+    BS->>LOCK: lock
+    BS->>AUC: updateBid · BidTransaction
+    opt anti-sniping
+        BS->>AUC: extendEndTime
+    end
+    BS->>LOCK: unlock
+    BS->>DAO: saveTransactionAndUpdatePrice
+    BS->>AS: notify
+    opt outbid
+        BS->>SBN: notifyOutbid
     end
 ```
+
+Auto-bid: [AutoBidSequenceDiagram.md](./AutoBidSequenceDiagram.md)
