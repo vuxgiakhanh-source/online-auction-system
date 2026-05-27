@@ -461,12 +461,24 @@ public class AuctionService implements IAuctionService {
     return false;
   }
 
+  /**
+   * Filter trước khi dispatch event cho observer.
+   *
+   * <p>FIX: trước đây require {@code bidder.hasJoined(auctionId)} cho BidderObserver — sai logic vì:
+   *
+   * <ul>
+   *   <li>Watcher (gọi {@code watchAuction()}) có observer được đăng ký nhưng chưa join → không bao
+   *       giờ nhận thông báo, dù đó chính là mục đích đăng ký watch.
+   *   <li>Vi phạm hợp đồng Observer pattern: addObserver xong PHẢI được notify.
+   *   <li>Isolation giữa các phiên đã được bảo đảm bởi {@code observersMap} per-auction, không cần
+   *       check trùng lặp ở đây.
+   *   <li>Khi user leave, {@code removeObserverForUserLeaving()} đã xóa observer khỏi map.
+   * </ul>
+   *
+   * <p>Giờ chỉ chặn null cho an toàn — mọi observer được đăng ký đều nhận event.
+   */
   private boolean shouldNotifyObserver(AuctionObserver observer, String auctionId) {
-    if (observer instanceof BidderObserver bidderObserver) {
-      NormalUser bidder = bidderObserver.getBidder();
-      return bidder != null && bidder.hasJoined(auctionId);
-    }
-    return true;
+    return observer != null;
   }
 
   @Override

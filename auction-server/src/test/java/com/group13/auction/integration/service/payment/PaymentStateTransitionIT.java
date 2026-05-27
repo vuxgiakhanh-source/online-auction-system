@@ -78,7 +78,15 @@ class PaymentStateTransitionIT {
 
     ratingService = TestFixture.ratingServiceAllowAll();
     walletService = new WalletService(financialTransactionDAO, userDAO, ratingService);
-    auctionService = new AuctionService(ratingService, auctionDAO);
+    // FIX: dùng 4-arg constructor để inject CẢ HAI mock (financialTransactionDAO + auctionWinnerDAO).
+    // Constructor 2-arg cũ tự new FinancialTransactionDAO() + new AuctionWinnerDAO() thật:
+    //  - real auctionWinnerDAO.saveWinner() INSERT vào DB không tồn tại → trả false
+    //    → closeAuction() throw RuntimeException ("Không thể lưu AuctionWinner vào DB...")
+    //    → @BeforeEach crash → toàn bộ 21 test trong class fail trước khi chạy assert.
+    //  - real financialTransactionDAO.saveTransaction() trong recordWinnerDepositHeldInBank()
+    //    cũng sẽ fail vì cùng lý do.
+    auctionService =
+        new AuctionService(ratingService, auctionDAO, financialTransactionDAO, auctionWinnerDAO);
     paymentService =
         new PaymentService(
             auctionService,
@@ -102,6 +110,11 @@ class PaymentStateTransitionIT {
     // → toàn bộ test bị fail ở @BeforeEach trước khi test nào chạy được.
     when(financialTransactionDAO.saveTransaction(any())).thenReturn(true);
 
+    // FIX: stub saveWinner() → true để AuctionService.closeAuction() TH2 (có winner)
+    // không throw RuntimeException ở line 234. Đây là điều kiện CỐT LÕI để setUp()
+    // hoàn thành transition RUNNING → FINISHED.
+    when(auctionWinnerDAO.saveWinner(any())).thenReturn(true);
+
     auctionService.closeAuction(auction); // RUNNING → FINISHED
 
     assertThat(auction.getStatus()).isEqualTo(AuctionStatus.FINISHED);
@@ -124,7 +137,16 @@ class PaymentStateTransitionIT {
 
     @BeforeEach
     void stubPaymentDAOs() {
+      // updatePaymentStatus vẫn được stub vì các flow khác (vd: expirePayment → EXPIRED)
+      // có thể vẫn dùng. Strictness.LENIENT cho phép giữ stub không dùng.
       when(auctionWinnerDAO.updatePaymentStatus(anyString(), anyString())).thenReturn(true);
+      // FIX: stub updateFundsHeld — production AuctionService.markAsPaid() gọi method này
+      // để gộp set status FUNDS_HELD + set confirmReceiptDeadline thành 1 atomic call.
+      // Thiếu stub này thì mock trả false; tuy không crash test (return value không check)
+      // nhưng test winnerDAO_called_once_with_FUNDS_HELD verify method này phải được gọi.
+      when(auctionWinnerDAO.updateFundsHeld(
+          anyString(), anyString(), any(java.time.LocalDateTime.class)))
+          .thenReturn(true);
       when(userDAO.updateBalances(anyString(), anyLong(), anyLong())).thenReturn(true);
     }
 
@@ -161,14 +183,34 @@ class PaymentStateTransitionIT {
     }
 
     @Test
-    @DisplayName("SystemBank nhận đúng finalPrice")
+    @DisplayName("SystemBank nhận đúng finalPrice (split-phase: deposit ở closeAuction + remaining ở completePayment)")
     void systemBank_receives_finalPrice() throws Exception {
-      TestFixture.resetSystemBankBalance();
-      long bankBefore = SystemBank.getInstance().getTotalBalance();
+      // FIX: Production split SystemBank credit thành 2 phase (xem comment ở
+      // WalletService.executePaymentToBank line 340-349 và
+      // AuctionService.recordWinnerDepositHeldInBank):
+      //   - Phase 1 (closeAuction trong setUp): bank += depositPaid     (600_000)
+      //   - Phase 2 (completePayment hiện tại): bank += remaining       (4_400_000)
+      // Tổng credit cho phiên này = depositPaid + remaining = FINAL_PRICE.
+      //
+      // Lỗi cũ: test gọi TestFixture.resetSystemBankBalance() ngay đầu test
+      // → xóa mất 600_000 đã ghi nhận ở phase 1 trong setUp
+      // → chỉ đo được delta của phase 2 (4_400_000) → fail vì expect FINAL_PRICE.
+      // Reset bank ở đây là sai bản chất: setUp ĐÃ commit phase 1 rồi.
+
+      long bankBefore = SystemBank.getInstance().getTotalBalance(); // chứa DEPOSIT từ setUp
+      long remaining = FINAL_PRICE - DEPOSIT;
 
       paymentService.completePayment(auction);
 
-      assertThat(SystemBank.getInstance().getTotalBalance() - bankBefore).isEqualTo(FINAL_PRICE);
+      long delta = SystemBank.getInstance().getTotalBalance() - bankBefore;
+
+      assertAll(
+          "Phase 2 chỉ chuyển remaining; tổng 2 phase = finalPrice",
+          () -> assertThat(delta).as("Delta phase 2 = remaining").isEqualTo(remaining),
+          () ->
+              assertThat(bankBefore + delta)
+                  .as("Tổng credit cho phiên này = finalPrice")
+                  .isEqualTo(FINAL_PRICE));
     }
 
     @Test
@@ -179,12 +221,21 @@ class PaymentStateTransitionIT {
     }
 
     @Test
-    @DisplayName("auctionWinnerDAO.updatePaymentStatus gọi đúng 1 lần với FUNDS_HELD")
+    @DisplayName("auctionWinnerDAO.updateFundsHeld gọi đúng 1 lần với FUNDS_HELD + deadline")
     void winnerDAO_called_once_with_FUNDS_HELD() {
+      // FIX: Production đã refactor để gộp set-status + persist-deadline thành 1 atomic call
+      // updateFundsHeld(id, status, deadline) — thay cho 2 call riêng lẻ trước đây
+      // (updatePaymentStatus + setConfirmReceiptDeadline). Lý do refactor: xem comment ở
+      // PaymentService.completePayment line 132-136 — gọi 2 lần làm reset deadline trễ 7 ngày.
+      //
+      // Test cũ verify updatePaymentStatus — đó là API CŨ, không còn được dùng nữa.
+      // Refactor sang verify updateFundsHeld để khớp với production hiện tại.
       paymentService.completePayment(auction);
       verify(auctionWinnerDAO, times(1))
-          .updatePaymentStatus(
-              eq(auction.getWinner().getId()), eq(PaymentStatus.FUNDS_HELD.name()));
+          .updateFundsHeld(
+              eq(auction.getWinner().getId()),
+              eq(PaymentStatus.FUNDS_HELD.name()),
+              any(java.time.LocalDateTime.class));
     }
 
     @Test
