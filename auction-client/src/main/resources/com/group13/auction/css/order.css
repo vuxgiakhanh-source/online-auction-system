@@ -78,46 +78,45 @@
 /* ORDER CARD */
 
 .order-card {
-    -fx-background-color: rgba(255, 255, 255, 0.94);
-    -fx-background-radius: 24;
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 26;
 
-    -fx-border-color: rgba(255, 255, 255, 0.58);
-    -fx-border-radius: 24;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 26;
     -fx-border-width: 1;
 
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.18, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
 }
 
 .order-card:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.98);
-    -fx-border-color: rgba(103, 184, 234, 0.45);
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.30), 24, 0.24, 0, 10);
+    -fx-background-color: rgba(255, 255, 255, 0.115);
+    -fx-border-color: rgba(103, 184, 234, 0.34);
 }
 
 .order-title {
     -fx-font-size: 20px;
     -fx-font-weight: 900;
-    -fx-text-fill: #0f253c;
+    -fx-text-fill: #ffffff;
 }
 
 .order-muted-text {
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-text-fill: rgba(15, 37, 60, 0.68);
+    -fx-text-fill: rgba(255, 255, 255, 0.70);
 }
 
 .order-status-badge {
-    -fx-background-color: rgba(15, 37, 60, 0.10);
+    -fx-background-color: rgba(103, 184, 234, 0.20);
     -fx-background-radius: 999;
 
-    -fx-border-color: rgba(15, 37, 60, 0.18);
+    -fx-border-color: rgba(103, 184, 234, 0.45);
     -fx-border-radius: 999;
     -fx-border-width: 1;
 
     -fx-padding: 7 14 7 14;
     -fx-font-size: 12px;
     -fx-font-weight: 900;
-    -fx-text-fill: #0f253c;
+    -fx-text-fill: #dff4ff;
 }
 
 
@@ -126,10 +125,10 @@
 .order-thumbnail-box {
     -fx-min-height: 96;
     -fx-pref-height: 96;
-    -fx-background-color: rgba(15, 37, 60, 0.08);
+    -fx-background-color: rgba(255, 255, 255, 0.08);
     -fx-background-radius: 18;
 
-    -fx-border-color: rgba(15, 37, 60, 0.12);
+    -fx-border-color: rgba(255, 255, 255, 0.10);
     -fx-border-radius: 18;
     -fx-border-width: 1;
 }
@@ -137,15 +136,18 @@
 .order-thumbnail-placeholder {
     -fx-font-size: 12px;
     -fx-font-weight: 800;
-    -fx-text-fill: rgba(15, 37, 60, 0.55);
+    -fx-text-fill: rgba(255, 255, 255, 0.58);
 }
 
 
 /* ORDER METRIC */
 
 .order-metric-box {
-    -fx-background-color: rgba(15, 37, 60, 0.06);
-    -fx-background-radius: 16;
+    -fx-background-color: rgba(255, 255, 255, 0.075);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
     -fx-padding: 10 14 10 14;
     -fx-min-width: 0;
 }
@@ -153,7 +155,7 @@
 .order-metric-value {
     -fx-font-size: 16px;
     -fx-font-weight: 900;
-    -fx-text-fill: #0f253c;
+    -fx-text-fill: #ffffff;
     -fx-wrap-text: true;
 }
 
@@ -161,19 +163,19 @@
 /* ORDER EMPTY / ERROR STATE */
 
 .order-empty-state {
-    -fx-background-color: rgba(255, 255, 255, 0.92);
-    -fx-background-radius: 24;
+    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-radius: 26;
 
-    -fx-border-color: rgba(255, 255, 255, 0.48);
-    -fx-border-radius: 24;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 26;
     -fx-border-width: 1;
 
     -fx-padding: 28;
     -fx-font-size: 16px;
     -fx-font-weight: 800;
-    -fx-text-fill: #0f253c;
+    -fx-text-fill: rgba(255, 255, 255, 0.78);
 
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 16, 0.16, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
 }
 
 
@@ -184,8 +186,11 @@
 }
 
 .order-hint-box {
-    -fx-background-color: rgba(15, 37, 60, 0.05);
-    -fx-background-radius: 16px;
+    -fx-background-color: rgba(255, 255, 255, 0.075);
+    -fx-background-radius: 18px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 18px;
+    -fx-border-width: 1;
     -fx-padding: 10px 14px;
     -fx-max-width: 360px;
 }
