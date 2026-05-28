@@ -108,16 +108,24 @@ public class DatabaseConnection {
     // Logic: pool đầy → HikariCP throw SQLTransientConnectionException sau 6s
     //        → handler catch → gửi SYSTEM_ERROR về client (còn ~4s buffer)
     //        → client nhận "lỗi server" thay vì "server không phản hồi"
-    config.setConnectionTimeout(6_000); // FIX: 30_000 → 6_000
-    config.setIdleTimeout(300_000); // 5 phút
-    config.setMaxLifetime(900_000); // 15 phút
+    // NOTE: timeout mặc định 6s tối ưu UX realtime (client timeout 10s).
+    // Tuy nhiên CI/load test thường cần timeout lớn hơn để DB warm-up / parallelism.
+    // Có thể override bằng env: DB_CONN_TIMEOUT_MS.
+    long connectionTimeoutMs = parseEnvLong("DB_CONN_TIMEOUT_MS", 6_000L);
+    long idleTimeoutMs = parseEnvLong("DB_IDLE_TIMEOUT_MS", 300_000L);
+    long maxLifetimeMs = parseEnvLong("DB_MAX_LIFETIME_MS", 900_000L);
+    config.setConnectionTimeout(connectionTimeoutMs);
+    config.setIdleTimeout(idleTimeoutMs);
+    config.setMaxLifetime(maxLifetimeMs);
 
     // ── MySQL socket & query timeouts ─────────────────────────────────
     // socketTimeout: nếu DB hang (deadlock, slow query), MySQL driver
     // throw exception sau 8s → tránh thread block vô hạn.
     // connectTimeout: TCP handshake timeout khi tạo connection mới.
-    config.addDataSourceProperty("socketTimeout", "8000"); // FIX: thêm mới
-    config.addDataSourceProperty("connectTimeout", "5000"); // FIX: thêm mới
+    long socketTimeoutMs = parseEnvLong("DB_SOCKET_TIMEOUT_MS", 8_000L);
+    long connectTimeoutMs = parseEnvLong("DB_CONNECT_TIMEOUT_MS", 5_000L);
+    config.addDataSourceProperty("socketTimeout", String.valueOf(socketTimeoutMs));
+    config.addDataSourceProperty("connectTimeout", String.valueOf(connectTimeoutMs));
 
     // ── MySQL prepared statement cache ────────────────────────────────
     config.addDataSourceProperty("cachePrepStmts", "true");
@@ -131,11 +139,12 @@ public class DatabaseConnection {
 
     dataSource = new HikariDataSource(config);
     log.warn(
-        "HikariCP pool created. URL: {} | maxPoolSize={} minIdle={} connTimeout=6s"
-            + " socketTimeout=8s",
+        "HikariCP pool created. URL: {} | maxPoolSize={} minIdle={} connTimeout={}ms socketTimeout={}ms",
         url,
         poolMax,
-        poolMin);
+        poolMin,
+        connectionTimeoutMs,
+        socketTimeoutMs);
   }
 
   public static DatabaseConnection getInstance() {
@@ -236,6 +245,17 @@ public class DatabaseConnection {
     if (val != null && !val.isBlank()) {
       try {
         return Integer.parseInt(val.trim());
+      } catch (NumberFormatException ignored) {
+      }
+    }
+    return defaultVal;
+  }
+
+  private static long parseEnvLong(String key, long defaultVal) {
+    String val = System.getenv(key);
+    if (val != null && !val.isBlank()) {
+      try {
+        return Long.parseLong(val.trim());
       } catch (NumberFormatException ignored) {
       }
     }

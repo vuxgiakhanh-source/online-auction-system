@@ -395,7 +395,7 @@ public class AuctionDAO {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx++, statusFilter);
+        pstmt.setString(idx, statusFilter);
       }
       pstmt.setInt(idx++, size);
       pstmt.setInt(idx, page * size);
@@ -526,7 +526,7 @@ public class AuctionDAO {
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx++, sellerId);
+        pstmt.setString(idx, sellerId);
       }
       pstmt.setInt(idx++, size);
       pstmt.setInt(idx, page * size);
