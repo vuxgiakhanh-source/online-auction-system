@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Mapper chuyển DTO auction từ {@code auction-common} sang view model của client. */
 public final class AuctionViewModelMapper {
@@ -253,16 +254,33 @@ public final class AuctionViewModelMapper {
         addNumberSpecification(specifications, "Năm sản xuất", fields.get("year"), "");
         addNumberSpecification(specifications, "Số km đã đi", fields.get("mileage"), " km");
       }
-      default -> addUnknownCategorySpecifications(specifications, fields);
+      default -> { }
     }
+
+    addRemainingSpecifications(specifications, fields, knownSpecificationKeys(item.getCategory()));
 
     return List.copyOf(specifications);
   }
 
-  private static void addUnknownCategorySpecifications(
-      List<ProductSpecificationViewModel> specifications, Map<String, Object> fields) {
+  private static Set<String> knownSpecificationKeys(String category) {
+    return switch (normalize(category)) {
+      case "ELECTRONICS" -> Set.of("brand", "warrantyMonths", "condition");
+      case "ART" -> Set.of("artist", "yearCreated", "medium");
+      case "VEHICLE" -> Set.of("manufacturer", "year", "mileage");
+      default -> Set.of();
+    };
+  }
+
+  private static void addRemainingSpecifications(
+      List<ProductSpecificationViewModel> specifications,
+      Map<String, Object> fields,
+      Set<String> handledKeys) {
     fields.forEach(
-        (key, value) -> addTextSpecification(specifications, humanReadableKey(key), value));
+        (key, value) -> {
+          if (key == null || !handledKeys.contains(key)) {
+            addTextSpecification(specifications, humanReadableKey(key), value);
+          }
+        });
   }
 
   private static void addTextSpecification(

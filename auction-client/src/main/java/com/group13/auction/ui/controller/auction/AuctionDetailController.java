@@ -21,6 +21,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 
 /** Controller cho màn chi tiết phiên đấu giá. */
 public final class AuctionDetailController {
@@ -345,7 +346,8 @@ public final class AuctionDetailController {
     productSpecsGrid.getChildren().clear();
 
     if (detail == null || !detail.hasProductSpecifications()) {
-      Label emptyLabel = new Label("Thông tin sản phẩm đang được cập nhật.");
+      Label emptyLabel = new Label("Chưa có thông số bổ sung cho sản phẩm này.");
+      emptyLabel.setMaxWidth(Double.MAX_VALUE);
       emptyLabel.setWrapText(true);
       emptyLabel.getStyleClass().add("auction-spec-empty-text");
       productSpecsGrid.add(emptyLabel, 0, 0, 2, 1);
@@ -355,15 +357,19 @@ public final class AuctionDetailController {
     int rowIndex = 0;
     for (ProductSpecificationViewModel specification : detail.productSpecifications()) {
       Label label = new Label(specification.label());
+      label.setMaxWidth(Double.MAX_VALUE);
       label.setWrapText(true);
       label.getStyleClass().add("auction-spec-label");
 
       Label value = new Label(specification.value());
+      value.setMaxWidth(Double.MAX_VALUE);
       value.setWrapText(true);
       value.getStyleClass().add("auction-spec-value");
 
       productSpecsGrid.add(label, 0, rowIndex);
       productSpecsGrid.add(value, 1, rowIndex);
+      GridPane.setHgrow(value, Priority.ALWAYS);
+      GridPane.setFillWidth(value, true);
       rowIndex++;
     }
   }

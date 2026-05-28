@@ -175,6 +175,42 @@ class SellerAuctionViewModelMapperTest {
   }
 
   @Test
+  void toRowShouldAppendUnmappedExtraFieldsForKnownCategories() {
+    AuctionDTOs.AuctionDTO auction = createAuction("A-1", "OPEN", "ELECTRONICS");
+    Map<String, Object> fields = new LinkedHashMap<>();
+    fields.put("brand", "Sony");
+    fields.put("warrantyMonths", 12);
+    fields.put("condition", "Like new");
+    fields.put("serialNumber", "SN-001");
+    fields.put("originCountry", "Japan");
+    fields.put("empty", "   ");
+    auction.getItem().setExtraFields(fields);
+
+    SellerAuctionRowViewModel row = SellerAuctionViewModelMapper.toRow(auction);
+
+    assertTrue(
+        row.productSpecifications().stream()
+            .anyMatch(
+                specification ->
+                    specification.label().equals("Serial Number")
+                        && specification.value().equals("SN-001")));
+    assertTrue(
+        row.productSpecifications().stream()
+            .anyMatch(
+                specification ->
+                    specification.label().equals("Origin Country")
+                        && specification.value().equals("Japan")));
+    assertEquals(
+        1,
+        row.productSpecifications().stream()
+            .filter(specification -> specification.label().equals("Thương hiệu"))
+            .count());
+    assertFalse(
+        row.productSpecifications().stream()
+            .anyMatch(specification -> specification.label().equals("Empty")));
+  }
+
+  @Test
   void toRowShouldMapUnknownCategorySpecificationsWithReadableKeys() {
     AuctionDTOs.AuctionDTO auction = createAuction("A-1", "OPEN", "COLLECTIBLE");
     Map<String, Object> fields = new LinkedHashMap<>();
