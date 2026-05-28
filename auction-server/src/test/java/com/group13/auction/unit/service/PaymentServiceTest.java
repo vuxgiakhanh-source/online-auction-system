@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
@@ -42,6 +43,11 @@ class PaymentServiceTest {
   @Mock BidTransactionDAO bidTransactionDAO;
   @Mock UserDAO userDAO;
 
+  // FIX [P2 — slow unit test]: auctionDAO trước đây bị `new` ngầm trong constructor
+  // 7-tham số của PaymentService → updateAuctionStatus() chạm DB thật.
+  // Mock tường minh + dùng constructor 8-tham số để giữ test thuần (no DB).
+  @Mock AuctionDAO auctionDAO;
+
   PaymentService paymentService;
   NormalUser seller;
   NormalUser winner;
@@ -54,11 +60,15 @@ class PaymentServiceTest {
   @BeforeEach
   void setUp() throws Exception {
     TestFixture.bootstrapSystemAdmin();
+    // FIX [P2]: ServerBroadcastNotifier.notifyPaymentSuccess/Failed/SecondChance* chạm DB
+    // qua Singleton — block 6s/HikariCP/call. Helper inject mock no-op.
+    TestFixture.silenceGlobalSingletons();
     paymentService =
         new PaymentService(
             auctionService,
             ratingService,
             walletService,
+            auctionDAO,
             auctionWinnerDAO,
             secondChanceOfferDAO,
             bidTransactionDAO,

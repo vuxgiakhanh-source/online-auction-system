@@ -47,6 +47,8 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
   private UserDAO mockUserDAO;
   private IRatingService mockRatingService;
   private FinancialTransactionDAO mockFinancialTransactionDAO;
+  // FIX [P2]: tránh `new AuctionWinnerDAO()` ngầm trong AuctionService(2-arg) → chạm DB.
+  private AuctionWinnerDAO mockAuctionWinnerDAO;
 
   private ExecutorService executor;
 
@@ -80,11 +82,12 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
     mockUserDAO = mock(UserDAO.class);
     mockRatingService = mock(IRatingService.class);
     mockFinancialTransactionDAO = mock(FinancialTransactionDAO.class);
+    mockAuctionWinnerDAO = mock(AuctionWinnerDAO.class);
 
     when(mockRatingService.isEligible(any())).thenReturn(true);
 
     when(mockBidTransactionDAO.saveTransactionAndUpdatePrice(
-            any(), anyString(), anyLong(), anyString()))
+        any(), anyString(), anyLong(), anyString()))
         .thenReturn(true);
 
     when(mockAuctionDAO.updateViewerCount(any(), anyInt())).thenReturn(true);
@@ -104,7 +107,9 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
     WalletService walletService =
         new WalletService(mockFinancialTransactionDAO, mockUserDAO, mockRatingService);
 
-    auctionService = new AuctionService(mockRatingService, mockAuctionDAO);
+    auctionService =
+        new AuctionService(
+            mockRatingService, mockAuctionDAO, mockFinancialTransactionDAO, mockAuctionWinnerDAO);
 
     bidService =
         new BidService(

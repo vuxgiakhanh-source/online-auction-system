@@ -34,6 +34,8 @@ class ObserverNotificationSmokeTest {
   @BeforeEach
   void setUp() throws Exception {
     TestFixture.bootstrapSystemAdmin();
+    // FIX [P2]: Observer-driven notify*() chạm ServerBroadcastNotifier → DB.
+    TestFixture.silenceGlobalSingletons();
     seller = TestFixture.normalSeller("obsSeller1");
     bidder = TestFixture.bidderWithBalance("obsBidder1", 5_000_000L);
     runningAuction = TestFixture.runningAuction(seller, 1_000_000L);

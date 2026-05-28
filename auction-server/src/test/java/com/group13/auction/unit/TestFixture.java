@@ -1,6 +1,13 @@
 package com.group13.auction.unit;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.group13.auction.bank.SystemBank;
+import com.group13.auction.dao.NotificationDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.SecondChanceOffer;
@@ -13,10 +20,13 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.NormalUserFactory;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.strategy.AutoBidRegistry;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -711,6 +721,53 @@ public final class TestFixture {
     Field instanceField = SystemAdmin.class.getDeclaredField("INSTANCE");
     instanceField.setAccessible(true);
     instanceField.set(null, null);
+  }
+
+  /**
+   * Vô hiệu hoá I/O DB của các Singleton toàn cục trong unit test.
+   *
+   * <p>Vấn đề: {@link ServerBroadcastNotifier} hard-code {@code new NotificationDAO()} và
+   * {@code new UserDAO()} ở field-level → mọi {@code notify*()} gọi từ service đều chạm DB thật.
+   * Tương tự, {@link AutoBidRegistry} có {@code autoBidDAO} thật. Trong CI khi schema MySQL
+   * thiếu, mỗi call block 6s theo HikariCP {@code connectionTimeout} → test 80–170s.
+   *
+   * <p>Helper này dùng reflection thay 2 field DAO của ServerBroadcastNotifier bằng mock no-op
+   * (yêu cầu production đã bỏ {@code final} ở 2 field đó), và set {@code AutoBidRegistry.autoBidDAO
+   * = null} (đã có null-guard sẵn).
+   *
+   * <p>Idempotent — gọi nhiều lần an toàn. Đặt trong {@code @BeforeEach} của mọi test class có SUT
+   * gọi {@code closeAuction}, {@code completePayment}, {@code approveReport}, {@code notifyXxx}, …
+   *
+   * @throws Exception nếu reflection thất bại (không kỳ vọng xảy ra với JDK 17 + argLine
+   *     --add-opens java.base/java.lang.reflect=ALL-UNNAMED)
+   */
+  public static void silenceGlobalSingletons() throws Exception {
+    // ── ServerBroadcastNotifier ──────────────────────────────────────────
+    ServerBroadcastNotifier broadcaster = ServerBroadcastNotifier.getInstance();
+
+    UserDAO noOpUserDAO = mock(UserDAO.class);
+    lenient()
+        .when(noOpUserDAO.findJoinedUserIdsByAuctionId(any()))
+        .thenReturn(Collections.emptySet());
+    lenient().when(noOpUserDAO.isActiveJoinedParticipant(any(), any())).thenReturn(false);
+
+    NotificationDAO noOpNotificationDAO = mock(NotificationDAO.class);
+    lenient().when(noOpNotificationDAO.save(any())).thenReturn(true);
+
+    injectInstanceField(broadcaster, "userDAO", noOpUserDAO);
+    injectInstanceField(broadcaster, "notificationDAO", noOpNotificationDAO);
+
+    // ── AutoBidRegistry ──────────────────────────────────────────────────
+    // Field `autoBidDAO` đã package-private và có null-guard trong production.
+    injectInstanceField(AutoBidRegistry.getInstance(), "autoBidDAO", null);
+  }
+
+  /** Reflection setter cho instance field — bypass `private`, hoạt động với non-final field. */
+  private static void injectInstanceField(Object target, String fieldName, Object value)
+      throws Exception {
+    Field field = target.getClass().getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(target, value);
   }
 
   /**
