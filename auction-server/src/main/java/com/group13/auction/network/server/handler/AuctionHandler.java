@@ -162,15 +162,7 @@ public class AuctionHandler implements PacketHandler {
 
       savedItemId = item.getId();
 
-      boolean itemSaved =
-          itemDAO.addItem(
-              item.getId(),
-              seller.getId(),
-              item.getName(),
-              item.getDescription(),
-              item.getStartingPrice(),
-              req.getItemCategory().trim().toUpperCase(),
-              imageUrls);
+      boolean itemSaved = itemDAO.addItem(item);
 
       if (!itemSaved) {
         session.send(
