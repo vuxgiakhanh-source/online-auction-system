@@ -23,15 +23,11 @@
 
     <Pane prefHeight="720.0" prefWidth="1280.0" styleClass="background-layer"/>
 
-    <ScrollPane fitToWidth="true"
-                hbarPolicy="NEVER"
-                pannable="true"
-                styleClass="page-scroll-pane"
-                AnchorPane.topAnchor="0.0"
-                AnchorPane.bottomAnchor="0.0"
-                AnchorPane.leftAnchor="0.0"
-                AnchorPane.rightAnchor="0.0">
-        <VBox spacing="22.0">
+    <VBox spacing="22.0"
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0"
+          AnchorPane.rightAnchor="0.0">
         <padding>
             <Insets top="28.0" right="42.0" bottom="72.0" left="42.0"/>
         </padding>
@@ -76,11 +72,12 @@
         </VBox>
 
         <!-- Content -->
-        <HBox spacing="22.0" VBox.vgrow="ALWAYS">
+        <HBox spacing="22.0" minHeight="0.0" VBox.vgrow="ALWAYS">
             <!-- FAQ panel -->
             <VBox spacing="14.0"
                   prefWidth="330.0"
                   minWidth="300.0"
+                  minHeight="0.0"
                   styleClass="chatbot-side-panel">
                 <Label text="FAQ gợi ý"
                        styleClass="chatbot-panel-title"/>
@@ -96,6 +93,7 @@
 
                 <ListView fx:id="faqListView"
                           onMouseClicked="#handleFaqClicked"
+                          minHeight="0.0"
                           VBox.vgrow="ALWAYS"
                           styleClass="chatbot-faq-list"/>
             </VBox>
@@ -103,6 +101,7 @@
             <!-- Chat panel -->
             <VBox spacing="14.0"
                   HBox.hgrow="ALWAYS"
+                  minHeight="0.0"
                   styleClass="chatbot-main-panel">
                 <HBox alignment="CENTER_LEFT" spacing="8.0">
                     <Label text="Chat with OMNI"
@@ -117,6 +116,10 @@
 
                 <ScrollPane fx:id="messageScrollPane"
                             fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            minHeight="0.0"
+                            pannable="true"
+                            vbarPolicy="AS_NEEDED"
                             VBox.vgrow="ALWAYS"
                             styleClass="chatbot-message-scroll">
                     <VBox fx:id="messageContainer"
@@ -139,8 +142,7 @@
                 </HBox>
             </VBox>
         </HBox>
-        </VBox>
-    </ScrollPane>
+    </VBox>
     <Label styleClass="signature-label"
            text="by CKNT team"
            maxHeight="-Infinity"
