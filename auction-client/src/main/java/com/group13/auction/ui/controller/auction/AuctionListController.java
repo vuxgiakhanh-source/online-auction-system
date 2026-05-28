@@ -37,12 +37,10 @@ public final class AuctionListController {
   private static final String SCOPE_ALL_LABEL = "Tất cả phiên";
   private static final String SCOPE_MY_AUCTIONS_LABEL = "Phiên của tôi";
   private static final String SCOPE_JOINED_LABEL = "Phiên đã tham gia";
-  private static final String SCOPE_WATCHING_LABEL = "Phiên đang theo dõi";
 
   private static final String SCOPE_ALL_VALUE = "ALL";
   private static final String SCOPE_MY_AUCTIONS_VALUE = "OWNED";
   private static final String SCOPE_JOINED_VALUE = "JOINED";
-  private static final String SCOPE_WATCHING_VALUE = "WATCHING";
 
   private static final String SORT_BY_START_TIME_LABEL = "Thời gian bắt đầu";
   private static final String SORT_BY_ACCESS_COUNT_LABEL = "Lượt truy cập";
@@ -98,12 +96,12 @@ public final class AuctionListController {
     statusFilterComboBox
         .getItems()
         .setAll(STATUS_ALL_LABEL, "OPEN", "RUNNING", "FINISHED", "PAID", "CANCELED");
-    statusFilterComboBox.getSelectionModel().selectFirst();
+    statusFilterComboBox.getSelectionModel().select("RUNNING");
 
     sortByComboBox
         .getItems()
         .setAll(SORT_BY_START_TIME_LABEL, SORT_BY_ACCESS_COUNT_LABEL, SORT_BY_CURRENT_PRICE_LABEL);
-    sortByComboBox.getSelectionModel().selectFirst();
+    sortByComboBox.getSelectionModel().select(SORT_BY_ACCESS_COUNT_LABEL);
   }
 
   private void setupScopeFilter() {
@@ -113,12 +111,9 @@ public final class AuctionListController {
     if (isCurrentUserSeller()) {
       scopeFilterComboBox
           .getItems()
-          .setAll(
-              SCOPE_ALL_LABEL, SCOPE_MY_AUCTIONS_LABEL, SCOPE_JOINED_LABEL, SCOPE_WATCHING_LABEL);
+          .setAll(SCOPE_ALL_LABEL, SCOPE_MY_AUCTIONS_LABEL, SCOPE_JOINED_LABEL);
     } else {
-      scopeFilterComboBox
-          .getItems()
-          .setAll(SCOPE_ALL_LABEL, SCOPE_JOINED_LABEL, SCOPE_WATCHING_LABEL);
+      scopeFilterComboBox.getItems().setAll(SCOPE_ALL_LABEL, SCOPE_JOINED_LABEL);
     }
 
     scopeFilterComboBox.getSelectionModel().selectFirst();
@@ -309,9 +304,6 @@ public final class AuctionListController {
     if (SCOPE_JOINED_LABEL.equals(selectedLabel)) {
       return SCOPE_JOINED_VALUE;
     }
-    if (SCOPE_WATCHING_LABEL.equals(selectedLabel)) {
-      return SCOPE_WATCHING_VALUE;
-    }
     return SCOPE_ALL_VALUE;
   }
 
@@ -357,9 +349,6 @@ public final class AuctionListController {
     }
     if (SCOPE_JOINED_LABEL.equals(selectedLabel)) {
       return " trong phiên đã tham gia";
-    }
-    if (SCOPE_WATCHING_LABEL.equals(selectedLabel)) {
-      return " trong phiên đang theo dõi";
     }
     return "";
   }
