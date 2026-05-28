@@ -151,6 +151,10 @@
                         <include>**/*IT.java</include>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
+                    <excludes>
+                        <!-- Load tests chạy rất nặng, tách khỏi CI mặc định để tránh timeout -->
+                        <exclude>**/load/*IT.java</exclude>
+                    </excludes>
                     <!-- Java 17: allow reflection on static final fields in tests -->
                     <argLine>
                         --add-opens java.base/java.lang.reflect=ALL-UNNAMED
