@@ -16,12 +16,15 @@ on:
 jobs:
   qodana:
     runs-on: ubuntu-latest
+    env:
+      # Opt-in Node.js 24 for JavaScript actions (Node 20 deprecation warning in 2026).
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
       pull-requests: write
       checks: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
