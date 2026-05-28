@@ -532,7 +532,7 @@ public class BidService implements IBidService {
         auctionId,
         leaderChanged);
 
-    if (extendedForAntiSniping && leavingLeader != null) {
+    if (extendedForAntiSniping) {
       auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
       auctionService.notify(
           auction,

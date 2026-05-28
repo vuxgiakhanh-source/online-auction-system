@@ -452,7 +452,7 @@ public class AuctionDAO {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx++, statusFilter);
+        pstmt.setString(idx, statusFilter);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
@@ -580,7 +580,7 @@ public class AuctionDAO {
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx++, sellerId);
+        pstmt.setString(idx, sellerId);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
