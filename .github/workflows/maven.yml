@@ -1,18 +1,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # CI/CD — Online Auction System
 #
-# Pipeline gồm 3 job:
+# Pipeline gồm 2 job:
 #   1. test     — build Maven + chạy unit test
 #   2. docker   — build & push Docker image lên GHCR  (chỉ khi push vào main)
-#   3. deploy   — deploy lên VPS qua SSH + Docker Compose  (chỉ main)
-#
-# Secrets cần cấu hình trong GitHub → Settings → Secrets and variables → Actions:
-#   DEPLOY_HOST             — IP hoặc domain VPS
-#   DEPLOY_USER             — user SSH (vd: ubuntu)
-#   DEPLOY_SSH_KEY          — private key SSH (RSA/Ed25519, không passphrase)
-#   DEPLOY_DB_USERNAME      — username DB trên VPS
-#   DEPLOY_DB_PASSWORD      — password DB trên VPS
-#   DEPLOY_DB_ROOT_PASSWORD — root password MySQL trên VPS
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: CI/CD — Online Auction System
@@ -22,10 +13,12 @@ on:
     branches:
       - main
       - OOP-logic-testig
+      - backup-client
   pull_request:
     branches:
       - main
       - OOP-logic-testig
+      - backup-client
 
 env:
   REGISTRY: ghcr.io
@@ -136,65 +129,3 @@ jobs:
           # Dùng GitHub Actions cache để tăng tốc build
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  # ── Job 3: Deploy lên VPS ──────────────────────────────────────────────────
-  deploy:
-    name: Deploy to VPS (SSH + Docker Compose)
-    runs-on: ubuntu-latest
-    needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - name: Checkout source (để copy docker-compose.yml)
-        uses: actions/checkout@v5
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Copy docker-compose.yml lên VPS
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "mkdir -p ~/auction-system"
-          scp -i ~/.ssh/deploy_key \
-            docker-compose.yml \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/auction-system/docker-compose.yml"
-
-      - name: Deploy trên VPS
-        run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}"
-          ssh -i ~/.ssh/deploy_key \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" bash -s << REMOTE
-            set -euo pipefail
-            cd ~/auction-system
-
-            # Login GHCR trên VPS
-            echo "${{ secrets.GITHUB_TOKEN }}" | \
-              docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-            # Ghi file .env với secrets (không lưu trong image)
-            # Dùng printf thay vì heredoc để tránh khoảng trắng YAML / delimiter lồng nhau làm hỏng .env
-            printf '%s\n' \
-              "DB_ROOT_PASSWORD=${{ secrets.DEPLOY_DB_ROOT_PASSWORD }}" \
-              "DB_USERNAME=${{ secrets.DEPLOY_DB_USERNAME }}" \
-              "DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }}" \
-              > .env
-
-            # Pull image mới và restart container (chuỗi image đã được runner chèn vào script)
-            docker pull "$IMAGE"
-            AUCTION_SERVER_IMAGE="$IMAGE" docker compose up -d --no-build
-            docker compose ps
-
-            # Dọn image cũ không còn dùng
-            docker image prune -f
-          REMOTE
-
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f ~/.ssh/deploy_key
