@@ -66,6 +66,7 @@ public class PaymentService implements IPaymentService {
     return auctionPaymentLocks.computeIfAbsent(auction.getId(), id -> new Object());
   }
 
+  /** Khởi tạo PaymentService với AuctionDAO mặc định. */
   public PaymentService(
       IAuctionService auctionService,
       IRatingService ratingService,
@@ -162,6 +163,7 @@ public class PaymentService implements IPaymentService {
     }
   }
 
+  /** Winner xác nhận đã nhận hàng để bắt đầu cửa sổ report 3 ngày. */
   public void confirmItemReceived(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
 
@@ -185,6 +187,7 @@ public class PaymentService implements IPaymentService {
     ServerBroadcastNotifier.getInstance().notifyItemReceived(auction);
   }
 
+  /** Giải ngân khoản tiền đang giữ tại hệ thống cho seller. */
   public void releaseToSeller(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser seller = auction.getItem().getSeller();
@@ -222,6 +225,7 @@ public class PaymentService implements IPaymentService {
     cleanupAuctionLocks(auction.getId(), auctionWinner.getId());
   }
 
+  /** Hoàn tiền đang giữ tại hệ thống về lại winner khi đủ điều kiện. */
   public void refundToWinnerFromBank(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser winner = auctionWinner.getWinner();
@@ -398,6 +402,7 @@ public class PaymentService implements IPaymentService {
         skipped);
   }
 
+  /** Chấp nhận second chance offer và gán runner-up thành winner mới của phiên. */
   public void acceptSecondChanceOffer(SecondChanceOffer offer, Auction auction) {
     if (offer.getStatus() != SecondChanceOffer.OfferStatus.PENDING) {
       throw new IllegalStateException(
@@ -444,6 +449,7 @@ public class PaymentService implements IPaymentService {
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
   }
 
+  /** Từ chối second chance offer và hủy phiên do không còn winner hợp lệ. */
   public void declineSecondChanceOffer(SecondChanceOffer offer, Auction auction) {
     if (offer.getStatus() != SecondChanceOffer.OfferStatus.PENDING) {
       throw new IllegalStateException(
@@ -484,6 +490,7 @@ public class PaymentService implements IPaymentService {
     }
   }
 
+  /** Tạo second chance offer cho runner-up khi winner cũ hết hạn thanh toán. */
   public SecondChanceOffer createSecondChanceOffer(
       NormalUser runnerUp, Auction auction, long offerPrice, long depositPaid) {
     if (offerPrice < auction.getReservePrice()) {
@@ -590,7 +597,8 @@ public class PaymentService implements IPaymentService {
    * Idempotent — gọi nhiều lần an toàn (remove trả null là OK).
    *
    * @param auctionId id phiên cần dọn lock (bắt buộc)
-   * @param winnerId id winner cần dọn lock; {@code null} nếu phiên không có winner (cancel-no-winner)
+   * @param winnerId id winner cần dọn lock; {@code null} nếu phiên không có winner
+   *     (cancel-no-winner)
    */
   public void cleanupAuctionLocks(String auctionId, String winnerId) {
     if (auctionId != null) {

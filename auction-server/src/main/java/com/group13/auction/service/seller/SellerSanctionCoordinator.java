@@ -45,6 +45,7 @@ public class SellerSanctionCoordinator {
   private final SecondChanceOfferDAO secondChanceOfferDAO;
   private final ExecutorService worker;
 
+  /** Tạo coordinator xử lý workflow xử phạt seller theo cơ chế bất đồng bộ. */
   public SellerSanctionCoordinator(
       IAuctionService auctionService,
       IPaymentService paymentService,
@@ -59,17 +60,19 @@ public class SellerSanctionCoordinator {
     this.worker =
         Executors.newSingleThreadExecutor(
             new ThreadFactory() {
-              private final AtomicInteger n = new AtomicInteger();
+              private final AtomicInteger workerIndex = new AtomicInteger();
 
               @Override
               public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "seller-sanction-worker-" + n.incrementAndGet());
+                Thread t =
+                    new Thread(r, "seller-sanction-worker-" + workerIndex.incrementAndGet());
                 t.setDaemon(true);
                 return t;
               }
             });
   }
 
+  /** Khởi tạo singleton instance dùng trong runtime server. */
   public static void initialize(
       IAuctionService auctionService,
       IPaymentService paymentService,

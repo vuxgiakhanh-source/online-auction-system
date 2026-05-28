@@ -11,8 +11,19 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.BidService;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -146,6 +157,7 @@ public class AutoBidProcessor {
 
   // ── Constructor ───────────────────────────────────────────────────────────
 
+  /** Tạo bộ xử lý Auto-Bid với các dependency cần thiết cho đặt giá và broadcast. */
   public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
     this.bidService = bidService;
     this.sessionManager = sessionManager;
@@ -486,7 +498,7 @@ public class AutoBidProcessor {
   // =========================================================================
 
   /**
-   * Tính giá bid thông minh theo phase:
+   * Tính giá bid thông minh theo phase.
    *
    * <ul>
    *   <li>EARLY/MID → base increment (tiết kiệm).
