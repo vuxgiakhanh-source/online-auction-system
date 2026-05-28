@@ -151,6 +151,12 @@ public class QualityReportService implements IQualityReportService {
 
       NormalUser winner = report.getReporter();
       NormalUser seller = auction.getItem().getSeller();
+      if (winner == null) {
+        throw new IllegalStateException("Không thể approve report vì winner (reporter) bị null.");
+      }
+      if (seller == null) {
+        throw new IllegalStateException("Không thể approve report vì seller bị null.");
+      }
 
       report.approve();
       ratingService.penalizeSeller(seller);
