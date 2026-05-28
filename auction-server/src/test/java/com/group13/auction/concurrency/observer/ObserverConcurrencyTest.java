@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import com.group13.auction.concurrency.ConcurrencyTestBase;
 import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.AuctionWinnerDAO;
+import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.observer.AuctionEvent;
@@ -36,6 +38,10 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
   private Auction auction;
   private IRatingService mockRatingService;
   private AuctionDAO mockAuctionDAO;
+  // FIX [P2]: tránh `new FinancialTransactionDAO()` + `new AuctionWinnerDAO()` ngầm trong
+  // AuctionService(2-arg) → chạm DB. Concurrency test có N threads → blast multiplier.
+  private FinancialTransactionDAO mockFinancialTransactionDAO;
+  private AuctionWinnerDAO mockAuctionWinnerDAO;
 
   /**
    * Bootstrap SystemAdmin bằng reflection để tránh gọi DB thật. AuctionService có field `private
@@ -58,6 +64,8 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
 
     mockRatingService = mock(IRatingService.class);
     mockAuctionDAO = mock(AuctionDAO.class);
+    mockFinancialTransactionDAO = mock(FinancialTransactionDAO.class);
+    mockAuctionWinnerDAO = mock(AuctionWinnerDAO.class);
     lockRegistry = AuctionLockRegistry.getInstance();
     auction = buildRunningAuction();
     resetAuctionManagerUsers();
@@ -77,7 +85,8 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
       "G4-1: 20 threads addObserver() với instance khác nhau — tất cả observers nhận notify()")
   @Timeout(value = 10)
   void concurrentAddObserver_allObserversReceiveNotify() throws InterruptedException {
-    AuctionService as = new AuctionService(mockRatingService, mockAuctionDAO);
+    AuctionService as = new AuctionService(
+        mockRatingService, mockAuctionDAO, mockFinancialTransactionDAO, mockAuctionWinnerDAO);
 
     int N = 20;
     AtomicInteger notifyCount = new AtomicInteger(0);
@@ -88,16 +97,16 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
       // Mỗi observer là instance riêng biệt — đếm số lần notify
       AuctionObserver obs = countingObserver(notifyCount);
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  as.addObserver(auction.getId(), obs);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              as.addObserver(auction.getId(), obs);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -120,7 +129,8 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
           + " atomic")
   @Timeout(value = 5)
   void sameObserver_concurrentAdd_duplicateRisk_documentedBehavior() throws InterruptedException {
-    AuctionService as = new AuctionService(mockRatingService, mockAuctionDAO);
+    AuctionService as = new AuctionService(
+        mockRatingService, mockAuctionDAO, mockFinancialTransactionDAO, mockAuctionWinnerDAO);
     AtomicInteger notifyCount = new AtomicInteger(0);
     // Cùng 1 instance — contains() + add() không atomic → có thể duplicate
     AuctionObserver singleObs = countingObserver(notifyCount);
@@ -131,16 +141,16 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
 
     for (int i = 0; i < N; i++) {
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  as.addObserver(auction.getId(), singleObs);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              as.addObserver(auction.getId(), singleObs);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -170,7 +180,8 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
   @DisplayName("G8-1: 20 unique observers concurrent add — không lost observer")
   @Timeout(value = 5)
   void uniqueObservers_concurrentAdd_noneAreLost() throws InterruptedException {
-    AuctionService as = new AuctionService(mockRatingService, mockAuctionDAO);
+    AuctionService as = new AuctionService(
+        mockRatingService, mockAuctionDAO, mockFinancialTransactionDAO, mockAuctionWinnerDAO);
 
     int N = 20;
     AtomicInteger total = new AtomicInteger(0);
@@ -180,16 +191,16 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
     for (int i = 0; i < N; i++) {
       AuctionObserver obs = countingObserver(total);
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  as.addObserver(auction.getId(), obs);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              as.addObserver(auction.getId(), obs);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -212,7 +223,8 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
   void stressRounds_addAndNotify_countCorrect() throws InterruptedException {
     for (int round = 0; round < 5; round++) {
       Auction freshAuction = buildRunningAuction();
-      AuctionService as = new AuctionService(mockRatingService, mockAuctionDAO);
+      AuctionService as = new AuctionService(
+          mockRatingService, mockAuctionDAO, mockFinancialTransactionDAO, mockAuctionWinnerDAO);
 
       int N = 10;
       AtomicInteger count = new AtomicInteger(0);
@@ -222,16 +234,16 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
       for (int i = 0; i < N; i++) {
         AuctionObserver obs = countingObserver(count);
         new Thread(
-                () -> {
-                  try {
-                    gate.await();
-                    as.addObserver(freshAuction.getId(), obs);
-                  } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                  } finally {
-                    done.countDown();
-                  }
-                })
+            () -> {
+              try {
+                gate.await();
+                as.addObserver(freshAuction.getId(), obs);
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              } finally {
+                done.countDown();
+              }
+            })
             .start();
       }
 

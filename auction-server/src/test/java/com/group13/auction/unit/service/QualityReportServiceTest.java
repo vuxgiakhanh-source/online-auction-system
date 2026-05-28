@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.QualityReportDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
@@ -50,6 +51,11 @@ class QualityReportServiceTest {
   @Mock QualityReportDAO qualityReportDAO;
   @Mock UserDAO userDAO;
 
+  // FIX [P2 — slow unit test]: notificationDAO trước đây bị `new` ngầm trong constructor
+  // 4-tham số của QualityReportService → mỗi lần saveNotification() chạm DB thật, block 6s
+  // theo HikariCP connectionTimeout. Mock tường minh để giữ test thuần (no DB, no network).
+  @Mock NotificationDAO notificationDAO;
+
   QualityReportService qualityReportService;
 
   // ── Fixtures ──────────────────────────────────────────────────────────────
@@ -69,7 +75,8 @@ class QualityReportServiceTest {
     TestFixture.bootstrapSystemAdmin();
 
     qualityReportService =
-        new QualityReportService(ratingService, paymentService, qualityReportDAO, userDAO);
+        new QualityReportService(
+            ratingService, paymentService, qualityReportDAO, userDAO, notificationDAO);
 
     seller = TestFixture.normalSeller("sellerQR1");
     winner = TestFixture.bidderWithBalance("winnerQR2", 20_000_000L);

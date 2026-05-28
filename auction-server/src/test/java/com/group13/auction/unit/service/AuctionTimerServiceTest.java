@@ -64,6 +64,9 @@ class AuctionTimerServiceTest {
     resetAuctionManager();
     clearLockRegistry();
     clearAutoBidRegistry();
+    // FIX [P2]: AuctionTimerService → AuctionService.closeAuction() chạm ServerBroadcastNotifier
+    // (notify*) + AutoBidRegistry.deleteByAuction → AutoBidDAO. Vô hiệu hoá qua Singleton.
+    TestFixture.silenceGlobalSingletons();
 
     sut = AuctionTimerService.getInstance();
     inject("auctionService", auctionService);
@@ -182,10 +185,10 @@ class AuctionTimerServiceTest {
       Auction auction = openAuction(NOW.minusMinutes(1), NOW.plusHours(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToRunning();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToRunning();
+            return null;
+          })
           .when(auctionService)
           .startAuction(auction);
 
@@ -202,10 +205,10 @@ class AuctionTimerServiceTest {
       Auction auction = openAuction(NOW, NOW.plusHours(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToRunning();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToRunning();
+            return null;
+          })
           .when(auctionService)
           .startAuction(auction);
 
@@ -264,10 +267,10 @@ class AuctionTimerServiceTest {
           .when(auctionService)
           .startAuction(failing);
       doAnswer(
-              invocation -> {
-                succeeding.transitionToRunning();
-                return null;
-              })
+          invocation -> {
+            succeeding.transitionToRunning();
+            return null;
+          })
           .when(auctionService)
           .startAuction(succeeding);
 
@@ -291,10 +294,10 @@ class AuctionTimerServiceTest {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusMinutes(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -310,10 +313,10 @@ class AuctionTimerServiceTest {
       Auction auction = runningAuction(NOW.minusHours(1), NOW);
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -356,10 +359,10 @@ class AuctionTimerServiceTest {
       auction.updateBid(2_500_000L, bidder);
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToClose(true);
-                return null;
-              })
+          invocation -> {
+            auction.transitionToClose(true);
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -378,10 +381,10 @@ class AuctionTimerServiceTest {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -399,10 +402,10 @@ class AuctionTimerServiceTest {
       auction.updateBid(1_200_000L, normalBidder("bidder-low"));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -419,10 +422,10 @@ class AuctionTimerServiceTest {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
       doThrow(new RuntimeException("refund failed")).when(paymentService).refundDeposits(auction);
@@ -522,10 +525,10 @@ class AuctionTimerServiceTest {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       register(auction);
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 
@@ -548,10 +551,10 @@ class AuctionTimerServiceTest {
           .register(normalBidder("auto-2").getId(), auction.getId(), 4_000_000L);
       AuctionLockRegistry.getInstance().getLock(auction.getId());
       doAnswer(
-              invocation -> {
-                auction.transitionToCancel();
-                return null;
-              })
+          invocation -> {
+            auction.transitionToCancel();
+            return null;
+          })
           .when(auctionService)
           .closeAuction(auction);
 

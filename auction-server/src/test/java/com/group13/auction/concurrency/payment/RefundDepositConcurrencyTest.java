@@ -53,6 +53,8 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
   private BidTransactionDAO mockBidTransactionDAO;
   private UserDAO mockUserDAO;
   private FinancialTransactionDAO mockFinancialDAO;
+  // FIX [P2]: tránh `new AuctionDAO()` ngầm trong PaymentService(7-arg) → chạm DB.
+  private AuctionDAO mockAuctionDAO;
 
   private static final long DEPOSIT_AMOUNT = STARTING_PRICE * 3 / 10; // 150_000
 
@@ -65,6 +67,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     mockBidTransactionDAO = mock(BidTransactionDAO.class);
     mockUserDAO = mock(UserDAO.class);
     mockFinancialDAO = mock(FinancialTransactionDAO.class);
+    mockAuctionDAO = mock(AuctionDAO.class);
 
     when(mockRatingService.isEligible(any())).thenReturn(true);
     when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
@@ -79,6 +82,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
             mockAuctionService,
             mockRatingService,
             walletService,
+            mockAuctionDAO,
             mockAuctionWinnerDAO,
             mockSecondChanceOfferDAO,
             mockBidTransactionDAO,
