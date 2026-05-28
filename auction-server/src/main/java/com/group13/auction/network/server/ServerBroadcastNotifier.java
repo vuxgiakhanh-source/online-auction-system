@@ -123,7 +123,6 @@ public class ServerBroadcastNotifier {
         || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
         || type == AuctionEvent.AuctionEventType.BID_PLACED
         || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
-        || type == AuctionEvent.AuctionEventType.AUCTION_ENDED
         || type == AuctionEvent.AuctionEventType.PAYMENT_COMPLETED
         || type == AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED) {
       return;
@@ -159,7 +158,6 @@ public class ServerBroadcastNotifier {
   }
 
   private static String eventBody(AuctionEvent event) {
-    Auction auction = event.getAuction();
     NormalUser bidder = event.getBidder();
     String bidderName = bidder != null ? bidder.getUsername() : "Không có";
     return switch (event.getEventType()) {

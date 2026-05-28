@@ -61,7 +61,7 @@ public class UserService implements IUserService {
 
     // Kiểm tra mật khẩu
     if (!user.getHashedPassword().equals(User.hashPassword(inputPassword))) {
-      log.warn("Login failed: wrong password, username={}", username);
+      log.warn("User login failed: wrong password, username={}", username);
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
@@ -80,7 +80,7 @@ public class UserService implements IUserService {
 
     AdminRow row = rowOpt.get();
     if (!row.passwordHash().equals(User.hashPassword(inputPassword))) {
-      log.warn("Login failed: wrong password, username={}", username);
+      log.warn("Admin login failed: wrong password, username={}", username);
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 

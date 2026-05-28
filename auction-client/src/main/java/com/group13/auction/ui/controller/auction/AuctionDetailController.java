@@ -437,18 +437,15 @@ public final class AuctionDetailController {
 
   private boolean isCurrentUserLeading(AuctionDetailViewModel detail) {
     String currentUserId = currentUserId();
+    String leaderId = detail != null ? detail.currentLeaderId() : "";
     return detail != null
-        && currentUserId != null
         && !currentUserId.isBlank()
-        && detail.currentLeaderId() != null
-        && !detail.currentLeaderId().isBlank()
-        && detail.currentLeaderId().equals(currentUserId);
+        && !leaderId.isBlank()
+        && leaderId.equals(currentUserId);
   }
 
   private boolean hasCurrentLeader(AuctionDetailViewModel detail) {
-    return detail != null
-        && detail.currentLeaderId() != null
-        && !detail.currentLeaderId().isBlank();
+    return detail != null && !detail.currentLeaderId().isBlank();
   }
 
   private void setCancelJoinButtonVisible(boolean visible) {

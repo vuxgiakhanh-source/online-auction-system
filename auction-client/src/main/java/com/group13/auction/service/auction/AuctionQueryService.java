@@ -17,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 /** Service đọc danh sách và chi tiết phiên đấu giá từ server. */
 public final class AuctionQueryService {
 
-  private static final String SORT_BY_START_TIME = "START_TIME";
   private static final String SORT_BY_CURRENT_PRICE = "CURRENT_PRICE";
   private static final String SORT_BY_VIEWER_COUNT = "VIEWER_COUNT";
   private static final String DEFAULT_SCOPE_FILTER = "ALL";
@@ -200,9 +199,6 @@ public final class AuctionQueryService {
     }
     if (SORT_BY_CURRENT_PRICE.equals(normalizedSortBy)) {
       return currentPriceDescendingComparator().thenComparing(startTimeDescendingComparator());
-    }
-    if (SORT_BY_START_TIME.equals(normalizedSortBy)) {
-      return startTimeDescendingComparator();
     }
     return startTimeDescendingComparator();
   }
