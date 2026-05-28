@@ -8,6 +8,8 @@ import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.viewmodel.auction.AuctionCardViewModel;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +17,9 @@ import java.util.concurrent.CompletableFuture;
 /** Service đọc danh sách và chi tiết phiên đấu giá từ server. */
 public final class AuctionQueryService {
 
+  private static final String SORT_BY_START_TIME = "START_TIME";
   private static final String SORT_BY_CURRENT_PRICE = "CURRENT_PRICE";
+  private static final String SORT_BY_VIEWER_COUNT = "VIEWER_COUNT";
   private static final String DEFAULT_SCOPE_FILTER = "ALL";
 
   private final ClientNetworkFacade networkFacade;
@@ -50,8 +54,7 @@ public final class AuctionQueryService {
    *
    * @param keyword từ khóa tìm kiếm theo tên sản phẩm
    * @param statusFilter trạng thái phiên cần lọc, null nghĩa là tất cả
-   * @param scopeFilter phạm vi phiên cần lấy: {@code ALL}, {@code OWNED}, {@code JOINED}, {@code
-   *     WATCHING}
+   * @param scopeFilter phạm vi phiên cần lấy: {@code ALL}, {@code OWNED}, {@code JOINED}
    * @param sortBy khóa sắp xếp của màn danh sách auction
    * @param page trang bắt đầu từ 0
    * @param pageSize số item mỗi trang
@@ -74,6 +77,7 @@ public final class AuctionQueryService {
 
     return auctionFuture
         .thenApply(auctions -> filterByStatus(auctions, normalizedKeyword, statusFilter))
+        .thenApply(auctions -> sortByRequestedOrder(auctions, sortBy))
         .thenApply(AuctionViewModelMapper::toCardViewModels);
   }
 
@@ -173,6 +177,44 @@ public final class AuctionQueryService {
 
   private int normalizePageSize(int pageSize) {
     return pageSize <= 0 ? 20 : Math.min(pageSize, 100);
+  }
+
+  static List<AuctionDTOs.AuctionDTO> sortByRequestedOrder(
+      List<AuctionDTOs.AuctionDTO> auctions, String sortBy) {
+    if (auctions == null || auctions.size() < 2) {
+      return auctions == null ? List.of() : auctions;
+    }
+
+    return auctions.stream()
+        .sorted(Comparator.nullsLast(auctionComparator(sortBy)))
+        .toList();
+  }
+
+  private static Comparator<AuctionDTOs.AuctionDTO> auctionComparator(String sortBy) {
+    String normalizedSortBy = sortBy == null ? "" : sortBy.trim();
+    if (SORT_BY_VIEWER_COUNT.equals(normalizedSortBy)) {
+      return Comparator.comparingInt(AuctionDTOs.AuctionDTO::getViewerCount)
+          .reversed()
+          .thenComparing(currentPriceDescendingComparator())
+          .thenComparing(startTimeDescendingComparator());
+    }
+    if (SORT_BY_CURRENT_PRICE.equals(normalizedSortBy)) {
+      return currentPriceDescendingComparator().thenComparing(startTimeDescendingComparator());
+    }
+    if (SORT_BY_START_TIME.equals(normalizedSortBy)) {
+      return startTimeDescendingComparator();
+    }
+    return startTimeDescendingComparator();
+  }
+
+  private static Comparator<AuctionDTOs.AuctionDTO> currentPriceDescendingComparator() {
+    return Comparator.comparingDouble(AuctionDTOs.AuctionDTO::getCurrentPrice).reversed();
+  }
+
+  private static Comparator<AuctionDTOs.AuctionDTO> startTimeDescendingComparator() {
+    return Comparator.comparing(
+        AuctionDTOs.AuctionDTO::getStartTime,
+        Comparator.nullsLast(Comparator.<LocalDateTime>reverseOrder()));
   }
 
   private String toSearchSortBy(String sortBy) {
