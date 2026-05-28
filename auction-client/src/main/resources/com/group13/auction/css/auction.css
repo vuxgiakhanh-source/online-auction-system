@@ -537,6 +537,33 @@
     -fx-padding: 4px;
 }
 
+.auction-line-chart .chart-line-symbol.bid-chart-point {
+    -fx-background-color: #e0f2fe, #1d4ed8;
+    -fx-background-radius: 8px;
+    -fx-padding: 5px;
+    -fx-cursor: hand;
+}
+
+.auction-line-chart .chart-line-symbol.bid-chart-point:hover {
+    -fx-background-color: #ffffff, #67b8ea;
+    -fx-effect: dropshadow(gaussian, rgba(103, 184, 234, 0.55), 14, 0.35, 0, 0);
+}
+
+.auction-line-chart .chart-line-symbol.bid-chart-point-auto {
+    -fx-background-color: #fef3c7, #f59e0b;
+}
+
+.bid-chart-tooltip {
+    -fx-background-color: rgba(10, 19, 33, 0.96);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(103, 184, 234, 0.55);
+    -fx-border-radius: 8;
+    -fx-padding: 8 10 8 10;
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
 
 /* LIVE BIDDING ENHANCEMENTS */
 
