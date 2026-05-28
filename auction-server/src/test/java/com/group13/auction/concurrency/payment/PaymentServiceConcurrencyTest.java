@@ -47,6 +47,8 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
   private BidTransactionDAO mockBidTransactionDAO;
   private UserDAO mockUserDAO;
   private FinancialTransactionDAO mockFinancialDAO;
+  // FIX [P2]: tránh `new AuctionDAO()` ngầm trong PaymentService(7-arg) → chạm DB.
+  private AuctionDAO mockAuctionDAO;
 
   @BeforeEach
   void setUp() {
@@ -57,6 +59,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     mockBidTransactionDAO = mock(BidTransactionDAO.class);
     mockUserDAO = mock(UserDAO.class);
     mockFinancialDAO = mock(FinancialTransactionDAO.class);
+    mockAuctionDAO = mock(AuctionDAO.class);
 
     when(mockRatingService.isEligible(any())).thenReturn(true);
     when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
@@ -72,6 +75,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
             mockAuctionService,
             mockRatingService,
             walletService,
+            mockAuctionDAO,
             mockAuctionWinnerDAO,
             mockSecondChanceOfferDAO,
             mockBidTransactionDAO,
@@ -179,17 +183,17 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
 
     for (int i = 0; i < 2; i++) {
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  paymentService.refundToWinnerFromBank(auction);
-                  successes.incrementAndGet();
-                } catch (Exception e) {
-                  failures.incrementAndGet();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              paymentService.refundToWinnerFromBank(auction);
+              successes.incrementAndGet();
+            } catch (Exception e) {
+              failures.incrementAndGet();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -299,27 +303,27 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     CountDownLatch done = new CountDownLatch(2);
 
     new Thread(
-            () -> {
-              try {
-                gate.await();
-                paymentService.releaseToSeller(auction);
-              } catch (Exception ignored) {
-              } finally {
-                done.countDown();
-              }
-            })
+        () -> {
+          try {
+            gate.await();
+            paymentService.releaseToSeller(auction);
+          } catch (Exception ignored) {
+          } finally {
+            done.countDown();
+          }
+        })
         .start();
 
     new Thread(
-            () -> {
-              try {
-                gate.await();
-                paymentService.refundToWinnerFromBank(auction);
-              } catch (Exception ignored) {
-              } finally {
-                done.countDown();
-              }
-            })
+        () -> {
+          try {
+            gate.await();
+            paymentService.refundToWinnerFromBank(auction);
+          } catch (Exception ignored) {
+          } finally {
+            done.countDown();
+          }
+        })
         .start();
 
     gate.countDown();
@@ -374,31 +378,31 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     AtomicInteger expireRan = new AtomicInteger(0);
 
     new Thread(
-            () -> {
-              try {
-                gate.await();
-                paymentService.completePayment(auction);
-                completeOk.incrementAndGet();
-              } catch (Exception ignored) {
-              } finally {
-                done.countDown();
-              }
-            })
+        () -> {
+          try {
+            gate.await();
+            paymentService.completePayment(auction);
+            completeOk.incrementAndGet();
+          } catch (Exception ignored) {
+          } finally {
+            done.countDown();
+          }
+        })
         .start();
 
     new Thread(
-            () -> {
-              try {
-                gate.await();
-                paymentService.expirePayment(auction);
-                if (aw.getPaymentStatus() == AuctionWinner.PaymentStatus.EXPIRED) {
-                  expireRan.incrementAndGet();
-                }
-              } catch (Exception ignored) {
-              } finally {
-                done.countDown();
-              }
-            })
+        () -> {
+          try {
+            gate.await();
+            paymentService.expirePayment(auction);
+            if (aw.getPaymentStatus() == AuctionWinner.PaymentStatus.EXPIRED) {
+              expireRan.incrementAndGet();
+            }
+          } catch (Exception ignored) {
+          } finally {
+            done.countDown();
+          }
+        })
         .start();
 
     gate.countDown();

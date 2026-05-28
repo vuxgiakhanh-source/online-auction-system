@@ -151,6 +151,12 @@ public class QualityReportService implements IQualityReportService {
 
       NormalUser winner = report.getReporter();
       NormalUser seller = auction.getItem().getSeller();
+      if (winner == null) {
+        throw new IllegalStateException("Không thể approve report vì winner (reporter) bị null.");
+      }
+      if (seller == null) {
+        throw new IllegalStateException("Không thể approve report vì seller bị null.");
+      }
 
       report.approve();
       ratingService.penalizeSeller(seller);
@@ -166,6 +172,7 @@ public class QualityReportService implements IQualityReportService {
       userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
 
       // Notify Staff
+      String winnerName = winner.getUsername();
       AuctionEvent event =
           new AuctionEvent(
               AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
@@ -173,14 +180,14 @@ public class QualityReportService implements IQualityReportService {
               winner,
               0L,
               String.format(
-                  "Admin %s chấp nhận report của %s", admin.getUsername(), winner.getUsername()));
+                  "Admin %s chấp nhận report của %s", admin.getUsername(), winnerName));
       AuctionManager.getInstance().notifyStaffObservers(event);
       AuctionManager.getInstance().notifyGlobalObservers(event);
 
       String entry =
           String.format(
               "[QUALITY] Admin %s chấp nhận report | Seller %s bị phạt | Winner %s được hoàn %d",
-              admin.getUsername(), seller.getUsername(), winner.getUsername(), finalPrice);
+              admin.getUsername(), seller.getUsername(), winnerName, finalPrice);
       admin.addActionLog(entry);
       SystemAdmin.getInstance().addActionLog(entry);
       log.info(

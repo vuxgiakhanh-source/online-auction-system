@@ -268,7 +268,7 @@ public class AuctionTimerService implements IAuctionTimerService {
 
       // Mỗi mốc (10 phút / 5 phút) chỉ gửi một lần cho cả phiên — không gắn endTime.
       // Bug cũ: key kèm endTime → anti-sniping đổi endTime → gửi lại "còn 10 phút".
-      if (secondsLeft <= UPCOMING_END_10_MIN_SECONDS && secondsLeft > UPCOMING_END_5_MIN_SECONDS) {
+      if (secondsLeft > UPCOMING_END_5_MIN_SECONDS) {
         String key10 = auction.getId() + ":10";
         if (upcomingEndNotifiedKeys.add(key10)) {
           ServerBroadcastNotifier.getInstance().notifyAuctionUpcomingEnd(auction, 10);

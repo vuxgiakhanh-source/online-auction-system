@@ -50,6 +50,7 @@ public class ChatbotProvider {
     private static final ChatbotProvider INSTANCE = new ChatbotProvider();
   }
 
+  /** Trả về singleton instance của chatbot provider. */
   public static ChatbotProvider getInstance() {
     return SingletonHolder.INSTANCE;
   }
@@ -79,6 +80,7 @@ public class ChatbotProvider {
   // Public API — Phương thức tìm kiếm chính
   // ══════════════════════════════════════════════════════════════════════════
 
+  /** Tìm câu trả lời theo mã FAQ. */
   public ChatbotResponse getAnswerByQuestionId(String faqId) {
     if (faqId == null || faqId.isBlank()) {
       return ChatbotResponse.ofNotFound("[mã câu hỏi trống]");
@@ -166,6 +168,7 @@ public class ChatbotProvider {
     return ChatbotResponse.ofNotFound(query);
   }
 
+  /** Lọc danh sách FAQ theo category, null/rỗng thì trả về toàn bộ. */
   public List<FAQ> getFaqsByCategory(String category) {
     if (category == null || category.isBlank()) {
       log.debug("[ChatbotProvider] Trả về toàn bộ {} FAQ.", allFaqs.size());
@@ -182,6 +185,7 @@ public class ChatbotProvider {
     return Collections.unmodifiableList(result);
   }
 
+  /** Trả về toàn bộ FAQ đã nạp từ file dữ liệu. */
   public List<FAQ> getAllFaqs() {
     return allFaqs;
   }
@@ -283,7 +287,7 @@ public class ChatbotProvider {
     }
 
     // Chuyển chữ thường và đổi chữ đ/Đ thành d
-    String normalized = text.toLowerCase().trim().replace('\u0111', 'd').replace('\u0110', 'd');
+    String normalized = text.toLowerCase().trim().replace('đ', 'd').replace('Đ', 'd');
 
     // Khử toàn bộ dấu tiếng Việt bằng Normalizer
     normalized = Normalizer.normalize(normalized, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");

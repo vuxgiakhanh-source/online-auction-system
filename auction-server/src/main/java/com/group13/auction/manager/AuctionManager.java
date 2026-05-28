@@ -168,6 +168,7 @@ public class AuctionManager {
     return null;
   }
 
+  /** Tìm user theo username (ưu tiên DB, fallback in-memory). */
   public User findUserByUsername(String username) {
     User dbUser = userDAO.findUserByUsername(username);
     if (dbUser != null) {
@@ -184,6 +185,7 @@ public class AuctionManager {
 
   // ── Auction management ────────────────────────────────────────────────────
 
+  /** Đăng ký auction vào bộ nhớ runtime để phục vụ truy vấn nhanh. */
   public void registerAuction(Auction auction) {
     if (auction == null) {
       throw new IllegalArgumentException("Auction không được null.");
@@ -194,22 +196,26 @@ public class AuctionManager {
 
   // ── Observer management ───────────────────────────────────────────────────
 
+  /** Thêm observer nhận toàn bộ sự kiện global của hệ thống. */
   public void addGlobalObserver(AuctionObserver observer) {
     if (observer != null && !globalObservers.contains(observer)) {
       globalObservers.add(observer);
     }
   }
 
+  /** Gỡ observer khỏi danh sách global observers. */
   public void removeGlobalObserver(AuctionObserver observer) {
     globalObservers.remove(observer);
   }
 
+  /** Thêm observer dành riêng cho nhóm sự kiện staff. */
   public void addStaffObserver(AuctionObserver observer) {
     if (observer != null && !staffObservers.contains(observer)) {
       staffObservers.add(observer);
     }
   }
 
+  /** Phát sự kiện tới toàn bộ global observers. */
   public void notifyGlobalObservers(AuctionEvent event) {
     if (event == null) {
       return;
@@ -219,6 +225,7 @@ public class AuctionManager {
     }
   }
 
+  /** Phát các sự kiện staff-relevant tới staff observers. */
   public void notifyStaffObservers(AuctionEvent event) {
     if (event == null) {
       return;
@@ -248,18 +255,21 @@ public class AuctionManager {
 
   // ── Auction queries ───────────────────────────────────────────────────────
 
+  /** Lấy danh sách các phiên đang ở trạng thái RUNNING. */
   public List<Auction> getRunningAuctions() {
     return allAuctions.values().stream()
         .filter(a -> a.getStatus() == Auction.AuctionStatus.RUNNING)
         .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
   }
 
+  /** Lấy danh sách các phiên theo trạng thái chỉ định. */
   public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
     return allAuctions.values().stream()
         .filter(a -> a.getStatus() == status)
         .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
   }
 
+  /** Tìm phiên đấu giá theo id trong bộ nhớ. */
   public Auction findAuctionById(String id) {
     if (id == null) {
       return null;

@@ -397,6 +397,7 @@ public class BidService implements IBidService {
     boolean ratingPenalized = false;
     long previousPrice = 0L;
     boolean extendedForAntiSniping = false;
+    NormalUser leavingLeader = null;
 
     if (user instanceof NormalUser && auction != null) {
       NormalUser bidder = (NormalUser) user;
@@ -456,6 +457,7 @@ public class BidService implements IBidService {
           leaderChanged = true;
           if (applyAntiSnipingExtension(auction)) {
             extendedForAntiSniping = true;
+            leavingLeader = bidder;
             log.info(
                 "Anti-sniping on leader leave: auctionId={}, leaderId={}, newEndTime={}",
                 auctionId,
@@ -530,8 +532,7 @@ public class BidService implements IBidService {
         auctionId,
         leaderChanged);
 
-    if (extendedForAntiSniping && auction != null && user instanceof NormalUser) {
-      NormalUser leavingLeader = (NormalUser) user;
+    if (extendedForAntiSniping) {
       auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
       auctionService.notify(
           auction,

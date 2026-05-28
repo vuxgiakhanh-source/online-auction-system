@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
@@ -34,11 +35,16 @@ class RatingServiceTest {
   private static final double EPSILON = 1e-9;
 
   @Mock private UserDAO userDAO;
+
+  // FIX [P2 — slow unit test]: RatingService(1-arg) ngầm `new NotificationDAO()`,
+  // mọi penalize/reward gọi notificationDAO.save() → chạm DB thật, block 6s/HikariCP timeout.
+  @Mock private NotificationDAO notificationDAO;
+
   private RatingService ratingService;
 
   @BeforeEach
   void setUp() {
-    ratingService = new RatingService(userDAO);
+    ratingService = new RatingService(userDAO, notificationDAO);
     lenient().when(userDAO.updateRating(anyString(), anyDouble())).thenReturn(true);
     lenient().when(userDAO.updateAccountStatus(anyString(), anyString())).thenReturn(true);
     lenient()

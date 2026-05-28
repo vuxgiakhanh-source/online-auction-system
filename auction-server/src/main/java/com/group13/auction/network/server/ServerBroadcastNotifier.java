@@ -42,8 +42,12 @@ public class ServerBroadcastNotifier {
   private static final ServerBroadcastNotifier INSTANCE = new ServerBroadcastNotifier();
 
   private final SessionManager sessionManager = SessionManager.getInstance();
-  private final NotificationDAO notificationDAO = new NotificationDAO();
-  private final UserDAO userDAO = new UserDAO();
+
+  // FIX [P2 — test isolation]: 2 field bên dưới KHÔNG `final` (production code không
+  // bao giờ reassign). Lý do: cho phép test inject mock DAO qua reflection để
+  // tránh chạm DB thật từ Singleton trong unit test. Xem TestFixture.silenceGlobalSingletons().
+  private NotificationDAO notificationDAO = new NotificationDAO();
+  private UserDAO userDAO = new UserDAO();
 
   /** Đã gửi AUTO_BID_EXHAUSTED cho cặp user+phiên — tránh spam khi chain chạy lặp. */
   private final Set<String> autoBidExhaustedNotifiedKeys = ConcurrentHashMap.newKeySet();
@@ -123,7 +127,6 @@ public class ServerBroadcastNotifier {
         || type == AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED
         || type == AuctionEvent.AuctionEventType.BID_PLACED
         || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
-        || type == AuctionEvent.AuctionEventType.AUCTION_ENDED
         || type == AuctionEvent.AuctionEventType.PAYMENT_COMPLETED
         || type == AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED) {
       return;
@@ -134,10 +137,16 @@ public class ServerBroadcastNotifier {
         event.getMessage() != null && !event.getMessage().isBlank()
             ? event.getMessage()
             : eventBody(event);
-    String excludeUserId =
-        type == AuctionEvent.AuctionEventType.AUCTION_ENDED && event.getBidder() != null
-            ? event.getBidder().getId()
-            : null;
+    // Với AUCTION_ENDED: event.getBidder() không phải lúc nào cũng được set.
+    // Ưu tiên bidder trong event nếu có, fallback sang currentLeader của auction.
+    String excludeUserId = null;
+    if (type == AuctionEvent.AuctionEventType.AUCTION_ENDED) {
+      if (event.getBidder() != null) {
+        excludeUserId = event.getBidder().getId();
+      } else if (event.getAuction().getCurrentLeader() != null) {
+        excludeUserId = event.getAuction().getCurrentLeader().getId();
+      }
+    }
     notifyJoinedParticipants(auctionId, title, body, excludeUserId);
   }
 
@@ -159,7 +168,6 @@ public class ServerBroadcastNotifier {
   }
 
   private static String eventBody(AuctionEvent event) {
-    Auction auction = event.getAuction();
     NormalUser bidder = event.getBidder();
     String bidderName = bidder != null ? bidder.getUsername() : "Không có";
     return switch (event.getEventType()) {
@@ -197,7 +205,7 @@ public class ServerBroadcastNotifier {
     String body =
         depositForfeited
             ? NotificationMessages.leaveAuctionForfeitBody(
-                auction, forfeitedAmount, ratingPenalized)
+            auction, forfeitedAmount, ratingPenalized)
             : NotificationMessages.leaveAuctionRefundBody(auction);
     persistNotification(
         user.getId(),

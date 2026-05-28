@@ -31,6 +31,8 @@ class AuctionObserverContractTest {
   @BeforeEach
   void setUp() throws Exception {
     TestFixture.bootstrapSystemAdmin();
+    // FIX [P2]: BidderObserver/SellerObserver.onBidPlaced gọi ServerBroadcastNotifier → DB.
+    TestFixture.silenceGlobalSingletons();
     seller = TestFixture.normalSeller("contractSel1");
     bidder = TestFixture.bidderWithBalance("contractBid1", 5_000_000L);
     runningAuction = TestFixture.runningAuction(seller, 1_000_000L);

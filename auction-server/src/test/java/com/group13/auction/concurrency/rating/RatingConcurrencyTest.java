@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.*;
 
 import com.group13.auction.concurrency.ConcurrencyTestBase;
+import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
@@ -30,10 +31,13 @@ import org.junit.jupiter.api.*;
 class RatingConcurrencyTest extends ConcurrencyTestBase {
 
   private UserDAO mockUserDAO;
+  // FIX [P2]: tránh `new NotificationDAO()` ngầm trong RatingService(1-arg) → chạm DB.
+  private NotificationDAO mockNotificationDAO;
 
   @BeforeEach
   void setUp() {
     mockUserDAO = mock(UserDAO.class);
+    mockNotificationDAO = mock(NotificationDAO.class);
     when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
   }
 
@@ -55,16 +59,16 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
     for (int i = 0; i < N; i++) {
       final double delta = (i % 2 == 0) ? +0.3 : -0.3;
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  user.adjustRating(delta);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              user.adjustRating(delta);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -93,7 +97,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
   @Timeout(value = 5)
   void ratingService_concurrentRewardAndPenalize_boundsNeverViolated() throws InterruptedException {
     NormalUser user = buildUser("user-G3-2", 0L);
-    RatingService rs = new RatingService(mockUserDAO);
+    RatingService rs = new RatingService(mockUserDAO, mockNotificationDAO);
 
     int N = 40;
     CountDownLatch gate = new CountDownLatch(1);
@@ -102,18 +106,18 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
     for (int i = 0; i < N; i++) {
       final int idx = i;
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  if (idx % 2 == 0) {
-                    rs.rewardBidder(user);
-                  } else rs.penalizeLatePayment(user);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              if (idx % 2 == 0) {
+                rs.rewardBidder(user);
+              } else rs.penalizeLatePayment(user);
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -133,7 +137,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
   @Timeout(value = 5)
   void mixedRewardPenalize_boundsAlwaysHeld() throws InterruptedException {
     NormalUser user = buildUser("user-G9-1", 0L);
-    RatingService rs = new RatingService(mockUserDAO);
+    RatingService rs = new RatingService(mockUserDAO, mockNotificationDAO);
 
     int rewardCount = 30;
     int penalizeCount = 20;
@@ -153,16 +157,16 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
 
     for (Runnable task : tasks) {
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  task.run();
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              task.run();
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
@@ -189,7 +193,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
     // Rating ban đầu 3.0, hạ xuống ~1.4 — dưới ngưỡng SUSPEND 1.5
     user.adjustRating(-1.6);
 
-    RatingService rs = new RatingService(mockUserDAO);
+    RatingService rs = new RatingService(mockUserDAO, mockNotificationDAO);
     addSellerRole(user);
 
     int N = 10;
@@ -198,15 +202,15 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
 
     for (int i = 0; i < N; i++) {
       new Thread(
-              () -> {
-                try {
-                  gate.await();
-                  rs.penalizeSeller(user);
-                } catch (Exception ignored) {
-                } finally {
-                  done.countDown();
-                }
-              })
+          () -> {
+            try {
+              gate.await();
+              rs.penalizeSeller(user);
+            } catch (Exception ignored) {
+            } finally {
+              done.countDown();
+            }
+          })
           .start();
     }
 
