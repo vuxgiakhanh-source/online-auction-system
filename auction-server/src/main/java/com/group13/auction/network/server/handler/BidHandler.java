@@ -7,7 +7,6 @@ import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
 import com.group13.auction.common.protocol.PacketType;
-import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.BidTransactionDAO;
 import com.group13.auction.exception.AuctionBusinessException;
 import com.group13.auction.exception.AuctionClosedException;
@@ -75,7 +74,6 @@ import org.slf4j.LoggerFactory;
 public class BidHandler implements PacketHandler {
 
   private static final Logger log = LoggerFactory.getLogger(BidHandler.class);
-  private static final long BID_LOCK_TIMEOUT_SECONDS = 5L;
 
   private static final Set<PacketType> SUPPORTED =
       EnumSet.of(
@@ -92,7 +90,6 @@ public class BidHandler implements PacketHandler {
   private final BidService bidService;
   private final IRatingService ratingService;
   private final SessionManager sessionManager;
-  private final AuctionDAO auctionDAO;
   // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
   private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
   private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
@@ -109,7 +106,6 @@ public class BidHandler implements PacketHandler {
     this.bidService = bidService;
     this.ratingService = ratingService;
     this.sessionManager = sessionManager;
-    this.auctionDAO = new AuctionDAO();
     this.autoBidProcessor = new AutoBidProcessor(bidService, sessionManager);
     this.bidTransactionDAO = new BidTransactionDAO();
   }
@@ -334,7 +330,7 @@ public class BidHandler implements PacketHandler {
               result.forfeitedAmount,
               result.ratingPenalized);
 
-      if (result.extendedForAntiSniping && auction.getEndTime() != null) {
+      if (result.extendedForAntiSniping && auction != null && auction.getEndTime() != null) {
         AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
         extDto.setAuctionId(auctionId);
         extDto.setNewEndTime(auction.getEndTime());
@@ -578,7 +574,6 @@ public class BidHandler implements PacketHandler {
       return;
     }
 
-    Auction registerAutoBidAuction = null;
     String registerAutoBidBidderId = null;
 
     // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
@@ -602,7 +597,6 @@ public class BidHandler implements PacketHandler {
       // bidder đã resolve trước lock
       Auction auction = auctionForRegister;
 
-      registerAutoBidAuction = auction;
       registerAutoBidBidderId = bidder.getId();
 
       AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
@@ -714,8 +708,8 @@ public class BidHandler implements PacketHandler {
       lock.unlock();
     }
     // FIX DEADLOCK: process ngoài lock
-    if (registerAutoBidAuction != null && registerAutoBidBidderId != null) {
-      autoBidProcessor.submit(registerAutoBidAuction, registerAutoBidBidderId);
+    if (registerAutoBidBidderId != null) {
+      autoBidProcessor.submit(auctionForRegister, registerAutoBidBidderId);
     }
   }
 

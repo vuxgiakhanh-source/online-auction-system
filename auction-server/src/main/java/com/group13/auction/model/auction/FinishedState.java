@@ -28,7 +28,7 @@ public class FinishedState implements AuctionState {
 
   @Override
   public AuctionState cancel() {
-    return CanceledState.INSTANCE;
+    throw new IllegalStateException("Phiên đã FINISHED - không thể hủy.");
   }
 
   @Override

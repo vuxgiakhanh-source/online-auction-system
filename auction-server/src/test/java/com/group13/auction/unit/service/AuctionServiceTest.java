@@ -46,6 +46,9 @@ class AuctionServiceTest {
     bootstrapSystemAdmin();
     resetSystemBankBalance();
     resetAuctionManager();
+    // FIX [P2]: vô hiệu hoá ServerBroadcastNotifier + AutoBidRegistry để closeAuction()
+    // không chạm DB qua Singleton (xem report: 78s waste trong $CloseAuction).
+    TestFixture.silenceGlobalSingletons();
 
     sut = new AuctionService(ratingService, auctionDAO, financialTransactionDAO, auctionWinnerDAO);
     lenient().when(auctionDAO.createAuction(any())).thenReturn(true);

@@ -9,6 +9,7 @@ import com.group13.auction.integration.base.IntegrationTestBase;
 import com.group13.auction.integration.base.RequiresDocker;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -48,6 +49,8 @@ class WalletPaymentIT extends IntegrationTestBase {
           .withInitScript("database/schema.sql");
 
   private UserDAO userDAO;
+  private ItemDAO itemDAO;
+  private AuctionDAO auctionDAO;
   private FinancialTransactionDAO financialTransactionDAO;
   private RatingService ratingService;
   private WalletService walletService;
@@ -60,6 +63,8 @@ class WalletPaymentIT extends IntegrationTestBase {
   @BeforeEach
   void setUp() {
     userDAO = new UserDAO();
+    itemDAO = new ItemDAO();
+    auctionDAO = new AuctionDAO();
     financialTransactionDAO = new FinancialTransactionDAO();
     ratingService = new RatingService(userDAO);
     walletService = new WalletService(financialTransactionDAO, userDAO, ratingService);
@@ -86,7 +91,7 @@ class WalletPaymentIT extends IntegrationTestBase {
         "TC-01a: Happy path — balance, lockedDeposit, DB nhất quán sau thanh toán thành công")
     void happyPath_balanceAndDB_consistentAfterPayment() {
       NormalUser winner = givenUserWithBalance("pay_w1", 20_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(winner.getId());
       long finalPrice = 10_000_000L;
       long depositPaid = 3_000_000L;
 
@@ -130,7 +135,7 @@ class WalletPaymentIT extends IntegrationTestBase {
     void insufficientBalance_throwsPaymentException_ramAndDbRolledBack() {
       // winner chỉ có 5M, remaining = 10M - 3M = 7M > available(5M - 3M = 2M)
       NormalUser winner = givenUserWithBalance("pay_w2", 5_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(winner.getId());
       long finalPrice = 10_000_000L;
       long depositPaid = 3_000_000L;
 
@@ -177,7 +182,7 @@ class WalletPaymentIT extends IntegrationTestBase {
     void concurrentPayment_onlyOneSucceeds_noDoubleCharge() throws InterruptedException {
       // winner có đúng đủ tiền cho 1 lần thanh toán
       NormalUser winner = givenUserWithBalance("pay_w3", 15_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(winner.getId());
       long finalPrice = 10_000_000L;
       long depositPaid = 3_000_000L;
       walletService.lockDeposit(winner, depositPaid, auctionId);
@@ -234,7 +239,7 @@ class WalletPaymentIT extends IntegrationTestBase {
     void withdraw_exactAvailableAmount_succeeds() {
       // balance = 10M, locked = 3M, available = 7M
       NormalUser user = givenUserWithBalance("wd_u1", 10_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(user.getId());
       walletService.lockDeposit(user, 3_000_000L, auctionId);
 
       // Rút đúng 7M available
@@ -262,7 +267,7 @@ class WalletPaymentIT extends IntegrationTestBase {
     void withdraw_exceedsAvailableBalance_throws_noSideEffect() {
       // balance = 10M, locked = 3M, available = 7M — cố rút 8M
       NormalUser user = givenUserWithBalance("wd_u2", 10_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(user.getId());
       walletService.lockDeposit(user, 3_000_000L, auctionId);
 
       long balanceBefore = user.getBalance();
@@ -312,5 +317,29 @@ class WalletPaymentIT extends IntegrationTestBase {
 
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);
+  }
+
+  private String createDummyAuction(String sellerId) {
+    ensureSellerRecord(sellerId);
+    String itemId = UUID.randomUUID().toString();
+    itemDAO.addItem(
+        itemId,
+        sellerId,
+        "WalletIT item " + itemId.substring(0, 6),
+        "test",
+        1_000_000L,
+        "ELECTRONICS");
+    trackItem(itemId);
+
+    var item = itemDAO.findItemById(itemId);
+    var auction =
+        com.group13.auction.model.auction.Auction.create(
+            item,
+            LocalDateTime.now().plusSeconds(1),
+            LocalDateTime.now().plusHours(1),
+            1_200_000L);
+    auctionDAO.createAuction(auction);
+    trackAuction(auction.getId());
+    return auction.getId();
   }
 }

@@ -188,33 +188,34 @@ public class AuctionDAO {
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
         if (rs.next()) {
-          String id = rs.getString("id");
-          String statusStr = rs.getString("status");
-          String itemId = rs.getString("item_id");
-          String leaderId = rs.getString("current_leader_id");
-          long currentPrice = rs.getLong("current_price");
+          final String id = rs.getString("id");
+          final String statusStr = rs.getString("status");
+          final String itemId = rs.getString("item_id");
+          final String leaderId = rs.getString("current_leader_id");
+          final long currentPrice = rs.getLong("current_price");
 
           java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
           java.time.LocalDateTime createdAt =
               (createdTs != null) ? createdTs.toLocalDateTime() : java.time.LocalDateTime.now();
 
           java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
-          java.time.LocalDateTime updatedAt =
+          final java.time.LocalDateTime updatedAt =
               (updatedTs != null) ? updatedTs.toLocalDateTime() : createdAt;
 
           java.sql.Timestamp startTs = rs.getTimestamp("start_time");
-          java.time.LocalDateTime startTime = (startTs != null) ? startTs.toLocalDateTime() : null;
+          final java.time.LocalDateTime startTime =
+              (startTs != null) ? startTs.toLocalDateTime() : null;
 
           java.sql.Timestamp endTs = rs.getTimestamp("end_time");
-          java.time.LocalDateTime endTime = (endTs != null) ? endTs.toLocalDateTime() : null;
+          final java.time.LocalDateTime endTime = (endTs != null) ? endTs.toLocalDateTime() : null;
 
           // FIX: đọc viewer_count từ DB để restore đúng giá trị khi server restart.
           // Trước đây cột này được đọc nhưng không truyền vào reconstitute(),
           // nên viewerCount trong memory luôn = 0 sau mỗi lần khởi động lại.
-          int savedViewerCount = rs.getInt("viewer_count");
+          final int savedViewerCount = rs.getInt("viewer_count");
 
-          ItemDAO itemDAO = new ItemDAO();
-          com.group13.auction.model.item.Item item = itemDAO.findItemById(itemId);
+          final ItemDAO itemDAO = new ItemDAO();
+          final com.group13.auction.model.item.Item item = itemDAO.findItemById(itemId);
 
           UserDAO userDAO = new UserDAO();
           com.group13.auction.model.user.NormalUser currentLeader = null;
@@ -235,6 +236,7 @@ public class AuctionDAO {
                   com.group13.auction.model.auction.Auction.AuctionStatus.valueOf(
                       statusStr.trim().toUpperCase());
             } catch (IllegalArgumentException ignored) {
+              // Keep default OPEN status when DB value is invalid.
             }
           }
 
@@ -367,7 +369,9 @@ public class AuctionDAO {
               .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
               .append(scope)
               .append("' ");
-      default -> {} // ALL — không join thêm
+      default -> {
+        // ALL — không join thêm
+      }
     }
 
     sql.append("WHERE 1=1 ");
@@ -391,7 +395,7 @@ public class AuctionDAO {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx++, statusFilter);
+        pstmt.setString(idx, statusFilter);
       }
       pstmt.setInt(idx++, size);
       pstmt.setInt(idx, page * size);
@@ -424,7 +428,9 @@ public class AuctionDAO {
               .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
               .append(scope)
               .append("' ");
-      default -> {}
+      default -> {
+        // no-op
+      }
     }
 
     sql.append("WHERE 1=1 ");
@@ -446,7 +452,7 @@ public class AuctionDAO {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx++, statusFilter);
+        pstmt.setString(idx, statusFilter);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
@@ -487,7 +493,7 @@ public class AuctionDAO {
       String sortDir) {
 
     String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
-    String orderClause = buildOrderClause(sortBy, sortDir);
+    final String orderClause = buildOrderClause(sortBy, sortDir);
 
     StringBuilder sql =
         new StringBuilder("SELECT a.id FROM auctions a JOIN items i ON a.item_id = i.id ");
@@ -498,7 +504,9 @@ public class AuctionDAO {
               .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
               .append(scope)
               .append("' ");
-      default -> {}
+      default -> {
+        // no-op
+      }
     }
 
     sql.append("WHERE LOWER(i.name) LIKE LOWER(?) ");
@@ -518,7 +526,7 @@ public class AuctionDAO {
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx++, sellerId);
+        pstmt.setString(idx, sellerId);
       }
       pstmt.setInt(idx++, size);
       pstmt.setInt(idx, page * size);
@@ -552,7 +560,9 @@ public class AuctionDAO {
               .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
               .append(scope)
               .append("' ");
-      default -> {}
+      default -> {
+        // no-op
+      }
     }
 
     sql.append("WHERE LOWER(i.name) LIKE LOWER(?) ");
@@ -570,7 +580,7 @@ public class AuctionDAO {
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx++, sellerId);
+        pstmt.setString(idx, sellerId);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
@@ -673,13 +683,22 @@ public class AuctionDAO {
 
   /** Xây ORDER BY clause từ tên cột và chiều sắp xếp. Whitelist để tránh SQL injection. */
   private String buildOrderClause(String sortBy, String sortDir) {
-    String col =
-        switch (sortBy == null ? "" : sortBy.trim()) {
-          case "currentPrice" -> "a.current_price";
-          case "endTime" -> "a.end_time";
-          case "itemName" -> "i.name";
-          default -> "a.created_at";
-        };
+    final String normalizedSortBy = sortBy == null ? "" : sortBy.trim();
+    final String col;
+    switch (normalizedSortBy) {
+      case "currentPrice":
+        col = "a.current_price";
+        break;
+      case "endTime":
+        col = "a.end_time";
+        break;
+      case "itemName":
+        col = "i.name";
+        break;
+      default:
+        col = "a.created_at";
+        break;
+    }
     String dir = "ASC".equalsIgnoreCase(sortDir) ? "ASC" : "DESC";
     return col + " " + dir;
   }

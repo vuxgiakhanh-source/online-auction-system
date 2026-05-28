@@ -23,6 +23,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/auction-server
+  # Opt-in Node.js 24 for JavaScript actions (Node 20 deprecation warning in 2026).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
 
@@ -58,13 +60,34 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Wait for MySQL to be ready
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Waiting for MySQL on 127.0.0.1:3306..."
+          for i in {1..60}; do
+            if (echo > /dev/tcp/127.0.0.1/3306) >/dev/null 2>&1; then
+              echo "MySQL port is open."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "MySQL did not become ready in time."
+          exit 1
+
       - name: Build and run unit tests
         run: mvn -B clean verify --no-transfer-progress
-        timeout-minutes: 20
+        timeout-minutes: 40
         env:
           DB_URL: jdbc:mysql://localhost:3306/auction_db
           DB_USERNAME: auction_user
           DB_PASSWORD: auction_pass
+          # Concurrency tests can temporarily saturate pool while DB warms up.
+          # Override DatabaseConnection defaults (6s) to avoid flakiness in CI.
+          DB_CONN_TIMEOUT_MS: 30000
+          DB_CONNECT_TIMEOUT_MS: 10000
+          DB_SOCKET_TIMEOUT_MS: 30000
+          DB_POOL_MAX: 50
 
       - name: Upload test reports (surefire + failsafe)
         if: always()

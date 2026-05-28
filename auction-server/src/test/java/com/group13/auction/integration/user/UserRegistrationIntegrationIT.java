@@ -172,10 +172,10 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
     @Test
     @Order(2)
     @DisplayName("TC-27b: withdraw() vượt available → IllegalArgumentException, balance không đổi")
-    void withdraw_exceedsAvailableBalance_throwsException_balanceUnchanged() {
+    void withdraw_exceedsAvailableBalance_throwsException_balanceUnchanged() throws Exception {
       NormalUser user = givenUser("dw_user2");
       walletService.deposit(user, 5_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(user.getId());
       walletService.lockDeposit(user, 2_000_000L, auctionId);
 
       long balanceBefore = user.getBalance();
@@ -221,10 +221,10 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
     @Test
     @Order(1)
     @DisplayName("TC-28a: findNormalUserById() — balance, lockedDeposit, rating, status đúng")
-    void findNormalUserById_reconstitutesAllFieldsCorrectly() {
+    void findNormalUserById_reconstitutesAllFieldsCorrectly() throws Exception {
       NormalUser user = givenUser("reconstitute1");
       walletService.deposit(user, 8_000_000L);
-      String auctionId = UUID.randomUUID().toString();
+      String auctionId = createDummyAuction(user.getId());
       walletService.lockDeposit(user, 2_000_000L, auctionId);
 
       NormalUser fromDB = userDAO.findNormalUserById(user.getId());
