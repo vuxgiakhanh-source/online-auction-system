@@ -1,6 +1,13 @@
 package com.group13.auction.service;
 
-import com.group13.auction.dao.*;
+import com.group13.auction.dao.AccountBanDAO;
+import com.group13.auction.dao.AdminDAO;
+import com.group13.auction.dao.AuctionDAO;
+import com.group13.auction.dao.AuctionWinnerDAO;
+import com.group13.auction.dao.FinancialTransactionDAO;
+import com.group13.auction.dao.NotificationDAO;
+import com.group13.auction.dao.SellerDAO;
+import com.group13.auction.dao.UserDAO;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.notification.Notification;
@@ -42,6 +49,7 @@ public class AccountService implements IAccountService {
   private final NotificationDAO notificationDAO;
   private final AccountBanDAO accountBanDAO;
 
+  /** Khởi tạo service với DAO mặc định cho notification và account ban. */
   public AccountService(
       IRatingService ratingService,
       UserDAO userDAO,
@@ -60,6 +68,7 @@ public class AccountService implements IAccountService {
         new AccountBanDAO());
   }
 
+  /** Khởi tạo service với NotificationDAO tùy chỉnh và AccountBanDAO mặc định. */
   public AccountService(
       IRatingService ratingService,
       UserDAO userDAO,
@@ -79,6 +88,7 @@ public class AccountService implements IAccountService {
         new AccountBanDAO());
   }
 
+  /** Khởi tạo service đầy đủ dependency để thuận tiện cho test/integration. */
   public AccountService(
       IRatingService ratingService,
       UserDAO userDAO,
@@ -182,7 +192,7 @@ public class AccountService implements IAccountService {
   /** Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này. */
   @Override
   public Admin createStaffAdmin(String username, String password, String email) {
-    SystemAdmin system = SystemAdmin.getInstance();
+    final SystemAdmin system = SystemAdmin.getInstance();
 
     Admin newAdmin = (Admin) adminFactory.createUser(username, password, email);
 

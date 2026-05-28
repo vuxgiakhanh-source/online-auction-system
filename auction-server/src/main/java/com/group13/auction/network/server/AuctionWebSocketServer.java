@@ -5,11 +5,21 @@ import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.model.item.ItemFactory;
-import com.group13.auction.network.server.handler.*;
+import com.group13.auction.network.server.handler.AuctionHandler;
+import com.group13.auction.network.server.handler.AuthHandler;
+import com.group13.auction.network.server.handler.BidHandler;
+import com.group13.auction.network.server.handler.PaymentHandler;
+import com.group13.auction.network.server.handler.UserAdminHandler;
 import com.group13.auction.network.server.router.PacketRouter;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
-import com.group13.auction.service.*;
+import com.group13.auction.service.AccountService;
+import com.group13.auction.service.AuctionService;
+import com.group13.auction.service.BidService;
+import com.group13.auction.service.PaymentService;
+import com.group13.auction.service.QualityReportService;
+import com.group13.auction.service.RatingService;
+import com.group13.auction.service.UserService;
 import java.net.InetSocketAddress;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -30,6 +40,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
   private final SessionManager sessionManager;
   private final PacketRouter router;
 
+  /** Khởi tạo WebSocket server và đăng ký toàn bộ packet handler. */
   public AuctionWebSocketServer(
       int port,
       AccountService accountService,
@@ -38,7 +49,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
       PaymentService paymentService,
       RatingService ratingService,
       QualityReportService qualityReportService,
-      com.group13.auction.service.UserService userService,
+      UserService userService,
       ItemFactory itemFactory) {
     super(new InetSocketAddress(port));
 
@@ -151,6 +162,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
     setConnectionLostTimeout(60);
   }
 
+  /** Gửi thông báo hệ thống tới tất cả client đang kết nối. */
   public void broadcastSystemAnnouncement(String message, String severity) {
     AdminDTOs.SystemAnnouncementDTO dto = new AdminDTOs.SystemAnnouncementDTO();
     dto.setMessage(message);
@@ -162,6 +174,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
         message != null ? message.length() : 0);
   }
 
+  /** Gửi cảnh báo server sắp tắt tới toàn bộ người dùng. */
   public void broadcastShutdownWarning(String reason, int shutdownInSeconds) {
     AdminDTOs.ServerShutdownDTO dto = new AdminDTOs.ServerShutdownDTO();
     dto.setReason(reason);
