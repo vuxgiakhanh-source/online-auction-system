@@ -35,6 +35,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -46,6 +47,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 
 /** Controller cho màn đấu giá trực tiếp và realtime bid chart. */
 public final class LiveBiddingController implements ClientEventListener {
@@ -108,6 +110,7 @@ public final class LiveBiddingController implements ClientEventListener {
     bidLineChart.getData().add(priceSeries);
     bidLineChart.setAnimated(false);
     bidLineChart.setLegendVisible(false);
+    bidLineChart.setCreateSymbols(true);
 
     // Tắt autoRanging trên Y-axis và quản lý bounds thủ công.
     // Khi autoRanging=true, JavaFX không luôn recalculate đúng sau khi xóa data point đầu tiên,
@@ -814,7 +817,7 @@ public final class LiveBiddingController implements ClientEventListener {
     }
 
     historyPoints.add(point);
-    priceSeries.getData().add(new XYChart.Data<>(point.timestampText(), point.price()));
+    priceSeries.getData().add(createBidChartData(point));
 
     if (priceSeries.getData().size() > MAX_CHART_POINTS) {
       priceSeries.getData().remove(0);
@@ -868,11 +871,79 @@ public final class LiveBiddingController implements ClientEventListener {
 
     XYChart.Series<String, Number> series = new XYChart.Series<>();
     series.setName("Giá cao nhất");
-    historyPoints.forEach(
-        point -> series.getData().add(new XYChart.Data<>(point.timestampText(), point.price())));
+    historyPoints.forEach(point -> series.getData().add(createBidChartData(point)));
     chart.getData().add(series);
 
     return chart;
+  }
+
+  private XYChart.Data<String, Number> createBidChartData(BidHistoryPointViewModel point) {
+    XYChart.Data<String, Number> data = new XYChart.Data<>(point.timestampText(), point.price());
+    Tooltip tooltip = createBidPointTooltip(point);
+
+    data.nodeProperty()
+        .addListener(
+            (observable, oldNode, newNode) -> {
+              if (oldNode != null) {
+                Tooltip.uninstall(oldNode, tooltip);
+                oldNode
+                    .getStyleClass()
+                    .removeAll(
+                        "bid-chart-point", "bid-chart-point-manual", "bid-chart-point-auto");
+              }
+              if (newNode != null) {
+                installBidPointTooltip(newNode, tooltip, point);
+              }
+            });
+
+    return data;
+  }
+
+  private Tooltip createBidPointTooltip(BidHistoryPointViewModel point) {
+    Tooltip tooltip = new Tooltip(buildBidTooltipText(point));
+    tooltip.setWrapText(true);
+    tooltip.setMaxWidth(280);
+    tooltip.setShowDelay(javafx.util.Duration.millis(120));
+    tooltip.setHideDelay(javafx.util.Duration.millis(80));
+    tooltip.setShowDuration(javafx.util.Duration.seconds(12));
+    tooltip.getStyleClass().add("bid-chart-tooltip");
+    return tooltip;
+  }
+
+  private void installBidPointTooltip(
+      Node node, Tooltip tooltip, BidHistoryPointViewModel point) {
+    addStyleClass(node, "bid-chart-point");
+    addStyleClass(node, point.autoBid() ? "bid-chart-point-auto" : "bid-chart-point-manual");
+    Tooltip.install(node, tooltip);
+  }
+
+  private void addStyleClass(Node node, String styleClass) {
+    if (!node.getStyleClass().contains(styleClass)) {
+      node.getStyleClass().add(styleClass);
+    }
+  }
+
+  private String buildBidTooltipText(BidHistoryPointViewModel point) {
+    StringBuilder text =
+        new StringBuilder()
+            .append("Người bid: ")
+            .append(fallbackText(point.bidderUsername(), "Unknown"))
+            .append(System.lineSeparator())
+            .append("Giá đặt: ")
+            .append(point.priceText())
+            .append(System.lineSeparator())
+            .append("Thời gian: ")
+            .append(point.timestampText());
+
+    if (point.autoBid()) {
+      text.append(System.lineSeparator()).append("Nguồn: Auto-Bid");
+    }
+
+    return text.toString();
+  }
+
+  private String fallbackText(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
   }
 
   private TableView<BidHistoryPointViewModel> createExpandedBidHistoryTable() {
