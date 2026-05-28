@@ -56,10 +56,109 @@ public class ItemDAO {
       long startingPrice,
       String categoryType,
       List<String> imageUrls) {
+    return addItem(
+        itemId,
+        sellerId,
+        name,
+        description,
+        startingPrice,
+        categoryType,
+        imageUrls,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
+  }
+
+  /** Thêm sản phẩm theo domain object để lưu đủ thông số riêng theo category. */
+  public boolean addItem(Item item) {
+    if (item == null || item.getSeller() == null) {
+      return false;
+    }
+
+    String brand = null;
+    Integer warrantyMonths = null;
+    String condition = null;
+    String artist = null;
+    Integer yearCreated = null;
+    String medium = null;
+    String manufacturer = null;
+    Integer year = null;
+    Double mileage = null;
+
+    if (item instanceof Electronics electronics) {
+      brand = electronics.getBrand();
+      warrantyMonths = electronics.getWarrantyMonths();
+      condition = electronics.getCondition();
+    } else if (item instanceof Art art) {
+      artist = art.getArtist();
+      yearCreated = art.getYearCreated();
+      medium = art.getMedium();
+    } else if (item instanceof Vehicle vehicle) {
+      manufacturer = vehicle.getManufacturer();
+      year = vehicle.getYear();
+      mileage = vehicle.getMileage();
+    }
+
     String sql =
         "INSERT INTO items "
-            + "(id, seller_id, name, description, starting_price, category_type, image_urls) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            + "(id, seller_id, name, description, starting_price, category_type, image_urls, "
+            + "brand, warranty_months, `condition`, artist, year_created, medium, manufacturer, `year`, mileage) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      ps.setString(1, item.getId());
+      ps.setString(2, item.getSeller().getId());
+      ps.setString(3, item.getName());
+      ps.setString(4, item.getDescription());
+      ps.setLong(5, item.getStartingPrice());
+      ps.setString(6, item.getCategory().name());
+      ps.setString(7, toJson(item.getImageUrls()));
+      ps.setString(8, brand);
+      ps.setObject(9, warrantyMonths);
+      ps.setString(10, condition);
+      ps.setString(11, artist);
+      ps.setObject(12, yearCreated);
+      ps.setString(13, medium);
+      ps.setString(14, manufacturer);
+      ps.setObject(15, year);
+      ps.setObject(16, mileage);
+
+      return ps.executeUpdate() > 0;
+    } catch (SQLException e) {
+      log.error("Lỗi thêm sản phẩm: ", e);
+      return false;
+    }
+  }
+
+  private boolean addItem(
+      String itemId,
+      String sellerId,
+      String name,
+      String description,
+      long startingPrice,
+      String categoryType,
+      List<String> imageUrls,
+      String brand,
+      Integer warrantyMonths,
+      String condition,
+      String artist,
+      Integer yearCreated,
+      String medium,
+      String manufacturer,
+      Integer year,
+      Double mileage) {
+    String sql =
+        "INSERT INTO items "
+            + "(id, seller_id, name, description, starting_price, category_type, image_urls, "
+            + "brand, warranty_months, `condition`, artist, year_created, medium, manufacturer, `year`, mileage) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -70,6 +169,15 @@ public class ItemDAO {
       ps.setLong(5, startingPrice);
       ps.setString(6, categoryType);
       ps.setString(7, toJson(imageUrls));
+      ps.setString(8, brand);
+      ps.setObject(9, warrantyMonths);
+      ps.setString(10, condition);
+      ps.setString(11, artist);
+      ps.setObject(12, yearCreated);
+      ps.setString(13, medium);
+      ps.setString(14, manufacturer);
+      ps.setObject(15, year);
+      ps.setObject(16, mileage);
 
       return ps.executeUpdate() > 0;
     } catch (SQLException e) {
