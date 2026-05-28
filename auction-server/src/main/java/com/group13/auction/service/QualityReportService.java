@@ -172,7 +172,7 @@ public class QualityReportService implements IQualityReportService {
       userDAO.updateAccountStatus(seller.getId(), seller.getAccountStatus().name());
 
       // Notify Staff
-      String winnerName = winner != null ? winner.getUsername() : "unknown";
+      String winnerName = winner.getUsername();
       AuctionEvent event =
           new AuctionEvent(
               AuctionEvent.AuctionEventType.QUALITY_REPORT_APPROVED,
