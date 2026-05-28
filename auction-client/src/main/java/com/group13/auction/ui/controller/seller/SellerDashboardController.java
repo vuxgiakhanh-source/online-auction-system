@@ -30,6 +30,10 @@ public final class SellerDashboardController {
 
   @FXML private Label finishedAuctionLabel;
 
+  @FXML private Label paidAuctionLabel;
+
+  @FXML private Label canceledAuctionLabel;
+
   @FXML private Label statusLabel;
 
   @FXML private ProgressIndicator loadingIndicator;
@@ -109,11 +113,15 @@ public final class SellerDashboardController {
     int open = countByStatus(rows, "Sắp mở");
     int running = countByStatus(rows, "Đang đấu giá");
     int finished = countByStatus(rows, "Đã kết thúc");
+    int paid = countByStatus(rows, "Đã thanh toán");
+    int canceled = countByStatus(rows, "Đã hủy");
 
     totalAuctionLabel.setText(String.valueOf(total));
     openAuctionLabel.setText(String.valueOf(open));
     runningAuctionLabel.setText(String.valueOf(running));
     finishedAuctionLabel.setText(String.valueOf(finished));
+    paidAuctionLabel.setText(String.valueOf(paid));
+    canceledAuctionLabel.setText(String.valueOf(canceled));
 
     setLoading(false, "Đã tải " + total + " phiên thuộc tài khoản Seller hiện tại.");
   }

@@ -8,6 +8,8 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
@@ -81,9 +83,18 @@
         </VBox>
 
         <!-- Summary cards -->
-        <HBox spacing="18.0">
+        <GridPane hgap="18.0" vgap="18.0">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="33.333"/>
+                <ColumnConstraints percentWidth="33.333"/>
+                <ColumnConstraints percentWidth="33.333"/>
+            </columnConstraints>
+
             <VBox spacing="8.0"
-                  prefWidth="260.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="0"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="0"
                   styleClass="seller-summary-card">
                 <Label text="Tổng phiên"
                        styleClass="seller-muted-text"/>
@@ -93,7 +104,10 @@
             </VBox>
 
             <VBox spacing="8.0"
-                  prefWidth="260.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="1"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="0"
                   styleClass="seller-summary-card">
                 <Label text="Sắp mở"
                        styleClass="seller-muted-text"/>
@@ -103,7 +117,10 @@
             </VBox>
 
             <VBox spacing="8.0"
-                  prefWidth="260.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="2"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="0"
                   styleClass="seller-summary-card">
                 <Label text="Đang chạy"
                        styleClass="seller-muted-text"/>
@@ -113,7 +130,10 @@
             </VBox>
 
             <VBox spacing="8.0"
-                  prefWidth="260.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="0"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="1"
                   styleClass="seller-summary-card">
                 <Label text="Đã kết thúc"
                        styleClass="seller-muted-text"/>
@@ -121,7 +141,33 @@
                        text="0"
                        styleClass="seller-summary-number"/>
             </VBox>
-        </HBox>
+
+            <VBox spacing="8.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="1"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="1"
+                  styleClass="seller-summary-card">
+                <Label text="Đã thanh toán"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="paidAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+
+            <VBox spacing="8.0"
+                  maxWidth="Infinity"
+                  GridPane.columnIndex="2"
+                  GridPane.hgrow="ALWAYS"
+                  GridPane.rowIndex="1"
+                  styleClass="seller-summary-card">
+                <Label text="Đã hủy"
+                       styleClass="seller-muted-text"/>
+                <Label fx:id="canceledAuctionLabel"
+                       text="0"
+                       styleClass="seller-summary-number"/>
+            </VBox>
+        </GridPane>
 
         <!-- Action panel -->
         <HBox spacing="20.0" alignment="TOP_LEFT">
