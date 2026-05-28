@@ -11,6 +11,7 @@ on:
     branches:
       - main
       - OOP-logic-testig
+      - backup-client
 
 jobs:
   qodana:
