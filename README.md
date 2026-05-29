@@ -9,7 +9,7 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
 
 ---
 
-[![Java CI](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml/badge.svg?branch=backup-client)](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml)
+[![Java CI](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml/badge.svg)](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml)
 ![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8+-C71A36?logo=apachemaven&logoColor=white)
 ![JavaFX](https://img.shields.io/badge/JavaFX-17-4A8CFF?logo=java&logoColor=white)
