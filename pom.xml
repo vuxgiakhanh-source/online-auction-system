@@ -169,10 +169,6 @@
 
                 <configuration>
                     <configLocation>google_checks.xml</configLocation>
-                    <suppressionsLocation>${session.executionRootDirectory}/config/checkstyle-suppressions.xml</suppressionsLocation>
-                    <propertyExpansion>
-                        org.checkstyle.google.suppressionfilter.config=${session.executionRootDirectory}/config/checkstyle-suppressions.xml
-                    </propertyExpansion>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                 </configuration>
