@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -278,7 +279,23 @@ public final class QualityReportService {
     }
 
     String reportId = result.getReportId() == null ? "--" : result.getReportId();
-    return "Đã xử lý báo cáo chất lượng. Mã báo cáo: " + reportId;
+    StringBuilder message =
+        new StringBuilder("Đã xử lý báo cáo chất lượng. Mã báo cáo: ").append(reportId);
+
+    double ratingPenalty = Math.max(0.0, result.getSellerRatingPenalty());
+    if (ratingPenalty > 0.0) {
+      message
+          .append(". Seller bị trừ ")
+          .append(String.format(Locale.US, "%.1f", ratingPenalty))
+          .append(" điểm rating; rating mới: ")
+          .append(String.format(Locale.US, "%.1f / 5.0", result.getSellerNewRating()));
+    }
+
+    if (result.isSellerBanned()) {
+      message.append(". Seller đã bị khóa sau khi xử lý báo cáo.");
+    }
+
+    return message.toString();
   }
 
   private boolean currentUserIsAdmin() {

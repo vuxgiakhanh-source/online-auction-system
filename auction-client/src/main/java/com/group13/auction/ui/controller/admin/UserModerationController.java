@@ -33,6 +33,7 @@ public final class UserModerationController {
   @FXML private TableColumn<UserModerationViewModel, String> emailColumn;
   @FXML private TableColumn<UserModerationViewModel, String> roleColumn;
   @FXML private TableColumn<UserModerationViewModel, String> statusColumn;
+  @FXML private TableColumn<UserModerationViewModel, String> ratingColumn;
   @FXML private TableColumn<UserModerationViewModel, String> banReasonColumn;
   @FXML private TableColumn<UserModerationViewModel, String> bannedByColumn;
   @FXML private TableColumn<UserModerationViewModel, String> bannedAtColumn;
@@ -159,6 +160,9 @@ public final class UserModerationController {
     }
     if (statusColumn != null) {
       statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+    }
+    if (ratingColumn != null) {
+      ratingColumn.setCellValueFactory(new PropertyValueFactory<>("ratingText"));
     }
     if (banReasonColumn != null) {
       banReasonColumn.setCellValueFactory(new PropertyValueFactory<>("banReason"));

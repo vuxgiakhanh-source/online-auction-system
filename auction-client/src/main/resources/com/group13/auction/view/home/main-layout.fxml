@@ -100,7 +100,7 @@
             </VBox>
 
             <!-- Main module cards -->
-            <HBox spacing="22.0" styleClass="main-card-row">
+            <HBox alignment="CENTER" spacing="22.0" styleClass="main-card-row">
                 <VBox spacing="14.0"
                       prefWidth="360.0"
                       prefHeight="220.0"
@@ -146,7 +146,9 @@
                             styleClass="main-card-button"
                             text="Mở ví"/>
                 </VBox>
+            </HBox>
 
+            <HBox alignment="CENTER" spacing="22.0" styleClass="main-card-row">
                 <VBox spacing="14.0"
                       prefWidth="360.0"
                       prefHeight="220.0"
@@ -169,31 +171,6 @@
                             onAction="#handleOpenSellerDashboard"
                             styleClass="main-card-button"
                             text="Mở kênh Seller"/>
-                </VBox>
-            </HBox>
-
-            <HBox spacing="22.0" styleClass="main-card-row">
-                <VBox spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
-                      styleClass="main-dashboard-card">
-                    <ImageView fitHeight="46.0" preserveRatio="true">
-                        <Image url="@../../assets/icons/accent/icon-message.png"/>
-                    </ImageView>
-
-                    <Label text="Rating"
-                           styleClass="main-card-title"/>
-
-                    <Label text="Gửi đánh giá hoặc xem lịch sử rating của người dùng sau giao dịch."
-                           wrapText="true"
-                           styleClass="main-card-description"/>
-
-                    <Region VBox.vgrow="ALWAYS"/>
-
-                    <Button mnemonicParsing="false"
-                            onAction="#handleOpenRating"
-                            styleClass="main-card-button"
-                            text="Mở Rating"/>
                 </VBox>
 
                 <VBox spacing="14.0"

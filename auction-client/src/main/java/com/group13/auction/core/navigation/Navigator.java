@@ -199,11 +199,6 @@ public final class Navigator {
     goTo(Route.NOTIFICATION_CENTER);
   }
 
-  /** Chuyển tới màn rating. */
-  public void goToRating() {
-    goTo(Route.RATING);
-  }
-
   /** Chuyển tới màn đơn hàng đã thắng của người dùng. */
   public void goToMyOrders() {
     goTo(Route.MY_ORDERS);

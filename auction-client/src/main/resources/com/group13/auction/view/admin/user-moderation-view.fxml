@@ -90,6 +90,7 @@
                         <TableColumn fx:id="emailColumn" text="Email" prefWidth="250.0"/>
                         <TableColumn fx:id="roleColumn" text="Vai trò" prefWidth="190.0"/>
                         <TableColumn fx:id="statusColumn" text="Trạng thái" prefWidth="120.0"/>
+                        <TableColumn fx:id="ratingColumn" text="Rating" prefWidth="110.0"/>
                         <TableColumn fx:id="banReasonColumn" text="Lý do khóa" prefWidth="150.0"/>
                         <TableColumn fx:id="bannedByColumn" text="Khóa bởi" prefWidth="120.0"/>
                         <TableColumn fx:id="bannedAtColumn" text="Thời điểm khóa" prefWidth="160.0"/>

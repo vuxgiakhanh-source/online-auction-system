@@ -18,6 +18,8 @@ import java.util.Locale;
 /** Mapper chuyển user DTO từ {@code auction-common} sang view model phía client. */
 public final class UserViewModelMapper {
 
+  private static final double MIN_SELLER_ELIGIBLE_RATING = 2.0;
+
   private UserViewModelMapper() {
     // Utility class.
   }
@@ -45,7 +47,7 @@ public final class UserViewModelMapper {
         rolesText(roles),
         primaryRoleText(roles, dto.getAdminType()),
         accountStatusText(dto.getAccountStatus()),
-        String.format(Locale.US, "%.1f / 5.0", dto.getRating()),
+        formatRating(dto.getRating()),
         formatMoney(dto.getBalance()),
         formatMoney(dto.getLockedDeposit()),
         formatMoney(dto.getAvailableBalance()),
@@ -95,7 +97,7 @@ public final class UserViewModelMapper {
    */
   public static UserModerationViewModel toModerationViewModel(UserDTO dto) {
     if (dto == null) {
-      return new UserModerationViewModel("--", "--", "--", "--", "--", false, "--", "--", "--");
+      return new UserModerationViewModel("--", "--", "--", "--", "--", "--", false, "--", "--", "--");
     }
 
     List<String> roles = safeRoles(dto.getRoles());
@@ -107,6 +109,7 @@ public final class UserViewModelMapper {
         fallback(dto.getEmail()),
         rolesText(roles),
         status,
+        formatRating(dto.getRating()),
         isBanned(dto),
         banReasonText(dto.getActiveBanReason()),
         fallback(dto.getBannedByUsername()),
@@ -170,7 +173,8 @@ public final class UserViewModelMapper {
    * Chuyển mảng user DTO sang danh sách candidate duyệt Seller.
    *
    * <p>Backend hiện có API approve seller role, nhưng chưa có API riêng để list pending seller
-   * request. Vì vậy client lọc từ danh sách user hiện có và chỉ hiển thị candidate phù hợp.
+   * request. Vì vậy client lọc từ danh sách user hiện có, hiển thị rating và lý do nếu candidate
+   * chưa đủ điều kiện approve.
    *
    * @param users mảng user DTO server trả về
    * @return danh sách seller approval view model
@@ -181,8 +185,8 @@ public final class UserViewModelMapper {
     }
 
     return Arrays.stream(users)
+        .filter(UserViewModelMapper::isSellerApprovalCandidateVisible)
         .map(UserViewModelMapper::toSellerApprovalViewModel)
-        .filter(SellerApprovalViewModel::isApprovable)
         .toList();
   }
 
@@ -194,7 +198,7 @@ public final class UserViewModelMapper {
    */
   public static SellerApprovalViewModel toSellerApprovalViewModel(UserDTO dto) {
     if (dto == null) {
-      return new SellerApprovalViewModel("--", "--", "--", "--", "--", false);
+      return new SellerApprovalViewModel("--", "--", "--", "--", "--", "--", false);
     }
 
     List<String> roles = safeRoles(dto.getRoles());
@@ -202,7 +206,9 @@ public final class UserViewModelMapper {
     boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
     boolean active =
         dto.getAccountStatus() != null && dto.getAccountStatus().equalsIgnoreCase("ACTIVE");
-    boolean approvable = !alreadySeller && !admin && active && !dto.isHasEverBeenPenalized();
+    boolean ratingEligible = dto.getRating() >= MIN_SELLER_ELIGIBLE_RATING;
+    boolean approvable =
+        !alreadySeller && !admin && active && !dto.isHasEverBeenPenalized() && ratingEligible;
 
     String note;
     if (alreadySeller) {
@@ -213,6 +219,8 @@ public final class UserViewModelMapper {
       note = "Chỉ tài khoản ACTIVE mới có thể duyệt Seller.";
     } else if (dto.isHasEverBeenPenalized()) {
       note = "Tài khoản từng bị phạt, không auto-approve Seller.";
+    } else if (!ratingEligible) {
+      note = "Rating dưới 2.0, backend sẽ từ chối duyệt Seller.";
     } else {
       note = "Có thể duyệt quyền Seller bằng API hiện có.";
     }
@@ -222,6 +230,7 @@ public final class UserViewModelMapper {
         fallback(dto.getUsername()),
         fallback(dto.getEmail()),
         rolesText(roles),
+        formatRating(dto.getRating()),
         note,
         approvable);
   }
@@ -305,7 +314,20 @@ public final class UserViewModelMapper {
     }
 
     String status = dto.getAccountStatus();
-    return status != null && status.equalsIgnoreCase("ACTIVE");
+    return status != null
+        && status.equalsIgnoreCase("ACTIVE")
+        && dto.getRating() >= MIN_SELLER_ELIGIBLE_RATING;
+  }
+
+  private static boolean isSellerApprovalCandidateVisible(UserDTO dto) {
+    if (dto == null) {
+      return false;
+    }
+
+    List<String> roles = safeRoles(dto.getRoles());
+    boolean alreadySeller = hasRole(roles, "SELLER") || hasRole(roles, "BIDDER_SELLER");
+    boolean admin = hasRole(roles, "ADMIN") || dto.getAdminType() != null;
+    return !alreadySeller && !admin;
   }
 
   private static String restoredText(int timesRestored) {
@@ -315,6 +337,10 @@ public final class UserViewModelMapper {
 
   private static String formatMoney(long amount) {
     return CurrencyUtil.formatVnd(BigDecimal.valueOf(amount));
+  }
+
+  private static String formatRating(double rating) {
+    return String.format(Locale.US, "%.1f / 5.0", rating);
   }
 
   private static String fallback(String value) {

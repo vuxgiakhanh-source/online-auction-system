@@ -8,6 +8,7 @@ public class UserModerationViewModel {
   private final String email;
   private final String role;
   private final String status;
+  private final String ratingText;
   private final boolean banned;
   private final String banReason;
   private final String bannedBy;
@@ -19,6 +20,7 @@ public class UserModerationViewModel {
       String email,
       String role,
       String status,
+      String ratingText,
       boolean banned,
       String banReason,
       String bannedBy,
@@ -28,6 +30,7 @@ public class UserModerationViewModel {
     this.email = email;
     this.role = role;
     this.status = status;
+    this.ratingText = ratingText;
     this.banned = banned;
     this.banReason = banReason;
     this.bannedBy = bannedBy;
@@ -52,6 +55,10 @@ public class UserModerationViewModel {
 
   public String getStatus() {
     return status;
+  }
+
+  public String getRatingText() {
+    return ratingText;
   }
 
   public boolean isBanned() {

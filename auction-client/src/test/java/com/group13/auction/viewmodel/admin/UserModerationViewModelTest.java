@@ -18,6 +18,7 @@ class UserModerationViewModelTest {
             "bidder01@example.com",
             "BIDDER",
             "BANNED",
+            "1.8 / 5.0",
             true,
             "Spam bid nhiều lần",
             "admin01",
@@ -28,6 +29,7 @@ class UserModerationViewModelTest {
     assertEquals("bidder01@example.com", viewModel.getEmail());
     assertEquals("BIDDER", viewModel.getRole());
     assertEquals("BANNED", viewModel.getStatus());
+    assertEquals("1.8 / 5.0", viewModel.getRatingText());
     assertTrue(viewModel.isBanned());
     assertEquals("Spam bid nhiều lần", viewModel.getBanReason());
     assertEquals("admin01", viewModel.getBannedBy());
@@ -38,9 +40,19 @@ class UserModerationViewModelTest {
   void bannedShouldReturnFalseForActiveUser() {
     UserModerationViewModel viewModel =
         new UserModerationViewModel(
-            "U-2", "seller01", "seller01@example.com", "SELLER", "ACTIVE", false, "", "", "");
+            "U-2",
+            "seller01",
+            "seller01@example.com",
+            "SELLER",
+            "ACTIVE",
+            "4.9 / 5.0",
+            false,
+            "",
+            "",
+            "");
 
     assertFalse(viewModel.isBanned());
+    assertEquals("4.9 / 5.0", viewModel.getRatingText());
     assertEquals("", viewModel.getBanReason());
     assertEquals("", viewModel.getBannedBy());
     assertEquals("", viewModel.getBannedAt());

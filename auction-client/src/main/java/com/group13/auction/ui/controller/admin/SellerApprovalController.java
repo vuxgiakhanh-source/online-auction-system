@@ -19,7 +19,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
  * Controller cho màn Admin duyệt quyền Seller.
  *
  * <p>Source hiện có API approve seller role, nhưng chưa có API list pending/reject seller request
- * riêng. Controller vì vậy chỉ hiển thị candidate có thể approve từ danh sách user hiện có.
+ * riêng. Controller vì vậy hiển thị candidate từ danh sách user hiện có, kèm rating và trạng thái
+ * có thể approve hay chưa.
  */
 public final class SellerApprovalController {
 
@@ -30,6 +31,7 @@ public final class SellerApprovalController {
   @FXML private TableColumn<SellerApprovalViewModel, String> usernameColumn;
   @FXML private TableColumn<SellerApprovalViewModel, String> emailColumn;
   @FXML private TableColumn<SellerApprovalViewModel, String> roleColumn;
+  @FXML private TableColumn<SellerApprovalViewModel, String> ratingColumn;
   @FXML private TableColumn<SellerApprovalViewModel, String> noteColumn;
 
   @FXML private Label statusLabel;
@@ -112,6 +114,9 @@ public final class SellerApprovalController {
     if (roleColumn != null) {
       roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
     }
+    if (ratingColumn != null) {
+      ratingColumn.setCellValueFactory(new PropertyValueFactory<>("ratingText"));
+    }
     if (noteColumn != null) {
       noteColumn.setCellValueFactory(new PropertyValueFactory<>("note"));
     }
@@ -133,7 +138,7 @@ public final class SellerApprovalController {
     if (backendNoteLabel != null) {
       backendNoteLabel.setText(
           "Backend hiện hỗ trợ duyệt quyền Seller. API lấy danh sách yêu cầu đang chờ và API từ "
-              + "chối yêu cầu Seller chưa được tách riêng.");
+              + "chối yêu cầu Seller chưa được tách riêng; điều kiện rating tối thiểu là 2.0.");
     }
     if (rejectButton != null) {
       rejectButton.setDisable(true);

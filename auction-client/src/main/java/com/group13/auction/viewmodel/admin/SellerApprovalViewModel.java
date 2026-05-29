@@ -7,6 +7,7 @@ public class SellerApprovalViewModel {
   private final String username;
   private final String email;
   private final String role;
+  private final String ratingText;
   private final String note;
   private final boolean approvable;
 
@@ -17,15 +18,23 @@ public class SellerApprovalViewModel {
    * @param username tên đăng nhập
    * @param email email
    * @param role vai trò hiện tại
+   * @param ratingText rating hiện tại
    * @param note ghi chú trạng thái
    * @param approvable true nếu có thể approve bằng API hiện có
    */
   public SellerApprovalViewModel(
-      String userId, String username, String email, String role, String note, boolean approvable) {
+      String userId,
+      String username,
+      String email,
+      String role,
+      String ratingText,
+      String note,
+      boolean approvable) {
     this.userId = userId;
     this.username = username;
     this.email = email;
     this.role = role;
+    this.ratingText = ratingText;
     this.note = note;
     this.approvable = approvable;
   }
@@ -44,6 +53,10 @@ public class SellerApprovalViewModel {
 
   public String getRole() {
     return role;
+  }
+
+  public String getRatingText() {
+    return ratingText;
   }
 
   public String getNote() {

@@ -17,6 +17,7 @@ class SellerApprovalViewModelTest {
             "bidder01",
             "bidder01@example.com",
             "BIDDER",
+            "4.2 / 5.0",
             "Đang chờ duyệt quyền Seller",
             true);
 
@@ -24,6 +25,7 @@ class SellerApprovalViewModelTest {
     assertEquals("bidder01", viewModel.getUsername());
     assertEquals("bidder01@example.com", viewModel.getEmail());
     assertEquals("BIDDER", viewModel.getRole());
+    assertEquals("4.2 / 5.0", viewModel.getRatingText());
     assertEquals("Đang chờ duyệt quyền Seller", viewModel.getNote());
     assertTrue(viewModel.isApprovable());
   }
@@ -36,9 +38,11 @@ class SellerApprovalViewModelTest {
             "seller01",
             "seller01@example.com",
             "SELLER",
+            "1.9 / 5.0",
             "Người dùng đã có quyền Seller",
             false);
 
     assertFalse(viewModel.isApprovable());
+    assertEquals("1.9 / 5.0", viewModel.getRatingText());
   }
 }

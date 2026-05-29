@@ -60,9 +60,9 @@
         <VBox spacing="12.0" styleClass="table-panel" VBox.vgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12.0">
                 <VBox spacing="4.0">
-                    <Label text="Candidate có thể duyệt Seller" styleClass="section-title"/>
+                    <Label text="Candidate duyệt Seller" styleClass="section-title"/>
                     <Label
-                            text="Danh sách này được lọc an toàn từ API danh sách người dùng."
+                            text="Danh sách này được lọc an toàn từ API danh sách người dùng và hiển thị rating hiện tại."
                             styleClass="muted-label"/>
                 </VBox>
 
@@ -92,6 +92,7 @@
                         <TableColumn fx:id="usernameColumn" text="Tên đăng nhập" prefWidth="170.0"/>
                         <TableColumn fx:id="emailColumn" text="Email" prefWidth="250.0"/>
                         <TableColumn fx:id="roleColumn" text="Vai trò" prefWidth="170.0"/>
+                        <TableColumn fx:id="ratingColumn" text="Rating" prefWidth="110.0"/>
                         <TableColumn fx:id="noteColumn" text="Ghi chú" prefWidth="330.0"/>
                     </columns>
                 </TableView>

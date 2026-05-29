@@ -76,12 +76,6 @@ public final class MainLayoutController {
             () -> AlertUtil.showError("Tài khoản hiện tại chưa có quyền Seller."));
   }
 
-  /** Mở màn Rating. */
-  @FXML
-  public void handleOpenRating() {
-    Navigator.getInstance().goToRating();
-  }
-
   /** Mở màn đơn hàng đã thắng của người dùng. */
   @FXML
   public void handleOpenMyOrders() {

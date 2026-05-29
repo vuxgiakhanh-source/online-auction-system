@@ -28,6 +28,7 @@ class UserViewModelMapperTest {
     assertEquals("--", viewModel.rolesText());
     assertEquals("--", viewModel.primaryRoleText());
     assertEquals("--", viewModel.accountStatusText());
+    assertEquals("--", viewModel.ratingText());
     assertFalse(viewModel.bidder());
     assertFalse(viewModel.seller());
     assertFalse(viewModel.admin());
@@ -108,6 +109,7 @@ class UserViewModelMapperTest {
     assertEquals("--", viewModel.getEmail());
     assertEquals("--", viewModel.getRole());
     assertEquals("--", viewModel.getStatus());
+    assertEquals("--", viewModel.getRatingText());
     assertFalse(viewModel.isBanned());
     assertEquals("--", viewModel.getBanReason());
     assertEquals("--", viewModel.getBannedBy());
@@ -119,6 +121,7 @@ class UserViewModelMapperTest {
     UserDTO dto = createUser("U-4", "baduser", "bad@example.com");
     dto.setRoles(List.of("BIDDER"));
     dto.setAccountStatus("BANNED");
+    dto.setRating(1.8D);
     dto.setActiveBanReason("FRAUD");
     dto.setBannedByUsername("admin01");
     dto.setBannedAt(LocalDateTime.of(2026, 5, 26, 20, 30));
@@ -130,6 +133,7 @@ class UserViewModelMapperTest {
     assertEquals("bad@example.com", viewModel.getEmail());
     assertEquals("BIDDER", viewModel.getRole());
     assertEquals("Bị cấm", viewModel.getStatus());
+    assertEquals("1.8 / 5.0", viewModel.getRatingText());
     assertTrue(viewModel.isBanned());
     assertEquals("Gian lận", viewModel.getBanReason());
     assertEquals("admin01", viewModel.getBannedBy());
@@ -229,12 +233,13 @@ class UserViewModelMapperTest {
     assertEquals("bidder01", viewModel.getUsername());
     assertEquals("bidder01@example.com", viewModel.getEmail());
     assertEquals("BIDDER", viewModel.getRole());
+    assertEquals("5.0 / 5.0", viewModel.getRatingText());
     assertEquals("Có thể duyệt quyền Seller bằng API hiện có.", viewModel.getNote());
     assertTrue(viewModel.isApprovable());
   }
 
   @Test
-  void toSellerApprovalViewModelShouldRejectSellerAdminInactiveAndPenalizedUser() {
+  void toSellerApprovalViewModelShouldRejectSellerAdminInactivePenalizedAndLowRatingUser() {
     UserDTO seller = createUser("U-1", "seller01", "seller01@example.com");
     seller.setRoles(List.of("SELLER"));
     seller.setAccountStatus("ACTIVE");
@@ -251,6 +256,11 @@ class UserViewModelMapperTest {
     penalized.setRoles(List.of("BIDDER"));
     penalized.setAccountStatus("ACTIVE");
     penalized.setHasEverBeenPenalized(true);
+
+    UserDTO lowRating = createUser("U-5", "lowrating01", "lowrating01@example.com");
+    lowRating.setRoles(List.of("BIDDER"));
+    lowRating.setAccountStatus("ACTIVE");
+    lowRating.setRating(1.9D);
 
     assertFalse(UserViewModelMapper.toSellerApprovalViewModel(seller).isApprovable());
     assertEquals(
@@ -271,23 +281,41 @@ class UserViewModelMapperTest {
     assertEquals(
         "Tài khoản từng bị phạt, không auto-approve Seller.",
         UserViewModelMapper.toSellerApprovalViewModel(penalized).getNote());
+
+    SellerApprovalViewModel lowRatingViewModel =
+        UserViewModelMapper.toSellerApprovalViewModel(lowRating);
+    assertFalse(lowRatingViewModel.isApprovable());
+    assertEquals("1.9 / 5.0", lowRatingViewModel.getRatingText());
+    assertEquals("Rating dưới 2.0, backend sẽ từ chối duyệt Seller.", lowRatingViewModel.getNote());
   }
 
   @Test
-  void toSellerApprovalViewModelsShouldFilterOnlyApprovableUsers() {
+  void toSellerApprovalViewModelsShouldFilterAlreadySellerAndAdminButKeepCandidatesWithNotes() {
     UserDTO approvable = createUser("U-1", "bidder01", "bidder01@example.com");
     approvable.setRoles(List.of("BIDDER"));
     approvable.setAccountStatus("ACTIVE");
+
+    UserDTO lowRating = createUser("U-3", "lowrating01", "lowrating01@example.com");
+    lowRating.setRoles(List.of("BIDDER"));
+    lowRating.setAccountStatus("ACTIVE");
+    lowRating.setRating(1.5D);
 
     UserDTO seller = createUser("U-2", "seller01", "seller01@example.com");
     seller.setRoles(List.of("SELLER"));
     seller.setAccountStatus("ACTIVE");
 
-    List<SellerApprovalViewModel> viewModels =
-        UserViewModelMapper.toSellerApprovalViewModels(new UserDTO[] {approvable, seller});
+    UserDTO admin = createUser("U-4", "admin01", "admin01@example.com");
+    admin.setRoles(List.of("ADMIN"));
+    admin.setAccountStatus("ACTIVE");
 
-    assertEquals(1, viewModels.size());
+    List<SellerApprovalViewModel> viewModels =
+        UserViewModelMapper.toSellerApprovalViewModels(
+            new UserDTO[] {approvable, lowRating, seller, admin});
+
+    assertEquals(2, viewModels.size());
     assertEquals("U-1", viewModels.get(0).getUserId());
+    assertEquals("U-3", viewModels.get(1).getUserId());
+    assertFalse(viewModels.get(1).isApprovable());
   }
 
   private static UserDTO createUser(String id, String username, String email) {
@@ -297,6 +325,7 @@ class UserViewModelMapperTest {
     dto.setEmail(email);
     dto.setRoles(List.of("BIDDER"));
     dto.setAccountStatus("ACTIVE");
+    dto.setRating(5.0D);
     return dto;
   }
 
