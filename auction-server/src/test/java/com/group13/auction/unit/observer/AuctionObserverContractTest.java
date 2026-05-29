@@ -7,6 +7,8 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
+import com.group13.auction.dao.NotificationDAO;
+import org.mockito.Mockito;
 import com.group13.auction.observer.*;
 import com.group13.auction.observer.AuctionEvent.AuctionEventType;
 import com.group13.auction.unit.TestFixture;
@@ -74,7 +76,7 @@ class AuctionObserverContractTest {
     return Stream.of(
         new BidderObserver(b, TestFixture.ratingServiceAllowAll()),
         new SellerObserver(s, TestFixture.ratingServiceAllowAll()),
-        new AdminObserver(master),
+        new AdminObserver(master, Mockito.mock(NotificationDAO.class)),
         new StaffObserver(staff),
         new SystemAdminObserver(SystemAdmin.getInstance()));
   }

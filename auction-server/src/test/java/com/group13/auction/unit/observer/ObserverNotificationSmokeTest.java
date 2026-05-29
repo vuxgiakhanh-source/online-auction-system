@@ -8,6 +8,8 @@ import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
+import com.group13.auction.dao.NotificationDAO;
+import org.mockito.Mockito;
 import com.group13.auction.observer.*;
 import com.group13.auction.observer.AuctionEvent.AuctionEventType;
 import com.group13.auction.unit.TestFixture;
@@ -134,7 +136,7 @@ class ObserverNotificationSmokeTest {
             "Bidder", new BidderObserver(b, TestFixture.ratingServiceAllowAll())),
         org.junit.jupiter.params.provider.Arguments.of(
             "Seller", new SellerObserver(s, TestFixture.ratingServiceAllowAll())),
-        org.junit.jupiter.params.provider.Arguments.of("Admin", new AdminObserver(master)),
+        org.junit.jupiter.params.provider.Arguments.of("Admin", new AdminObserver(master, Mockito.mock(NotificationDAO.class))),
         org.junit.jupiter.params.provider.Arguments.of("Staff", new StaffObserver(staff)),
         org.junit.jupiter.params.provider.Arguments.of(
             "SystemAdmin", new SystemAdminObserver(SystemAdmin.getInstance())));
