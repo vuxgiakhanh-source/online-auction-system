@@ -67,6 +67,7 @@ class PaymentStateTransitionIT {
   void setUp() throws Exception {
     TestFixture.bootstrapSystemAdmin();
     TestFixture.resetSystemBankBalance();
+    TestFixture.silenceGlobalSingletons();
 
     seller = TestFixture.normalSeller("sellerUser");
     // balance phải >= FINAL_PRICE để availableBalance >= remaining sau khi lock DEPOSIT
