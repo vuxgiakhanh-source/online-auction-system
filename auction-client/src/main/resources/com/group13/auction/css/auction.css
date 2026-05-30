@@ -261,6 +261,7 @@
     -fx-font-size: 22px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .auction-status-badge {
@@ -381,12 +382,15 @@
     -fx-font-size: 32px;
     -fx-font-weight: 900;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .auction-current-price {
     -fx-font-size: 34px;
     -fx-font-weight: 900;
     -fx-text-fill: #67b8ea;
+    -fx-wrap-text: true;
+    -fx-text-alignment: right;
 }
 
 .auction-description-text {
@@ -489,11 +493,12 @@
 }
 
 .auction-history-list .list-cell {
-    -fx-padding: 9 10 9 10;
+    -fx-padding: 10 12 10 12;
 
     -fx-font-size: 13px;
     -fx-font-weight: 600;
     -fx-text-fill: rgba(255, 255, 255, 0.86);
+    -fx-wrap-text: true;
 
     -fx-background-color: transparent;
 }
@@ -547,10 +552,6 @@
 .auction-line-chart .chart-line-symbol.bid-chart-point:hover {
     -fx-background-color: #ffffff, #67b8ea;
     -fx-effect: dropshadow(gaussian, rgba(103, 184, 234, 0.55), 14, 0.35, 0, 0);
-}
-
-.auction-line-chart .chart-line-symbol.bid-chart-point-auto {
-    -fx-background-color: #fef3c7, #f59e0b;
 }
 
 .bid-chart-tooltip {

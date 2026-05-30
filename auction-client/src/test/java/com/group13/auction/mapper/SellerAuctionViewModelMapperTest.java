@@ -162,7 +162,7 @@ class SellerAuctionViewModelMapperTest {
     art.getItem()
         .setExtraFields(Map.of("artist", "Van Gogh", "yearCreated", 1889, "medium", "Oil"));
     assertSpecification(art, "Nghệ sĩ", "Van Gogh");
-    assertSpecification(art, "Năm sáng tác", "1,889");
+    assertSpecification(art, "Năm sáng tác", "1889");
     assertSpecification(art, "Chất liệu", "Oil");
 
     AuctionDTOs.AuctionDTO vehicle = createAuction("A-3", "OPEN", "VEHICLE");
@@ -170,7 +170,7 @@ class SellerAuctionViewModelMapperTest {
         .getItem()
         .setExtraFields(Map.of("manufacturer", "Honda", "year", 2020, "mileage", 12500));
     assertSpecification(vehicle, "Nhà sản xuất", "Honda");
-    assertSpecification(vehicle, "Năm sản xuất", "2,020");
+    assertSpecification(vehicle, "Năm sản xuất", "2020");
     assertSpecification(vehicle, "Số km đã đi", "12,500 km");
   }
 

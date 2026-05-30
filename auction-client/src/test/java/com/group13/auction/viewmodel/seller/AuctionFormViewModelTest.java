@@ -210,8 +210,8 @@ class AuctionFormViewModelTest {
 
   @Test
   void validateForCreateShouldRejectEndTimeBeforeStartTime() {
-    LocalDateTime startTime = LocalDateTime.of(2026, 5, 26, 21, 0);
-    LocalDateTime endTime = LocalDateTime.of(2026, 5, 26, 20, 0);
+    LocalDateTime startTime = LocalDateTime.now().plusDays(2);
+    LocalDateTime endTime = startTime.minusHours(1);
     AuctionFormViewModel form =
         createForm(
             "Camera",
@@ -228,6 +228,47 @@ class AuctionFormViewModelTest {
         assertThrows(IllegalArgumentException.class, form::validateForCreate);
 
     assertEquals("Thời gian kết thúc phải sau thời gian bắt đầu.", exception.getMessage());
+  }
+
+  @Test
+  void validateForCreateShouldRejectStartTimeInPast() {
+    AuctionFormViewModel form =
+        createForm(
+            "Camera",
+            "Description",
+            "ELECTRONICS",
+            1_000_000D,
+            1_500_000D,
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(2),
+            Map.of(),
+            List.of());
+
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, form::validateForCreate);
+
+    assertEquals(
+        "Thời gian bắt đầu phải bằng hoặc sau thời điểm hiện tại.", exception.getMessage());
+  }
+
+  @Test
+  void validateForCreateShouldRejectEndTimeNotAfterNow() {
+    AuctionFormViewModel form =
+        createForm(
+            "Camera",
+            "Description",
+            "ELECTRONICS",
+            1_000_000D,
+            1_500_000D,
+            LocalDateTime.now().plusHours(1),
+            LocalDateTime.now(),
+            Map.of(),
+            List.of());
+
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, form::validateForCreate);
+
+    assertEquals("Thời gian kết thúc phải sau thời điểm hiện tại.", exception.getMessage());
   }
 
   @Test
@@ -305,10 +346,10 @@ class AuctionFormViewModelTest {
   }
 
   private static LocalDateTime validStartTime() {
-    return LocalDateTime.of(2026, 5, 26, 20, 0);
+    return LocalDateTime.now().plusHours(1).withNano(0);
   }
 
   private static LocalDateTime validEndTime() {
-    return LocalDateTime.of(2026, 5, 26, 21, 0);
+    return validStartTime().plusHours(1);
   }
 }

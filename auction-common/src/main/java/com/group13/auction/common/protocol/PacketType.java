@@ -420,8 +420,9 @@ public enum PacketType {
   BID_UPDATE,
 
   /**
-   * Server push riêng cho bidder bid thủ công khi bị vượt giá. Không gửi nếu bidder đang bật
-   * auto-bid (auto-bid dùng {@link #AUTO_BID_EXHAUSTED_NOTIFY}). Payload: {@code OutbidNotifyDTO}.
+   * Server push riêng cho bidder bid thủ công khi bị vượt giá — client chỉ hiện popup, không lưu
+   * inbox/DB. Không gửi nếu bidder đang bật auto-bid (auto-bid dùng {@link
+   * #AUTO_BID_EXHAUSTED_NOTIFY}). Payload: {@code OutbidNotifyDTO}.
    */
   OUTBID_NOTIFY,
 

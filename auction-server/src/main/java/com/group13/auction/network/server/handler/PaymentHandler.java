@@ -668,28 +668,11 @@ public class PaymentHandler implements PacketHandler {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
-    // FIX Bug 3: Dùng session cache trước — tránh hit DB mỗi payment request và
-    // tránh AuctionManager.findUserByUsername() gọi allUsers.put() thay thế in-memory
-    // user object, làm mất đồng bộ với object session cache của BidHandler và
-    // object Auction.currentLeader đang giữ reference cũ.
-    //
-    // Tuy nhiên, KHÔNG cache cho payment operations (deposit/withdraw): các thao tác này
-    // gọi session.invalidateCachedUser() để force reload balance mới nhất.
-    // Nếu cache đã bị invalidate, fallback xuống AuctionManager (in-memory only) → không hit DB lần
-    // nữa.
-    NormalUser cached = session.getCachedUser();
-    if (cached != null) {
-      return cached;
-    }
-
-    // Fallback: tìm trong in-memory (không query DB để tránh replace allUsers)
-    com.group13.auction.model.user.User user =
-        AuctionManager.getInstance().findUserByUsernameInMemoryOnly(session.getUsername());
+    // Luôn đọc balance/lockedDeposit từ DB — tránh object in-memory cũ (vd. sau server restart
+    // hoặc khi deposit dùng addBalance SQL nhưng RAM vẫn giữ số dư cũ) khiến ví hiển thị sai sau
+    // đăng nhập lại.
+    NormalUser user = userDAO.findUserCoreByUsername(session.getUsername());
     if (user == null) {
-      // Lần đầu tiên (vd: server restart, user chưa có trong memory): load từ DB
-      user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
-    }
-    if (!(user instanceof NormalUser)) {
       log.warn(
           "NormalUser required for payment handler: username={}, requestId={}",
           session.getUsername(),
@@ -701,9 +684,9 @@ public class PaymentHandler implements PacketHandler {
               requestId));
       return null;
     }
-    NormalUser normalUser = (NormalUser) user;
-    session.setCachedUser(normalUser); // cache để dùng lại, tương nhất quán với BidHandler
-    return normalUser;
+    AuctionManager.getInstance().refreshUser(user);
+    session.setCachedUser(user);
+    return user;
   }
 
   /**

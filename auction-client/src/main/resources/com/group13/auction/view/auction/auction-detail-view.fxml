@@ -79,11 +79,12 @@
 
                 <!-- Title card -->
                 <VBox spacing="10.0" styleClass="auction-detail-hero">
-                    <HBox alignment="CENTER_LEFT" spacing="12.0">
-                        <VBox spacing="6.0">
+                    <HBox alignment="TOP_LEFT" spacing="12.0">
+                        <VBox spacing="6.0" HBox.hgrow="ALWAYS" minWidth="0.0" maxWidth="Infinity">
                             <Label fx:id="titleLabel"
                                    text="Đang tải phiên đấu giá..."
                                    wrapText="true"
+                                   maxWidth="Infinity"
                                    styleClass="auction-detail-title"/>
 
                             <HBox spacing="10.0">
@@ -97,14 +98,14 @@
                             </HBox>
                         </VBox>
 
-                        <Region HBox.hgrow="ALWAYS"/>
-
-                        <VBox alignment="CENTER_RIGHT" spacing="4.0">
+                        <VBox alignment="CENTER_RIGHT" spacing="4.0" minWidth="180.0" maxWidth="280.0">
                             <Label text="Giá hiện tại"
                                    styleClass="auction-muted-text"/>
 
                             <Label fx:id="currentPriceLabel"
                                    text="--"
+                                   wrapText="true"
+                                   maxWidth="Infinity"
                                    styleClass="auction-current-price"/>
                         </VBox>
                     </HBox>

@@ -189,6 +189,10 @@ public final class EditAuctionController {
       throw new IllegalArgumentException(
           "Thời gian kết thúc mới phải sau thời gian kết thúc hiện tại.");
     }
+
+    if (!newEndTime.isAfter(LocalDateTime.now())) {
+      throw new IllegalArgumentException("Thời gian kết thúc mới phải sau thời điểm hiện tại.");
+    }
   }
 
   private void updateAuctionEndTime(LocalDateTime newEndTime) {

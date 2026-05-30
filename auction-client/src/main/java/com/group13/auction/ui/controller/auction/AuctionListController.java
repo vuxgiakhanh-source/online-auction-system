@@ -167,28 +167,37 @@ public final class AuctionListController {
     root.setPadding(new Insets(18.0, 20.0, 18.0, 20.0));
 
     HBox topRow = new HBox(12.0);
+    topRow.setAlignment(Pos.TOP_LEFT);
     topRow.setFillHeight(false);
 
     VBox thumbnailBox = createThumbnailBox(card.primaryImageUrl());
 
     VBox titleBox = new VBox(5.0);
+    HBox.setHgrow(titleBox, Priority.ALWAYS);
+    titleBox.setMinWidth(0);
+    titleBox.setMaxWidth(Double.MAX_VALUE);
+
     Label titleLabel = new Label(card.itemName());
     titleLabel.getStyleClass().add("auction-card-title");
+    titleLabel.setWrapText(true);
+    titleLabel.setMaxWidth(Double.MAX_VALUE);
 
     Label metaLabel = new Label(card.categoryText() + " • " + card.sellerText());
     metaLabel.getStyleClass().add("auction-muted-text");
+    metaLabel.setWrapText(true);
+    metaLabel.setMaxWidth(Double.MAX_VALUE);
 
     titleBox.getChildren().addAll(titleLabel, metaLabel);
 
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-
     Label statusBadge = new Label(card.statusText());
     statusBadge.getStyleClass().add("auction-status-badge");
+    statusBadge.setMinWidth(Region.USE_PREF_SIZE);
+    HBox.setHgrow(statusBadge, Priority.NEVER);
 
-    topRow.getChildren().addAll(thumbnailBox, titleBox, spacer, statusBadge);
+    topRow.getChildren().addAll(thumbnailBox, titleBox, statusBadge);
 
     HBox priceRow = new HBox(18.0);
+    priceRow.setFillHeight(false);
     priceRow
         .getChildren()
         .addAll(

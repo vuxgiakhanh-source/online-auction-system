@@ -52,7 +52,7 @@ import javafx.scene.control.Tooltip;
 /** Controller cho màn đấu giá trực tiếp và realtime bid chart. */
 public final class LiveBiddingController implements ClientEventListener {
 
-  private static final int MAX_CHART_POINTS = 40;
+  private static final int MAX_BID_HISTORY_POINTS = 200;
   private static final long TIER_LOW = 1_000_000L;
   private static final long TIER_MID = 10_000_000L;
   private static final long INCREMENT_LOW = 50_000L;
@@ -74,6 +74,8 @@ public final class LiveBiddingController implements ClientEventListener {
   private boolean readOnlyMode;
   private boolean bidAllowed;
   private long currentPriceRaw;
+  private long activeAutoBidMaxRaw;
+  private boolean autoBidActive;
   private volatile boolean pendingBidRequest;
   private volatile boolean pendingAutoBidRequest;
 
@@ -225,7 +227,8 @@ public final class LiveBiddingController implements ClientEventListener {
     setAutoBidLoading(true, "Đang đăng ký auto-bid...");
 
     autoBidService
-        .registerAutoBid(auctionId, autoBidMaxField.getText())
+        .registerAutoBid(
+            auctionId, autoBidMaxField.getText(), currentPriceRaw, previousAutoBidMaxForValidation())
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
@@ -262,7 +265,8 @@ public final class LiveBiddingController implements ClientEventListener {
     setAutoBidLoading(true, "Đang cập nhật auto-bid...");
 
     autoBidService
-        .updateAutoBid(auctionId, autoBidMaxField.getText())
+        .updateAutoBid(
+            auctionId, autoBidMaxField.getText(), currentPriceRaw, previousAutoBidMaxForValidation())
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
@@ -344,7 +348,7 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    ContentPreviewDialog.show(bidHistoryListView, "Lịch sử bid", createExpandedBidHistoryTable());
+    ContentPreviewDialog.show(bidHistoryListView, "Lịch sử đặt giá", createExpandedBidHistoryTable());
   }
 
   @Override
@@ -431,6 +435,8 @@ public final class LiveBiddingController implements ClientEventListener {
                   + notify.getLeadingBidderUsername()
                   + ".");
           setMessage("Auto-bid đã hết hiệu lực vì maxBid không đủ để vượt giá hiện tại.");
+          autoBidActive = false;
+          activeAutoBidMaxRaw = 0L;
         });
   }
 
@@ -818,17 +824,11 @@ public final class LiveBiddingController implements ClientEventListener {
 
     historyPoints.add(point);
     priceSeries.getData().add(createBidChartData(point));
-
-    if (priceSeries.getData().size() > MAX_CHART_POINTS) {
-      priceSeries.getData().remove(0);
-    }
+    bidHistoryListView.getItems().add(0, formatBidHistoryListRow(point));
+    trimBidHistoryIfNeeded();
 
     // Cập nhật Y-axis bounds sau mỗi thay đổi dữ liệu để mốc giá không bị mất
     updateChartYAxisBounds();
-
-    bidHistoryListView
-        .getItems()
-        .add(0, point.timestampText() + " • " + point.bidderUsername() + " • " + point.priceText());
 
     currentPriceRaw = point.price();
     currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
@@ -886,10 +886,7 @@ public final class LiveBiddingController implements ClientEventListener {
             (observable, oldNode, newNode) -> {
               if (oldNode != null) {
                 Tooltip.uninstall(oldNode, tooltip);
-                oldNode
-                    .getStyleClass()
-                    .removeAll(
-                        "bid-chart-point", "bid-chart-point-manual", "bid-chart-point-auto");
+                oldNode.getStyleClass().removeAll("bid-chart-point");
               }
               if (newNode != null) {
                 installBidPointTooltip(newNode, tooltip, point);
@@ -913,7 +910,6 @@ public final class LiveBiddingController implements ClientEventListener {
   private void installBidPointTooltip(
       Node node, Tooltip tooltip, BidHistoryPointViewModel point) {
     addStyleClass(node, "bid-chart-point");
-    addStyleClass(node, point.autoBid() ? "bid-chart-point-auto" : "bid-chart-point-manual");
     Tooltip.install(node, tooltip);
   }
 
@@ -935,10 +931,6 @@ public final class LiveBiddingController implements ClientEventListener {
             .append("Thời gian: ")
             .append(point.timestampText());
 
-    if (point.autoBid()) {
-      text.append(System.lineSeparator()).append("Nguồn: Auto-Bid");
-    }
-
     return text.toString();
   }
 
@@ -946,38 +938,51 @@ public final class LiveBiddingController implements ClientEventListener {
     return value == null || value.isBlank() ? fallback : value;
   }
 
+  private String formatBidHistoryListRow(BidHistoryPointViewModel point) {
+    return point.timestampText()
+        + " • "
+        + fallbackText(point.bidderUsername(), "Unknown")
+        + " • "
+        + point.priceText();
+  }
+
+  private void trimBidHistoryIfNeeded() {
+    while (historyPoints.size() > MAX_BID_HISTORY_POINTS) {
+      historyPoints.remove(0);
+      if (!priceSeries.getData().isEmpty()) {
+        priceSeries.getData().remove(0);
+      }
+      if (!bidHistoryListView.getItems().isEmpty()) {
+        bidHistoryListView.getItems().remove(bidHistoryListView.getItems().size() - 1);
+      }
+    }
+  }
+
   private TableView<BidHistoryPointViewModel> createExpandedBidHistoryTable() {
     TableView<BidHistoryPointViewModel> table = new TableView<>();
     table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-    table.setPrefSize(960, 560);
-    table.setMinSize(760, 420);
+    table.setPrefSize(1020, 620);
+    table.setMinSize(820, 480);
     table.getStyleClass().add("live-preview-table");
 
     TableColumn<BidHistoryPointViewModel, String> timeColumn = new TableColumn<>("Thời gian");
-    timeColumn.setPrefWidth(210);
+    timeColumn.setPrefWidth(300);
     timeColumn.setCellValueFactory(
         cellData -> new ReadOnlyStringWrapper(cellData.getValue().timestampText()));
 
-    TableColumn<BidHistoryPointViewModel, String> bidderColumn = new TableColumn<>("Bidder");
-    bidderColumn.setPrefWidth(260);
+    TableColumn<BidHistoryPointViewModel, String> bidderColumn = new TableColumn<>("Người đặt giá");
+    bidderColumn.setPrefWidth(360);
     bidderColumn.setCellValueFactory(
         cellData -> new ReadOnlyStringWrapper(cellData.getValue().bidderUsername()));
 
     TableColumn<BidHistoryPointViewModel, String> amountColumn = new TableColumn<>("Giá đặt");
-    amountColumn.setPrefWidth(220);
+    amountColumn.setPrefWidth(300);
     amountColumn.setCellValueFactory(
         cellData -> new ReadOnlyStringWrapper(cellData.getValue().priceText()));
-
-    TableColumn<BidHistoryPointViewModel, String> sourceColumn = new TableColumn<>("Nguồn");
-    sourceColumn.setPrefWidth(160);
-    sourceColumn.setCellValueFactory(
-        cellData ->
-            new ReadOnlyStringWrapper(cellData.getValue().autoBid() ? "Auto-Bid" : "Manual"));
 
     table.getColumns().add(timeColumn);
     table.getColumns().add(bidderColumn);
     table.getColumns().add(amountColumn);
-    table.getColumns().add(sourceColumn);
 
     List<BidHistoryPointViewModel> latestFirst = new ArrayList<>(historyPoints);
     Collections.reverse(latestFirst);
@@ -997,6 +1002,9 @@ public final class LiveBiddingController implements ClientEventListener {
       autoBidMaxField.setText(String.valueOf(registration.getMaxBid()));
     }
 
+    activeAutoBidMaxRaw = registration.getMaxBid();
+    autoBidActive = true;
+
     setAutoBidStatusText(
         "Đang bật • MaxBid: "
             + CurrencyUtil.formatVnd(registration.getMaxBid())
@@ -1007,8 +1015,17 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   private void renderAutoBidInactive(String message) {
+    activeAutoBidMaxRaw = 0L;
+    autoBidActive = false;
     setAutoBidStatusText("Chưa bật auto-bid cho phiên này.");
     setAutoBidLoading(false, message);
+  }
+
+  private Long previousAutoBidMaxForValidation() {
+    if (!autoBidActive || activeAutoBidMaxRaw <= 0L) {
+      return null;
+    }
+    return activeAutoBidMaxRaw;
   }
 
   private boolean isCurrentAuction(String incomingAuctionId) {

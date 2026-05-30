@@ -128,27 +128,34 @@ public final class SellerAuctionListController {
     root.setPadding(new Insets(20.0));
 
     HBox topRow = new HBox(14.0);
+    topRow.setAlignment(Pos.TOP_LEFT);
     topRow.setFillHeight(true);
 
     VBox thumbnailBox = createThumbnailBox(row.primaryImageUrl());
 
     VBox titleBox = new VBox(5.0);
+    HBox.setHgrow(titleBox, Priority.ALWAYS);
+    titleBox.setMinWidth(0);
+    titleBox.setMaxWidth(Double.MAX_VALUE);
 
     Label titleLabel = new Label(row.itemName());
     titleLabel.getStyleClass().add("seller-card-title");
+    titleLabel.setWrapText(true);
+    titleLabel.setMaxWidth(Double.MAX_VALUE);
 
     Label metaLabel = new Label(row.categoryText() + " • Mã phiên: " + row.auctionId());
     metaLabel.getStyleClass().add("seller-muted-text");
+    metaLabel.setWrapText(true);
+    metaLabel.setMaxWidth(Double.MAX_VALUE);
 
     titleBox.getChildren().addAll(titleLabel, metaLabel);
 
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-
     Label statusBadge = new Label(row.statusText());
     statusBadge.getStyleClass().add("seller-status-badge");
+    statusBadge.setMinWidth(Region.USE_PREF_SIZE);
+    HBox.setHgrow(statusBadge, Priority.NEVER);
 
-    topRow.getChildren().addAll(thumbnailBox, titleBox, spacer, statusBadge);
+    topRow.getChildren().addAll(thumbnailBox, titleBox, statusBadge);
 
     HBox metricRow = new HBox(14.0);
     metricRow

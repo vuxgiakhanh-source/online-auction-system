@@ -3,6 +3,7 @@ package com.group13.auction.service;
 import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.dao.UserDAO;
+import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.exception.AuctionBusinessException;
 import com.group13.auction.exception.PaymentException;
 import com.group13.auction.model.bid.FinancialTransaction;
@@ -69,6 +70,16 @@ public class WalletService implements IWalletService {
     return userLocks.computeIfAbsent(user.getId(), id -> new Object());
   }
 
+  /** Đồng bộ balance/lockedDeposit trên object RAM với giá trị thật trong DB. */
+  private void reloadBalancesFromDatabase(NormalUser user) {
+    NormalUser fromDb = userDAO.findUserCoreByUsername(user.getUsername());
+    if (fromDb == null) {
+      return;
+    }
+    user.restoreBalances(fromDb.getBalance(), fromDb.getLockedDeposit());
+    AuctionManager.getInstance().refreshUser(fromDb);
+  }
+
   /**
    * FIX STALE CACHE: Sau khi balance hoặc lockedDeposit thay đổi trên một user object KHÁC với
    * session cache (vd: PaymentService.refundDeposits() dùng fresh object từ DB), session cache của
@@ -112,14 +123,13 @@ public class WalletService implements IWalletService {
     }
 
     synchronized (lockFor(user)) {
-      user.setBalance(user.getBalance() + amount);
+      userDAO.addBalance(user.getId(), amount);
+      reloadBalancesFromDatabase(user);
       log.info(
           "Deposit success: username={}, amount={}, newBalance={}",
           user.getUsername(),
           amount,
           user.getBalance());
-      userDAO.addBalance(user.getId(), amount);
-      // FIX: đồng bộ balance mới về session cache (PaymentHandler dùng fresh object)
       syncBalanceToSessionCache(user.getId(), user.getBalance(), user.getLockedDeposit());
     }
   }

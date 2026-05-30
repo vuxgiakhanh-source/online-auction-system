@@ -3,6 +3,7 @@ package com.group13.auction.ui.controller.home;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
+import com.group13.auction.service.auth.AuthService;
 import com.group13.auction.service.notification.NotificationService;
 import com.group13.auction.service.payment.SecondChanceRealtimeService;
 import com.group13.auction.service.support.AudioManager;
@@ -18,6 +19,9 @@ import javafx.scene.layout.VBox;
 /** Controller cho dashboard chính sau khi người dùng đăng nhập hoặc đăng ký. */
 public final class MainLayoutController {
 
+  private static final String NOTIFICATION_BUTTON_UNREAD_CLASS =
+      "main-header-notification-button-unread";
+
   @FXML private Label welcomeLabel;
 
   @FXML private Label accountInfoLabel;
@@ -32,12 +36,15 @@ public final class MainLayoutController {
 
   @FXML private Button adminDashboardButton;
 
+  @FXML private Button notificationButton;
+
   @FXML private Label notificationBadgeLabel;
 
   private final SecondChanceRealtimeService secondChanceRealtimeService =
       SecondChanceRealtimeService.getInstance();
 
   private final NotificationService notificationService = new NotificationService();
+  private final AuthService authService = new AuthService();
 
   /** Hiển thị thông tin session hiện tại lên dashboard. */
   @FXML
@@ -45,7 +52,7 @@ public final class MainLayoutController {
     secondChanceRealtimeService.start();
     updateAudioButtons();
 
-    hideNotificationBadge();
+    setNotificationButtonHasUnread(false);
 
     AppContext.getInstance()
         .getSessionManager()
@@ -104,13 +111,12 @@ public final class MainLayoutController {
   @FXML
   public void handleLogout() {
     secondChanceRealtimeService.clear();
-    AppContext.getInstance().getSessionManager().clearSession();
+    authService.logout();
     Navigator.getInstance().goToLanding();
   }
 
   private void renderSession(UserSession session) {
-    String roleText =
-        session.getRoles().isEmpty() ? "Chưa có vai trò" : String.join(", ", session.getRoles());
+    String roleText = formatRoleLabel(session);
 
     welcomeLabel.setText("Xin chào, " + session.getUsername() + "!");
     accountInfoLabel.setText(
@@ -130,6 +136,31 @@ public final class MainLayoutController {
     accountInfoLabel.setText("Chưa tìm thấy session đăng nhập.");
     updateSellerAccess(false);
     updateAdminAccess(false);
+  }
+
+  private static String formatRoleLabel(UserSession session) {
+    if (session.isMasterAdmin()) {
+      return "System Admin";
+    }
+    if (session.isStaffAdmin()) {
+      return "Staff Admin";
+    }
+    if (session.isAdmin()) {
+      return "Admin";
+    }
+    if (session.isSeller() && session.isBidder()) {
+      return "Bidder / Seller";
+    }
+    if (session.isSeller()) {
+      return "Seller";
+    }
+    if (session.isBidder()) {
+      return "Bidder";
+    }
+    if (session.getRoles().isEmpty()) {
+      return "Chưa có vai trò";
+    }
+    return String.join(", ", session.getRoles());
   }
 
   private void loadNotificationBadge() {
@@ -166,6 +197,7 @@ public final class MainLayoutController {
 
     notificationBadgeLabel.setText(unreadCount > 9 ? "9+" : Long.toString(unreadCount));
     notificationBadgeLabel.setVisible(true);
+    setNotificationButtonHasUnread(true);
   }
 
   private void hideNotificationBadge() {
@@ -174,6 +206,22 @@ public final class MainLayoutController {
     }
 
     notificationBadgeLabel.setVisible(false);
+    setNotificationButtonHasUnread(false);
+  }
+
+  private void setNotificationButtonHasUnread(boolean hasUnread) {
+    if (notificationButton == null) {
+      return;
+    }
+
+    if (hasUnread) {
+      if (!notificationButton.getStyleClass().contains(NOTIFICATION_BUTTON_UNREAD_CLASS)) {
+        notificationButton.getStyleClass().add(NOTIFICATION_BUTTON_UNREAD_CLASS);
+      }
+      return;
+    }
+
+    notificationButton.getStyleClass().remove(NOTIFICATION_BUTTON_UNREAD_CLASS);
   }
 
   private void updateSellerAccess(boolean seller) {
