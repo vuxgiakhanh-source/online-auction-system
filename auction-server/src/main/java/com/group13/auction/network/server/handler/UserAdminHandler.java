@@ -148,7 +148,10 @@ public class UserAdminHandler implements PacketHandler {
   // ── USER PROFILE ──────────────────────────────────────────────────────────
 
   private void handleGetMyProfile(ClientSession session, String requestId) {
-    User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());
+    User user = userDAO.findUserCoreByUsername(session.getUsername());
+    if (user != null) {
+      AuctionManager.getInstance().refreshUser(user);
+    }
     if (user == null) {
       session.send(
           Packet.of(

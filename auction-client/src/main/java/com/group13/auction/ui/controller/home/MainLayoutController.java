@@ -3,6 +3,7 @@ package com.group13.auction.ui.controller.home;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.core.session.UserSession;
+import com.group13.auction.service.auth.AuthService;
 import com.group13.auction.service.notification.NotificationService;
 import com.group13.auction.service.payment.SecondChanceRealtimeService;
 import com.group13.auction.service.support.AudioManager;
@@ -38,6 +39,7 @@ public final class MainLayoutController {
       SecondChanceRealtimeService.getInstance();
 
   private final NotificationService notificationService = new NotificationService();
+  private final AuthService authService = new AuthService();
 
   /** Hiển thị thông tin session hiện tại lên dashboard. */
   @FXML
@@ -110,7 +112,7 @@ public final class MainLayoutController {
   @FXML
   public void handleLogout() {
     secondChanceRealtimeService.clear();
-    AppContext.getInstance().getSessionManager().clearSession();
+    authService.logout();
     Navigator.getInstance().goToLanding();
   }
 
