@@ -2,9 +2,11 @@ package com.group13.auction.network.server.session;
 
 import com.group13.auction.common.protocol.Packet;
 import com.group13.auction.common.protocol.PacketCodec;
+import com.group13.auction.common.protocol.PacketType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.java_websocket.WebSocket;
@@ -206,6 +208,38 @@ public class SessionManager {
     ClientSession session = byUserId.get(userId);
     if (session != null) {
       session.send(packet);
+    }
+  }
+
+  /**
+   * Phát packet kết thúc phiên: user đã JOINED (và seller) nhận qua kênh user; watcher không JOINED
+   * nhận qua room. Mỗi session dedupe theo auctionId + packetType.
+   */
+  public void deliverAuctionLifecyclePacket(
+      String auctionId, Packet<?> packet, Set<String> primaryUserIds) {
+    if (auctionId == null || packet == null || packet.getType() == null) {
+      return;
+    }
+    PacketType type = packet.getType();
+    Set<String> primary =
+        primaryUserIds != null ? primaryUserIds : Collections.emptySet();
+
+    for (String userId : primary) {
+      ClientSession session = byUserId.get(userId);
+      if (session != null) {
+        session.deliverLifecyclePacketOnce(auctionId, type, packet);
+      }
+    }
+
+    for (ClientSession session : byConnection.values()) {
+      if (!session.isWatchingAuction(auctionId)) {
+        continue;
+      }
+      String uid = session.getUserId();
+      if (uid != null && primary.contains(uid)) {
+        continue;
+      }
+      session.deliverLifecyclePacketOnce(auctionId, type, packet);
     }
   }
 

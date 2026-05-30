@@ -117,6 +117,13 @@ public class AuctionService implements IAuctionService {
     if (!endTime.isAfter(startTime)) {
       throw new IllegalArgumentException("endTime phải sau startTime.");
     }
+    LocalDateTime now = LocalDateTime.now();
+    if (!startTime.isAfter(now)) {
+      throw new IllegalArgumentException("startTime phải sau thời điểm hiện tại của server.");
+    }
+    if (!endTime.isAfter(now)) {
+      throw new IllegalArgumentException("endTime phải sau thời điểm hiện tại của server.");
+    }
     if (reservePrice <= 0) {
       throw new IllegalArgumentException("reservePrice phải lớn hơn 0.");
     }

@@ -65,6 +65,9 @@ public class ClientSession {
    */
   private final Set<String> watchingAuctionIds = ConcurrentHashMap.newKeySet();
 
+  /** Mỗi phiên + loại packet lifecycle chỉ gửi một lần trên session này. */
+  private final Set<String> deliveredLifecycleKeys = ConcurrentHashMap.newKeySet();
+
   /**
    * FIX PERFORMANCE: Cache NormalUser object để tránh DB round-trip mỗi bid.
    *
@@ -162,6 +165,7 @@ public class ClientSession {
   public void deauthenticate() {
     AuthState prev = authState.getAndSet(AuthState.ANONYMOUS);
     this.watchingAuctionIds.clear();
+    this.deliveredLifecycleKeys.clear();
     this.cachedUser = null; // FIX: xóa cache khi logout
     log.info("Session deauthenticated: username={}", prev.username);
   }
@@ -182,6 +186,24 @@ public class ClientSession {
 
   public Set<String> getWatchingAuctionIds() {
     return Collections.unmodifiableSet(watchingAuctionIds);
+  }
+
+  /**
+   * Gửi packet lifecycle (ended / no-winner / reserve / canceled) tối đa một lần cho cặp
+   * auctionId + packetType trên session này.
+   *
+   * @return true nếu packet được gửi
+   */
+  public boolean deliverLifecyclePacketOnce(
+      String auctionId, com.group13.auction.common.protocol.PacketType type, Packet<?> packet) {
+    if (auctionId == null || type == null || packet == null) {
+      return false;
+    }
+    if (!deliveredLifecycleKeys.add(auctionId + ":" + type.name())) {
+      return false;
+    }
+    send(packet);
+    return true;
   }
 
   // ── Getters ───────────────────────────────────────────────────────────────

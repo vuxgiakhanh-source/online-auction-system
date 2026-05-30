@@ -343,7 +343,7 @@ public class AuctionDAO {
    *
    * <ul>
    *   <li>{@code OWNED} — lọc theo seller_id = sellerId (dùng sellerId param).
-   *   <li>{@code JOINED} — lọc auction_id thuộc user_auction_activity JOINED của userId.
+   *   <li>{@code JOINED} — phiên user đã JOINED hoặc đã từng đặt bid ({@code bid_transactions}).
    *   <li>{@code WATCHING} — lọc auction_id thuộc user_auction_activity WATCHING của userId.
    *   <li>Mặc định ({@code ALL} / null) — không lọc thêm theo user.
    * </ul>
@@ -356,6 +356,16 @@ public class AuctionDAO {
    * @param size số bản ghi mỗi trang
    * @return danh sách Auction khớp
    */
+  private static final String JOINED_PARTICIPATION_JOIN =
+      "JOIN ( "
+          + "SELECT DISTINCT auction_id FROM ( "
+          + "SELECT auction_id FROM user_auction_activity "
+          + "WHERE user_id = ? AND activity_type = 'JOINED' "
+          + "UNION "
+          + "SELECT auction_id FROM bid_transactions WHERE bidder_id = ? "
+          + ") joined_participation "
+          + ") jp ON jp.auction_id = a.id ";
+
   public java.util.List<com.group13.auction.model.auction.Auction> findByScope(
       String userId, String sellerId, String scopeFilter, String statusFilter, int page, int size) {
 
@@ -364,11 +374,10 @@ public class AuctionDAO {
 
     String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
     switch (scope) {
-      case "JOINED", "WATCHING" ->
+      case "JOINED" -> sql.append(JOINED_PARTICIPATION_JOIN);
+      case "WATCHING" ->
           sql.append("JOIN user_auction_activity uaa ")
-              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
-              .append(scope)
-              .append("' ");
+              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = 'WATCHING' ");
       default -> {
         // ALL — không join thêm
       }
@@ -388,17 +397,20 @@ public class AuctionDAO {
         java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
       int idx = 1;
-      if ("JOINED".equals(scope) || "WATCHING".equals(scope)) {
+      if ("JOINED".equals(scope)) {
+        pstmt.setString(idx++, userId);
+        pstmt.setString(idx++, userId);
+      } else if ("WATCHING".equals(scope)) {
         pstmt.setString(idx++, userId);
       }
       if ("OWNED".equals(scope)) {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx, statusFilter);
+        pstmt.setString(idx++, statusFilter);
       }
       pstmt.setInt(idx++, size);
-      pstmt.setInt(idx, page * size);
+      pstmt.setInt(idx++, page * size);
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
         while (rs.next()) {
@@ -423,11 +435,10 @@ public class AuctionDAO {
 
     String scope = (scopeFilter == null) ? "ALL" : scopeFilter.trim().toUpperCase();
     switch (scope) {
-      case "JOINED", "WATCHING" ->
+      case "JOINED" -> sql.append(JOINED_PARTICIPATION_JOIN);
+      case "WATCHING" ->
           sql.append("JOIN user_auction_activity uaa ")
-              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
-              .append(scope)
-              .append("' ");
+              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = 'WATCHING' ");
       default -> {
         // no-op
       }
@@ -445,14 +456,17 @@ public class AuctionDAO {
         java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
       int idx = 1;
-      if ("JOINED".equals(scope) || "WATCHING".equals(scope)) {
+      if ("JOINED".equals(scope)) {
+        pstmt.setString(idx++, userId);
+        pstmt.setString(idx++, userId);
+      } else if ("WATCHING".equals(scope)) {
         pstmt.setString(idx++, userId);
       }
       if ("OWNED".equals(scope)) {
         pstmt.setString(idx++, sellerId);
       }
       if (statusFilter != null && !statusFilter.isEmpty()) {
-        pstmt.setString(idx, statusFilter);
+        pstmt.setString(idx++, statusFilter);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
@@ -499,11 +513,10 @@ public class AuctionDAO {
         new StringBuilder("SELECT a.id FROM auctions a JOIN items i ON a.item_id = i.id ");
 
     switch (scope) {
-      case "JOINED", "WATCHING" ->
+      case "JOINED" -> sql.append(JOINED_PARTICIPATION_JOIN);
+      case "WATCHING" ->
           sql.append("JOIN user_auction_activity uaa ")
-              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
-              .append(scope)
-              .append("' ");
+              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = 'WATCHING' ");
       default -> {
         // no-op
       }
@@ -521,15 +534,18 @@ public class AuctionDAO {
         java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
       int idx = 1;
-      if ("JOINED".equals(scope) || "WATCHING".equals(scope)) {
+      if ("JOINED".equals(scope)) {
+        pstmt.setString(idx++, userId);
+        pstmt.setString(idx++, userId);
+      } else if ("WATCHING".equals(scope)) {
         pstmt.setString(idx++, userId);
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx, sellerId);
+        pstmt.setString(idx++, sellerId);
       }
       pstmt.setInt(idx++, size);
-      pstmt.setInt(idx, page * size);
+      pstmt.setInt(idx++, page * size);
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {
         while (rs.next()) {
@@ -555,11 +571,10 @@ public class AuctionDAO {
         new StringBuilder("SELECT COUNT(*) FROM auctions a JOIN items i ON a.item_id = i.id ");
 
     switch (scope) {
-      case "JOINED", "WATCHING" ->
+      case "JOINED" -> sql.append(JOINED_PARTICIPATION_JOIN);
+      case "WATCHING" ->
           sql.append("JOIN user_auction_activity uaa ")
-              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = '")
-              .append(scope)
-              .append("' ");
+              .append("ON uaa.auction_id = a.id AND uaa.user_id = ? AND uaa.activity_type = 'WATCHING' ");
       default -> {
         // no-op
       }
@@ -575,12 +590,15 @@ public class AuctionDAO {
         java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
       int idx = 1;
-      if ("JOINED".equals(scope) || "WATCHING".equals(scope)) {
+      if ("JOINED".equals(scope)) {
+        pstmt.setString(idx++, userId);
+        pstmt.setString(idx++, userId);
+      } else if ("WATCHING".equals(scope)) {
         pstmt.setString(idx++, userId);
       }
       pstmt.setString(idx++, likeKeyword);
       if ("OWNED".equals(scope)) {
-        pstmt.setString(idx, sellerId);
+        pstmt.setString(idx++, sellerId);
       }
 
       try (java.sql.ResultSet rs = pstmt.executeQuery()) {

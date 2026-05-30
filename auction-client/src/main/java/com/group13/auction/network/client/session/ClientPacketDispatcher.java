@@ -42,12 +42,24 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
     private final java.util.List<ClientEventListener> listeners =
         new java.util.concurrent.CopyOnWriteArrayList<>();
 
+    /** Tránh xử lý trùng lifecycle khi server gửi lại cùng auctionId + packetType. */
+    private final java.util.Set<String> seenLifecycleKeys =
+        java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     public void addListener(ClientEventListener listener) {
         if (!listeners.contains(listener)) listeners.add(listener);
     }
 
     public void removeListener(ClientEventListener listener) {
         listeners.remove(listener);
+    }
+
+    private boolean shouldDispatchLifecycle(
+            PacketType type, AuctionDTOs.AuctionUpdateDTO update) {
+        if (update == null || update.getAuctionId() == null) {
+            return true;
+        }
+        return seenLifecycleKeys.add(update.getAuctionId() + ":" + type.name());
     }
 
     @Override
@@ -175,19 +187,27 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case AUCTION_ENDED_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
-                listeners.forEach(l -> l.onAuctionEnded(update));
+                if (shouldDispatchLifecycle(type, update)) {
+                    listeners.forEach(l -> l.onAuctionEnded(update));
+                }
             }
             case AUCTION_NO_WINNER_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
-                listeners.forEach(l -> l.onAuctionNoWinner(update));
+                if (shouldDispatchLifecycle(type, update)) {
+                    listeners.forEach(l -> l.onAuctionNoWinner(update));
+                }
             }
             case AUCTION_RESERVE_NOT_MET_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
-                listeners.forEach(l -> l.onAuctionReserveNotMet(update));
+                if (shouldDispatchLifecycle(type, update)) {
+                    listeners.forEach(l -> l.onAuctionReserveNotMet(update));
+                }
             }
             case AUCTION_CANCELED_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
-                listeners.forEach(l -> l.onAuctionCanceled(update));
+                if (shouldDispatchLifecycle(type, update)) {
+                    listeners.forEach(l -> l.onAuctionCanceled(update));
+                }
             }
             case AUCTION_EXTENDED_NOTIFY -> {
                 var ext = PacketCodec.fromElement(payload, AuctionDTOs.AuctionExtendedDTO.class);

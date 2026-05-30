@@ -95,6 +95,29 @@ class AuctionServiceTest {
           .isInstanceOf(IllegalStateException.class);
       verify(auctionDAO, never()).createAuction(any());
     }
+
+    @Test
+    void startTimeInPast_throws() {
+      when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
+      LocalDateTime start = LocalDateTime.now().minusMinutes(5);
+      LocalDateTime end = LocalDateTime.now().plusHours(2);
+
+      assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("startTime");
+      verify(auctionDAO, never()).createAuction(any());
+    }
+
+    @Test
+    void pastSchedule_throwsBeforePersist() {
+      when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
+      LocalDateTime start = LocalDateTime.now().minusHours(2);
+      LocalDateTime end = LocalDateTime.now().minusMinutes(30);
+
+      assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
+          .isInstanceOf(IllegalArgumentException.class);
+      verify(auctionDAO, never()).createAuction(any());
+    }
   }
 
   @Nested

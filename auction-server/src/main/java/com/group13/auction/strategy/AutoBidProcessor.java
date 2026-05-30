@@ -7,7 +7,12 @@ import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
+import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.common.protocol.Packet;
+import com.group13.auction.common.protocol.PacketType;
 import com.group13.auction.network.server.session.SessionManager;
+import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.BidService;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -100,6 +105,9 @@ public class AutoBidProcessor {
 
   /** TTL của UserCache entry (ms). 5 phút là đủ cho 1 phiên đấu giá. */
   private static final long USER_CACHE_TTL_MS = 5 * 60 * 1_000L;
+
+  /** Khớp {@link BidService} ANTI_SNIPING_EXTENSION_SECONDS — dùng trong broadcast. */
+  private static final int ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
   // ── Dependencies ──────────────────────────────────────────────────────────
 
@@ -415,11 +423,13 @@ public class AutoBidProcessor {
       }
 
       try {
+        LocalDateTime endTimeBefore = auction.getEndTime();
+        long previousPrice = auction.getCurrentPrice();
         AutoBidStrategy strategy = new AutoBidStrategy(winner.getMaxBid());
         bidService.placeBid(autoBidder, auction, nextBid, strategy);
 
-        // Broadcast only — autobid không gửi TRIGGERED notify (chỉ EXHAUSTED khi hết maxBid).
-        sessionManager.broadcastToAuction(auctionId, null);
+        broadcastAutoBidSideEffects(
+            auction, auctionId, nextBid, previousPrice, endTimeBefore, autoBidder);
 
         log.info(
             "[AutoBid] Bid placed: userId={} username={} auctionId={} amount={} phase={} step={}"
@@ -467,6 +477,41 @@ public class AutoBidProcessor {
       }
     }
     return false;
+  }
+
+  /** Broadcast BID_UPDATE / anti-sniping giống {@link com.group13.auction.network.server.handler.BidHandler}. */
+  private void broadcastAutoBidSideEffects(
+      Auction auction,
+      String auctionId,
+      long confirmedAmount,
+      long previousPrice,
+      LocalDateTime endTimeBefore,
+      NormalUser autoBidder) {
+    LocalDateTime endTimeAfter = auction.getEndTime();
+    boolean extended =
+        endTimeBefore != null
+            && endTimeAfter != null
+            && !endTimeAfter.equals(endTimeBefore);
+
+    BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, confirmedAmount, previousPrice);
+    if (extended) {
+      update.setNewEndTime(endTimeAfter);
+      AuctionDTOs.AuctionExtendedDTO extDto = new AuctionDTOs.AuctionExtendedDTO();
+      extDto.setAuctionId(auctionId);
+      extDto.setNewEndTime(endTimeAfter);
+      extDto.setExtendedBySeconds(ANTI_SNIPING_EXTENSION_SECONDS);
+      sessionManager.broadcastToAuctionAsync(
+          auctionId, Packet.of(PacketType.AUCTION_EXTENDED_NOTIFY, extDto));
+    }
+    PacketType broadcastType =
+        auction.isReserveMet() ? PacketType.BID_UPDATE : PacketType.BID_RESERVE_NOT_MET_UPDATE;
+    sessionManager.broadcastToAuctionAsync(auctionId, Packet.of(broadcastType, update));
+    sessionManager.broadcastToAuctionAsync(
+        auctionId,
+        Packet.of(
+            PacketType.BID_CHART_POINT_UPDATE,
+            DTOMapper.toBidChartPoint(
+                auctionId, confirmedAmount, autoBidder.getUsername(), false)));
   }
 
   // =========================================================================

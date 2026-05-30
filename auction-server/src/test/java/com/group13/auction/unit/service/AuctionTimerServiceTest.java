@@ -352,8 +352,8 @@ class AuctionTimerServiceTest {
     }
 
     @Test
-    @DisplayName("expired auction finished by close service broadcasts ended update")
-    void expiredAuction_finished_broadcastsEndedUpdate() throws Exception {
+    @DisplayName("expired auction finished — timer không broadcast lifecycle (do closeAuction)")
+    void expiredAuction_finished_noDuplicateTimerBroadcast() throws Exception {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       NormalUser bidder = normalBidder("bidder-finished");
       auction.updateBid(2_500_000L, bidder);
@@ -369,15 +369,15 @@ class AuctionTimerServiceTest {
       invokeCloseExpired(NOW);
 
       assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.FINISHED);
-      verifyBroadcast(auction, PacketType.AUCTION_ENDED_UPDATE);
+      verifyNoLifecycleBroadcastFromTimer(auction);
       // FIX: refundDeposits() bây giờ luôn được gọi sau closeAuction() cho cả FINISHED lẫn CANCELED
       // để hoàn cọc cho các bidder thua (winner bị bỏ qua qua Objects.equals() bên trong).
       verify(paymentService, times(1)).refundDeposits(auction);
     }
 
     @Test
-    @DisplayName("expired auction without leader broadcasts no-winner and refunds deposits")
-    void expiredAuction_noLeader_broadcastsNoWinnerAndRefunds() throws Exception {
+    @DisplayName("expired auction without leader — timer không broadcast lifecycle, vẫn refund")
+    void expiredAuction_noLeader_noDuplicateTimerBroadcast() throws Exception {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       register(auction);
       doAnswer(
@@ -391,13 +391,13 @@ class AuctionTimerServiceTest {
       invokeCloseExpired(NOW);
 
       assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.CANCELED);
-      verifyBroadcast(auction, PacketType.AUCTION_NO_WINNER_UPDATE);
+      verifyNoLifecycleBroadcastFromTimer(auction);
       verify(paymentService).refundDeposits(auction);
     }
 
     @Test
-    @DisplayName("expired auction below reserve broadcasts reserve-not-met and refunds deposits")
-    void expiredAuction_reserveNotMet_broadcastsReserveNotMetAndRefunds() throws Exception {
+    @DisplayName("expired auction below reserve — timer không broadcast lifecycle, vẫn refund")
+    void expiredAuction_reserveNotMet_noDuplicateTimerBroadcast() throws Exception {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       auction.updateBid(1_200_000L, normalBidder("bidder-low"));
       register(auction);
@@ -412,13 +412,13 @@ class AuctionTimerServiceTest {
       invokeCloseExpired(NOW);
 
       assertThat(auction.getStatus()).isEqualTo(Auction.AuctionStatus.CANCELED);
-      verifyBroadcast(auction, PacketType.AUCTION_RESERVE_NOT_MET_UPDATE);
+      verifyNoLifecycleBroadcastFromTimer(auction);
       verify(paymentService).refundDeposits(auction);
     }
 
     @Test
-    @DisplayName("refund exception does not prevent cancel broadcast")
-    void refundException_stillBroadcastsCloseResult() throws Exception {
+    @DisplayName("refund exception — timer vẫn không broadcast lifecycle trùng")
+    void refundException_noDuplicateTimerBroadcast() throws Exception {
       Auction auction = runningAuction(NOW.minusHours(1), NOW.minusSeconds(1));
       register(auction);
       doAnswer(
@@ -433,7 +433,7 @@ class AuctionTimerServiceTest {
       invokeCloseExpired(NOW);
 
       verify(paymentService).refundDeposits(auction);
-      verifyBroadcast(auction, PacketType.AUCTION_NO_WINNER_UPDATE);
+      verifyNoLifecycleBroadcastFromTimer(auction);
     }
 
     @Test
@@ -537,7 +537,7 @@ class AuctionTimerServiceTest {
 
       verify(auctionService, times(1)).closeAuction(auction);
       verify(paymentService, times(1)).refundDeposits(auction);
-      verify(sessionManager, times(1)).broadcastToAuction(eq(auction.getId()), any(Packet.class));
+      verifyNoLifecycleBroadcastFromTimer(auction);
     }
 
     @Test
@@ -642,6 +642,10 @@ class AuctionTimerServiceTest {
     ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
     verify(sessionManager).broadcastToAuction(eq(auction.getId()), captor.capture());
     assertThat(captor.getValue().getType()).isEqualTo(packetType);
+  }
+
+  private void verifyNoLifecycleBroadcastFromTimer(Auction auction) {
+    verify(sessionManager, never()).broadcastToAuction(eq(auction.getId()), any());
   }
 
   private static void register(Auction auction) {

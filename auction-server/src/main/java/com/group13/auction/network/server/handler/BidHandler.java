@@ -777,22 +777,23 @@ public class BidHandler implements PacketHandler {
       updateAutoBidAuction = auction;
       updateAutoBidBidderId = bidder.getId();
 
-      if (req.getMaxBid() <= existing.getMaxBid()) {
+      AutoBidStrategy updateStrategy = new AutoBidStrategy(req.getMaxBid());
+      if (updateStrategy.calculateNextBid(auction) < 0) {
         log.warn(
-            "Update auto-bid rejected because maxBid did not increase: auctionId={}, bidderId={},"
-                + " oldMaxBid={}, newMaxBid={}",
+            "Update auto-bid rejected because maxBid too low: auctionId={}, bidderId={},"
+                + " maxBid={}, currentPrice={}",
             req.getAuctionId(),
             bidder.getId(),
-            existing.getMaxBid(),
-            req.getMaxBid());
+            req.getMaxBid(),
+            auction.getCurrentPrice());
         session.send(
             Packet.of(
                 PacketType.UPDATE_AUTO_BID_FAILED,
                 ErrorDTO.of(
-                    "INVALID_MAX_BID",
+                    ErrorDTO.MAX_BID_TOO_LOW,
                     String.format(
-                        "maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d).",
-                        req.getMaxBid(), existing.getMaxBid()),
+                        "maxBid %d quá thấp, phải > giá hiện tại %d + bước giá.",
+                        req.getMaxBid(), auction.getCurrentPrice()),
                     requestId),
                 requestId));
         return;

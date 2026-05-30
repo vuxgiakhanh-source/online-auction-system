@@ -312,26 +312,12 @@ public class AuctionTimerService implements IAuctionTimerService {
 
         MDC.put("auctionId", auction.getId());
 
-        NormalUser leaderBeforeClose = auction.getCurrentLeader();
-        boolean reserveMetBeforeClose = auction.isReserveMet();
-
         auctionService.closeAuction(auction);
         // Lock entry được giải phóng ngay khi auction đã đóng thành công —
         // không phụ thuộc vào broadcast hay cleanup sau đó.
         releaseLock = true;
 
-        PacketType packetType;
-        if (auction.getStatus() == Auction.AuctionStatus.FINISHED) {
-          packetType = PacketType.AUCTION_ENDED_UPDATE;
-        } else {
-          if (leaderBeforeClose == null) {
-            packetType = PacketType.AUCTION_NO_WINNER_UPDATE;
-          } else if (!reserveMetBeforeClose) {
-            packetType = PacketType.AUCTION_RESERVE_NOT_MET_UPDATE;
-          } else {
-            packetType = PacketType.AUCTION_CANCELED_UPDATE;
-          }
-        }
+        // Lifecycle WS do AuctionService.closeAuction() → ServerBroadcastNotifier (không broadcast lại).
 
         // FIX: hoàn cọc cho tất cả bidder không phải winner.
         // Trước đây chỉ gọi refundDeposits() trong nhánh CANCELED/NO_WINNER/RESERVE_NOT_MET,
@@ -343,7 +329,6 @@ public class AuctionTimerService implements IAuctionTimerService {
           log.error("Lỗi hoàn cọc: auctionId={}", auction.getId(), refundEx);
         }
 
-        broadcastUpdate(auction, packetType);
         autoBidRegistry.clearAuction(auction.getId());
         AutoBidProcessor.clearAuctionActivity(auction.getId());
 

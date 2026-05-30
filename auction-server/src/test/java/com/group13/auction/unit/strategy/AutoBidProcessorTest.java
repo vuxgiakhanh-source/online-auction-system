@@ -119,7 +119,7 @@ class AutoBidProcessorTest {
 
     // Mặc định: sessionManager không làm gì
     lenient().doNothing().when(sessionManager).sendToUser(anyString(), any());
-    lenient().doNothing().when(sessionManager).broadcastToAuction(anyString(), any());
+    lenient().doNothing().when(sessionManager).broadcastToAuctionAsync(anyString(), any());
   }
 
   @AfterEach
@@ -863,7 +863,7 @@ class AutoBidProcessorTest {
       sut.submit(runningAuction, seller.getId());
 
       // Assert
-      verify(sessionManager, atLeastOnce()).broadcastToAuction(eq(auctionId), any());
+      verify(sessionManager, atLeastOnce()).broadcastToAuctionAsync(eq(auctionId), any());
     }
 
     @Test

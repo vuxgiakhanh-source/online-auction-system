@@ -230,6 +230,7 @@ public class BidService implements IBidService {
     BidTransaction tx;
     boolean reserveMet;
     boolean extendedForAntiSniping = false;
+    LocalDateTime endTimeAfterAntiSniping = null;
 
     NormalUser previousLeader = auction.getCurrentLeader();
     long previousPrice = auction.getCurrentPrice();
@@ -258,6 +259,8 @@ public class BidService implements IBidService {
 
       if (applyAntiSnipingExtension(auction)) {
         extendedForAntiSniping = true;
+        endTimeAfterAntiSniping = auction.getEndTime();
+        auctionDAO.updateEndTime(auction.getId(), endTimeAfterAntiSniping);
       }
 
       BidResult result = reserveMet ? BidResult.ACCEPTED : BidResult.ACCEPTED_RESERVE_NOT_MET;
@@ -291,7 +294,6 @@ public class BidService implements IBidService {
     }
 
     if (extendedForAntiSniping) {
-      auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
       auctionService.notify(
           auction,
           AuctionEvent.AuctionEventType.AUCTION_EXTENDED,
@@ -458,6 +460,7 @@ public class BidService implements IBidService {
           if (applyAntiSnipingExtension(auction)) {
             extendedForAntiSniping = true;
             leavingLeader = bidder;
+            auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
             log.info(
                 "Anti-sniping on leader leave: auctionId={}, leaderId={}, newEndTime={}",
                 auctionId,
@@ -533,7 +536,6 @@ public class BidService implements IBidService {
         leaderChanged);
 
     if (extendedForAntiSniping) {
-      auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
       auctionService.notify(
           auction,
           AuctionEvent.AuctionEventType.AUCTION_EXTENDED,

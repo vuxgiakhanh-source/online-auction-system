@@ -139,7 +139,23 @@ public final class ClientNotificationService implements ClientEventListener {
 
   @Override
   public void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {
-    // Không hiển thị popup khi phiên kết thúc — UI màn hình đấu giá tự cập nhật trạng thái.
+    if (update == null) {
+      return;
+    }
+    String auctionId = fallback(update.getAuctionId());
+    String status = update.getStatus() != null ? update.getStatus() : "FINISHED";
+    FxThreadUtil.runOnFxThread(
+        () ->
+            AlertUtil.showInfo(
+                "Phiên đấu giá đã kết thúc.\n\n"
+                    + "Mã phiên: "
+                    + auctionId
+                    + "\n"
+                    + "Trạng thái: "
+                    + status
+                    + (update.getMessage() != null && !update.getMessage().isBlank()
+                        ? "\n" + update.getMessage()
+                        : "")));
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.observer.AuctionEvent;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -390,11 +391,27 @@ public class ServerBroadcastNotifier {
   }
 
   public void notifyAuctionEnded(Auction auction) {
-    log.info("Broadcast AUCTION_ENDED_UPDATE: auctionId={}", auction.getId());
+    log.info("Deliver AUCTION_ENDED_UPDATE: auctionId={}", auction.getId());
     AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
-    sessionManager.broadcastToAuction(
-        auction.getId(), Packet.of(PacketType.AUCTION_ENDED_UPDATE, update));
+    Packet<AuctionDTOs.AuctionUpdateDTO> packet =
+        Packet.of(PacketType.AUCTION_ENDED_UPDATE, update);
+    deliverAuctionLifecycle(auction, packet);
     notifyAuctionOutcome(auction);
+  }
+
+  /**
+   * JOINED + seller nhận qua user-channel; watcher không JOINED nhận qua room; dedupe trên session.
+   */
+  private void deliverAuctionLifecycle(Auction auction, Packet<?> packet) {
+    if (auction == null || packet == null) {
+      return;
+    }
+    Set<String> targets =
+        new HashSet<>(userDAO.findJoinedUserIdsByAuctionId(auction.getId()));
+    if (auction.getItem() != null && auction.getItem().getSeller() != null) {
+      targets.add(auction.getItem().getSeller().getId());
+    }
+    sessionManager.deliverAuctionLifecyclePacket(auction.getId(), packet, targets);
   }
 
   /** Thông báo won/lost cho người tham gia và seller sau khi phiên có winner hợp lệ. */
@@ -451,9 +468,8 @@ public class ServerBroadcastNotifier {
     AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, "NO_WINNER");
     Packet<AuctionDTOs.AuctionUpdateDTO> packet =
         Packet.of(PacketType.AUCTION_NO_WINNER_UPDATE, update);
-    sessionManager.broadcastToAuction(auction.getId(), packet);
+    deliverAuctionLifecycle(auction, packet);
     if (auction.getItem() != null && auction.getItem().getSeller() != null) {
-      sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
       persistNotification(
           auction.getItem().getSeller().getId(),
           auction.getId(),
@@ -466,9 +482,8 @@ public class ServerBroadcastNotifier {
     AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, "RESERVE_NOT_MET");
     Packet<AuctionDTOs.AuctionUpdateDTO> packet =
         Packet.of(PacketType.AUCTION_RESERVE_NOT_MET_UPDATE, update);
-    sessionManager.broadcastToAuction(auction.getId(), packet);
+    deliverAuctionLifecycle(auction, packet);
     if (auction.getItem() != null && auction.getItem().getSeller() != null) {
-      sessionManager.sendToUser(auction.getItem().getSeller().getId(), packet);
       persistNotification(
           auction.getItem().getSeller().getId(),
           auction.getId(),
@@ -479,8 +494,7 @@ public class ServerBroadcastNotifier {
 
   public void notifyAuctionCanceled(Auction auction, String reason) {
     AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, reason);
-    sessionManager.broadcastToAuction(
-        auction.getId(), Packet.of(PacketType.AUCTION_CANCELED_UPDATE, update));
+    deliverAuctionLifecycle(auction, Packet.of(PacketType.AUCTION_CANCELED_UPDATE, update));
   }
 
   public void notifyAuctionExtended(
