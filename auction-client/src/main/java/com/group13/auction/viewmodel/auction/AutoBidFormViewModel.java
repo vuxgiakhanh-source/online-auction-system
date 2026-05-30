@@ -1,5 +1,6 @@
 package com.group13.auction.viewmodel.auction;
 
+import com.group13.auction.util.CurrencyUtil;
 import java.util.Optional;
 
 /** Dữ liệu form đăng ký Auto-Bid ở phía client. */
@@ -34,6 +35,36 @@ public final class AutoBidFormViewModel {
       }
     } catch (NumberFormatException exception) {
       return Optional.of("Giá tối đa phải là số nguyên hợp lệ.");
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Validate maxBid theo giá hiện tại + bước giá, và (khi cập nhật) phải lớn hơn maxBid trước đó.
+   *
+   * @param minimumMaxBid giá tối đa tối thiểu = giá hiện tại + bước giá
+   * @param previousMaxBid maxBid auto-bid hiện tại; {@code null} khi đăng ký mới
+   */
+  public Optional<String> validateAgainstMinimum(long minimumMaxBid, Long previousMaxBid) {
+    Optional<String> basicValidation = validate();
+    if (basicValidation.isPresent()) {
+      return basicValidation;
+    }
+
+    long maxBid = maxBidAmount();
+    if (maxBid < minimumMaxBid) {
+      return Optional.of(
+          "Giá tối đa phải >= "
+              + CurrencyUtil.formatVnd(minimumMaxBid)
+              + " (giá hiện tại + bước giá).");
+    }
+
+    if (previousMaxBid != null && previousMaxBid > 0 && maxBid <= previousMaxBid) {
+      return Optional.of(
+          "Giá tối đa mới phải lớn hơn maxBid hiện tại ("
+              + CurrencyUtil.formatVnd(previousMaxBid)
+              + ").");
     }
 
     return Optional.empty();
