@@ -23,12 +23,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -40,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * <h2>Thiết kế tổng quát</h2>
  *
  * <pre>
- *  BidHandler.placeBid()  ──────► submit(auction, trigger)   [non-blocking, ~1µs]
+ *  BidHandler.placeBid()  ──────► submit(auction, trigger)   [non-blocking — caller trả về ngay]
  *                                        │
  *                          ┌─────────────▼──────────────────┐
  *                          │  Per-Auction SingleThread       │
@@ -177,7 +175,7 @@ public class AutoBidProcessor {
   // =========================================================================
 
   /**
-   * Đăng ký trigger auto-bid — NON-BLOCKING, trả về ngay lập tức (~1µs).
+   * Đăng ký trigger auto-bid — NON-BLOCKING với production caller, trả về ngay lập tức.
    *
    * <p><b>Cơ chế task-coalescing:</b>
    *
@@ -188,6 +186,10 @@ public class AutoBidProcessor {
    *
    * <p>Kết quả: dù có 100 bid/giây đến, mỗi auction chỉ có tối đa 1 task queued + 1 "rerun signal",
    * không bao giờ stack thêm. Zero wasted task submissions.
+   *
+   * <p><b>Threading:</b> Caller thread (BidHandler) trả về ngay — chain chạy trên executor riêng.
+   * Ngoại lệ duy nhất: khi gọi từ autobid- worker thread (recheck recursive) sẽ block tới 5s để
+   * tránh deadlock.
    *
    * @param auction phiên vừa có bid mới
    * @param triggeredByUserId userId vừa bid (cho context logging)
@@ -229,19 +231,10 @@ public class AutoBidProcessor {
                       }
                     }
                   });
-      // Unit tests kỳ vọng submit() chỉ return sau khi chain xử lý xong.
-      // Tránh deadlock khi submit được gọi lại từ chính worker thread.
-      if (!Thread.currentThread().getName().startsWith("autobid-")) {
-        try {
-          chainFuture.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-          log.warn("[AutoBid] submit timeout waiting chain: auctionId={}", auctionId);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-          log.error("[AutoBid] submit wait failed: auctionId={}", auctionId, e);
-        }
-      }
+      // submit() là NON-BLOCKING hoàn toàn — chain chạy trên executor riêng.
+      // Tests dùng awaitAutoBidChain() để chờ chain xong thay vì block ở đây.
+      // KHÔNG dùng chainFuture.get(): nếu finally block gọi lại submit() từ autobid- thread
+      // → thread đó block chờ chính executor SingleThread của mình → deadlock.
       log.debug(
           "[AutoBid] Chain task submitted: auctionId={} trigger={}", auctionId, triggeredByUserId);
     } else {
@@ -641,6 +634,10 @@ public class AutoBidProcessor {
     AutoBidPhase phase = detectPhase(auction);
     String leaderId = currentLeaderId(auction);
 
+    // Lấy username của leader để đưa vào thông báo (có thể null nếu chưa có ai bid)
+    NormalUser leader = auction.getCurrentLeader();
+    String leaderUsername = (leader != null) ? leader.getUsername() : null;
+
     for (AutoBidRegistry.AutoBidEntry entry : registry.getEntriesForAuction(auctionId)) {
       if (entry.getUserId().equals(leaderId)) {
         continue;
@@ -649,7 +646,15 @@ public class AutoBidProcessor {
         continue;
       }
 
-      sessionManager.sendToUser(entry.getUserId(), null);
+      // FIX Bug: trước đây gửi null thay vì DTO thật → client không parse được
+      BidDTOs.AutoBidExhaustedDTO dto = new BidDTOs.AutoBidExhaustedDTO();
+      dto.setAuctionId(auctionId);
+      dto.setMaxBid(entry.getMaxBid());
+      dto.setCurrentPrice(auction.getCurrentPrice());
+      dto.setLeadingBidderUsername(
+          leaderUsername != null && !leaderUsername.isBlank() ? leaderUsername : "Chưa có");
+      sessionManager.sendToUser(entry.getUserId(), Packet.of(PacketType.AUTO_BID_EXHAUSTED_NOTIFY, dto));
+
       registry.cancel(entry.getUserId(), auctionId);
       log.info(
           "[AutoBid] Exhausted & cancelled: userId={} auctionId={} maxBid={}",

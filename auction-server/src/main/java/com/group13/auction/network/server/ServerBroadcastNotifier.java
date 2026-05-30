@@ -253,21 +253,15 @@ public class ServerBroadcastNotifier {
     var autoBidRegistry = com.group13.auction.strategy.AutoBidRegistry.getInstance();
     var activeAutoBid = autoBidRegistry.get(previousLeader.getId(), auction.getId());
 
-    // Bidder đang bật auto-bid: hệ thống tự counter hoặc gửi EXHAUSTED — không báo outbid.
+    // Bidder đang bật auto-bid: hệ thống sẽ tự counter qua AutoBidProcessor — không báo outbid.
+    // FIX: KHÔNG cancel entry ở đây, dù calculateNextBid < 0.
+    // Lý do: AutoBidProcessor.calcSmartBid có fallback cho LATE/VERY_HOT phase (bid bằng maxBid
+    // nếu maxBid > currentPrice), nhưng AutoBidEntry.calculateNextBid không có fallback đó.
+    // Nếu cancel sớm tại đây → chain không tìm thấy entry → không counter → chuỗi escalation mất.
+    // AutoBidProcessor.notifyExhaustedBidders() chịu trách nhiệm duy nhất cho việc cancel + notify.
     if (activeAutoBid != null) {
-      NormalUser leader = auction.getCurrentLeader();
-      String leaderName = leader != null ? NotificationMessages.username(leader) : "Chưa có";
-      if (activeAutoBid.calculateNextBid(auction.getCurrentPrice()) < 0) {
-        notifyAutoBidExhausted(
-            previousLeader.getId(),
-            auction,
-            activeAutoBid.getMaxBid(),
-            auction.getCurrentPrice(),
-            leaderName);
-        autoBidRegistry.cancel(previousLeader.getId(), auction.getId());
-      }
       log.debug(
-          "Skip outbid notify — user has active auto-bid: auctionId={}, userId={}",
+          "Skip outbid notify — user has active auto-bid (AutoBidProcessor will handle counter/exhaust): auctionId={}, userId={}",
           auction.getId(),
           previousLeader.getId());
       return;

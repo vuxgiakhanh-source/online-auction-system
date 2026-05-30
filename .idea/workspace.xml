@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/network/server/ServerBroadcastNotifier.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/strategy/AutoBidProcessor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -241,7 +244,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.PaymentStateTransitionIT">
+  <component name="RunManager" selected="Application.Launcher">
     <configuration name="IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.base.IntegrationTestLauncher" />
       <module name="auction-server" />
@@ -255,17 +258,28 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AuctionTimerServiceConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
+    <configuration name="Launcher" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.Launcher" />
+      <module name="auction-client" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.timer.*" />
+          <option name="PATTERN" value="com.group13.auction.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.timer" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.timer.AuctionTimerServiceConcurrencyTest" />
-      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ServerMain" type="Application" factoryName="Application" singleton="false" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.group13.auction.ServerMain" />
+      <module name="auction-server" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.group13.auction.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -280,21 +294,6 @@
       </extension>
       <option name="PACKAGE_NAME" value="com.group13.auction.integration.service.payment" />
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.service.payment.PaymentStateTransitionIT" />
-      <option name="TEST_OBJECT" value="class" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="SessionManagerConcurrencyTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="auction-server" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.group13.auction.concurrency.session.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.group13.auction.concurrency.session" />
-      <option name="MAIN_CLASS_NAME" value="com.group13.auction.concurrency.session.SessionManagerConcurrencyTest" />
       <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -328,19 +327,19 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="Application.Launcher" />
+      <item itemvalue="Application.ServerMain" />
       <item itemvalue="Application.IntegrationTestLauncher" />
       <item itemvalue="JUnit.PaymentStateTransitionIT" />
-      <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
-      <item itemvalue="JUnit.SessionManagerConcurrencyTest" />
       <item itemvalue="JUnit.WalletConcurrencyTest" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.PaymentStateTransitionIT" />
         <item itemvalue="Application.IntegrationTestLauncher" />
         <item itemvalue="JUnit.WalletConcurrencyTest" />
-        <item itemvalue="JUnit.AuctionTimerServiceConcurrencyTest" />
-        <item itemvalue="JUnit.SessionManagerConcurrencyTest" />
       </list>
     </recent_temporary>
   </component>
@@ -483,6 +482,11 @@
           <url>file://$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/load/ChatbotProviderConcurrentLoadTest.java</url>
           <line>23</line>
           <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/auction-server/src/main/java/com/group13/auction/ServerMain.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="59" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
