@@ -113,7 +113,7 @@
             </HBox>
 
             <HBox spacing="18.0" VBox.vgrow="ALWAYS">
-                <VBox spacing="14.0" prefWidth="380.0">
+                <VBox spacing="14.0" prefWidth="420.0">
                     <VBox spacing="10.0" styleClass="auction-info-box">
                         <Label text="Thông tin realtime"
                                styleClass="auction-section-title"/>
@@ -197,7 +197,7 @@
                           onMouseClicked="#handleOpenBidHistoryPreview"
                           styleClass="auction-info-box live-previewable-card">
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
-                            <Label text="Lịch sử bid mới nhất"
+                            <Label text="Lịch sử đặt giá"
                                    styleClass="auction-section-title"/>
 
                             <Region HBox.hgrow="ALWAYS"/>
@@ -206,11 +206,13 @@
                                    styleClass="live-expand-badge"/>
                         </HBox>
 
-                        <Label text="Bấm vào khung này để xem lịch sử bid ở dạng bảng lớn."
+                        <Label text="Bấm vào khung này để xem toàn bộ lịch sử ở dạng bảng lớn (tối đa 200 lượt gần nhất)."
                                wrapText="true"
                                styleClass="auction-muted-text"/>
 
                         <ListView fx:id="bidHistoryListView"
+                                  minHeight="260.0"
+                                  prefHeight="280.0"
                                   VBox.vgrow="ALWAYS"
                                   styleClass="auction-history-list"/>
                     </VBox>
