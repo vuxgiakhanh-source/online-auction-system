@@ -117,8 +117,7 @@ public final class MainLayoutController {
   }
 
   private void renderSession(UserSession session) {
-    String roleText =
-        session.getRoles().isEmpty() ? "Chưa có vai trò" : String.join(", ", session.getRoles());
+    String roleText = formatRoleLabel(session);
 
     welcomeLabel.setText("Xin chào, " + session.getUsername() + "!");
     accountInfoLabel.setText(
@@ -138,6 +137,31 @@ public final class MainLayoutController {
     accountInfoLabel.setText("Chưa tìm thấy session đăng nhập.");
     updateSellerAccess(false);
     updateAdminAccess(false);
+  }
+
+  private static String formatRoleLabel(UserSession session) {
+    if (session.isMasterAdmin()) {
+      return "System Admin";
+    }
+    if (session.isStaffAdmin()) {
+      return "Staff Admin";
+    }
+    if (session.isAdmin()) {
+      return "Admin";
+    }
+    if (session.isSeller() && session.isBidder()) {
+      return "Bidder / Seller";
+    }
+    if (session.isSeller()) {
+      return "Seller";
+    }
+    if (session.isBidder()) {
+      return "Bidder";
+    }
+    if (session.getRoles().isEmpty()) {
+      return "Chưa có vai trò";
+    }
+    return String.join(", ", session.getRoles());
   }
 
   private void loadNotificationBadge() {

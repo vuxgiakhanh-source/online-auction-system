@@ -9,7 +9,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.group13.auction.dao.AdminDAO;
+import com.group13.auction.dao.AdminDAO.AdminRow;
 import com.group13.auction.dao.UserDAO;
+import com.group13.auction.model.user.Admin;
 import com.group13.auction.exception.AuthenticationException;
 import com.group13.auction.exception.AuthenticationException.Reason;
 import com.group13.auction.manager.AuctionManager;
@@ -72,6 +74,7 @@ class UserServiceTest {
   void login_validCredentials_activeAccount_returnsUser() {
     String rawPassword = "correctPass1";
     NormalUser user = normalBidder("bidder01", rawPassword, AccountStatus.ACTIVE, 3.0);
+    when(adminDAO.findByUsername("bidder01")).thenReturn(Optional.empty());
     when(userDAO.findUserCoreByUsername("bidder01")).thenReturn(user);
 
     User result = sut.login("bidder01", rawPassword);
@@ -84,6 +87,7 @@ class UserServiceTest {
   void login_callsUserDAOExactlyOnce() {
     String rawPassword = "correctPass1";
     NormalUser user = normalBidder("bidder01", rawPassword, AccountStatus.ACTIVE, 3.0);
+    when(adminDAO.findByUsername("bidder01")).thenReturn(Optional.empty());
     when(userDAO.findUserCoreByUsername("bidder01")).thenReturn(user);
 
     sut.login("bidder01", rawPassword);
@@ -231,10 +235,34 @@ class UserServiceTest {
   }
 
   @Test
+  @DisplayName("login - username in admins table uses admin auth even if users row exists")
+  void login_adminUsernameInAdminsTable_skipsNormalUserLookup() {
+    String rawPassword = "staffPass1";
+    AdminRow row =
+        new AdminRow(
+            UUID.randomUUID().toString(),
+            "staffadmin",
+            User.hashPassword(rawPassword),
+            "staff@test.com",
+            Admin.LEVEL_STAFF,
+            LocalDateTime.now());
+    NormalUser shadowUser = normalBidder("staffadmin", "otherPass", AccountStatus.ACTIVE, 3.0);
+
+    when(adminDAO.findByUsername("staffadmin")).thenReturn(Optional.of(row));
+    when(userDAO.findUserCoreByUsername("staffadmin")).thenReturn(shadowUser);
+
+    User result = sut.login("staffadmin", rawPassword);
+
+    assertThat(result).isInstanceOf(com.group13.auction.model.user.Admin.class);
+    verify(userDAO, never()).findUserCoreByUsername("staffadmin");
+  }
+
+  @Test
   @DisplayName("login - returns exact object from DAO")
   void login_returnsExactObjectFromDAO() {
     String rawPassword = "correctPass1";
     NormalUser expected = normalBidder("bidder99", rawPassword, AccountStatus.ACTIVE, 4.5);
+    when(adminDAO.findByUsername("bidder99")).thenReturn(Optional.empty());
     when(userDAO.findUserCoreByUsername("bidder99")).thenReturn(expected);
 
     User result = sut.login("bidder99", rawPassword);

@@ -48,13 +48,17 @@ public class UserService implements IUserService {
   @Override
   public User login(String username, String inputPassword) {
 
-    // Luôn đọc từ DB khi login để có roles/balance/status mới nhất (kể cả SELLER đã duyệt).
-    // Không dùng bản in-memory cũ — tránh "chưa là seller" / số dư ví lệch sau khi duyệt role.
-    NormalUser user = userDAO.findUserCoreByUsername(username);
-
-    // Admin nằm ở bảng admins — không có trong users
-    if (user == null) {
+    // Ưu tiên bảng admins: username có thể trùng giữa users và admins (vd. staffadmin test),
+    // nếu không kiểm tra trước sẽ đăng nhập nhầm NormalUser (BIDDER) thay vì Staff Admin.
+    if (adminDAO.findByUsername(username).isPresent()) {
       return loginAdmin(username, inputPassword);
+    }
+
+    // Luôn đọc từ DB khi login để có roles/balance/status mới nhất (kể cả SELLER đã duyệt).
+    NormalUser user = userDAO.findUserCoreByUsername(username);
+    if (user == null) {
+      log.warn("Login failed: user not found, username={}", username);
+      throw new AuthenticationException(Reason.USER_NOT_FOUND);
     }
 
     // BANNED/SUSPENDED vẫn đăng nhập được (restricted mode — chỉ ví); kiểm tra mật khẩu bên dưới.
