@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.group13.auction.util.CurrencyUtil;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -76,19 +77,21 @@ class AutoBidFormViewModelTest {
   @Test
   void validateAgainstMinimumShouldRejectWhenBelowCurrentPricePlusIncrement() {
     AutoBidFormViewModel formState = new AutoBidFormViewModel("1040000");
+    long minimumMaxBid = 1_050_000L;
 
     assertEquals(
-        Optional.of("Giá tối đa phải >= 1.050.000 ₫ (giá hiện tại + bước giá)."),
-        formState.validateAgainstMinimum(1_050_000L, null));
+        Optional.of(
+            "Giá tối đa phải >= "
+                + CurrencyUtil.formatVnd(minimumMaxBid)
+                + " (giá hiện tại + bước giá)."),
+        formState.validateAgainstMinimum(minimumMaxBid, null));
   }
 
   @Test
-  void validateAgainstMinimumShouldRejectWhenNotHigherThanPreviousMaxBid() {
+  void validateAgainstMinimumShouldAcceptWhenBelowPreviousMaxButAboveMinimum() {
     AutoBidFormViewModel formState = new AutoBidFormViewModel("2000000");
 
-    assertEquals(
-        Optional.of("Giá tối đa mới phải lớn hơn maxBid hiện tại (2.500.000 ₫)."),
-        formState.validateAgainstMinimum(1_050_000L, 2_500_000L));
+    assertFalse(formState.validateAgainstMinimum(1_050_000L, 2_500_000L).isPresent());
   }
 
   @Test
