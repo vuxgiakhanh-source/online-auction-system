@@ -143,7 +143,7 @@ public final class ClientNotificationService implements ClientEventListener {
       return;
     }
     String auctionId = fallback(update.getAuctionId());
-    String status = update.getStatus() != null ? update.getStatus() : "FINISHED";
+    String status = update.getNewStatus() != null ? update.getNewStatus() : "FINISHED";
     FxThreadUtil.runOnFxThread(
         () ->
             AlertUtil.showInfo(
