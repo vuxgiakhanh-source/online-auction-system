@@ -39,16 +39,17 @@ public final class DTOMapper {
     dto.setCreatedAt(user.getCreatedAt());
     dto.setUpdatedAt(user.getUpdatedAt());
 
-    List<String> roles = new ArrayList<>();
-    for (User.UserRole role : User.UserRole.values()) {
-      if (user.hasRole(role)) {
+    if (user instanceof Admin admin) {
+      dto.setRoles(List.of("ADMIN"));
+      dto.setAdminType(admin.getAdminLevel());
+    } else if (user instanceof NormalUser normalUser) {
+      List<String> roles = new ArrayList<>();
+      for (User.UserRole role : normalUser.getRoles()) {
         roles.add(role.name());
       }
-    }
-    dto.setRoles(roles);
-
-    if (user instanceof Admin admin) {
-      dto.setAdminType(admin.getAdminLevel());
+      dto.setRoles(roles);
+    } else {
+      dto.setRoles(List.of());
     }
 
     if (showBalance && user instanceof NormalUser normalUser) {
