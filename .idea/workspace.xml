@@ -7,9 +7,6 @@
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/payment/PaymentStateTransitionIT.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/integration/service/payment/PaymentStateTransitionIT.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionObserverContractTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/AuctionObserverContractTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/ObserverNotificationSmokeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-server/src/test/java/com/group13/auction/unit/observer/ObserverNotificationSmokeTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,7 +14,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="823" />
+    <option name="cachedIndexableFilesCount" value="801" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -221,7 +218,7 @@
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;backup-client&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/online-auction-system&quot;,

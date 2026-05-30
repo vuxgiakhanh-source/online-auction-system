@@ -30,7 +30,7 @@ public interface AuctionState {
   AuctionState close(boolean hasWinner);
 
   /**
-   * Hủy phiên (OPEN / RUNNING -> CANCELED).
+   * Hủy phiên (OPEN / RUNNING / FINISHED -> CANCELED).
    *
    * @return trạng thái CANCELED
    * @throws IllegalStateException nếu trạng thái hiện tại không cho phép

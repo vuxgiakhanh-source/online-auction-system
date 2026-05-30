@@ -7,6 +7,8 @@ package com.group13.auction.model.auction;
  *
  * <ul>
  *   <li>FINISHED -> PAID (khi {@link #markPaid()} được gọi)
+ *   <li>FINISHED -> CANCELED (khi {@link #cancel()} — winner/second-chance không thanh toán hoặc
+ *       từ chối)
  * </ul>
  */
 public class FinishedState implements AuctionState {
@@ -28,7 +30,7 @@ public class FinishedState implements AuctionState {
 
   @Override
   public AuctionState cancel() {
-    throw new IllegalStateException("Phiên đã FINISHED - không thể hủy.");
+    return CanceledState.INSTANCE;
   }
 
   @Override

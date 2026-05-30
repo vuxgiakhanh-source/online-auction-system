@@ -68,18 +68,19 @@ class AuctionStateMachineTest {
   class FinishedStateTest {
 
     @Test
-    @DisplayName("markPaid → PAID")
-    void markPaid_toPaid() {
-      assertSame(PaidState.INSTANCE, FinishedState.INSTANCE.markPaid());
+    @DisplayName("markPaid → PAID, cancel → CANCELED")
+    void validTransitions() {
+      AuctionState finished = FinishedState.INSTANCE;
+      assertSame(PaidState.INSTANCE, finished.markPaid());
+      assertSame(CanceledState.INSTANCE, finished.cancel());
     }
 
     @Test
-    @DisplayName("start / close / cancel → IllegalStateException")
+    @DisplayName("start / close → IllegalStateException")
     void illegalTransitions_throw() {
       AuctionState finished = FinishedState.INSTANCE;
       assertThrows(IllegalStateException.class, finished::start);
       assertThrows(IllegalStateException.class, () -> finished.close(true));
-      assertThrows(IllegalStateException.class, finished::cancel);
     }
   }
 
@@ -117,6 +118,13 @@ class AuctionStateMachineTest {
     void happyPath_toPaid() {
       AuctionState state = OpenState.INSTANCE.start().close(true).markPaid();
       assertEquals(Auction.AuctionStatus.PAID, state.getStatus());
+    }
+
+    @Test
+    @DisplayName("OPEN → RUNNING → FINISHED → CANCELED")
+    void finishedPath_toCanceled() {
+      AuctionState state = OpenState.INSTANCE.start().close(true).cancel();
+      assertEquals(Auction.AuctionStatus.CANCELED, state.getStatus());
     }
 
     @Test
