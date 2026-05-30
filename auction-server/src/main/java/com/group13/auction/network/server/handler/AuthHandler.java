@@ -263,6 +263,9 @@ public class AuthHandler implements PacketHandler {
 
       sessionManager.authenticate(
           session.getConnection(), user.getId(), user.getUsername(), role, restricted);
+      if (user instanceof NormalUser normalUser) {
+        session.setCachedUser(normalUser);
+      }
 
       log.info(
           "Login success: userId={}, username={}, role={}, restricted={}, requestId={}",
