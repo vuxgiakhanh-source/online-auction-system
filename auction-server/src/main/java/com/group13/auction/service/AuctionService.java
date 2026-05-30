@@ -116,14 +116,15 @@ public class AuctionService implements IAuctionService {
           "Seller không đủ điều kiện tạo auction (rating < 2.0 hoặc bị ban).");
     }
     LocalDateTime now = LocalDateTime.now();
-    if (!endTime.isAfter(startTime)) {
-      throw new IllegalArgumentException("endTime phải sau startTime.");
-    }
-    if (!startTime.isAfter(now)) {
-      throw new IllegalArgumentException("startTime phải sau thời điểm hiện tại của server.");
+    if (startTime.isBefore(now)) {
+      throw new IllegalArgumentException(
+          "Thời gian bắt đầu phải bằng hoặc sau thời điểm hiện tại.");
     }
     if (!endTime.isAfter(now)) {
-      throw new IllegalArgumentException("endTime phải sau thời điểm hiện tại của server.");
+      throw new IllegalArgumentException("Thời gian kết thúc phải sau thời điểm hiện tại.");
+    }
+    if (!endTime.isAfter(startTime)) {
+      throw new IllegalArgumentException("endTime phải sau startTime.");
     }
     if (reservePrice <= 0) {
       throw new IllegalArgumentException("reservePrice phải lớn hơn 0.");

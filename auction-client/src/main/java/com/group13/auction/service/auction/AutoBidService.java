@@ -136,8 +136,12 @@ public final class AutoBidService {
 
   private static Optional<String> validateAutoBidForm(
       AutoBidFormViewModel form, long currentPrice, Long previousMaxBid) {
+    Optional<String> basicValidation = form.validate();
+    if (basicValidation.isPresent()) {
+      return basicValidation;
+    }
     if (currentPrice <= 0) {
-      return form.validate();
+      return Optional.of("Giá hiện tại chưa sẵn sàng. Vui lòng đợi dữ liệu phiên tải xong.");
     }
 
     long increment = minimumIncrementFor(currentPrice);

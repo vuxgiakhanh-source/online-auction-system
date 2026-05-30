@@ -88,10 +88,15 @@ class AutoBidFormViewModelTest {
   }
 
   @Test
-  void validateAgainstMinimumShouldAcceptWhenBelowPreviousMaxButAboveMinimum() {
+  void validateAgainstMinimumShouldRejectWhenNotHigherThanPreviousMaxBid() {
     AutoBidFormViewModel formState = new AutoBidFormViewModel("2000000");
 
-    assertFalse(formState.validateAgainstMinimum(1_050_000L, 2_500_000L).isPresent());
+    assertEquals(
+        Optional.of(
+            "Giá tối đa mới phải lớn hơn maxBid hiện tại ("
+                + CurrencyUtil.formatVnd(2_500_000L)
+                + ")."),
+        formState.validateAgainstMinimum(1_050_000L, 2_500_000L));
   }
 
   @Test

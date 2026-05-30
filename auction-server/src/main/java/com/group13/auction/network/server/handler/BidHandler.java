@@ -687,7 +687,7 @@ public class BidHandler implements PacketHandler {
       if (!isAlreadyLeader) {
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
         sessionManager.broadcastToAuction(
-            req.getAuctionId(), Packet.of(PacketType.BID_UPDATE, update));
+            req.getAuctionId(), Packet.of(bidBroadcastType(auction), update));
 
         BidDTOs.BidChartPointDTO chartPoint =
             DTOMapper.toBidChartPoint(req.getAuctionId(), nextBid, bidder.getUsername(), true);
@@ -854,7 +854,7 @@ public class BidHandler implements PacketHandler {
         if (!isAlreadyLeader) {
           BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
           sessionManager.broadcastToAuction(
-              req.getAuctionId(), Packet.of(PacketType.BID_UPDATE, update));
+              req.getAuctionId(), Packet.of(bidBroadcastType(auction), update));
 
           BidDTOs.BidChartPointDTO chartPoint =
               DTOMapper.toBidChartPoint(req.getAuctionId(), nextBid, bidder.getUsername(), true);
@@ -1141,6 +1141,10 @@ public class BidHandler implements PacketHandler {
   private static long minimumMaxBidFor(Auction auction) {
     long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
     return auction.getCurrentPrice() + increment;
+  }
+
+  private static PacketType bidBroadcastType(Auction auction) {
+    return auction.isReserveMet() ? PacketType.BID_UPDATE : PacketType.BID_RESERVE_NOT_MET_UPDATE;
   }
 
   private void sendMaxBidTooLow(

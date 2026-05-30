@@ -122,7 +122,7 @@ class AuctionServiceTest {
     @Test
     void endTimeNotAfterNow_throws() {
       when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
-      LocalDateTime start = LocalDateTime.now();
+      LocalDateTime start = LocalDateTime.now().plusMinutes(10);
       LocalDateTime end = LocalDateTime.now();
 
       assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
