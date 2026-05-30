@@ -28,6 +28,7 @@ import com.group13.auction.strategy.AutoBidProcessor;
 import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.AutoBidRegistry.AutoBidEntry;
 import com.group13.auction.strategy.AutoBidStrategy;
+import com.group13.auction.strategy.BidIncrementCalculator;
 import com.group13.auction.strategy.BidRateLimiter;
 import com.group13.auction.strategy.StandardBidStrategy;
 import java.time.LocalDateTime;
@@ -599,10 +600,35 @@ public class BidHandler implements PacketHandler {
 
       registerAutoBidBidderId = bidder.getId();
 
+      AutoBidEntry existingForRegister = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
+      if (existingForRegister != null && req.getMaxBid() <= existingForRegister.getMaxBid()) {
+        log.warn(
+            "Register auto-bid rejected because maxBid did not increase: auctionId={},"
+                + " bidderId={}, oldMaxBid={}, newMaxBid={}",
+            req.getAuctionId(),
+            bidder.getId(),
+            existingForRegister.getMaxBid(),
+            req.getMaxBid());
+        session.send(
+            Packet.of(
+                PacketType.REGISTER_AUTO_BID_FAILED,
+                ErrorDTO.of(
+                    "INVALID_MAX_BID",
+                    String.format(
+                        "maxBid mới (%d) phải lớn hơn maxBid hiện tại (%d). Hãy dùng cập nhật"
+                            + " auto-bid.",
+                        req.getMaxBid(), existingForRegister.getMaxBid()),
+                    requestId),
+                requestId));
+        return;
+      }
+
       AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
       long nextBid = strategy.calculateNextBid(auction);
 
       if (nextBid < 0) {
+        sendMaxBidTooLow(
+            session, PacketType.REGISTER_AUTO_BID_FAILED, req.getMaxBid(), auction, requestId);
         log.warn(
             "Register auto-bid rejected because maxBid is too low: auctionId={}, bidderId={},"
                 + " maxBid={}, currentPrice={}",
@@ -610,16 +636,6 @@ public class BidHandler implements PacketHandler {
             bidder.getId(),
             req.getMaxBid(),
             auction.getCurrentPrice());
-        session.send(
-            Packet.of(
-                PacketType.REGISTER_AUTO_BID_FAILED,
-                ErrorDTO.of(
-                    ErrorDTO.MAX_BID_TOO_LOW,
-                    String.format(
-                        "maxBid %d quá thấp, phải > giá hiện tại %d + bước giá.",
-                        req.getMaxBid(), auction.getCurrentPrice()),
-                    requestId),
-                requestId));
         return;
       }
 
@@ -756,28 +772,28 @@ public class BidHandler implements PacketHandler {
     try {
       // bidder đã resolve trước lock
       AutoBidEntry existing = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
-      if (existing == null) {
+      Auction auction = auctionForUpdate;
+
+      AutoBidStrategy strategy = new AutoBidStrategy(req.getMaxBid());
+      long nextBid = strategy.calculateNextBid(auction);
+
+      if (nextBid < 0) {
+        sendMaxBidTooLow(
+            session, PacketType.UPDATE_AUTO_BID_FAILED, req.getMaxBid(), auction, requestId);
         log.warn(
-            "Update auto-bid rejected because entry does not exist: auctionId={}, bidderId={}",
+            "Update auto-bid rejected because maxBid is too low: auctionId={}, bidderId={},"
+                + " maxBid={}, currentPrice={}",
             req.getAuctionId(),
-            bidder.getId());
-        session.send(
-            Packet.of(
-                PacketType.UPDATE_AUTO_BID_FAILED,
-                ErrorDTO.of(
-                    "NO_AUTO_BID",
-                    "Chưa có auto-bid trong phiên này. Hãy dùng REGISTER_AUTO_BID trước.",
-                    requestId),
-                requestId));
+            bidder.getId(),
+            req.getMaxBid(),
+            auction.getCurrentPrice());
         return;
       }
-
-      Auction auction = auctionForUpdate;
 
       updateAutoBidAuction = auction;
       updateAutoBidBidderId = bidder.getId();
 
-      if (req.getMaxBid() <= existing.getMaxBid()) {
+      if (existing != null && req.getMaxBid() <= existing.getMaxBid()) {
         log.warn(
             "Update auto-bid rejected because maxBid did not increase: auctionId={}, bidderId={},"
                 + " oldMaxBid={}, newMaxBid={}",
@@ -798,7 +814,55 @@ public class BidHandler implements PacketHandler {
         return;
       }
 
-      long oldMaxBid = existing.getMaxBid();
+      long oldMaxBid = existing != null ? existing.getMaxBid() : 0L;
+
+      if (existing == null) {
+        boolean isAlreadyLeader =
+            auction.getCurrentLeader() != null
+                && auction.getCurrentLeader().getId().equals(bidder.getId());
+
+        autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
+        ServerBroadcastNotifier.getInstance()
+            .clearAutoBidExhaustedFlag(bidder.getId(), req.getAuctionId());
+
+        if (!isAlreadyLeader) {
+          try {
+            bidService.placeBid(bidder, auction, nextBid, strategy);
+          } catch (Exception ex) {
+            autoBidRegistry.cancel(bidder.getId(), req.getAuctionId());
+            throw ex;
+          }
+        }
+
+        BidDTOs.AutoBidRegistrationDTO reg = new BidDTOs.AutoBidRegistrationDTO();
+        reg.setAuctionId(req.getAuctionId());
+        reg.setMaxBid(req.getMaxBid());
+        reg.setCurrentSystemBid(isAlreadyLeader ? auction.getCurrentPrice() : nextBid);
+        reg.setActive(true);
+        reg.setRegisteredAt(LocalDateTime.now());
+        session.send(Packet.of(PacketType.UPDATE_AUTO_BID_SUCCESS, reg, requestId));
+
+        log.info(
+            "Auto-bid re-registered via update: auctionId={}, bidderId={}, username={},"
+                + " maxBid={}, firstBid={}",
+            req.getAuctionId(),
+            bidder.getId(),
+            bidder.getUsername(),
+            req.getMaxBid(),
+            isAlreadyLeader ? auction.getCurrentPrice() : nextBid);
+
+        if (!isAlreadyLeader) {
+          BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
+          sessionManager.broadcastToAuction(
+              req.getAuctionId(), Packet.of(PacketType.BID_UPDATE, update));
+
+          BidDTOs.BidChartPointDTO chartPoint =
+              DTOMapper.toBidChartPoint(req.getAuctionId(), nextBid, bidder.getUsername(), true);
+          sessionManager.broadcastToAuction(
+              req.getAuctionId(), Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
+        }
+        return;
+      }
       autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
       ServerBroadcastNotifier.getInstance()
           .clearAutoBidExhaustedFlag(bidder.getId(), req.getAuctionId());
@@ -1072,5 +1136,29 @@ public class BidHandler implements PacketHandler {
     NormalUser normalUser = (NormalUser) user;
     session.setCachedUser(normalUser); // cache để dùng lại cho các request tiếp theo
     return normalUser;
+  }
+
+  private static long minimumMaxBidFor(Auction auction) {
+    long increment = BidIncrementCalculator.calculate(auction.getCurrentPrice());
+    return auction.getCurrentPrice() + increment;
+  }
+
+  private void sendMaxBidTooLow(
+      ClientSession session,
+      PacketType failureType,
+      long maxBid,
+      Auction auction,
+      String requestId) {
+    long minimum = minimumMaxBidFor(auction);
+    session.send(
+        Packet.of(
+            failureType,
+            ErrorDTO.of(
+                ErrorDTO.MAX_BID_TOO_LOW,
+                String.format(
+                    "maxBid %d quá thấp. Phải >= %d (giá hiện tại %d + bước giá).",
+                    maxBid, minimum, auction.getCurrentPrice()),
+                requestId),
+            requestId));
   }
 }

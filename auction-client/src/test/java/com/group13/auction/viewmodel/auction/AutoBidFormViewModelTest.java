@@ -72,4 +72,29 @@ class AutoBidFormViewModelTest {
 
     assertThrows(NumberFormatException.class, formState::maxBidAmount);
   }
+
+  @Test
+  void validateAgainstMinimumShouldRejectWhenBelowCurrentPricePlusIncrement() {
+    AutoBidFormViewModel formState = new AutoBidFormViewModel("1040000");
+
+    assertEquals(
+        Optional.of("Giá tối đa phải >= 1.050.000 ₫ (giá hiện tại + bước giá)."),
+        formState.validateAgainstMinimum(1_050_000L, null));
+  }
+
+  @Test
+  void validateAgainstMinimumShouldRejectWhenNotHigherThanPreviousMaxBid() {
+    AutoBidFormViewModel formState = new AutoBidFormViewModel("2000000");
+
+    assertEquals(
+        Optional.of("Giá tối đa mới phải lớn hơn maxBid hiện tại (2.500.000 ₫)."),
+        formState.validateAgainstMinimum(1_050_000L, 2_500_000L));
+  }
+
+  @Test
+  void validateAgainstMinimumShouldAcceptHigherMaxBid() {
+    AutoBidFormViewModel formState = new AutoBidFormViewModel("3000000");
+
+    assertFalse(formState.validateAgainstMinimum(1_050_000L, 2_500_000L).isPresent());
+  }
 }

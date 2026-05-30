@@ -61,12 +61,17 @@ public final class AutoBidService {
    */
   public CompletableFuture<BidDTOs.AutoBidRegistrationDTO> registerAutoBid(
       String auctionId, String maxBidText) {
+    return registerAutoBid(auctionId, maxBidText, 0L, null);
+  }
+
+  public CompletableFuture<BidDTOs.AutoBidRegistrationDTO> registerAutoBid(
+      String auctionId, String maxBidText, long currentPrice, Long previousMaxBid) {
     if (auctionId == null || auctionId.isBlank()) {
       return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
     }
 
     AutoBidFormViewModel form = new AutoBidFormViewModel(maxBidText);
-    Optional<String> validationError = form.validate();
+    Optional<String> validationError = validateAutoBidForm(form, currentPrice, previousMaxBid);
     if (validationError.isPresent()) {
       return AuctionServiceSupport.failedFuture(validationError.get());
     }
@@ -88,12 +93,17 @@ public final class AutoBidService {
    */
   public CompletableFuture<BidDTOs.AutoBidRegistrationDTO> updateAutoBid(
       String auctionId, String maxBidText) {
+    return updateAutoBid(auctionId, maxBidText, 0L, null);
+  }
+
+  public CompletableFuture<BidDTOs.AutoBidRegistrationDTO> updateAutoBid(
+      String auctionId, String maxBidText, long currentPrice, Long previousMaxBid) {
     if (auctionId == null || auctionId.isBlank()) {
       return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
     }
 
     AutoBidFormViewModel form = new AutoBidFormViewModel(maxBidText);
-    Optional<String> validationError = form.validate();
+    Optional<String> validationError = validateAutoBidForm(form, currentPrice, previousMaxBid);
     if (validationError.isPresent()) {
       return AuctionServiceSupport.failedFuture(validationError.get());
     }
@@ -122,5 +132,26 @@ public final class AutoBidService {
         ClientRequestFactory.cancelAutoBid(auctionId),
         PacketType.CANCEL_AUTO_BID_SUCCESS,
         "Không hủy được auto-bid.");
+  }
+
+  private static Optional<String> validateAutoBidForm(
+      AutoBidFormViewModel form, long currentPrice, Long previousMaxBid) {
+    if (currentPrice <= 0) {
+      return form.validate();
+    }
+
+    long increment = minimumIncrementFor(currentPrice);
+    long minimumMaxBid = currentPrice + increment;
+    return form.validateAgainstMinimum(minimumMaxBid, previousMaxBid);
+  }
+
+  private static long minimumIncrementFor(long currentPrice) {
+    if (currentPrice < 1_000_000L) {
+      return 50_000L;
+    }
+    if (currentPrice <= 10_000_000L) {
+      return 200_000L;
+    }
+    return 500_000L;
   }
 }

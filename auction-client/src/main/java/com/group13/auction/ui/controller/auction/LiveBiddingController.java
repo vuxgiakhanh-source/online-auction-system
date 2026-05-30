@@ -74,6 +74,8 @@ public final class LiveBiddingController implements ClientEventListener {
   private boolean readOnlyMode;
   private boolean bidAllowed;
   private long currentPriceRaw;
+  private long activeAutoBidMaxRaw;
+  private boolean autoBidActive;
   private volatile boolean pendingBidRequest;
   private volatile boolean pendingAutoBidRequest;
 
@@ -225,7 +227,8 @@ public final class LiveBiddingController implements ClientEventListener {
     setAutoBidLoading(true, "Đang đăng ký auto-bid...");
 
     autoBidService
-        .registerAutoBid(auctionId, autoBidMaxField.getText())
+        .registerAutoBid(
+            auctionId, autoBidMaxField.getText(), currentPriceRaw, previousAutoBidMaxForValidation())
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
@@ -262,7 +265,8 @@ public final class LiveBiddingController implements ClientEventListener {
     setAutoBidLoading(true, "Đang cập nhật auto-bid...");
 
     autoBidService
-        .updateAutoBid(auctionId, autoBidMaxField.getText())
+        .updateAutoBid(
+            auctionId, autoBidMaxField.getText(), currentPriceRaw, previousAutoBidMaxForValidation())
         .thenAccept(
             registration ->
                 FxThreadUtil.runOnFxThread(
@@ -431,6 +435,8 @@ public final class LiveBiddingController implements ClientEventListener {
                   + notify.getLeadingBidderUsername()
                   + ".");
           setMessage("Auto-bid đã hết hiệu lực vì maxBid không đủ để vượt giá hiện tại.");
+          autoBidActive = false;
+          activeAutoBidMaxRaw = 0L;
         });
   }
 
@@ -997,6 +1003,9 @@ public final class LiveBiddingController implements ClientEventListener {
       autoBidMaxField.setText(String.valueOf(registration.getMaxBid()));
     }
 
+    activeAutoBidMaxRaw = registration.getMaxBid();
+    autoBidActive = true;
+
     setAutoBidStatusText(
         "Đang bật • MaxBid: "
             + CurrencyUtil.formatVnd(registration.getMaxBid())
@@ -1007,8 +1016,17 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   private void renderAutoBidInactive(String message) {
+    activeAutoBidMaxRaw = 0L;
+    autoBidActive = false;
     setAutoBidStatusText("Chưa bật auto-bid cho phiên này.");
     setAutoBidLoading(false, message);
+  }
+
+  private Long previousAutoBidMaxForValidation() {
+    if (!autoBidActive || activeAutoBidMaxRaw <= 0L) {
+      return null;
+    }
+    return activeAutoBidMaxRaw;
   }
 
   private boolean isCurrentAuction(String incomingAuctionId) {
