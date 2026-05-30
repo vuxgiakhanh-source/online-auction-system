@@ -225,7 +225,10 @@ public class ServerBroadcastNotifier {
     autoBidExhaustedNotifiedKeys.remove(exhaustedKey(userId, auctionId));
   }
 
-  /** Chỉ gửi cho bidder bid thủ công vừa bị vượt giá (không áp dụng khi đang bật auto-bid). */
+  /**
+   * Chỉ gửi {@link PacketType#OUTBID_NOTIFY} cho bidder bid thủ công vừa bị vượt giá (client hiện
+   * popup). Không lưu inbox/DB — không áp dụng khi đang bật auto-bid.
+   */
   public void notifyOutbid(
       NormalUser previousLeader,
       Auction auction,
@@ -268,14 +271,6 @@ public class ServerBroadcastNotifier {
           previousLeader.getId());
       return;
     }
-
-    persistNotification(
-        previousLeader.getId(),
-        auction.getId(),
-        NotificationTypes.AUCTION,
-        NotificationMessages.outbidTitle(),
-        NotificationMessages.outbidBody(
-            auction, NotificationMessages.username(newBidder), newAmount, previousAmount));
 
     BidDTOs.OutbidNotifyDTO dto = new BidDTOs.OutbidNotifyDTO();
     dto.setAuctionId(auction.getId());
