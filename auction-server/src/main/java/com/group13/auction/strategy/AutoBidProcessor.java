@@ -195,7 +195,8 @@ public class AutoBidProcessor {
    * @param triggeredByUserId userId vừa bid (cho context logging)
    */
   public void submit(Auction auction, String triggeredByUserId) {
-    String auctionId = auction.getId();
+    final Auction liveAuction = resolveLiveAuction(auction);
+    String auctionId = liveAuction.getId();
 
     AtomicBoolean running = chainRunning.computeIfAbsent(auctionId, k -> new AtomicBoolean(false));
     AtomicBoolean recheck =
@@ -214,7 +215,7 @@ public class AutoBidProcessor {
                       do {
                         recheck.set(
                             false); // Reset trước khi chạy — trigger mới trong lúc chạy sẽ set lại
-                        runChain(auction, triggeredByUserId);
+                        runChain(liveAuction, triggeredByUserId);
                       } while (recheck.getAndSet(false));
                       // getAndSet(false): đọc giá trị hiện tại VÀ reset về false atomically.
                       // Nếu true → có trigger mới đến trong lúc chain chạy → loop lại 1 lần nữa.
@@ -227,7 +228,7 @@ public class AutoBidProcessor {
                       // Sau khi set running=false, kiểm tra lần cuối xem có recheck pending không
                       // (edge case: trigger đến giữa getAndSet và running.set(false))
                       if (recheck.getAndSet(false)) {
-                        submit(auction, triggeredByUserId + "_recheck");
+                        submit(liveAuction, triggeredByUserId + "_recheck");
                       }
                     }
                   });
@@ -303,6 +304,7 @@ public class AutoBidProcessor {
    */
   private void runChain(Auction auction, String triggeredByUserId) {
     String auctionId = auction.getId();
+    auction = resolveLiveAuction(auction);
     log.info("[AutoBid] Chain started: auctionId={} trigger={}", auctionId, triggeredByUserId);
 
     int iteration = 0;
@@ -347,7 +349,7 @@ public class AutoBidProcessor {
         sleepQuietly(AUTO_BID_MIN_INTERVAL_MS);
       }
 
-      NormalUser autoBidder = resolveUser(winner.getUserId());
+      NormalUser autoBidder = resolveUser(winner.getUserId(), auctionId);
       if (autoBidder == null) {
         log.warn(
             "[AutoBid] User not found, cancelling: userId={} auctionId={}",
@@ -673,29 +675,53 @@ public class AutoBidProcessor {
     return leader != null ? leader.getId() : null;
   }
 
-  /** Tra cứu NormalUser với UserCache — O(1) sau lần đầu, tránh scan list O(n) và DB round-trip. */
-  private NormalUser resolveUser(String userId) {
-    // 1. Cache hit — fast path
+  /**
+   * Tra cứu NormalUser cho chuỗi auto-bid — phải có {@code joinedAuctionIds} đúng.
+   *
+   * <p>FIX: Đăng ký auto-bid dùng {@code session.getCachedUser()} (đã join in-place), nhưng chain
+   * trước đây ưu tiên {@link AuctionManager#getAllUsers()} — thường là bản user lúc login chưa có
+   * JOINED trong RAM → {@link BidService#placeBid} ném NOT_JOINED → chain dừng dù maxBid rất cao.
+   */
+  private NormalUser resolveUser(String userId, String auctionId) {
     NormalUser cached = userCache.get(userId);
-    if (cached != null) {
+    if (cached != null && cached.hasJoined(auctionId)) {
       return cached;
     }
 
-    // 2. AuctionManager in-memory list
     for (User u : AuctionManager.getInstance().getAllUsers()) {
-      if (u.getId().equals(userId) && u instanceof NormalUser) {
-        userCache.put(userId, (NormalUser) u);
-        return (NormalUser) u;
+      if (u.getId().equals(userId) && u instanceof NormalUser inMemory) {
+        if (!inMemory.hasJoined(auctionId)) {
+          java.util.Set<String> joinedIds = userDAO.findJoinedAuctionIdsByUserId(userId);
+          if (joinedIds != null && !joinedIds.isEmpty()) {
+            inMemory.setJoinedAuctionIds(joinedIds);
+          }
+        }
+        if (inMemory.hasJoined(auctionId)) {
+          userCache.put(userId, inMemory);
+          return inMemory;
+        }
+        break;
       }
     }
 
-    // 3. DB fallback — chỉ xảy ra lần đầu hoặc sau cache eviction
     NormalUser fromDb = userDAO.findNormalUserById(userId);
-    if (fromDb != null) {
-      AuctionManager.getInstance().addToUserList(fromDb);
+    if (fromDb != null && fromDb.hasJoined(auctionId)) {
+      AuctionManager.getInstance().refreshUser(fromDb);
       userCache.put(userId, fromDb);
+      return fromDb;
     }
-    return fromDb;
+
+    log.warn("[AutoBid] User not joined auction: userId={} auctionId={}", userId, auctionId);
+    return null;
+  }
+
+  /** Luôn dùng bản Auction trong {@link AuctionManager} nếu có — tránh bid trên object tách rời. */
+  private static Auction resolveLiveAuction(Auction auction) {
+    if (auction == null) {
+      return null;
+    }
+    Auction live = AuctionManager.getInstance().findAuctionById(auction.getId());
+    return live != null ? live : auction;
   }
 
   private ExecutorService getOrCreateExecutor(String auctionId) {

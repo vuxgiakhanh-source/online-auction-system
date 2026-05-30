@@ -19,7 +19,6 @@ LICENSE
 
 # Runtime-only folders (không cần trong image)
 logs/
-k8s/
 scripts/
 docker/
 

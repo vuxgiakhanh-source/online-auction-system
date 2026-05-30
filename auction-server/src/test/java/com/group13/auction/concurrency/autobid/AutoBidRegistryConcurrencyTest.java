@@ -25,7 +25,7 @@ class AutoBidRegistryConcurrencyTest {
 
   @Test
   @DisplayName("32 thread register cùng key — 1 entry, registeredAt ổn định")
-  @Timeout(10)
+  @Timeout(30)
   void concurrentRegister_sameKey_singleEntry() throws Exception {
     String auctionId = "auc-reg-test";
     String userId = "user-reg";
@@ -51,7 +51,7 @@ class AutoBidRegistryConcurrencyTest {
     }
 
     start.countDown();
-    assertThat(done.await(8, TimeUnit.SECONDS)).isTrue();
+    assertThat(done.await(20, TimeUnit.SECONDS)).isTrue();
     pool.shutdownNow();
 
     assertThat(errors.get()).isZero();

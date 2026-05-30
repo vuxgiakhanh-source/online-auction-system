@@ -575,7 +575,7 @@ public class BidHandler implements PacketHandler {
       return;
     }
 
-    String registerAutoBidBidderId = null;
+    String autoBidTriggerUserId = null;
 
     // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
     NormalUser bidder = requireNormalUser(session, requestId);
@@ -597,8 +597,6 @@ public class BidHandler implements PacketHandler {
     try {
       // bidder đã resolve trước lock
       Auction auction = auctionForRegister;
-
-      registerAutoBidBidderId = bidder.getId();
 
       AutoBidEntry existingForRegister = autoBidRegistry.get(bidder.getId(), req.getAuctionId());
       if (existingForRegister != null && req.getMaxBid() <= existingForRegister.getMaxBid()) {
@@ -683,6 +681,7 @@ public class BidHandler implements PacketHandler {
       reg.setActive(true);
       reg.setRegisteredAt(LocalDateTime.now());
       session.send(Packet.of(PacketType.REGISTER_AUTO_BID_SUCCESS, reg, requestId));
+      autoBidTriggerUserId = bidder.getId();
 
       if (!isAlreadyLeader) {
         BidDTOs.BidUpdateDTO update = DTOMapper.toBidUpdateDTO(auction, nextBid, 0L);
@@ -723,9 +722,9 @@ public class BidHandler implements PacketHandler {
     } finally {
       lock.unlock();
     }
-    // FIX DEADLOCK: process ngoài lock
-    if (registerAutoBidBidderId != null) {
-      autoBidProcessor.submit(auctionForRegister, registerAutoBidBidderId);
+    // FIX DEADLOCK: process ngoài lock — chỉ khi đăng ký thành công (không return sớm / lỗi)
+    if (autoBidTriggerUserId != null) {
+      autoBidProcessor.submit(auctionForRegister, autoBidTriggerUserId);
     }
   }
 
@@ -789,9 +788,6 @@ public class BidHandler implements PacketHandler {
             auction.getCurrentPrice());
         return;
       }
-
-      updateAutoBidAuction = auction;
-      updateAutoBidBidderId = bidder.getId();
 
       if (existing != null && req.getMaxBid() <= existing.getMaxBid()) {
         log.warn(
@@ -861,6 +857,8 @@ public class BidHandler implements PacketHandler {
           sessionManager.broadcastToAuction(
               req.getAuctionId(), Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
         }
+        updateAutoBidAuction = auction;
+        updateAutoBidBidderId = bidder.getId();
         return;
       }
       autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
@@ -882,6 +880,8 @@ public class BidHandler implements PacketHandler {
           bidder.getUsername(),
           oldMaxBid,
           req.getMaxBid());
+      updateAutoBidAuction = auction;
+      updateAutoBidBidderId = bidder.getId();
 
     } catch (Exception e) {
       log.error(
@@ -898,7 +898,7 @@ public class BidHandler implements PacketHandler {
     } finally {
       lock.unlock();
     }
-    // FIX DEADLOCK: process ngoài lock
+    // FIX DEADLOCK: process ngoài lock — chỉ khi cập nhật thành công
     if (updateAutoBidAuction != null && updateAutoBidBidderId != null) {
       autoBidProcessor.submit(updateAutoBidAuction, updateAutoBidBidderId);
     }

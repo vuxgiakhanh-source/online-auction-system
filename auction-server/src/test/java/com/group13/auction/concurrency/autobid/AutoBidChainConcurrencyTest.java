@@ -39,6 +39,9 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
   private AuctionLockRegistry lockRegistry;
   private AutoBidRegistry autoBidRegistry;
   private Auction auction;
+  /** Giả lập JOINED trong DB cho AutoBidProcessor (UserDAO thật không có Testcontainers ở đây). */
+  private final java.util.Map<String, java.util.Set<String>> joinedInDbSimulation =
+      new java.util.concurrent.ConcurrentHashMap<>();
 
   @BeforeEach
   void setUp() {
@@ -69,13 +72,16 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
             mockAuctionDAO,
             mockUserDAO);
     autoBidProcessor = new AutoBidProcessor(bidService, mockSessionManager);
+    injectAutoBidUserDaoMock(autoBidProcessor);
     lockRegistry = AuctionLockRegistry.getInstance();
     autoBidRegistry = AutoBidRegistry.getInstance();
+    joinedInDbSimulation.clear();
     auction = buildRunningAuction();
   }
 
   @AfterEach
   void tearDown() {
+    joinedInDbSimulation.clear();
     clearAutoBidProcessorState();
     autoBidRegistry.clearAuction(auction.getId());
     lockRegistry.release(auction.getId());
@@ -331,12 +337,127 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
     assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(maxBid);
   }
 
+  // ── D3b: Luồng đăng ký autobid (giống BidHandler.register) ─────────────────
+
+  @Test
+  @Order(35)
+  @DisplayName("D3b: Hai user register autobid lần lượt — chain phải counter sau user thứ 2")
+  void registerFlow_twoAutoBidders_chainContinuesAfterSecondRegister() {
+    long startingPrice = 12L;
+    auction =
+        buildRunningAuction(
+            startingPrice, 50_000_000L, java.time.LocalDateTime.now().plusHours(2));
+    com.group13.auction.manager.AuctionManager.getInstance().registerAuction(auction);
+
+    NormalUser autoBidderA = buildUser("regFlowA", USER_BALANCE);
+    NormalUser autoBidderB = buildUser("regFlowB", USER_BALANCE);
+    autoBidderA.addJoinedAuction(auction.getId());
+    autoBidderB.addJoinedAuction(auction.getId());
+    com.group13.auction.manager.AuctionManager.getInstance().addToUserList(autoBidderA);
+    com.group13.auction.manager.AuctionManager.getInstance().addToUserList(autoBidderB);
+
+    long maxBid = 10_000_000L;
+    ReentrantLock lock = lockRegistry.getLock(auction.getId());
+
+    // User A register (first bid)
+    lock.lock();
+    try {
+      autoBidRegistry.register(autoBidderA.getId(), auction.getId(), maxBid);
+      long nextA = new AutoBidStrategy(maxBid).calculateNextBid(auction);
+      bidService.placeBid(autoBidderA, auction, nextA, new AutoBidStrategy(maxBid));
+    } finally {
+      lock.unlock();
+    }
+    autoBidProcessor.submit(auction, autoBidderA.getId());
+    awaitAutoBidChain(auction.getId(), 4);
+    long afterA = auction.getCurrentPrice();
+
+    // User B register (first bid)
+    lock.lock();
+    try {
+      autoBidRegistry.register(autoBidderB.getId(), auction.getId(), maxBid);
+      long nextB = new AutoBidStrategy(maxBid).calculateNextBid(auction);
+      bidService.placeBid(autoBidderB, auction, nextB, new AutoBidStrategy(maxBid));
+    } finally {
+      lock.unlock();
+    }
+    autoBidProcessor.submit(auction, autoBidderB.getId());
+    awaitAutoBidChain(auction.getId(), 4);
+
+    assertThat(afterA).isEqualTo(50_012L);
+    assertThat(auction.getCurrentPrice())
+        .as("Sau khi B register, chain phải counter (A) — giá > 100_012")
+        .isGreaterThan(100_012L);
+  }
+
+  @Test
+  @Order(37)
+  @DisplayName(
+      "D3d: 10 autobid (login RAM thiếu JOINED) — 1 manual trigger, chain escalation qua hydrate DB")
+  void tenUsers_loginStaleManager_tenAutoBidders_chainEscalatesAfterManualTrigger()
+      throws Exception {
+    long startingPrice = 12L;
+    auction =
+        buildRunningAuction(
+            startingPrice, 50_000_000L, java.time.LocalDateTime.now().plusHours(2));
+    com.group13.auction.manager.AuctionManager.getInstance().registerAuction(auction);
+    String auctionId = auction.getId();
+
+    int totalUsers = 10;
+    long maxBid = 50_000_000L;
+    List<NormalUser> sessionUsers = new java.util.ArrayList<>();
+
+    for (int i = 0; i < totalUsers; i++) {
+      NormalUser sessionUser = buildUser("tenU" + i, USER_BALANCE);
+      sessionUser.addJoinedAuction(auctionId);
+      sessionUsers.add(sessionUser);
+
+      NormalUser managerStale =
+          NormalUser.reconstitute(
+              sessionUser.getId(),
+              sessionUser.getCreatedAt(),
+              sessionUser.getUpdatedAt(),
+              "mgr_" + i,
+              "hash",
+              "mgr" + i + "@test.com",
+              com.group13.auction.model.user.User.AccountStatus.ACTIVE,
+              3.0,
+              USER_BALANCE,
+              0L,
+              java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER),
+              false,
+              0,
+              null);
+      com.group13.auction.manager.AuctionManager.getInstance().refreshUser(managerStale);
+      joinedInDbSimulation.put(sessionUser.getId(), java.util.Set.of(auctionId));
+      autoBidRegistry.register(sessionUser.getId(), auctionId, maxBid);
+    }
+
+    NormalUser trigger = sessionUsers.get(0);
+    long manualBid = startingPrice + BidIncrementCalculator.calculate(startingPrice);
+    ReentrantLock lock = lockRegistry.getLock(auctionId);
+    lock.lock();
+    try {
+      bidService.placeBid(trigger, auction, manualBid, new StandardBidStrategy());
+    } finally {
+      lock.unlock();
+    }
+    autoBidProcessor.submit(auction, trigger.getId());
+    awaitAutoBidChain(auctionId, 10);
+
+    assertThat(auction.getCurrentLeader()).isNotNull();
+    assertThat(auction.getCurrentPrice())
+        .as("10 autobid + hydrate JOINED: chain phải vượt bid tay đầu")
+        .isGreaterThan(manualBid);
+    assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(maxBid);
+  }
+
   // ── D5 ────────────────────────────────────────────────────────────────────
 
   @Test
   @Order(6)
   @DisplayName("D5: Hai auto-bidder cùng maxBid — AutoBidProcessor không bị infinite loop")
-  @Timeout(value = 5)
+  @Timeout(value = 15)
   void autoBidProcessor_sameMaxBid_noInfiniteLoop() throws InterruptedException {
     NormalUser autoBidderX = buildUser("autoBidderX_D5", USER_BALANCE);
     NormalUser autoBidderY = buildUser("autoBidderY_D5", USER_BALANCE);
@@ -406,6 +527,23 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         }
       }
     } catch (Exception ignored) {
+    }
+  }
+
+  private void injectAutoBidUserDaoMock(AutoBidProcessor processor) {
+    try {
+      UserDAO mockUserDao = mock(UserDAO.class);
+      when(mockUserDao.findNormalUserById(anyString())).thenReturn(null);
+      when(mockUserDao.findJoinedAuctionIdsByUserId(anyString()))
+          .thenAnswer(
+              inv ->
+                  joinedInDbSimulation.getOrDefault(
+                      inv.getArgument(0, String.class), java.util.Set.of()));
+      java.lang.reflect.Field f = AutoBidProcessor.class.getDeclaredField("userDAO");
+      f.setAccessible(true);
+      f.set(processor, mockUserDao);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

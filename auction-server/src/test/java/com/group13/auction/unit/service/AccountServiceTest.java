@@ -74,6 +74,8 @@ class AccountServiceTest {
   void deposit_increasesBalanceAndPersists() {
     NormalUser user = TestFixture.bidderWithBalance("depUser", 500_000L);
     when(ratingService.isWalletOperationAllowed(user)).thenReturn(true);
+    when(userDAO.findUserCoreByUsername("depUser"))
+        .thenReturn(TestFixture.bidderWithBalance("depUser", 800_000L));
     sut.deposit(user, 300_000L);
     assertEquals(800_000L, user.getBalance());
     verify(userDAO).addBalance(user.getId(), 300_000L);

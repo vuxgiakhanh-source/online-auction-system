@@ -246,10 +246,7 @@ class UserServiceTest {
             "staff@test.com",
             Admin.LEVEL_STAFF,
             LocalDateTime.now());
-    NormalUser shadowUser = normalBidder("staffadmin", "otherPass", AccountStatus.ACTIVE, 3.0);
-
     when(adminDAO.findByUsername("staffadmin")).thenReturn(Optional.of(row));
-    when(userDAO.findUserCoreByUsername("staffadmin")).thenReturn(shadowUser);
 
     User result = sut.login("staffadmin", rawPassword);
 

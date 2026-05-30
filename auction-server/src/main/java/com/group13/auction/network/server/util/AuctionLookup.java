@@ -26,8 +26,11 @@ public final class AuctionLookup {
     Auction fromDb = new AuctionDAO().findAuctionById(auctionId);
     if (fromDb != null) {
       manager.registerAuction(fromDb);
+      // putIfAbsent có thể bỏ qua fromDb nếu phiên đã có trong RAM — luôn trả canonical instance.
+      Auction canonical = manager.findAuctionById(auctionId);
+      return canonical != null ? canonical : fromDb;
     }
-    return fromDb;
+    return null;
   }
 
   /** Cho phép join / watch / đặt giá — chỉ khi phiên còn {@code OPEN} hoặc {@code RUNNING}. */

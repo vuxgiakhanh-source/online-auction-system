@@ -106,9 +106,9 @@ class AutoBidProcessorTest {
     bidderA = TestFixture.bidderWithBalance("bidderAUser", 10_000_000L);
     bidderB = TestFixture.bidderWithBalance("bidderBUser", 10_000_000L);
 
-    // Đưa user vào AuctionManager in-memory để findNormalUserById tìm thấy
-    AuctionManager.getInstance().addToUserList(bidderA);
-    AuctionManager.getInstance().addToUserList(bidderB);
+    // Đưa user vào AuctionManager in-memory (refreshUser để không giữ bản cũ từ test trước)
+    AuctionManager.getInstance().refreshUser(bidderA);
+    AuctionManager.getInstance().refreshUser(bidderB);
 
     // Auction đang chạy với giá khởi điểm tier thấp
     runningAuction = TestFixture.runningAuction(seller, STARTING_PRICE);
@@ -194,6 +194,36 @@ class AutoBidProcessorTest {
     doThrow(ex).when(bidService).placeBid(any(), eq(auction), anyLong(), any());
   }
 
+  /** AutoBidProcessor chạy async — chờ chain idle trước khi assert. */
+  private void submitAndAwait(Auction auction, String triggeredByUserId) {
+    sut.submit(auction, triggeredByUserId);
+    try {
+      awaitAutoBidChain(auction.getId());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void awaitAutoBidChain(String auctionId) throws Exception {
+    Field f = AutoBidProcessor.class.getDeclaredField("chainRunning");
+    f.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicBoolean>
+        runningMap =
+            (java.util.concurrent.ConcurrentHashMap<
+                    String, java.util.concurrent.atomic.AtomicBoolean>)
+                f.get(null);
+    long deadline = System.currentTimeMillis() + 5_000L;
+    Thread.sleep(20);
+    while (System.currentTimeMillis() < deadline) {
+      java.util.concurrent.atomic.AtomicBoolean flag = runningMap.get(auctionId);
+      if (flag == null || !flag.get()) {
+        return;
+      }
+      Thread.sleep(30);
+    }
+  }
+
   // =========================================================================
   // 1. No auto-bidder registered
   // =========================================================================
@@ -208,7 +238,7 @@ class AutoBidProcessorTest {
       // Arrange: không register auto-bid nào
 
       // Act
-      sut.submit(runningAuction, bidderA.getId());
+      submitAndAwait(runningAuction, bidderA.getId());
 
       // Assert
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
@@ -220,7 +250,7 @@ class AutoBidProcessorTest {
       // Arrange: registry trống
 
       // Act
-      sut.submit(runningAuction, bidderA.getId());
+      submitAndAwait(runningAuction, bidderA.getId());
 
       // Assert
       verify(sessionManager, never()).sendToUser(anyString(), any());
@@ -231,7 +261,7 @@ class AutoBidProcessorTest {
     @DisplayName("process() không ném exception khi registry trống")
     void process_emptyRegistry_doesNotThrow() {
       // Act & Assert
-      assertDoesNotThrow(() -> sut.submit(runningAuction, bidderA.getId()));
+      assertDoesNotThrow(() -> submitAndAwait(runningAuction, bidderA.getId()));
     }
   }
 
@@ -252,7 +282,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
@@ -267,7 +297,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       verify(bidService).placeBid(eq(bidderA), eq(runningAuction), eq(expectedNextBid), any());
@@ -282,7 +312,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertEquals(bidderA, runningAuction.getCurrentLeader());
@@ -296,7 +326,7 @@ class AutoBidProcessorTest {
       registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
 
       // Act
-      sut.submit(runningAuction, bidderA.getId());
+      submitAndAwait(runningAuction, bidderA.getId());
 
       // Assert: không gọi bidService vì bidderA đã dẫn đầu
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
@@ -319,7 +349,7 @@ class AutoBidProcessorTest {
       registry.register(bidderA.getId(), runningAuction.getId(), insufficientMax);
 
       // Act
-      sut.submit(runningAuction, bidderB.getId());
+      submitAndAwait(runningAuction, bidderB.getId());
 
       // Assert
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
@@ -334,7 +364,7 @@ class AutoBidProcessorTest {
       stubPlaceBidThrows(runningAuction, new RuntimeException("maxBid exceeded"));
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
@@ -350,7 +380,7 @@ class AutoBidProcessorTest {
       runningAuction.updateBid(priceAboveMaxA, bidderB);
 
       // Act
-      sut.submit(runningAuction, bidderB.getId());
+      submitAndAwait(runningAuction, bidderB.getId());
 
       // Assert
       verify(sessionManager).sendToUser(eq(bidderA.getId()), any());
@@ -366,7 +396,7 @@ class AutoBidProcessorTest {
       runningAuction.updateBid(priceAboveMaxA, bidderB);
 
       // Act
-      sut.submit(runningAuction, bidderB.getId());
+      submitAndAwait(runningAuction, bidderB.getId());
 
       // Assert
       assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
@@ -392,7 +422,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertEquals(
@@ -410,7 +440,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
@@ -427,7 +457,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
@@ -444,7 +474,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertTrue(runningAuction.getCurrentPrice() >= maxBidB, "Giá cuối phải vượt maxBidB");
@@ -475,7 +505,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert: bidderA (đăng ký sớm hơn) dẫn đầu
       assertEquals(
@@ -498,7 +528,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertEquals(
@@ -516,7 +546,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act & Assert: không infinite loop
-      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+      assertDoesNotThrow(() -> submitAndAwait(runningAuction, seller.getId()));
     }
 
     /**
@@ -563,7 +593,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+      assertDoesNotThrow(() -> submitAndAwait(runningAuction, seller.getId()));
 
       // Assert
       assertEquals(bidderA, runningAuction.getCurrentLeader());
@@ -580,7 +610,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert: 2 auto-bidder → maxIterations = 2*2+2 = 6, số counter thực tế << 6
       verify(bidService, atMost(20)).placeBid(any(), eq(runningAuction), anyLong(), any());
@@ -597,7 +627,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertTrue(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
@@ -622,7 +652,7 @@ class AutoBidProcessorTest {
       when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       assertFalse(registry.hasActiveBid(ghostUserId, runningAuction.getId()));
@@ -637,7 +667,7 @@ class AutoBidProcessorTest {
       when(userDAO.findNormalUserById(ghostUserId)).thenReturn(null);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
@@ -656,7 +686,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert: bidderA vẫn counter dù ghost user bị skip
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
@@ -682,7 +712,7 @@ class AutoBidProcessorTest {
           .placeBid(any(), eq(runningAuction), anyLong(), any());
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert: entry KHÔNG bị xóa — đây là lỗi tạm thời do race, không phải lỗi nghiêm trọng
       assertTrue(
@@ -702,7 +732,7 @@ class AutoBidProcessorTest {
           .placeBid(any(), eq(runningAuction), anyLong(), any());
 
       // Act — không ném exception
-      assertDoesNotThrow(() -> sut.submit(runningAuction, seller.getId()));
+      assertDoesNotThrow(() -> submitAndAwait(runningAuction, seller.getId()));
 
       // Assert: bidService chỉ được gọi đúng 1 lần (loop break ngay sau AuctionClosed)
       verify(bidService, times(1)).placeBid(any(), any(), anyLong(), any());
@@ -717,7 +747,7 @@ class AutoBidProcessorTest {
           .when(bidService)
           .placeBid(any(), eq(runningAuction), anyLong(), any());
 
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
     }
@@ -754,7 +784,7 @@ class AutoBidProcessorTest {
       bidderA.addJoinedAuction(finishedAuction.getId());
 
       // Act
-      sut.submit(finishedAuction, seller.getId());
+      submitAndAwait(finishedAuction, seller.getId());
 
       // Assert
       assertFalse(registry.hasActiveBid(bidderA.getId(), finishedAuction.getId()));
@@ -777,7 +807,7 @@ class AutoBidProcessorTest {
           .placeBid(any(), eq(canceledAuction), anyLong(), any());
 
       // Act & Assert
-      assertDoesNotThrow(() -> sut.submit(canceledAuction, seller.getId()));
+      assertDoesNotThrow(() -> submitAndAwait(canceledAuction, seller.getId()));
     }
   }
 
@@ -797,10 +827,48 @@ class AutoBidProcessorTest {
       registry.register(bidderA.getId(), runningAuction.getId(), 5_000_000L);
 
       // Act
-      sut.submit(runningAuction, bidderA.getId());
+      submitAndAwait(runningAuction, bidderA.getId());
 
       // Assert: bidderA là leader → bị skip → không gọi bidService
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName(
+        "manager user thiếu JOINED trong RAM — hydrate từ DB rồi counter (lỗi production)")
+    void process_managerUserMissingJoinedInRam_hydratesAndCounters() throws Exception {
+      String auctionId = runningAuction.getId();
+      long maxBid = STARTING_PRICE + INCREMENT_LOW * 10;
+
+      NormalUser staleInManager =
+          NormalUser.reconstitute(
+              bidderA.getId(),
+              bidderA.getCreatedAt(),
+              bidderA.getUpdatedAt(),
+              bidderA.getUsername(),
+              "hash",
+              bidderA.getEmail(),
+              com.group13.auction.model.user.User.AccountStatus.ACTIVE,
+              3.0,
+              10_000_000L,
+              0L,
+              java.util.EnumSet.of(com.group13.auction.model.user.User.UserRole.BIDDER),
+              false,
+              0,
+              null);
+      AuctionManager.getInstance().refreshUser(staleInManager);
+
+      when(userDAO.findJoinedAuctionIdsByUserId(bidderA.getId()))
+          .thenReturn(java.util.Set.of(auctionId));
+
+      runningAuction.updateBid(STARTING_PRICE + INCREMENT_LOW, bidderB);
+      registry.register(bidderA.getId(), auctionId, maxBid);
+      stubPlaceBidWithSideEffect(runningAuction);
+
+      submitAndAwait(runningAuction, bidderB.getId());
+
+      verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
+      assertTrue(staleInManager.hasJoined(auctionId));
     }
 
     @Test
@@ -813,7 +881,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, bidderB.getId());
+      submitAndAwait(runningAuction, bidderB.getId());
 
       // Assert: bidderA counter
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
@@ -837,7 +905,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert — chỉ broadcast BID_UPDATE, không push TRIGGERED tới user
       verify(sessionManager, never())
@@ -860,7 +928,7 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       verify(sessionManager, atLeastOnce()).broadcastToAuctionAsync(eq(auctionId), any());
@@ -872,7 +940,7 @@ class AutoBidProcessorTest {
       // Arrange: không ai đăng ký auto-bid
 
       // Act
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
 
       // Assert
       verify(sessionManager, never()).broadcastToAuction(anyString(), any());
@@ -898,11 +966,11 @@ class AutoBidProcessorTest {
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act: lần 1
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
       NormalUser leaderAfterFirst = runningAuction.getCurrentLeader();
 
       // Act: lần 2 (bidderA đang dẫn đầu, bidderB đã bị loại)
-      sut.submit(runningAuction, seller.getId());
+      submitAndAwait(runningAuction, seller.getId());
       NormalUser leaderAfterSecond = runningAuction.getCurrentLeader();
 
       // Assert: leader không thay đổi
