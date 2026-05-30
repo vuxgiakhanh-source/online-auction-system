@@ -67,7 +67,8 @@
                         text="Hồ sơ"/>
 
                 <StackPane styleClass="notification-button-stack">
-                    <Button mnemonicParsing="false"
+                    <Button fx:id="notificationButton"
+                            mnemonicParsing="false"
                             onAction="#handleOpenNotificationCenter"
                             styleClass="main-header-button"
                             text="Thông báo"/>
