@@ -19,6 +19,9 @@ import javafx.scene.layout.VBox;
 /** Controller cho dashboard chính sau khi người dùng đăng nhập hoặc đăng ký. */
 public final class MainLayoutController {
 
+  private static final String NOTIFICATION_BUTTON_UNREAD_CLASS =
+      "main-header-notification-button-unread";
+
   @FXML private Label welcomeLabel;
 
   @FXML private Label accountInfoLabel;
@@ -32,6 +35,8 @@ public final class MainLayoutController {
   @FXML private VBox adminDashboardCard;
 
   @FXML private Button adminDashboardButton;
+
+  @FXML private Button notificationButton;
 
   @FXML private Label notificationBadgeLabel;
 
@@ -47,7 +52,7 @@ public final class MainLayoutController {
     secondChanceRealtimeService.start();
     updateAudioButtons();
 
-    hideNotificationBadge();
+    setNotificationButtonHasUnread(false);
 
     AppContext.getInstance()
         .getSessionManager()
@@ -198,6 +203,7 @@ public final class MainLayoutController {
 
     notificationBadgeLabel.setText(unreadCount > 9 ? "9+" : Long.toString(unreadCount));
     notificationBadgeLabel.setVisible(true);
+    setNotificationButtonHasUnread(true);
   }
 
   private void hideNotificationBadge() {
@@ -206,6 +212,22 @@ public final class MainLayoutController {
     }
 
     notificationBadgeLabel.setVisible(false);
+    setNotificationButtonHasUnread(false);
+  }
+
+  private void setNotificationButtonHasUnread(boolean hasUnread) {
+    if (notificationButton == null) {
+      return;
+    }
+
+    if (hasUnread) {
+      if (!notificationButton.getStyleClass().contains(NOTIFICATION_BUTTON_UNREAD_CLASS)) {
+        notificationButton.getStyleClass().add(NOTIFICATION_BUTTON_UNREAD_CLASS);
+      }
+      return;
+    }
+
+    notificationButton.getStyleClass().remove(NOTIFICATION_BUTTON_UNREAD_CLASS);
   }
 
   private void updateSellerAccess(boolean seller) {

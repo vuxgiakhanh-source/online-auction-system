@@ -144,6 +144,23 @@
     -fx-text-fill: #ffffff;
 }
 
+/* Nút Thông báo khi còn thông báo chưa đọc */
+.main-header-notification-button-unread {
+    -fx-background-color: #e53935;
+    -fx-border-color: rgba(255, 210, 210, 0.72);
+    -fx-border-width: 1.5;
+    -fx-text-fill: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(229, 57, 53, 0.5), 12, 0, 0, 2);
+}
+
+.main-header-notification-button-unread:hover {
+    -fx-background-color: #ef5350;
+}
+
+.main-header-notification-button-unread:pressed {
+    -fx-background-color: #c62828;
+}
+
 .main-header-button:hover,
 .main-header-danger-button:hover {
     -fx-opacity: 0.92;
