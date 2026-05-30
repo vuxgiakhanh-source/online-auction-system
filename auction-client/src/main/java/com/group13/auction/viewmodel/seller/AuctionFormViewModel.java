@@ -91,6 +91,14 @@ public final class AuctionFormViewModel {
     if (endTime == null) {
       throw new IllegalArgumentException("Thời gian kết thúc không được để trống.");
     }
+    LocalDateTime now = LocalDateTime.now();
+    if (startTime.isBefore(now)) {
+      throw new IllegalArgumentException(
+          "Thời gian bắt đầu phải bằng hoặc sau thời điểm hiện tại.");
+    }
+    if (!endTime.isAfter(now)) {
+      throw new IllegalArgumentException("Thời gian kết thúc phải sau thời điểm hiện tại.");
+    }
     if (!endTime.isAfter(startTime)) {
       throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu.");
     }

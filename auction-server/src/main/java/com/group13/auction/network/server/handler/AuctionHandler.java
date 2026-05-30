@@ -364,17 +364,6 @@ public class AuctionHandler implements PacketHandler {
 
       if (req.getNewEndTime() != null) {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        if (!req.getNewEndTime().isAfter(auction.getStartTime())) {
-          session.send(
-              Packet.of(
-                  PacketType.UPDATE_AUCTION_FAILED,
-                  ErrorDTO.of(
-                      ErrorDTO.VALIDATION_ERROR,
-                      "Thời gian kết thúc mới phải sau thời gian bắt đầu.",
-                      requestId),
-                  requestId));
-          return;
-        }
         if (!req.getNewEndTime().isAfter(now)) {
           session.send(
               Packet.of(
@@ -382,6 +371,17 @@ public class AuctionHandler implements PacketHandler {
                   ErrorDTO.of(
                       ErrorDTO.VALIDATION_ERROR,
                       "Thời gian kết thúc mới phải sau thời điểm hiện tại của server.",
+                      requestId),
+                  requestId));
+          return;
+        }
+        if (!req.getNewEndTime().isAfter(auction.getStartTime())) {
+          session.send(
+              Packet.of(
+                  PacketType.UPDATE_AUCTION_FAILED,
+                  ErrorDTO.of(
+                      ErrorDTO.VALIDATION_ERROR,
+                      "Thời gian kết thúc mới phải sau thời gian bắt đầu.",
                       requestId),
                   requestId));
           return;

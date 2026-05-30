@@ -3,6 +3,7 @@ package com.group13.auction.mapper;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.util.CurrencyUtil;
+import com.group13.auction.util.NumberDisplayUtil;
 import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import com.group13.auction.viewmodel.seller.SellerAuctionRowViewModel;
@@ -133,12 +134,12 @@ public final class SellerAuctionViewModelMapper {
       }
       case "ART" -> {
         addTextSpecification(specifications, "Nghệ sĩ", fields.get("artist"));
-        addNumberSpecification(specifications, "Năm sáng tác", fields.get("yearCreated"), "");
+        addPlainIntegerSpecification(specifications, "Năm sáng tác", fields.get("yearCreated"), "");
         addTextSpecification(specifications, "Chất liệu", fields.get("medium"));
       }
       case "VEHICLE" -> {
         addTextSpecification(specifications, "Nhà sản xuất", fields.get("manufacturer"));
-        addNumberSpecification(specifications, "Năm sản xuất", fields.get("year"), "");
+        addPlainIntegerSpecification(specifications, "Năm sản xuất", fields.get("year"), "");
         addNumberSpecification(specifications, "Số km đã đi", fields.get("mileage"), " km");
       }
       default -> { }
@@ -183,7 +184,19 @@ public final class SellerAuctionViewModelMapper {
       String label,
       Object value,
       String suffix) {
-    String numberText = numberToText(value);
+    String numberText = NumberDisplayUtil.formatGroupedNumber(value);
+    if (hasText(numberText)) {
+      specifications.add(
+          new ProductSpecificationViewModel(label, numberText + (suffix == null ? "" : suffix)));
+    }
+  }
+
+  private static void addPlainIntegerSpecification(
+      List<ProductSpecificationViewModel> specifications,
+      String label,
+      Object value,
+      String suffix) {
+    String numberText = NumberDisplayUtil.formatPlainInteger(value);
     if (hasText(numberText)) {
       specifications.add(
           new ProductSpecificationViewModel(label, numberText + (suffix == null ? "" : suffix)));
@@ -197,36 +210,6 @@ public final class SellerAuctionViewModelMapper {
 
     String text = String.valueOf(value).trim();
     return "null".equalsIgnoreCase(text) ? "" : text;
-  }
-
-  private static String numberToText(Object value) {
-    if (value == null) {
-      return "";
-    }
-
-    if (value instanceof Number number) {
-      long longValue = number.longValue();
-      if (Math.abs(number.doubleValue() - longValue) < 0.000_001D) {
-        return String.format("%,d", longValue);
-      }
-      return String.format("%,.2f", number.doubleValue());
-    }
-
-    String text = objectToText(value);
-    if (!hasText(text)) {
-      return "";
-    }
-
-    try {
-      double number = Double.parseDouble(text);
-      long longValue = (long) number;
-      if (Math.abs(number - longValue) < 0.000_001D) {
-        return String.format("%,d", longValue);
-      }
-      return String.format("%,.2f", number);
-    } catch (NumberFormatException exception) {
-      return text;
-    }
   }
 
   private static String humanReadableKey(String key) {

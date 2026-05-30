@@ -99,12 +99,12 @@ class AuctionServiceTest {
     @Test
     void startTimeInPast_throws() {
       when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
-      LocalDateTime start = LocalDateTime.now().minusMinutes(5);
+      LocalDateTime start = LocalDateTime.now().minusMinutes(1);
       LocalDateTime end = LocalDateTime.now().plusHours(2);
 
       assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("startTime");
+          .hasMessageContaining("Thời gian bắt đầu");
       verify(auctionDAO, never()).createAuction(any());
     }
 
@@ -116,6 +116,18 @@ class AuctionServiceTest {
 
       assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
           .isInstanceOf(IllegalArgumentException.class);
+      verify(auctionDAO, never()).createAuction(any());
+    }
+
+    @Test
+    void endTimeNotAfterNow_throws() {
+      when(ratingService.canSellerCreateAuction(seller)).thenReturn(true);
+      LocalDateTime start = LocalDateTime.now();
+      LocalDateTime end = LocalDateTime.now();
+
+      assertThatThrownBy(() -> sut.createAuction(seller, item, start, end, 2_000_000L))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Thời gian kết thúc");
       verify(auctionDAO, never()).createAuction(any());
     }
   }

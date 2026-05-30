@@ -96,7 +96,8 @@ public class AuctionService implements IAuctionService {
    * @param reservePrice giá sàn bí mật của Seller (>0)
    * @return Auction mới ở trạng thái OPEN
    * @throws IllegalStateException nếu seller không đủ điều kiện
-   * @throws IllegalArgumentException nếu endTime trước startTime hoặc thiếu role SELLER
+   * @throws IllegalArgumentException nếu thời gian không hợp lệ, endTime trước startTime hoặc thiếu
+   *     role SELLER
    */
   @Override
   public Auction createAuction(
@@ -113,6 +114,14 @@ public class AuctionService implements IAuctionService {
     if (!ratingService.canSellerCreateAuction(seller)) {
       throw new IllegalStateException(
           "Seller không đủ điều kiện tạo auction (rating < 2.0 hoặc bị ban).");
+    }
+    LocalDateTime now = LocalDateTime.now();
+    if (startTime.isBefore(now)) {
+      throw new IllegalArgumentException(
+          "Thời gian bắt đầu phải bằng hoặc sau thời điểm hiện tại.");
+    }
+    if (!endTime.isAfter(now)) {
+      throw new IllegalArgumentException("Thời gian kết thúc phải sau thời điểm hiện tại.");
     }
     if (!endTime.isAfter(startTime)) {
       throw new IllegalArgumentException("endTime phải sau startTime.");
