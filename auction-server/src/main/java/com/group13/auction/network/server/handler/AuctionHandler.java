@@ -386,6 +386,17 @@ public class AuctionHandler implements PacketHandler {
                   requestId));
           return;
         }
+        if (!req.getNewEndTime().isAfter(auction.getEndTime())) {
+          session.send(
+              Packet.of(
+                  PacketType.UPDATE_AUCTION_FAILED,
+                  ErrorDTO.of(
+                      ErrorDTO.VALIDATION_ERROR,
+                      "Thời gian kết thúc mới phải sau thời gian kết thúc hiện tại.",
+                      requestId),
+                  requestId));
+          return;
+        }
         auction.extendEndTime(
             java.time.Duration.between(auction.getEndTime(), req.getNewEndTime()));
         auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());

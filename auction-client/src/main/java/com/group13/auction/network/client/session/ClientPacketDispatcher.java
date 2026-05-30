@@ -425,7 +425,9 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             // Map về onAuctionEnded vì cả 2 đều mang AuctionUpdateDTO với winner mới.
             case SECOND_CHANCE_ACCEPTED_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
-                listeners.forEach(l -> l.onAuctionEnded(update));
+                if (shouldDispatchLifecycle(PacketType.AUCTION_ENDED_UPDATE, update)) {
+                    listeners.forEach(l -> l.onAuctionEnded(update));
+                }
             }
             case SECOND_CHANCE_ACCEPT_FAILED -> {
                 var err = PacketCodec.fromElement(payload, ErrorDTO.class);
