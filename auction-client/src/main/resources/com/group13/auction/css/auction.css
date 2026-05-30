@@ -261,6 +261,7 @@
     -fx-font-size: 22px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .auction-status-badge {
@@ -381,12 +382,15 @@
     -fx-font-size: 32px;
     -fx-font-weight: 900;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .auction-current-price {
     -fx-font-size: 34px;
     -fx-font-weight: 900;
     -fx-text-fill: #67b8ea;
+    -fx-wrap-text: true;
+    -fx-text-alignment: right;
 }
 
 .auction-description-text {

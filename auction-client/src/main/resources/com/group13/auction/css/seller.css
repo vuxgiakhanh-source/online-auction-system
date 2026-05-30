@@ -16,6 +16,7 @@
     -fx-font-size: 23px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
+    -fx-wrap-text: true;
 }
 
 .seller-muted-text {
