@@ -1,5 +1,6 @@
 package com.group13.auction.bank;
 
+import com.group13.auction.dao.SystemBankDAO;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,21 +8,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Ngân hàng hệ thống — nơi lưu thuế và trung gian chuyển tiền.
  *
- * <p>Singleton. Mọi giao dịch tài chính đều đi qua SystemBank:
- *
- * <ol>
- *   <li>Winner -> SystemBank (trả tiền)
- *   <li>SystemBank -> Seller (sau khi trừ thuế)
- *   <li>Thuế ở lại SystemBank
- * </ol>
- *
- * <p>Thuế suất theo giá bán:
- *
- * <ul>
- *   <li>Dưới 1000000: 5%
- *   <li>Từ 1000000 đến 10000000: 3%
- *   <li>Trên 10000000: 2%
- * </ul>
+ * <p>Singleton. Số dư được giữ trong RAM và đồng bộ xuống bảng {@code system_bank} sau mỗi thao
+ * tác. Khi server khởi động, gọi {@link #loadFromDatabase()} để khôi phục số dư sau restart.
  */
 public class SystemBank {
 
@@ -34,8 +22,11 @@ public class SystemBank {
   private static final double TAX_RATE_MID = 0.03;
   private static final double TAX_RATE_HIGH = 0.02;
 
-  /** Số dư tổng trong ngân hàng hệ thống (tiền thuế tích lũy + cọc bị tịch thu). */
   private final AtomicLong totalBalance = new AtomicLong(0L);
+  private final SystemBankDAO systemBankDAO = new SystemBankDAO();
+
+  /** Tắt khi unit test không có DB; mặc định bật trong production. */
+  private volatile boolean dbPersistenceEnabled = true;
 
   private SystemBank() {}
 
@@ -43,14 +34,19 @@ public class SystemBank {
     return INSTANCE;
   }
 
-  // Tax calculation
+  /** Chỉ dùng trong test để tránh ghi DB. */
+  public void setDbPersistenceEnabled(boolean enabled) {
+    this.dbPersistenceEnabled = enabled;
+  }
 
-  /**
-   * Tính thuế theo giá bán.
-   *
-   * @param salePrice giá bán cuối cùng
-   * @return số tiền thuế
-   */
+  /** Khôi phục số dư từ DB — gọi từ {@link com.group13.auction.ServerMain} sau khi DB sẵn sàng. */
+  public synchronized void loadFromDatabase() {
+    systemBankDAO.ensureRowExists();
+    long fromDb = systemBankDAO.loadTotalBalance();
+    totalBalance.set(fromDb);
+    log.info("SystemBank loaded from database: totalBalance={}", fromDb);
+  }
+
   public long calculateTax(long salePrice) {
     double rate;
     if (salePrice < PRICE_TIER_LOW) {
@@ -63,34 +59,16 @@ public class SystemBank {
     return Math.round(salePrice * rate);
   }
 
-  /**
-   * Tính số tiền seller nhận sau khi trừ thuế.
-   *
-   * @param salePrice giá bán cuối cùng
-   * @return tiền seller nhận
-   */
   public long calculateSellerPayout(long salePrice) {
     return salePrice - calculateTax(salePrice);
   }
 
-  // Bank operations
-
-  /**
-   * Tiếp nhận tiền từ winner (phần còn lại sau cọc). Ghi nhận vào tổng balance của bank.
-   *
-   * @param amount số tiền nhận
-   */
   public synchronized void receive(long amount) {
     long current = totalBalance.addAndGet(amount);
     log.info("Bank.receive: amount={}, totalBalance={}", amount, current);
+    persistBalance(current);
   }
 
-  /**
-   * Chuyển tiền cho seller sau khi trừ thuế. Giảm balance của bank (phần thuế ở lại bank).
-   *
-   * @param salePrice giá bán cuối cùng
-   * @return số tiền chuyển cho seller
-   */
   public synchronized long payoutToSeller(long salePrice) {
     long tax = calculateTax(salePrice);
     long payout = salePrice - tax;
@@ -101,32 +79,40 @@ public class SystemBank {
         tax,
         payout,
         current);
+    persistBalance(current);
     return payout;
   }
 
-  /**
-   * Hoàn tiền cho winner (khi seller vi phạm chất lượng).
-   *
-   * @param amount số tiền hoàn trả
-   */
   public synchronized void refundToWinner(long amount) {
     long current = totalBalance.addAndGet(-amount);
     log.info("Bank.refundToWinner: amount={}, totalBalance={}", amount, current);
+    persistBalance(current);
   }
 
-  /**
-   * Tiếp nhận tiền cọc bị tịch thu từ winner không thanh toán. Cọc này được cộng thẳng vào balance
-   * của bank.
-   *
-   * @param depositAmount số tiền cọc bị tịch thu
-   */
   public synchronized void receiveForfeittedDeposit(long depositAmount) {
-    long current = totalBalance.addAndGet(+depositAmount);
+    long current = totalBalance.addAndGet(depositAmount);
     log.warn(
         "Bank.receiveForfeittedDeposit: depositAmount={}, totalBalance={}", depositAmount, current);
+    persistBalance(current);
   }
 
+  /** Số dư hiện tại (RAM, đã đồng bộ DB sau mỗi mutation nếu persistence bật). */
   public long getTotalBalance() {
     return totalBalance.get();
+  }
+
+  /** Đọc trực tiếp từ DB — dùng đối soát / admin, không thay thế hot path. */
+  public long getTotalBalanceFromDatabase() {
+    return systemBankDAO.loadTotalBalance();
+  }
+
+  private void persistBalance(long current) {
+    if (!dbPersistenceEnabled) {
+      return;
+    }
+    if (!systemBankDAO.saveTotalBalance(current)) {
+      throw new IllegalStateException(
+          "Không thể persist SystemBank balance xuống DB: totalBalance=" + current);
+    }
   }
 }

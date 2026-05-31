@@ -230,7 +230,14 @@ CREATE TABLE IF NOT EXISTS auto_bids (
     FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
 );
 
--- 14. Notifications
+-- 14. System bank (escrow + thuế — singleton)
+CREATE TABLE IF NOT EXISTS system_bank (
+    id             VARCHAR(36) PRIMARY KEY,
+    total_balance  BIGINT      NOT NULL DEFAULT 0,
+    updated_at     TIMESTAMP   DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 15. Notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id                VARCHAR(36)  PRIMARY KEY,
     user_id           VARCHAR(36)  NOT NULL,

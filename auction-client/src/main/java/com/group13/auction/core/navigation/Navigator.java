@@ -1,6 +1,7 @@
 package com.group13.auction.core.navigation;
 
 import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import java.util.Objects;
 import java.util.Optional;
@@ -97,7 +98,7 @@ public final class Navigator {
     }
 
     if (AppContext.getInstance().getSessionManager().isLoggedIn()) {
-      goToMainLayout();
+      goToHomeForCurrentSession();
     } else {
       goToLanding();
     }
@@ -130,6 +131,23 @@ public final class Navigator {
   /** Chuyển tới trang chủ/layout chính. */
   public void goToMainLayout() {
     goTo(Route.MAIN_LAYOUT);
+  }
+
+  public void goToHomeForCurrentSession() {
+    AppContext.getInstance()
+        .getSessionManager()
+        .getCurrentSession()
+        .ifPresentOrElse(this::goToHomeForSession, this::goToLanding);
+  }
+
+  public void goToHomeForSession(UserSession session) {
+    Objects.requireNonNull(session, "session must not be null");
+    if (session.isAdmin()) {
+      goToAdminDashboard();
+      return;
+    }
+
+    goToMainLayout();
   }
 
   /** Chuyển tới danh sách phiên đấu giá. */

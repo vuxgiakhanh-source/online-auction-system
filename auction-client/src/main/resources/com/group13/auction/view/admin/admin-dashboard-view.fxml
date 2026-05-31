@@ -39,25 +39,11 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button
-                    fx:id="backButton"
-                    text="Về trang chính"
+                    fx:id="logoutButton"
+                    text="Đăng xuất"
                     styleClass="secondary-button"
-                    onAction="#handleBackToMain"/>
+                    onAction="#handleLogout"/>
         </HBox>
-
-        <VBox spacing="10.0" styleClass="admin-info-panel">
-            <Label text="Tổng quan hệ thống" styleClass="section-title"/>
-            <Label
-                    fx:id="statisticsStatusLabel"
-                    text="API thống kê dashboard hiện chưa khả dụng."
-                    wrapText="true"
-                    styleClass="muted-label"/>
-            <Label
-                    fx:id="supportedModulesLabel"
-                    text="Các module được hỗ trợ"
-                    wrapText="true"
-                    styleClass="muted-label"/>
-        </VBox>
 
         <HBox spacing="18.0" styleClass="admin-card-row">
             <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">

@@ -76,7 +76,7 @@ public final class LoginController {
         () -> {
           setFormDisabled(false);
           AlertUtil.showInfo("Đăng nhập thành công. Xin chào " + session.getUsername() + "!");
-          Navigator.getInstance().goToMainLayout();
+          Navigator.getInstance().goToHomeForSession(session);
         });
   }
 
