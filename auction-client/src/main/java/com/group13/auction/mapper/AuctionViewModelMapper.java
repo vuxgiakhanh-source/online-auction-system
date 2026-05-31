@@ -123,6 +123,7 @@ public final class AuctionViewModelMapper {
         itemName(item),
         sellerName(item),
         CurrencyUtil.formatVnd(auction == null ? 0 : auction.getCurrentPrice()),
+        normalize(status),
         statusText(status),
         DateTimeUtil.formatDateTime(auction == null ? null : auction.getStartTime()),
         DateTimeUtil.formatDateTime(effectiveEndTime),

@@ -5,6 +5,7 @@ import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.navigation.Route;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.mapper.BidViewModelMapper;
@@ -178,6 +179,22 @@ public final class LiveBiddingController implements ClientEventListener {
 
     // Quay lại màn chi tiết không đồng nghĩa với hủy tham gia phiên.
     // Không gửi LEAVE_AUCTION ở đây vì server hiện xử lý packet đó như xóa JOINED.
+    navigateBackAfterLiveBidding();
+  }
+
+  private void navigateBackAfterLiveBidding() {
+    String returnRouteName =
+        AppContext.getInstance()
+            .getScreenStateStore()
+            .get(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE, String.class)
+            .orElse("");
+    AppContext.getInstance().getScreenStateStore().remove(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE);
+
+    if (Route.ADMIN_AUCTIONS.name().equals(returnRouteName)) {
+      Navigator.getInstance().goToAdminAuctions();
+      return;
+    }
+
     Navigator.getInstance().goToAuctionDetail();
   }
 
@@ -649,7 +666,9 @@ public final class LiveBiddingController implements ClientEventListener {
                 FxThreadUtil.runOnFxThread(
                     () -> {
                       renderAuctionDetail(detail);
-                      loadAutoBidStatus();
+                      if (!adminWatchOnly) {
+                        loadAutoBidStatus();
+                      }
                     }))
         .exceptionally(
             throwable -> {
