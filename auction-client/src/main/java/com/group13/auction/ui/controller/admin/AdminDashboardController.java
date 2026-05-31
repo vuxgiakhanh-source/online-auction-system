@@ -3,7 +3,6 @@ package com.group13.auction.ui.controller.admin;
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.admin.AdminModerationService;
 import com.group13.auction.service.auth.AuthService;
-import java.util.StringJoiner;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -12,8 +11,7 @@ import javafx.scene.layout.VBox;
 /**
  * Controller cho màn Admin Dashboard.
  *
- * <p>Màn này không fake dashboard statistics nếu backend chưa có API thống kê. Controller chỉ hiển
- * thị các module admin có backend support và điều hướng tới màn quản trị tương ứng.
+ * <p>Controller kiểm tra quyền Admin và điều hướng tới các màn quản trị tương ứng.
  */
 public final class AdminDashboardController {
 
@@ -22,8 +20,6 @@ public final class AdminDashboardController {
 
   @FXML private Label titleLabel;
   @FXML private Label accessStatusLabel;
-  @FXML private Label statisticsStatusLabel;
-  @FXML private Label supportedModulesLabel;
 
   @FXML private Button usersButton;
   @FXML private Button auctionsButton;
@@ -45,15 +41,6 @@ public final class AdminDashboardController {
 
     if (accessStatusLabel != null) {
       accessStatusLabel.setText(adminModerationService.getCurrentAdminAccessLabel());
-    }
-
-    if (statisticsStatusLabel != null) {
-      statisticsStatusLabel.setText(
-          "API dashboard statistics hiện chưa khả dụng. Có thể dùng các module quản trị bên dưới.");
-    }
-
-    if (supportedModulesLabel != null) {
-      supportedModulesLabel.setText(buildSupportedModulesText());
     }
 
     setAdminActionsEnabled(admin);
@@ -131,9 +118,4 @@ public final class AdminDashboardController {
     }
   }
 
-  private String buildSupportedModulesText() {
-    StringJoiner joiner = new StringJoiner("\n• ", "Module được hỗ trợ:\n• ", "");
-    adminModerationService.getSupportedAdminModules().forEach(joiner::add);
-    return joiner.toString();
-  }
 }

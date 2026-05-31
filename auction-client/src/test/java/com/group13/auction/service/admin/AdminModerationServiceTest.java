@@ -2,8 +2,6 @@ package com.group13.auction.service.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.group13.auction.core.context.AppContext;
@@ -85,51 +83,9 @@ class AdminModerationServiceTest {
   }
 
   @Test
-  void getSupportedAdminModulesShouldReturnBaseModulesForStaffAdmin() {
-    startStaffAdminSession();
+  void getAccessDeniedMessageShouldReturnStableCopy() {
     AdminModerationService service = new AdminModerationService();
 
-    assertIterableEquals(
-        List.of(
-            "User moderation",
-            "Auction moderation",
-            "Seller role approval",
-            "Quality report review"),
-        service.getSupportedAdminModules());
-  }
-
-  @Test
-  void getSupportedAdminModulesShouldIncludeStaffManagementForMasterAdmin() {
-    startMasterAdminSession();
-    AdminModerationService service = new AdminModerationService();
-
-    assertIterableEquals(
-        List.of(
-            "User moderation",
-            "Auction moderation",
-            "Seller role approval",
-            "Quality report review",
-            "Staff Admin management"),
-        service.getSupportedAdminModules());
-  }
-
-  @Test
-  void getSupportedAdminModulesShouldReturnImmutableList() {
-    startMasterAdminSession();
-    AdminModerationService service = new AdminModerationService();
-
-    List<String> modules = service.getSupportedAdminModules();
-
-    assertThrows(UnsupportedOperationException.class, () -> modules.add("Fake module"));
-  }
-
-  @Test
-  void dashboardMessagesShouldReturnStableCopy() {
-    AdminModerationService service = new AdminModerationService();
-
-    assertEquals(
-        "Dashboard statistics API is not available yet. Use the moderation cards below.",
-        service.getStatisticsUnavailableMessage());
     assertEquals(
         "You do not have permission to access the Admin area.", service.getAccessDeniedMessage());
   }
