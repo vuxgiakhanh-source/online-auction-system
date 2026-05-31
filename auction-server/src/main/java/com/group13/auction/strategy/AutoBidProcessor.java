@@ -352,13 +352,20 @@ public class AutoBidProcessor {
 
       NormalUser autoBidder = resolveUser(winner.getUserId(), auctionId);
       if (autoBidder == null) {
+        // BUG FIX: Không cancel registry khi resolveUser thất bại (có thể do DB tạm chậm,
+        // user chưa được load vào RAM, hoặc joinedAuctionIds chưa sync).
+        // Cancel vĩnh viễn khiến chain dừng sớm dù maxBid rất cao — đây là nguyên nhân
+        // chính khiến autobid chỉ chạy 1 bước khi 2 user có maxBid bằng nhau.
+        // Thay vì cancel → chỉ bỏ qua iteration này, cho chain cơ hội tự phục hồi.
         log.warn(
-            "[AutoBid] User not found, cancelling: userId={} auctionId={}",
+            "[AutoBid] User not resolved (skipping, NOT cancelling): userId={} auctionId={}",
             winner.getUserId(),
             auctionId);
-        registry.cancel(winner.getUserId(), auctionId);
         noProgressCount++;
         if (noProgressCount >= 3) {
+          log.warn(
+              "[AutoBid] Chain stopped — 3 consecutive resolve failures: auctionId={}",
+              auctionId);
           break;
         }
         continue;
@@ -383,6 +390,33 @@ public class AutoBidProcessor {
           "[AutoBid] Chain stopped — safety limit {} reached: auctionId={}",
           MAX_CHAIN_ITERATIONS,
           auctionId);
+
+      // BUG FIX: Nếu chain dừng do safety limit nhưng vẫn còn candidates hợp lệ
+      // (2 user cùng maxBid rất cao), không có gì trigger submit() lại vì
+      // không có bid thủ công nào từ bên ngoài.
+      // Giải pháp: dùng chainNeedsRecheck flag — cơ chế recheck đã có sẵn trong submit().
+      // Sau khi runChain() return, finally block của submit() sẽ thấy recheck=true
+      // và tự gọi submit() lại — không cần thread mới hay schedule.
+      final Auction auctionSnapshot = auction; // effectively final for lambda
+      AutoBidPhase phaseCheck = detectPhase(auctionSnapshot);
+      String leaderIdCheck = currentLeaderId(auctionSnapshot);
+      boolean stillHasCandidates =
+          registry.getEntriesForAuction(auctionId).stream()
+              .anyMatch(
+                  e ->
+                      !e.getUserId().equals(leaderIdCheck)
+                          && calcSmartBid(auctionSnapshot.getCurrentPrice(), e.getMaxBid(), phaseCheck) > 0);
+
+      if (stillHasCandidates) {
+        log.info(
+            "[AutoBid] Marking recheck after safety limit — candidates still exist: auctionId={}",
+            auctionId);
+        // Set recheck=true — cơ chế trong submit() sẽ tự chạy lại chain sau khi runChain() return.
+        // An toàn: không có deadlock, không cần thread mới.
+        chainNeedsRecheck
+            .computeIfAbsent(auctionId, k -> new java.util.concurrent.atomic.AtomicBoolean(false))
+            .set(true);
+      }
     }
 
     notifyExhaustedBidders(auction);
@@ -563,8 +597,10 @@ public class AutoBidProcessor {
       return baseNext;
     }
 
-    // Fallback 2 (chỉ LATE/VERY_HOT): dùng toàn bộ maxBid — tận dụng hết budget
-    if ((phase == AutoBidPhase.LATE || phase == AutoBidPhase.VERY_HOT) && maxBid > currentPrice) {
+    // Fallback 2 (chỉ LATE/VERY_HOT): dùng toàn bộ maxBid — tận dụng hết budget.
+    // BUG FIX: maxBid phải >= currentPrice + base (đáp ứng minimum increment),
+    // nếu không isValidBid() sẽ từ chối → retry 5 lần vô ích → return false → chain dừng sớm.
+    if ((phase == AutoBidPhase.LATE || phase == AutoBidPhase.VERY_HOT) && maxBid >= currentPrice + base) {
       return maxBid;
     }
 

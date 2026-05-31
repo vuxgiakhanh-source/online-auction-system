@@ -76,7 +76,7 @@ public class UserDAO {
     String userId = UUID.randomUUID().toString();
     String sql = "INSERT INTO users (id, username, password_hash, email) VALUES (?, ?, ?, ?)";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       pstmt.setString(2, username);
       pstmt.setString(3, passwordHash);
@@ -94,7 +94,7 @@ public class UserDAO {
     String sql =
         "SELECT id FROM users WHERE username = ? AND password_hash = ? AND status != 'DELETED'";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, username);
       pstmt.setString(2, passwordHash);
       try (ResultSet rs = pstmt.executeQuery()) {
@@ -111,7 +111,7 @@ public class UserDAO {
   public boolean updateAccountStatus(String userId, String status) {
     String sql = "UPDATE users SET status = ? WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, status);
       pstmt.setString(2, userId);
       return pstmt.executeUpdate() > 0;
@@ -124,7 +124,7 @@ public class UserDAO {
   public boolean addBalance(String userId, long amount) {
     String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setLong(1, amount);
       pstmt.setString(2, userId);
       return pstmt.executeUpdate() > 0;
@@ -149,7 +149,7 @@ public class UserDAO {
             + "    ELSE VALUES(activity_type) "
             + "  END";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       pstmt.setString(2, auctionId);
       pstmt.setString(3, activityType);
@@ -170,7 +170,7 @@ public class UserDAO {
             + "VALUES (?, ?, 'LEFT') "
             + "ON DUPLICATE KEY UPDATE activity_type = 'LEFT'";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       pstmt.setString(2, auctionId);
       pstmt.executeUpdate();
@@ -186,7 +186,7 @@ public class UserDAO {
   public NormalUser findNormalUserById(String userId) {
     String sql = "SELECT * FROM users WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       try (ResultSet rs = pstmt.executeQuery()) {
         if (rs.next()) {
@@ -243,7 +243,7 @@ public class UserDAO {
   public boolean updateRating(String userId, double rating) {
     String sql = "UPDATE users SET rating = ? WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setDouble(1, rating);
       pstmt.setString(2, userId);
       return pstmt.executeUpdate() > 0;
@@ -256,7 +256,7 @@ public class UserDAO {
   public boolean updateRatingAndPenalty(String userId, double rating, boolean isPenalized) {
     String sql = "UPDATE users SET rating = ?, has_ever_been_penalized = ? WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setDouble(1, rating);
       pstmt.setBoolean(2, isPenalized);
       pstmt.setString(3, userId);
@@ -270,7 +270,7 @@ public class UserDAO {
   public boolean updateBalances(String userId, long balance, long lockedBalance) {
     String sql = "UPDATE users SET balance = ?, locked_balance = ? WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setLong(1, balance);
       pstmt.setLong(2, lockedBalance);
       pstmt.setString(3, userId);
@@ -292,7 +292,7 @@ public class UserDAO {
             + "created_at, suspended_at FROM users WHERE username = ? AND status != 'DELETED'";
 
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
       pstmt.setString(1, username);
       try (ResultSet rs = pstmt.executeQuery()) {
@@ -345,7 +345,7 @@ public class UserDAO {
   public NormalUser findUserByUsername(String username) {
     String sql = "SELECT * FROM users WHERE username = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
       pstmt.setString(1, username);
       try (ResultSet rs = pstmt.executeQuery()) {
@@ -404,8 +404,8 @@ public class UserDAO {
     List<User> users = new ArrayList<>();
     String sql = "SELECT * FROM users";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql);
-        ResultSet rs = pstmt.executeQuery()) {
+         PreparedStatement pstmt = conn.prepareStatement(sql);
+         ResultSet rs = pstmt.executeQuery()) {
       while (rs.next()) {
         String id = rs.getString("id");
         NormalUser user = findNormalUserById(id);
@@ -424,7 +424,7 @@ public class UserDAO {
         "INSERT INTO users (id, username, password_hash, email, status, created_at) VALUES (?, ?,"
             + " ?, ?, ?, ?)";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, user.getId());
       pstmt.setString(2, user.getUsername());
       pstmt.setString(3, user.getHashedPassword());
@@ -441,7 +441,7 @@ public class UserDAO {
   public boolean delete(User user) {
     String sql = "UPDATE users SET status = 'DELETED' WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, user.getId());
       return pstmt.executeUpdate() > 0;
     } catch (SQLException e) {
@@ -453,7 +453,7 @@ public class UserDAO {
   public boolean existsByUsername(String username) {
     String sql = "SELECT 1 FROM users WHERE username = ? AND status != 'DELETED' LIMIT 1";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, username);
       try (ResultSet rs = pstmt.executeQuery()) {
         return rs.next();
@@ -467,7 +467,7 @@ public class UserDAO {
   public boolean existsByEmail(String email) {
     String sql = "SELECT 1 FROM users WHERE email = ? AND status != 'DELETED' LIMIT 1";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, email);
       try (ResultSet rs = pstmt.executeQuery()) {
         return rs.next();
@@ -515,7 +515,7 @@ public class UserDAO {
         "SELECT 1 FROM user_auction_activity "
             + "WHERE user_id = ? AND auction_id = ? AND activity_type = 'JOINED' LIMIT 1";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       pstmt.setString(2, auctionId);
       try (ResultSet rs = pstmt.executeQuery()) {
@@ -535,13 +535,37 @@ public class UserDAO {
    * @param auctionId id phiên
    * @return tập userId có activity_type = 'JOINED' cho phiên này
    */
+  /**
+   * BUG FIX: Trả về tất cả userId từng tham gia phiên (cả người đã LEFT).
+   * Dùng khi cần gửi thông báo kết thúc phiên cho mọi người tẫm gia, bao gồm cả những người đã rời trước khi phín kết thúc.
+   * Khác với {@link #findJoinedUserIdsByAuctionId} chỉ lấy người đang JOINED.
+   */
+  public Set<String> findEverJoinedUserIdsByAuctionId(String auctionId) {
+    Set<String> ids = new HashSet<>();
+    String sql =
+        "SELECT user_id FROM user_auction_activity WHERE auction_id = ? AND activity_type IN"
+            + " ('JOINED', 'LEFT')";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setString(1, auctionId);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        while (rs.next()) {
+          ids.add(rs.getString("user_id"));
+        }
+      }
+    } catch (SQLException e) {
+      log.error("Lỗi lấy danh sách userId từng tham gia phiên: auctionId={}", auctionId, e);
+    }
+    return ids;
+  }
+
   public Set<String> findJoinedUserIdsByAuctionId(String auctionId) {
     Set<String> ids = new HashSet<>();
     String sql =
         "SELECT user_id FROM user_auction_activity WHERE auction_id = ? AND activity_type ="
             + " 'JOINED'";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, auctionId);
       try (ResultSet rs = pstmt.executeQuery()) {
         while (rs.next()) {
@@ -559,7 +583,7 @@ public class UserDAO {
     String sql =
         "SELECT auction_id FROM user_auction_activity WHERE user_id = ? AND activity_type = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       pstmt.setString(2, activityType);
       try (ResultSet rs = pstmt.executeQuery()) {
@@ -595,7 +619,7 @@ public class UserDAO {
   public boolean incrementTimesRestored(String userId) {
     String sql = "UPDATE users SET times_restored = times_restored + 1 WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
-        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
       pstmt.setString(1, userId);
       return pstmt.executeUpdate() > 0;
     } catch (SQLException e) {

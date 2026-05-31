@@ -148,7 +148,21 @@ public class ServerBroadcastNotifier {
         excludeUserId = event.getAuction().getCurrentLeader().getId();
       }
     }
-    notifyJoinedParticipants(auctionId, title, body, excludeUserId);
+    // BUG FIX: AUCTION_ENDED uses everJoined to reach users who left before end
+    if (type == AuctionEvent.AuctionEventType.AUCTION_ENDED) {
+      notifyParticipants(userDAO.findEverJoinedUserIdsByAuctionId(auctionId),
+          auctionId, NotificationTypes.SYSTEM, title, body, excludeUserId);
+    } else {
+      notifyJoinedParticipants(auctionId, title, body, excludeUserId);
+    }
+  }
+
+  private void notifyParticipants(java.util.Set<String> userIds, String auctionId,
+                                  String notificationType, String title, String body, String excludeUserId) {
+    for (String userId : userIds) {
+      if (excludeUserId != null && excludeUserId.equals(userId)) continue;
+      persistNotification(userId, auctionId, notificationType, title, body);
+    }
   }
 
   private static String eventTitle(AuctionEvent.AuctionEventType type) {
@@ -395,8 +409,9 @@ public class ServerBroadcastNotifier {
     if (auction == null || packet == null) {
       return;
     }
+    // BUG FIX: include users who already LEFT before auction ended
     Set<String> targets =
-        new HashSet<>(userDAO.findJoinedUserIdsByAuctionId(auction.getId()));
+        new HashSet<>(userDAO.findEverJoinedUserIdsByAuctionId(auction.getId()));
     if (auction.getItem() != null && auction.getItem().getSeller() != null) {
       targets.add(auction.getItem().getSeller().getId());
     }
@@ -438,7 +453,8 @@ public class ServerBroadcastNotifier {
         auction.getItem() != null && auction.getItem().getSeller() != null
             ? auction.getItem().getSeller().getId()
             : null;
-    var joinedUserIds = userDAO.findJoinedUserIdsByAuctionId(auction.getId());
+    // BUG FIX: use everJoined to send lost notification to users who left before end
+    var joinedUserIds = userDAO.findEverJoinedUserIdsByAuctionId(auction.getId());
     for (String userId : joinedUserIds) {
       if (winnerId.equals(userId) || (sellerId != null && sellerId.equals(userId))) {
         continue;
