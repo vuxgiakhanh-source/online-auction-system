@@ -733,10 +733,16 @@ public final class TestFixture {
     AtomicLong balance = (AtomicLong) field.get(bank);
     balance.set(0L);
 
+    // Chỉ ghi DB khi pool thực sự sẵn sàng. Nếu pool null / đã đóng (unit test, hoặc
+    // Testcontainer đã dừng sau IT trước đó) — bỏ qua hoàn toàn, tránh chờ HikariCP
+    // timeout 30 s rồi throw SQLTransientConnectionException vô ích.
+    if (!com.group13.auction.dao.DatabaseConnection.getInstance().isPoolReady()) {
+      return;
+    }
     try {
       new com.group13.auction.dao.SystemBankDAO().saveTotalBalance(0L);
     } catch (Exception e) {
-      // Unit test không có DB — bỏ qua.
+      // Pool báo ready nhưng DB vẫn từ chối (race condition hiếm) — bỏ qua.
     }
   }
   // Factory helpers (không cần DB)

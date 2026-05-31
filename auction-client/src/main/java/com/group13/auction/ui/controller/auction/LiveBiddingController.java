@@ -5,7 +5,6 @@ import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
-import com.group13.auction.core.navigation.Route;
 import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.mapper.BidViewModelMapper;
@@ -30,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -179,22 +179,6 @@ public final class LiveBiddingController implements ClientEventListener {
 
     // Quay lại màn chi tiết không đồng nghĩa với hủy tham gia phiên.
     // Không gửi LEAVE_AUCTION ở đây vì server hiện xử lý packet đó như xóa JOINED.
-    navigateBackAfterLiveBidding();
-  }
-
-  private void navigateBackAfterLiveBidding() {
-    String returnRouteName =
-        AppContext.getInstance()
-            .getScreenStateStore()
-            .get(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE, String.class)
-            .orElse("");
-    AppContext.getInstance().getScreenStateStore().remove(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE);
-
-    if (Route.ADMIN_AUCTIONS.name().equals(returnRouteName)) {
-      Navigator.getInstance().goToAdminAuctions();
-      return;
-    }
-
     Navigator.getInstance().goToAuctionDetail();
   }
 
@@ -666,9 +650,7 @@ public final class LiveBiddingController implements ClientEventListener {
                 FxThreadUtil.runOnFxThread(
                     () -> {
                       renderAuctionDetail(detail);
-                      if (!adminWatchOnly) {
-                        loadAutoBidStatus();
-                      }
+                      loadAutoBidStatus();
                     }))
         .exceptionally(
             throwable -> {
@@ -844,56 +826,11 @@ public final class LiveBiddingController implements ClientEventListener {
     // Padding 10% range để đường giá không chạm sát viền trên/dưới
     long range = Math.max(max - min, 100_000L);
     long padding = range / 8;
-    long lowerBound = niceFloor(Math.max(0, min - padding));
-    long upperBound = niceCeil(max + padding);
-    yAxis.setLowerBound(lowerBound);
-    yAxis.setUpperBound(upperBound);
-    yAxis.setTickUnit(niceTickUnit(upperBound - lowerBound, 6));
-  }
-
-  /**
-   * Tính tick unit "đẹp" (số tròn: 1, 2, 2.5, 5 × 10^n) để trục Y hiển thị mốc giá dễ đọc.
-   *
-   * @param totalRange khoảng giá trị cần chia
-   * @param targetTicks số khoảng mong muốn (thường 5–7)
-   */
-  private static long niceTickUnit(long totalRange, int targetTicks) {
-    if (totalRange <= 0 || targetTicks <= 0) {
-      return 500_000L;
-    }
-    double rawStep = (double) totalRange / targetTicks;
-    double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-    double normalized = rawStep / magnitude;
-    double niceStep;
-    if (normalized <= 1.0) {
-      niceStep = 1.0;
-    } else if (normalized <= 2.0) {
-      niceStep = 2.0;
-    } else if (normalized <= 2.5) {
-      niceStep = 2.5;
-    } else if (normalized <= 5.0) {
-      niceStep = 5.0;
-    } else {
-      niceStep = 10.0;
-    }
-    long tick = Math.round(niceStep * magnitude);
-    return Math.max(tick, 100_000L);
-  }
-
-  /** Làm tròn xuống theo bội số gần nhất của niceTickUnit để lowerBound là số đẹp. */
-  private static long niceFloor(long value) {
-    if (value <= 0) return 0;
-    long magnitude = (long) Math.pow(10, Math.floor(Math.log10(value)));
-    long unit = Math.max(magnitude, 100_000L);
-    return (value / unit) * unit;
-  }
-
-  /** Làm tròn lên theo bội số gần nhất của niceTickUnit để upperBound là số đẹp. */
-  private static long niceCeil(long value) {
-    if (value <= 0) return 1_000_000L;
-    long magnitude = (long) Math.pow(10, Math.floor(Math.log10(value)));
-    long unit = Math.max(magnitude, 100_000L);
-    return ((value + unit - 1) / unit) * unit;
+    yAxis.setLowerBound(Math.max(0, min - padding));
+    yAxis.setUpperBound(max + padding);
+    // Tick unit ~ 6–8 khoảng trên trục
+    long totalRange = (max + padding) - Math.max(0, min - padding);
+    yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
   }
 
   private void appendHistoryPoint(BidHistoryPointViewModel point) {
@@ -939,11 +876,10 @@ public final class LiveBiddingController implements ClientEventListener {
           historyPoints.stream().mapToLong(BidHistoryPointViewModel::price).max().getAsLong();
       long range = Math.max(max - min, 100_000L);
       long padding = range / 8;
-      long lowerBound = niceFloor(Math.max(0, min - padding));
-      long upperBound = niceCeil(max + padding);
-      yAxis.setLowerBound(lowerBound);
-      yAxis.setUpperBound(upperBound);
-      yAxis.setTickUnit(niceTickUnit(upperBound - lowerBound, 6));
+      yAxis.setLowerBound(Math.max(0, min - padding));
+      yAxis.setUpperBound(max + padding);
+      long totalRange = (max + padding) - Math.max(0, min - padding);
+      yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
     } else {
       yAxis.setLowerBound(0);
       yAxis.setUpperBound(1_000_000);
@@ -1119,7 +1055,7 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   private boolean isCurrentAuction(String incomingAuctionId) {
-    return incomingAuctionId != null && incomingAuctionId.equals(auctionId);
+    return Objects.equals(incomingAuctionId, auctionId);
   }
 
   /**

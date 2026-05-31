@@ -232,6 +232,16 @@ public class DatabaseConnection {
     return dataSource.getConnection();
   }
 
+  /**
+   * Trả về {@code true} nếu pool đã khởi tạo và chưa bị đóng.
+   *
+   * <p>Chỉ kiểm tra trạng thái object — không thực hiện kết nối thực tế. Dùng trong test-fixture
+   * để bỏ qua DB call nhanh khi pool chưa sẵn sàng (ví dụ: Testcontainer đã dừng).
+   */
+  public boolean isPoolReady() {
+    return dataSource != null && !dataSource.isClosed();
+  }
+
   public synchronized void close() {
     if (dataSource != null && !dataSource.isClosed()) {
       dataSource.close();
