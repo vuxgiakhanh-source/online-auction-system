@@ -71,7 +71,7 @@ public final class AuctionModerationController {
     }
 
     if (!selectedAuction.isCancellable()) {
-      showStatus("Phiên đấu giá này không thể hủy từ client.");
+      showStatus("Phiên đấu giá này không thể hủy ở trạng thái hiện tại.");
       return;
     }
 

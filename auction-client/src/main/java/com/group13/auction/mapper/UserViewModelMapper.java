@@ -220,9 +220,9 @@ public final class UserViewModelMapper {
     } else if (dto.isHasEverBeenPenalized()) {
       note = "Tài khoản từng bị phạt, không auto-approve Seller.";
     } else if (!ratingEligible) {
-      note = "Rating dưới 2.0, backend sẽ từ chối duyệt Seller.";
+      note = "Rating dưới 2.0 nên chưa đủ điều kiện duyệt Seller.";
     } else {
-      note = "Có thể duyệt quyền Seller bằng API hiện có.";
+      note = "Đủ điều kiện duyệt quyền Seller.";
     }
 
     return new SellerApprovalViewModel(

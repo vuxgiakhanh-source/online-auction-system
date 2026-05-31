@@ -54,7 +54,7 @@
                 <VBox spacing="4.0">
                     <Label text="Danh sách người dùng" styleClass="section-title"/>
                     <Label
-                            text="Dữ liệu được tải từ API quản trị người dùng."
+                            text="Theo dõi trạng thái tài khoản và xử lý khóa/mở khóa khi cần thiết."
                             styleClass="muted-label"/>
                 </VBox>
 

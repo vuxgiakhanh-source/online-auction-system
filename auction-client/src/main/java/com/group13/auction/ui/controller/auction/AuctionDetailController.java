@@ -430,7 +430,7 @@ public final class AuctionDetailController implements ClientEventListener {
           + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
           + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
           + " tín.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Kết quả cuối cùng sẽ được hệ thống xác nhận tại thời điểm hủy tham gia.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 
@@ -439,7 +439,7 @@ public final class AuctionDetailController implements ClientEventListener {
           + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
           + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
           + " tín.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Kết quả cuối cùng sẽ được hệ thống xác nhận tại thời điểm hủy tham gia.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 
@@ -449,13 +449,13 @@ public final class AuctionDetailController implements ClientEventListener {
           + " thời gian.\n"
           + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ"
           + " thống.\n\n"
-          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Kết quả cuối cùng sẽ được hệ thống xác nhận tại thời điểm hủy tham gia.\n\n"
           + "Bạn có chắc muốn tiếp tục không?";
     }
 
     return "Hủy tham gia phiên đấu giá?\n\n"
         + "Hiện phiên chưa có người dẫn đầu rõ ràng.\n"
-        + "Tiền cọc sẽ được xử lý theo trạng thái phiên tại thời điểm server xác nhận hủy.\n\n"
+        + "Tiền cọc sẽ được xử lý theo trạng thái phiên tại thời điểm hủy tham gia.\n\n"
         + "Bạn có chắc muốn tiếp tục không?";
   }
 

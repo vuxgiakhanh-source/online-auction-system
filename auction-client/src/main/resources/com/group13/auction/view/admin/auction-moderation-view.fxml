@@ -35,7 +35,7 @@
             <VBox spacing="6.0">
                 <Label text="Quản lý phiên đấu giá" styleClass="page-title"/>
                 <Label
-                        text="Admin có thể xem toàn bộ phiên đấu giá và hủy phiên khi backend cho phép."
+                        text="Admin có thể xem toàn bộ phiên đấu giá và hủy các phiên không hợp lệ."
                         wrapText="true"
                         styleClass="page-subtitle"/>
             </VBox>

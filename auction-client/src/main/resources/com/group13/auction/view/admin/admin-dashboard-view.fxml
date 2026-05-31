@@ -49,7 +49,7 @@
             <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
                 <Label text="Người dùng" styleClass="card-title"/>
                 <Label
-                        text="Xem tài khoản, khóa hoặc mở khóa người dùng thông qua API quản trị."
+                        text="Xem tài khoản, khóa hoặc mở khóa người dùng khi cần thiết."
                         wrapText="true"
                         styleClass="card-description"/>
                 <Region VBox.vgrow="ALWAYS"/>
@@ -102,7 +102,7 @@
             <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
                 <Label text="Duyệt quyền Seller" styleClass="card-title"/>
                 <Label
-                        text="Duyệt quyền Seller bằng API backend hiện có."
+                        text="Duyệt quyền Seller cho các tài khoản đủ điều kiện."
                         wrapText="true"
                         styleClass="card-description"/>
                 <Region VBox.vgrow="ALWAYS"/>

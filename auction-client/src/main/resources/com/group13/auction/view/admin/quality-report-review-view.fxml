@@ -36,7 +36,7 @@
             <VBox spacing="6.0">
                 <Label text="Duyệt báo cáo chất lượng" styleClass="page-title"/>
                 <Label
-                        text="Admin xem chi tiết báo cáo và duyệt hoặc từ chối theo API backend."
+                        text="Admin xem chi tiết báo cáo chất lượng và đưa ra quyết định xử lý."
                         wrapText="true"
                         styleClass="page-subtitle"/>
             </VBox>

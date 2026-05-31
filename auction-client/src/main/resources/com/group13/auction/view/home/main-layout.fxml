@@ -137,7 +137,7 @@
                     <Label text="Ví &amp; thanh toán"
                            styleClass="main-card-title"/>
 
-                    <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
+                    <Label text="Xem số dư ví, nạp tiền, rút tiền và quản lý khoản đặt cọc."
                            maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description"/>

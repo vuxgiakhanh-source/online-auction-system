@@ -113,7 +113,7 @@ public final class AuctionServiceSupport {
     boolean connected = networkFacade.connectBlocking();
     if (!connected) {
       throw new NetworkClientException(
-          "Không kết nối được tới server: " + networkFacade.getServerUri());
+          "Không thể kết nối tới hệ thống. Vui lòng kiểm tra kết nối và thử lại.");
     }
   }
 
@@ -123,7 +123,7 @@ public final class AuctionServiceSupport {
       future.complete(PacketCodec.fromElement(payload, payloadType));
     } catch (RuntimeException exception) {
       future.completeExceptionally(
-          new NetworkClientException("Response từ server không hợp lệ.", exception));
+          new NetworkClientException("Hệ thống trả về dữ liệu không hợp lệ. Vui lòng thử lại.", exception));
     }
   }
 
@@ -132,7 +132,7 @@ public final class AuctionServiceSupport {
         TIMEOUT_EXECUTOR.schedule(
             () ->
                 future.completeExceptionally(
-                    new NetworkClientException("Server không phản hồi. " + fallbackMessage)),
+                    new NetworkClientException("Hệ thống chưa phản hồi. " + fallbackMessage)),
             REQUEST_TIMEOUT_SECONDS,
             TimeUnit.SECONDS);
 

@@ -159,7 +159,7 @@ public final class AuthService {
               () ->
                   future.completeExceptionally(
                       new NetworkClientException(
-                          "Server không phản hồi. Kiểm tra server đã chạy chưa.")),
+                          "Hệ thống chưa phản hồi. Vui lòng thử lại sau.")),
               AUTH_TIMEOUT_SECONDS,
               TimeUnit.SECONDS);
 
@@ -179,7 +179,7 @@ public final class AuthService {
     boolean connected = networkFacade.connectBlocking();
     if (!connected) {
       throw new NetworkClientException(
-          "Không kết nối được tới server: " + networkFacade.getServerUri());
+          "Không thể kết nối tới hệ thống. Vui lòng kiểm tra kết nối và thử lại.");
     }
   }
 
@@ -191,7 +191,7 @@ public final class AuthService {
       future.complete(session);
     } catch (RuntimeException exception) {
       future.completeExceptionally(
-          new NetworkClientException("Response đăng nhập/đăng ký không hợp lệ.", exception));
+          new NetworkClientException("Hệ thống trả về dữ liệu không hợp lệ. Vui lòng thử lại.", exception));
     }
   }
 

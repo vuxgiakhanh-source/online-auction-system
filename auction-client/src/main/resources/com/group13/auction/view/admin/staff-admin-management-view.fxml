@@ -55,7 +55,7 @@
                 <VBox spacing="4.0">
                     <Label text="Tạo Staff Admin" styleClass="section-title"/>
                     <Label
-                            text="Tài khoản mới sẽ có quyền xử lý các nghiệp vụ quản trị được server cho phép."
+                            text="Tài khoản mới sẽ có quyền xử lý các nghiệp vụ quản trị được phân quyền."
                             wrapText="true"
                             styleClass="muted-label"/>
                 </VBox>
@@ -113,7 +113,7 @@
                     <VBox spacing="4.0">
                         <Label text="Danh sách Staff Admin" styleClass="section-title"/>
                         <Label
-                                text="Dữ liệu được tải từ API System Admin."
+                                text="Theo dõi các tài khoản Staff Admin đang hoạt động trong hệ thống."
                                 styleClass="muted-label"/>
                     </VBox>
 

@@ -145,7 +145,7 @@ public final class ChatbotService {
     boolean connected = networkFacade.connectBlocking();
     if (!connected) {
       throw new NetworkClientException(
-          "Không kết nối được tới server: " + networkFacade.getServerUri());
+          "Không thể kết nối tới hệ thống. Vui lòng kiểm tra kết nối và thử lại.");
     }
   }
 
@@ -155,7 +155,7 @@ public final class ChatbotService {
       future.complete(PacketCodec.fromElement(payload, ChatbotResponseDTO.class));
     } catch (RuntimeException exception) {
       future.completeExceptionally(
-          new NetworkClientException("Response chatbot từ server không hợp lệ.", exception));
+          new NetworkClientException("OMNI chưa xử lý được phản hồi. Vui lòng thử lại.", exception));
     }
   }
 
@@ -165,7 +165,7 @@ public final class ChatbotService {
         TIMEOUT_EXECUTOR.schedule(
             () ->
                 future.completeExceptionally(
-                    new NetworkClientException("Server không phản hồi. " + fallbackErrorMessage)),
+                    new NetworkClientException("Hệ thống chưa phản hồi. " + fallbackErrorMessage)),
             REQUEST_TIMEOUT_SECONDS,
             TimeUnit.SECONDS);
 

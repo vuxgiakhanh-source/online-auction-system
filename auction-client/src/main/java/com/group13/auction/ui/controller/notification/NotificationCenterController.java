@@ -528,7 +528,7 @@ public final class NotificationCenterController {
 
     if (empty) {
       clearNotificationDetail();
-      statusLabel.setText("Server hiện chưa trả về thông báo nào.");
+      statusLabel.setText("Chưa có thông báo nào.");
       return;
     }
 

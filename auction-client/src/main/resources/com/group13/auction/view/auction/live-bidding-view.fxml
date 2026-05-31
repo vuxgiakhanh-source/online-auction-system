@@ -232,7 +232,7 @@
                                styleClass="live-expand-badge"/>
                     </HBox>
 
-                    <Label text="Mỗi bid hợp lệ từ server sẽ cập nhật đường giá theo thời gian thực. Bấm vào khung này để xem biểu đồ lớn."
+                    <Label text="Mỗi lượt đặt giá hợp lệ sẽ tự động cập nhật đường giá theo thời gian thực. Bấm vào khung này để xem biểu đồ lớn."
                            wrapText="true"
                            styleClass="auction-muted-text"/>
 

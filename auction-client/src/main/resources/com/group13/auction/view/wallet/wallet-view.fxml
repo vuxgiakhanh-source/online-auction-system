@@ -64,7 +64,7 @@
         <VBox spacing="8.0">
             <Label styleClass="wallet-title" text="Ví &amp; thanh toán"/>
             <Label styleClass="wallet-subtitle"
-                   text="Theo dõi số dư ví, khoản đặt cọc đang khóa và thực hiện nạp/rút tiền qua server."/>
+                   text="Theo dõi số dư ví, khoản đặt cọc đang giữ và thực hiện nạp/rút tiền an toàn."/>
         </VBox>
 
             <HBox spacing="18.0">
@@ -123,7 +123,7 @@
 
                 <Label styleClass="wallet-muted-text"
                        wrapText="true"
-                       text="Nhập số tiền cần nạp vào ví. Server sẽ trả về số dư mới sau khi xử lý."/>
+                       text="Nhập số tiền cần nạp vào ví. Số dư sẽ được cập nhật sau khi giao dịch hoàn tất."/>
 
                 <TextField fx:id="depositAmountField"
                            maxWidth="Infinity"
@@ -151,7 +151,7 @@
 
                 <Label styleClass="wallet-muted-text"
                        wrapText="true"
-                       text="Nhập số tiền cần rút. Server sẽ kiểm tra số dư khả dụng trước khi xác nhận."/>
+                       text="Nhập số tiền cần rút. Giao dịch chỉ được xác nhận khi số dư khả dụng đủ."/>
 
                 <TextField fx:id="withdrawAmountField"
                            maxWidth="Infinity"

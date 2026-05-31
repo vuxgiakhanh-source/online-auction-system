@@ -200,7 +200,7 @@ public final class SellerAuctionService {
         throw new CompletionException(
             "Không upload được ảnh sản phẩm: "
                 + imagePath.getFileName()
-                + ". Kiểm tra ImageUploadServer trước khi tạo phiên.",
+                + ". Vui lòng kiểm tra kết nối và thử lại trước khi tạo phiên.",
             exception);
       } catch (InterruptedException exception) {
         Thread.currentThread().interrupt();

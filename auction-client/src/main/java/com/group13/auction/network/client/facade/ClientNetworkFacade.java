@@ -105,9 +105,10 @@ public final class ClientNetworkFacade {
       return wsClient.connectBlocking(timeout, unit);
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
-      throw new NetworkClientException("Bị ngắt khi đang kết nối tới server.", exception);
+      throw new NetworkClientException("Kết nối bị gián đoạn. Vui lòng thử lại.", exception);
     } catch (RuntimeException exception) {
-      throw new NetworkClientException("Không thể kết nối tới server: " + serverUri, exception);
+      throw new NetworkClientException(
+          "Không thể kết nối tới hệ thống. Vui lòng kiểm tra kết nối và thử lại." + serverUri, exception);
     }
   }
 
