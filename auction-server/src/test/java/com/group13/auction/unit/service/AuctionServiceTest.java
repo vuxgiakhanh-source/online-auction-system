@@ -3,7 +3,6 @@ package com.group13.auction.unit.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.group13.auction.bank.SystemBank;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.FinancialTransactionDAO;
@@ -19,7 +18,6 @@ import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.unit.TestFixture;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -44,7 +42,7 @@ class AuctionServiceTest {
   @BeforeEach
   void setUp() throws Exception {
     bootstrapSystemAdmin();
-    resetSystemBankBalance();
+    TestFixture.resetSystemBankBalance();
     resetAuctionManager();
     // FIX [P2]: vô hiệu hoá ServerBroadcastNotifier + AutoBidRegistry để closeAuction()
     // không chạm DB qua Singleton (xem report: 78s waste trong $CloseAuction).
@@ -211,12 +209,6 @@ class AuctionServiceTest {
     Field f = SystemAdmin.class.getDeclaredField("INSTANCE");
     f.setAccessible(true);
     f.set(null, null);
-  }
-
-  private static void resetSystemBankBalance() throws Exception {
-    Field field = SystemBank.class.getDeclaredField("totalBalance");
-    field.setAccessible(true);
-    ((AtomicLong) field.get(SystemBank.getInstance())).set(0L);
   }
 
   private static void resetAuctionManager() throws Exception {
