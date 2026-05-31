@@ -655,21 +655,20 @@ class AutoBidProcessorTest {
     }
 
     @Test
-    @DisplayName("ghost user bị skip, valid user vẫn counter bình thường")
+    @DisplayName("có ghost entry maxBid thấp, valid user vẫn counter bình thường")
     void process_ghostUserSkipped_validUserStillCounters() {
-      // Arrange: bidderA maxBid cao hơn ghost → được chọn trước khi chain dừng
+      // Arrange: ghost maxBid thấp → không vào candidate; bidderA là ứng viên duy nhất
       String ghostId = "ghost-user-id-7777";
       registry.register(ghostId, runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW);
       registry.register(
           bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 4);
 
-      when(userDAO.findNormalUserById(ghostId)).thenReturn(null);
       stubPlaceBidWithSideEffect(runningAuction);
 
       // Act
       submitAndAwait(runningAuction, seller.getId());
 
-      // Assert: bidderA vẫn counter dù ghost user bị skip
+      // Assert: bidderA vẫn đặt giá thành công
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
     }
   }
