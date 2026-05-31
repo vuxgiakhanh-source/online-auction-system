@@ -148,6 +148,7 @@ public class ServerMain {
     // 6. Tải dữ liệu vào in-memory
     AuctionManager.getInstance().loadDataFromDatabase();
     AutoBidRegistry.getInstance().loadFromDatabase();
+    com.group13.auction.bank.SystemBank.getInstance().loadFromDatabase();
 
     // 7. Khởi động AuctionTimerService
     IAuctionTimerService auctionTimer = AuctionTimerService.getInstance();
