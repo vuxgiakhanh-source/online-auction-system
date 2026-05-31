@@ -857,8 +857,6 @@ public class BidHandler implements PacketHandler {
           sessionManager.broadcastToAuction(
               req.getAuctionId(), Packet.of(PacketType.BID_CHART_POINT_UPDATE, chartPoint));
         }
-        updateAutoBidAuction = auction;
-        updateAutoBidBidderId = bidder.getId();
         return;
       }
       autoBidRegistry.register(bidder.getId(), req.getAuctionId(), req.getMaxBid());
