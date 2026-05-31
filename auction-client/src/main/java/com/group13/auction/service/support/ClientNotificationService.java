@@ -327,8 +327,7 @@ public final class ClientNotificationService implements ClientEventListener {
     String currentUserId = resolveCurrentUserId();
     String winnerId = update.getWinnerId();
     long finalPrice = Math.round(update.getFinalPrice());
-    boolean currentUserWon =
-        currentUserId != null && winnerId != null && currentUserId.equals(winnerId);
+    boolean currentUserWon = Objects.equals(currentUserId, winnerId);
 
     StringBuilder message = new StringBuilder(prefixAuctionId(update));
 

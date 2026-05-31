@@ -433,7 +433,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAutoBidExhausted(BidDTOs.AutoBidExhaustedDTO notify) {
-    if (!isCurrentAuction(notify == null ? null : notify.getAuctionId())) {
+    if (notify == null || !isCurrentAuction(notify.getAuctionId())) {
       return;
     }
 
@@ -483,7 +483,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAuctionExtended(AuctionDTOs.AuctionExtendedDTO dto) {
-    if (!isCurrentAuction(dto == null ? null : dto.getAuctionId())) {
+    if (dto == null || !isCurrentAuction(dto.getAuctionId())) {
       return;
     }
 
@@ -534,7 +534,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAuctionUpcomingEnd(AuctionDTOs.AuctionUpcomingEndDTO dto) {
-    if (!isCurrentAuction(dto == null ? null : dto.getAuctionId())) {
+    if (dto == null || !isCurrentAuction(dto.getAuctionId())) {
       return;
     }
 
@@ -548,7 +548,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   @Override
   public void onAuctionCanceled(AuctionDTOs.AuctionUpdateDTO update) {
-    if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+    if (update == null || !isCurrentAuction(update.getAuctionId())) {
       return;
     }
 
@@ -562,8 +562,7 @@ public final class LiveBiddingController implements ClientEventListener {
           bidAllowed = false;
           placeBidButton.setDisable(true);
           syncAutoBidButtons(false);
-          setMessage(
-              update.getMessage() == null ? "Phiên đấu giá đã bị hủy." : update.getMessage());
+          setMessage(Objects.requireNonNullElse(update.getMessage(), "Phiên đấu giá đã bị hủy."));
         });
   }
 
