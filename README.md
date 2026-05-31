@@ -11,8 +11,8 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
 
 [![Java CI](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml/badge.svg)](https://github.com/vuxgiakhanh-source/online-auction-system/actions/workflows/maven.yml)
 ![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
-![Maven](https://img.shields.io/badge/Maven-3.8+-C71A36?logo=apachemaven&logoColor=white)
-![JavaFX](https://img.shields.io/badge/JavaFX-17-4A8CFF?logo=java&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-3.9+-C71A36?logo=apachemaven&logoColor=white)
+![JavaFX](https://img.shields.io/badge/JavaFX-21-4A8CFF?logo=java&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-1.5.5-00BFFF)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?logo=mysql&logoColor=white)
 ![JUnit5](https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white)
@@ -52,13 +52,13 @@ Xử lý đặt giá đồng thời an toàn, broadcast giá tức thì qua WebS
 ___
 
 ## 🚀 Giới thiệu
-**OmniBid** là nền tảng đấu giá trực tuyến dạng desktop app, giải quyết các bài toán kỹ thuật cốt lõi của một hệ thống đấu giá thực tế.
 
-Hệ thống cho phép người bán (Seller) dễ dàng đăng tải các sản phẩm đa dạng, trong khi người mua (Bidder) có thể tham gia đấu thầu cạnh tranh gay gắt để sở hữu món đồ với mức giá phù hợp nhất thông qua cơ chế thị trường thực thụ.
+**OmniBid** là ứng dụng đấu giá **desktop** (Java Client–Server): Seller đăng sản phẩm, Bidder đặt giá theo thời gian thực; Admin quản trị phiên, người dùng và khiếu nại.
 
-Không dừng lại ở việc đơn thuần kết nối người mua và người bán, **OmniBid** tập trung giải quyết triệt để những bài toán khó của hệ thống phân tán: xử lý **đấu giá đồng thời** an toàn, ngăn chặn Race Condition, **cập nhật giá realtime** cho hàng trăm người dùng cùng lúc thông qua WebSocket, cùng với **quy trình hậu mãi** chuyên nghiệp (escrow payment, Quality Report, hoàn tiền tự động, Second Chance Offer…).
+Hệ thống tập trung **đấu giá đồng thời an toàn**, **cập nhật giá qua WebSocket**, và **hậu mãi** (escrow, Quality Report, hoàn tiền, Second Chance Offer).
 
-Dự án được phát triển bằng Java theo mô hình Client-Server, áp dụng sâu các nguyên lý **OOP** cùng nhiều **Design Patterns** quan trọng (State, Observer, Strategy, Factory, Singleton). Nhờ đó, **OmniBid** không chỉ hoạt động mượt mà mà còn có kiến trúc sạch, dễ mở rộng và bảo trì.
+**Phạm vi:** ứng dụng JavaFX trên máy người dùng, server WebSocket + MySQL; ba vai trò Bidder / Seller / Admin; không bao gồm thanh toán ngân hàng thật hay triển khai mobile/web public.
+
 > Add ảnh demo mô phỏng ứng dụng hoạt động (ghép 2-3 màn hình (Login, 
 > Auction List, Bidding Detail) vào một khung ảnh)
 
@@ -67,10 +67,10 @@ Dự án được phát triển bằng Java theo mô hình Client-Server, áp d�
 ## 🎬 Demo
 > Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
-|                    | Link                         |
-|--------------------|------------------------------|
-| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL.pdf)_ |
-| 🎥 **Video Demo**  | _[Cập nhật sau]_             |
+|                    | Link                           |
+|--------------------|--------------------------------|
+| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL13.pdf)_ |
+| 🎥 **Video Demo**  | _[Cập nhật sau]_               |
 
 ---
 
@@ -188,31 +188,33 @@ Project được tổ chức theo kiến trúc **Multi-module Maven**:
 online-auction-system/
 │
 ├── auction-common/                  # Module dùng chung (Client & Server)
-│   └── src/main/java/
-│       ├── dto/                     # Data Transfer Objects (Auth, Bid, Auction, Payment...)
-│       └── protocol/                # Packet, PacketType, PacketCodec (Gson-based)
+│   └── src/main/java/.../common/
+│       ├── dto/                     # DTO (auth, bid, auction, payment, admin, report...)
+│       ├── protocol/                # Packet, PacketType, PacketCodec (Gson-based)
+│       └── messages/                # RealtimeAccessMessages và message constants
 │
 ├── auction-server/                  # Module Server
-│   └── src/main/java/
+│   └── src/main/java/.../auction/
 │       ├── bank/                    # SystemBank
-│       ├── chatbot/                 # ChatbotHandler, ChatbotProvider, FAQ
-│       ├── model/
-│       │   ├── entity/              # Entity (abstract base)
-│       │   ├── user/                # User → NormalUser, Admin, SystemAdmin + Factories
-│       │   ├── item/                # Item → Electronics, Art, Vehicle + Factories
-│       │   ├── auction/             # Auction + State pattern (5 states), AuctionWinner
-│       │   └── bid/                 # BidTransaction, FinancialTransaction, QualityReport
-│       ├── service/                 # AccountService, AuctionService, BidService, PaymentService...
-│       ├── dao/                     # AuctionDAO, UserDAO, ItemDAO, SecondChanceOfferDAO...
-│       ├── network/server/          # AuctionWebSocketServer, PacketRouter, Handlers
-│       ├── observer/                # AuctionObserver interface + 4 implementations
-│       ├── strategy/                # BidStrategy, AutoBidStrategy, AuctionLockRegistry
+│       ├── chatbot/                 # handler/, provider/, model/ (FAQ, faq_data.json)
+│       ├── model/                   # entity, user, item, auction (State), bid
+│       ├── service/                 # Business services + iservice/, scheduler/
+│       ├── dao/                     # AuctionDAO, UserDAO, ItemDAO, ...
+│       ├── network/server/          # WebSocket, PacketRouter, handlers, session, image/
+│       ├── observer/                # AuctionObserver → BidderObserver, SellerObserver, …
+│       ├── strategy/                # BidStrategy, AutoBidStrategy, AuctionLockRegistry, ...
 │       └── manager/                 # AuctionManager (Singleton)
 │
-└── auction-client/                  # Module Client
-    └── src/main/java/
+└── auction-client/                  # Module Client (JavaFX 21)
+    └── src/main/java/.../auction/
+        ├── ui/                      # Controllers & FXML views
+        ├── viewmodel/               # ViewModels (auction, admin, payment, chatbot, ...)
+        ├── mapper/                  # DTO ↔ ViewModel mappers
+        ├── service/                 # Client-side services (auth, bid, wallet, ...)
         ├── network/client/          # AuctionWebSocketClient, ClientPacketDispatcher, Session
-        └── ui/                      # JavaFX Controllers & Views
+        ├── network/http/            # ImageUploadService (port 8081)
+        ├── config/                  # SocketConfig, ImageConfig, ViewPath, ...
+        └── core/                    # navigation/, state/
 ```
 
   > Tham khảo Class Diagram [tại đây](./ClassDiagram.md)
@@ -221,7 +223,7 @@ online-auction-system/
 | Pattern            | Implementation                                                                              | Mục đích hệ thống |
 |--------------------|---------------------------------------------------------------------------------------------|----------------------------------|
 | **State**          | `AuctionState` → `OpenState`, `RunningState`, `FinishedState`, `PaidState`, `CanceledState` | Quản lý logic chuyển đổi trạng thái phiên đấu giá (Mở → Chạy → Kết thúc) một cách tự động và rõ ràng. |
-| **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, … + `SystemAdminObserver`           | Domain events & inbox; bid WebSocket riêng qua `BidHandler` (xem RealtimeBroadcastViaObserverSequenceDiagram). |
+| **Observer**       | `AuctionObserver` → `BidderObserver`, `SellerObserver`, …                                 | Domain events & inbox; bid WebSocket riêng qua `BidHandler` (xem RealtimeBroadcastViaObserverSequenceDiagram). |
 | **Strategy**       | `BidStrategy`                                                                               | Linh hoạt giữa các chế độ đặt giá thủ công và Auto-Bidding. |
 | **Factory Method** | `ItemFactory`, `UserFactory`                                                                | Chuẩn hóa việc tạo các loại Item (Electronics, Art, Vehicle...) và User. |
 | **Singleton**      | `AuctionManager`, `DatabaseConnection`, `ChatbotProvider`                                    | Đảm bảo chỉ tồn tại duy nhất một instance cho các thành phần quản lý toàn cục. |
@@ -239,16 +241,14 @@ online-auction-system/
 - MySQL 8.0 + JDBC — persistence layer
 - Logback — structured logging (3 file: business / dao / error)
 - JUnit 5 + Mockito + Testcontainers — testing pyramid
-- Lombok — giảm boilerplate
 
 **Frontend (Client)**
-- JavaFX — desktop UI
-- MVC pattern: Controllers ↔ ClientPacketDispatcher ↔ AuctionWebSocketClient
+- JavaFX 21 — desktop UI
+- MVC pattern: Controllers ↔ ViewModels / Mappers ↔ ClientPacketDispatcher ↔ AuctionWebSocketClient
 
 **DevOps**
-- Docker + Docker Compose (multi-stage Dockerfile)
-- GitHub Actions (CI/CD pipeline)
-- Kubernetes / k3s (Kustomize: dev / staging / prod)
+- Docker + Docker Compose (multi-stage Dockerfile, image push GHCR qua GitHub Actions)
+- GitHub Actions — build, test (`mvn verify`), Docker publish khi push `main`
 - Qodana — static code analysis
 
 ---
@@ -320,10 +320,10 @@ db.password=your_password
 
 ```bash
 # Build nhanh để chạy app và install các module vào Maven local
-mvn clean install -DskipTests "-Dcheckstyle.skip"
+mvn clean install -DskipTests
 ```
 
-> `"-Dcheckstyle.skip"` được dùng vì repo hiện chưa kèm `google_checks.xml`. Trên PowerShell nên giữ dấu nháy cho các tham số `-D...` có dấu chấm.
+> Checkstyle dùng **Google Java Style** qua `<configLocation>google_checks.xml</configLocation>` trong `pom.xml` — file này do plugin/checkstyle resolve từ dependency, **không cần** copy `google_checks.xml` vào repo. Module `auction-client` mặc định `checkstyle.skip=true`. Trên PowerShell, nếu cần tham số `-D...` có dấu chấm thì bọc trong dấu nháy.
 
 #### 5. Khởi động Server
 
@@ -360,7 +360,7 @@ mvn -f auction-client/pom.xml javafx:run "-Dauction.server.host=localhost" "-Dau
 
 ### Vị trí file JAR
 
-Sau khi build xong (`mvn clean install -DskipTests "-Dcheckstyle.skip"`), các file JAR nằm tại:
+Sau khi build xong (`mvn clean install -DskipTests`), các file JAR nằm tại:
 
 | Module     | Đường dẫn                                                                                    |
 |------------|----------------------------------------------------------------------------------------------|
@@ -380,6 +380,15 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
 
 Nếu JAR client báo thiếu JavaFX runtime, chạy client bằng Maven (`mvn -f auction-client/pom.xml javafx:run`) là cách ổn định hơn vì Maven tự tải JavaFX dependencies.
 
+**Chạy full stack bằng Docker Compose**
+
+```bash
+# Tùy chọn: cp env.example .env và chỉnh mật khẩu DB
+docker compose up --build
+```
+
+Compose khởi động MySQL + `auction-server` (WebSocket **8080**). Image upload HTTP (**8081**) chỉ có khi chạy server bằng JAR/Maven trên host — không được map trong `docker-compose.yml` hiện tại.
+
 ---
 
 ### Troubleshooting
@@ -391,46 +400,54 @@ Nếu JAR client báo thiếu JavaFX runtime, chạy client bằng Maven (`mvn -
 | `Address already in use: 8080`      | Port WebSocket bị chiếm        | Đổi `SERVER_PORT` khi chạy server |
 | `Address already in use: 8081`      | Port image server bị chiếm     | Đổi `IMAGE_SERVER_PORT` khi chạy server |
 | `JavaFX runtime components missing` | Chạy client JAR thiếu JavaFX   | Chạy `mvn -f auction-client/pom.xml javafx:run` |
-| `BUILD FAILURE` do Checkstyle       | Thiếu `google_checks.xml`      | Build với `"-Dcheckstyle.skip"` |
+| `BUILD FAILURE` do Checkstyle       | Vi phạm Google Java Style      | Sửa code theo báo lỗi, hoặc `"-Dcheckstyle.skip"` khi build nhanh local |
 | `BUILD FAILURE` do tests            | Test cần DB/Docker             | Dùng `-DskipTests` để chạy app nhanh, hoặc setup Docker trước khi test |
 
 ---
 
 ## 🧪 Testing
 
-Project áp dụng __testing pyramid__ mạnh mẽ và có tổ chức rõ ràng với __6 nhóm test chính__.
+Project áp dụng __testing pyramid__ trên cả ba module: `auction-server` (unit, integration, concurrency, load), `auction-client` (ViewModel / mapper / validation), và `auction-common` (DTO / protocol).
 
-__Thống kê số files và test methods tính đến ngày `13-5-2026`__
+__Thống kê (đếm `@Test` trong repo)__
 
-| Loại Test             | Files        | Test Methods           | Công cụ / Đặc điểm                                                                      |
-|-----------------------|--------------|------------------------|-----------------------------------------------------------------------------------------|
-| **Unit Tests**        | 46           | 1,802                  | JUnit 5 + Mockito, kiểm tra từng class độc lập                                          |
-| **Integration Tests** | 12           | 157                    | Docker + MySQL thật, @RequiresDocker                                                    |
-| **Concurrency Tests** | 14           | 63                     | Multi-thread race condition, ExecutorService                                            |
-| **Security Tests**    | 2            | 17                     | WebSocket auth bypass, unauthorized bid                                                 |
-| **Load Tests**        | 10           | 74                     | Throughput benchmark, BidService + Chatbot                                              |
-| **WebSocket Tests**   | 7            | 121                    | End-to-end packet routing & broadcast                                                   |
-| **Stress Tests**      | 4            | 11                     | ExecutorService / đa luồng, kiểm tra hệ thống dưới tải cao và thao tác lặp lại liên tục |
-| **TỔNG CỘNG**         | **95 files** | **2,245 test methods** |                                                                                         | 
+| Module / loại | Files | `@Test` methods | Ghi chú |
+|---------------|-------|-----------------|---------|
+| **auction-server** | ~66 | ~680 | Gồm unit, integration, concurrency, load (xem bảng dưới) |
+| **auction-client** | 59 | ~357 | ViewModel, mapper, validation phía client |
+| **auction-common** | 15 | ~161 | DTO, `PacketCodec`, protocol |
+| **TỔNG CỘNG** | **~140** | **~1,198** | |
+
+_Phân rã trong `auction-server` (không cộng thêm vào tổng):_
+
+| Thư mục | Files | `@Test` | Đặc điểm |
+|---------|-------|---------|----------|
+| `unit/` | 42 | ~545 | JUnit 5 + Mockito |
+| `integration/` + `*IT` | ~14 | ~130 | Testcontainers / MySQL, `@RequiresDocker` |
+| `concurrency/` | 17 | ~86 | Race condition, `ExecutorService` |
+| `load/` | 10 | ~85 | `*LoadIT`, `*LoadTest` |
+
 ```bash
-# Chạy toàn bộ tests
-mvn clean test
+# Chạy toàn bộ tests (cần Docker cho integration)
+mvn clean verify
 
-# Chạy tests của riêng server module
+# Chỉ server module
 cd auction-server && mvn test
+
+# Chỉ client module
+cd auction-client && mvn test
 ```
 
-### Phân bổ Unit test theo tầng
+### Phân bổ test server theo tầng (tiêu biểu)
 
-| Tầng                       | Test Classes                                                                                                                                                                                | Scenarios tiêu biểu                                 |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| **Domain / State Machine** | `AuctionTest`, `AuctionStateMachineTest`, `AuctionWinnerTest`, `SecondChanceOfferTest`                                                                                                      | State transitions, winner determination, edge cases |
-| **Concurrency**            | `AuctionLockRegistryTest`, `ChatbotProviderTest`                                                                                                                                            | Per-auction locking, race condition prevention      |
-| **Strategy**               | `StandardBidStrategyTest`, `AutoBidStrategyTest`, `BidStrategyContractTest`, `AutoBidProcessorTest`                                                                                         | Bidding logic, contract testing trên interface      |
-| **Observer**               | `BidderObserverTest`, `SellerObserverTest`, `AdminObserverTest`, `AuctionObserverContractTest`, `AuctionEventTest`                                                                          | Notification propagation, contract tests            |
-| **Service**                | `BidServiceTest`, `PaymentServiceTest`, `AuctionServiceTest`, `AccountServiceTest`, `WalletServiceTest`, `RatingServiceTest`, `QualityReportServiceTest`, `ChatbotProviderTest`             | Business logic, payment flows                       |
-| **Factory**                | `UserFactoryTest`, `ItemFactoryTest`, `UserFactoryTest`                                                                                                                                     | Object creation, type correctness                   |
-| **Singleton**              | `AuctionManagerTest`, `SystemBankTest`, `ChatbotProviderTest`                                                                                                                               | Single-instance guarantee                           |
+| Tầng | Test classes | Scenarios tiêu biểu |
+|------|--------------|---------------------|
+| **Domain / State Machine** | `AuctionTest`, `AuctionStateMachineTest`, `AuctionWinnerTest`, `SecondChanceOfferTest` | State transitions, winner determination |
+| **Concurrency / lock** | `AuctionLockRegistryTest`, `AuctionLockRegistryConcurrencyTest`, `BidRaceConditionTest` | Per-auction locking, race prevention |
+| **Strategy** | `AutoBidStrategyTest`, `BidStrategyContractTest`, `AutoBidProcessorTest` | Manual vs auto-bid, contract trên `BidStrategy` |
+| **Observer** | `AuctionObserverContractTest`, `ObserverNotificationSmokeTest`, `ObserverConcurrencyTest` | Notification propagation, đa luồng |
+| **Service** | `BidServiceTest`, `PaymentServiceTest`, `AuctionServiceTest`, `QualityReportServiceTest`, … | Business logic, payment flows |
+| **Factory / singleton** | `UserFactoryTest`, `ItemFactoryTest`, `AuctionManagerTest`, `SystemBankTest` | Object creation, single instance |
 
 ---
 
@@ -439,10 +456,10 @@ cd auction-server && mvn test
 ### 🧠 Đội ngũ
 |                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |                Tiến độ                |   Trạng thái   |
 |:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:-------------------------------------:|:--------------:|
-|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
-|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![100%](https://geps.dev/progress/80) |     ✅ DONE     |
-|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![100%](https://geps.dev/progress/60) |     ✅ DONE     |
+|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
 
 
 ### 📅 Tổng quan Timeline
