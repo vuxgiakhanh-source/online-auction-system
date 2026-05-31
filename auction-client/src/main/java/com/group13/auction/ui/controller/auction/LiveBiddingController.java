@@ -5,6 +5,7 @@ import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.core.ErrorDTO;
 import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.mapper.BidViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
