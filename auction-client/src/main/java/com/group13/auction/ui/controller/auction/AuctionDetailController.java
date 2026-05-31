@@ -11,9 +11,14 @@ import com.group13.auction.service.payment.PaymentService;
 import com.group13.auction.ui.util.AlertUtil;
 import com.group13.auction.ui.util.FxThreadUtil;
 import com.group13.auction.ui.util.ImageLoader;
+import com.group13.auction.util.CurrencyUtil;
+import com.group13.auction.util.DateTimeUtil;
 import com.group13.auction.viewmodel.auction.AuctionDetailViewModel;
 import com.group13.auction.viewmodel.auction.ProductSpecificationViewModel;
 import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
+import com.group13.auction.common.dto.bid.BidDTOs;
+import com.group13.auction.network.client.facade.ClientNetworkFacade;
+import com.group13.auction.network.client.session.ClientEventListener;
 import java.util.concurrent.CompletionException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -24,12 +29,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 
 /** Controller cho màn chi tiết phiên đấu giá. */
-public final class AuctionDetailController {
+public final class AuctionDetailController implements ClientEventListener {
 
   private final AuctionQueryService auctionQueryService = new AuctionQueryService();
   private final WatchAuctionService watchAuctionService = new WatchAuctionService();
   private final JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
   private final PaymentService paymentService = new PaymentService();
+  private final ClientNetworkFacade networkFacade = ClientNetworkFacade.getDefault();
 
   private String auctionId;
   private boolean currentAuctionJoinable;
@@ -106,11 +112,13 @@ public final class AuctionDetailController {
     }
 
     loadAuctionDetail();
+    networkFacade.addListener(this);
   }
 
   /** Quay lại danh sách phiên đấu giá. */
   @FXML
   public void handleBackToList() {
+    cleanup();
     Navigator.getInstance().goToAuctionList();
   }
 
@@ -419,30 +427,30 @@ public final class AuctionDetailController {
   private String buildCancelJoinConfirmationMessage(AuctionDetailViewModel detail) {
     if (isCurrentUserLeading(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-                 + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
-                 + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
-                 + " tín.\n\n"
-                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-                 + "Bạn có chắc muốn tiếp tục không?";
+          + "Theo trạng thái hiện tại, bạn đang là người dẫn đầu phiên này.\n"
+          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
+          + " tín.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Bạn có chắc muốn tiếp tục không?";
     }
 
     if (detail != null && detail.pastTwoThirdsElapsed()) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-                 + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
-                 + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
-                 + " tín.\n\n"
-                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-                 + "Bạn có chắc muốn tiếp tục không?";
+          + "Theo trạng thái hiện tại, phiên đã đi qua hơn 2/3 thời gian đấu giá.\n"
+          + "Nếu xác nhận hủy tham gia, hệ thống sẽ phạt 100% tiền cọc và có thể trừ điểm uy"
+          + " tín.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Bạn có chắc muốn tiếp tục không?";
     }
 
     if (hasCurrentLeader(detail)) {
       return "Hủy tham gia phiên đấu giá?\n\n"
-                 + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu và phiên chưa đi qua 2/3"
-                 + " thời gian.\n"
-                 + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ"
-                 + " thống.\n\n"
-                 + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
-                 + "Bạn có chắc muốn tiếp tục không?";
+          + "Theo trạng thái hiện tại, bạn không phải người dẫn đầu và phiên chưa đi qua 2/3"
+          + " thời gian.\n"
+          + "Nếu xác nhận hủy tham gia, tiền cọc sẽ được hoàn lại theo xử lý của hệ"
+          + " thống.\n\n"
+          + "Kết quả cuối cùng sẽ được server xử lý tại thời điểm xác nhận hủy.\n\n"
+          + "Bạn có chắc muốn tiếp tục không?";
     }
 
     return "Hủy tham gia phiên đấu giá?\n\n"
@@ -553,6 +561,7 @@ public final class AuctionDetailController {
   }
 
   private void openLiveBidding() {
+    cleanup();
     AppContext.getInstance()
         .getScreenStateStore()
         .put(ScreenStateKeys.SELECTED_AUCTION_ID, auctionId);
@@ -560,6 +569,7 @@ public final class AuctionDetailController {
   }
 
   private void openLiveBiddingReadOnly() {
+    cleanup();
     Navigator.getInstance().goToLiveBiddingReadOnly(auctionId);
   }
 
@@ -590,5 +600,49 @@ public final class AuctionDetailController {
 
     String message = current.getMessage();
     return message == null || message.isBlank() ? "Không tải được dữ liệu." : message;
+  }
+
+  // =========================================================================
+  // ClientEventListener — cập nhật realtime giá và người dẫn đầu không cần reload
+  // =========================================================================
+
+  @Override
+  public void onBidUpdate(BidDTOs.BidUpdateDTO update) {
+    if (update == null || !auctionId.equals(update.getAuctionId())) return;
+    FxThreadUtil.runOnFxThread(() -> {
+      currentPriceLabel.setText(CurrencyUtil.formatVnd(update.getNewCurrentPrice()));
+      leaderLabel.setText("Người dẫn đầu: " + update.getLeaderUsername());
+      if (update.getNewEndTime() != null) {
+        endTimeLabel.setText(
+            DateTimeUtil.formatDateTime(update.getNewEndTime()));
+      }
+    });
+  }
+
+  @Override
+  public void onBidReserveNotMet(BidDTOs.BidUpdateDTO update) {
+    onBidUpdate(update); // cùng cần cập nhật giá
+  }
+
+  @Override
+  public void onAuctionExtended(com.group13.auction.common.dto.auction.AuctionDTOs.AuctionExtendedDTO dto) {
+    if (dto == null || !auctionId.equals(dto.getAuctionId())) return;
+    FxThreadUtil.runOnFxThread(() ->
+        endTimeLabel.setText(
+            DateTimeUtil.formatDateTime(dto.getNewEndTime())));
+  }
+
+  @Override
+  public void onAuctionEnded(com.group13.auction.common.dto.auction.AuctionDTOs.AuctionUpdateDTO update) {
+    if (update == null || !auctionId.equals(update.getAuctionId())) return;
+    FxThreadUtil.runOnFxThread(() -> statusLabel.setText("Kết thúc"));
+  }
+
+  /**
+   * Hủy đăng ký listener khi rời màn — gọi từ Navigator khi navigate ra khỏi màn này.
+   * Tránh memory leak và cập nhật nhầm vào UI đã bị destroy.
+   */
+  public void cleanup() {
+    networkFacade.removeListener(this);
   }
 }
