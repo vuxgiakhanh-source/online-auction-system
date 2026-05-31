@@ -230,7 +230,6 @@ public class BidService implements IBidService {
     BidTransaction tx;
     boolean reserveMet;
     boolean extendedForAntiSniping = false;
-    LocalDateTime endTimeAfterAntiSniping = null;
 
     NormalUser previousLeader = auction.getCurrentLeader();
     long previousPrice = auction.getCurrentPrice();
@@ -259,7 +258,7 @@ public class BidService implements IBidService {
 
       if (applyAntiSnipingExtension(auction)) {
         extendedForAntiSniping = true;
-        endTimeAfterAntiSniping = auction.getEndTime();
+        LocalDateTime endTimeAfterAntiSniping = auction.getEndTime();
         auctionDAO.updateEndTime(auction.getId(), endTimeAfterAntiSniping);
       }
 

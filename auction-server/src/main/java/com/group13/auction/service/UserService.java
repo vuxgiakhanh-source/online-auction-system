@@ -57,7 +57,7 @@ public class UserService implements IUserService {
     // Luôn đọc từ DB khi login để có roles/balance/status mới nhất (kể cả SELLER đã duyệt).
     NormalUser user = userDAO.findUserCoreByUsername(username);
     if (user == null) {
-      log.warn("Login failed: user not found, username={}", username);
+      log.warn("User login failed: user not found, username={}", username);
       throw new AuthenticationException(Reason.USER_NOT_FOUND);
     }
 
@@ -78,7 +78,7 @@ public class UserService implements IUserService {
   private User loginAdmin(String username, String inputPassword) {
     Optional<AdminRow> rowOpt = adminDAO.findByUsername(username);
     if (rowOpt.isEmpty()) {
-      log.warn("Login failed: user not found, username={}", username);
+      log.warn("Admin login failed: user not found, username={}", username);
       throw new AuthenticationException(Reason.USER_NOT_FOUND);
     }
 
