@@ -5,6 +5,7 @@ import com.group13.auction.common.dto.bank.SystemBankDTOs.FinancialTransactionDT
 import com.group13.auction.common.dto.bank.SystemBankDTOs.SystemBankSummaryDTO;
 import com.group13.auction.util.CurrencyUtil;
 import com.group13.auction.util.DateTimeUtil;
+import com.group13.auction.viewmodel.admin.FinancialTransactionPageViewModel;
 import com.group13.auction.viewmodel.admin.FinancialTransactionViewModel;
 import com.group13.auction.viewmodel.admin.SystemBankSummaryViewModel;
 import java.math.BigDecimal;
@@ -12,6 +13,9 @@ import java.util.List;
 
 /** Mapper chuyển DTO System Bank từ common sang ViewModel phía JavaFX client. */
 public final class SystemBankViewModelMapper {
+
+  private static final int DEFAULT_PAGE = 1;
+  private static final int DEFAULT_PAGE_SIZE = 50;
 
   private SystemBankViewModelMapper() {
     // Utility class.
@@ -31,6 +35,15 @@ public final class SystemBankViewModelMapper {
         money(dto.getTotalPayoutToSeller()),
         money(dto.getTotalRefundedToWinner()),
         DateTimeUtil.formatDateTime(dto.getUpdatedAt()));
+  }
+
+  public static FinancialTransactionPageViewModel toTransactionPageViewModel(
+      SystemBankDTOs.FinancialTransactionListDTO dto) {
+    if (dto == null) {
+      return new FinancialTransactionPageViewModel(List.of(), DEFAULT_PAGE, DEFAULT_PAGE_SIZE, 0);
+    }
+    return new FinancialTransactionPageViewModel(
+        toTransactionViewModels(dto), dto.getPage(), dto.getPageSize(), dto.getTotalItems());
   }
 
   public static List<FinancialTransactionViewModel> toTransactionViewModels(

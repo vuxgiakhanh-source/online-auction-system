@@ -2,6 +2,7 @@ package com.group13.auction.ui.controller.admin;
 
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.admin.AdminSystemBankService;
+import com.group13.auction.viewmodel.admin.FinancialTransactionPageViewModel;
 import com.group13.auction.viewmodel.admin.FinancialTransactionViewModel;
 import com.group13.auction.viewmodel.admin.SystemBankSummaryViewModel;
 import java.util.List;
@@ -27,6 +28,10 @@ public final class SystemBankController {
   private final AdminSystemBankService systemBankService = new AdminSystemBankService();
   private int pendingRequests = 0;
   private boolean loadHasError = false;
+  private int currentPage = DEFAULT_PAGE;
+  private int currentPageSize = DEFAULT_PAGE_SIZE;
+  private int totalPages = 1;
+  private int totalItems = 0;
 
   @FXML private Label totalBalanceLabel;
   @FXML private Label totalFundsHeldLabel;
@@ -38,6 +43,7 @@ public final class SystemBankController {
   @FXML private Label updatedAtLabel;
   @FXML private Label statusLabel;
   @FXML private Label emptyStateLabel;
+  @FXML private Label paginationLabel;
 
   @FXML private ChoiceBox<TransactionFilter> transactionTypeChoiceBox;
   @FXML private TextField auctionIdField;
@@ -54,6 +60,8 @@ public final class SystemBankController {
   @FXML private Button refreshButton;
   @FXML private Button clearFilterButton;
   @FXML private Button backButton;
+  @FXML private Button previousPageButton;
+  @FXML private Button nextPageButton;
   @FXML private ProgressIndicator loadingIndicator;
 
   @FXML
@@ -66,6 +74,7 @@ public final class SystemBankController {
 
   @FXML
   private void handleRefresh() {
+    currentPage = DEFAULT_PAGE;
     loadSystemBank();
   }
 
@@ -77,12 +86,31 @@ public final class SystemBankController {
     if (auctionIdField != null) {
       auctionIdField.clear();
     }
+    currentPage = DEFAULT_PAGE;
     loadTransactions();
   }
 
   @FXML
   private void handleBackToDashboard() {
     Navigator.getInstance().goToAdminDashboard();
+  }
+
+  @FXML
+  private void handlePreviousPage() {
+    if (currentPage <= 1) {
+      return;
+    }
+    currentPage--;
+    loadTransactions();
+  }
+
+  @FXML
+  private void handleNextPage() {
+    if (currentPage >= totalPages) {
+      return;
+    }
+    currentPage++;
+    loadTransactions();
   }
 
   private void loadSystemBank() {
@@ -114,7 +142,7 @@ public final class SystemBankController {
 
     beginRequest();
     systemBankService
-        .getTransactions(transactionType, auctionId, DEFAULT_PAGE, DEFAULT_PAGE_SIZE)
+        .getTransactions(transactionType, auctionId, currentPage, currentPageSize)
         .whenComplete(this::handleTransactionsResult);
   }
 
@@ -167,7 +195,7 @@ public final class SystemBankController {
   }
 
   private void handleTransactionsResult(
-      List<FinancialTransactionViewModel> transactions, Throwable throwable) {
+      FinancialTransactionPageViewModel transactionPage, Throwable throwable) {
     Platform.runLater(
         () -> {
           if (throwable != null) {
@@ -179,7 +207,8 @@ public final class SystemBankController {
           }
 
           List<FinancialTransactionViewModel> safeTransactions =
-              transactions == null ? List.of() : transactions;
+              transactionPage == null ? List.of() : transactionPage.getTransactions();
+          applyTransactionPage(transactionPage);
           if (transactionTable != null) {
             transactionTable.setItems(FXCollections.observableArrayList(safeTransactions));
           }
@@ -206,6 +235,22 @@ public final class SystemBankController {
     setText(totalPayoutToSellerLabel, summary.getTotalPayoutToSellerText());
     setText(totalRefundedToWinnerLabel, summary.getTotalRefundedToWinnerText());
     setText(updatedAtLabel, "Cap nhat: " + summary.getUpdatedAtText());
+  }
+
+  private void applyTransactionPage(FinancialTransactionPageViewModel transactionPage) {
+    if (transactionPage == null) {
+      currentPage = DEFAULT_PAGE;
+      currentPageSize = DEFAULT_PAGE_SIZE;
+      totalPages = 1;
+      totalItems = 0;
+      updatePaginationControls();
+      return;
+    }
+    currentPage = transactionPage.getPage();
+    currentPageSize = transactionPage.getPageSize();
+    totalPages = transactionPage.getTotalPages();
+    totalItems = transactionPage.getTotalItems();
+    updatePaginationControls();
   }
 
   private void beginRequest() {
@@ -236,6 +281,7 @@ public final class SystemBankController {
     if (backButton != null) {
       backButton.setDisable(busy);
     }
+    updatePaginationControls();
   }
 
   private void setText(Label label, String text) {
@@ -256,6 +302,23 @@ public final class SystemBankController {
       emptyStateLabel.setText(message == null ? "" : message);
       emptyStateLabel.setVisible(visible);
       emptyStateLabel.setManaged(visible);
+    }
+  }
+
+  private void updatePaginationControls() {
+    int safePage = Math.max(1, currentPage);
+    int safeTotalPages = Math.max(1, totalPages);
+    if (paginationLabel != null) {
+      paginationLabel.setText(
+          String.format("Trang %d/%d - %d giao dich", safePage, safeTotalPages, totalItems));
+    }
+
+    boolean busy = pendingRequests > 0;
+    if (previousPageButton != null) {
+      previousPageButton.setDisable(busy || safePage <= 1);
+    }
+    if (nextPageButton != null) {
+      nextPageButton.setDisable(busy || safePage >= safeTotalPages);
     }
   }
 

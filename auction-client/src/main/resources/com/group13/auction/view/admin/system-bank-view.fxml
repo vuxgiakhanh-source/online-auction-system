@@ -137,6 +137,26 @@
                             text="Chưa có giao dịch tài chính phù hợp."
                             styleClass="empty-state-label"/>
                 </StackPane>
+
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <Label
+                            fx:id="paginationLabel"
+                            text="Trang 1/1 - 0 giao dich"
+                            styleClass="muted-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button
+                            fx:id="previousPageButton"
+                            text="&lt;"
+                            minWidth="44.0"
+                            styleClass="secondary-button"
+                            onAction="#handlePreviousPage"/>
+                    <Button
+                            fx:id="nextPageButton"
+                            text="&gt;"
+                            minWidth="44.0"
+                            styleClass="secondary-button"
+                            onAction="#handleNextPage"/>
+                </HBox>
             </VBox>
 
             <HBox alignment="CENTER_LEFT" spacing="12.0">

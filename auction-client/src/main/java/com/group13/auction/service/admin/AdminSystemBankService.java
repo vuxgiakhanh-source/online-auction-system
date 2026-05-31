@@ -7,9 +7,8 @@ import com.group13.auction.mapper.SystemBankViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.service.auction.AuctionServiceSupport;
-import com.group13.auction.viewmodel.admin.FinancialTransactionViewModel;
+import com.group13.auction.viewmodel.admin.FinancialTransactionPageViewModel;
 import com.group13.auction.viewmodel.admin.SystemBankSummaryViewModel;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /** Service phía client cho màn System Bank của Admin. */
@@ -46,7 +45,7 @@ public final class AdminSystemBankService {
   }
 
   /** Lấy danh sách giao dịch tài chính gần nhất. */
-  public CompletableFuture<List<FinancialTransactionViewModel>> getTransactions(
+  public CompletableFuture<FinancialTransactionPageViewModel> getTransactions(
       String transactionType, String auctionId, int page, int pageSize) {
     if (!currentUserIsAdmin()) {
       return AuctionServiceSupport.failedFuture("Tài khoản hiện tại không có quyền Admin.");
@@ -65,7 +64,7 @@ public final class AdminSystemBankService {
             PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS_SUCCESS,
             SystemBankDTOs.FinancialTransactionListDTO.class,
             "Không tải được lịch sử giao dịch tài chính.")
-        .thenApply(SystemBankViewModelMapper::toTransactionViewModels);
+        .thenApply(SystemBankViewModelMapper::toTransactionPageViewModel);
   }
 
   private boolean currentUserIsAdmin() {

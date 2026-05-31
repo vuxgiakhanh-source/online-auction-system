@@ -234,7 +234,9 @@ class UserViewModelMapperTest {
     assertEquals("bidder01@example.com", viewModel.getEmail());
     assertEquals("BIDDER", viewModel.getRole());
     assertEquals("5.0 / 5.0", viewModel.getRatingText());
-    assertEquals("Có thể duyệt quyền Seller bằng API hiện có.", viewModel.getNote());
+    assertEquals(
+        "\u0110\u1ee7 \u0111i\u1ec1u ki\u1ec7n duy\u1ec7t quy\u1ec1n Seller.",
+        viewModel.getNote());
     assertTrue(viewModel.isApprovable());
   }
 
@@ -286,7 +288,9 @@ class UserViewModelMapperTest {
         UserViewModelMapper.toSellerApprovalViewModel(lowRating);
     assertFalse(lowRatingViewModel.isApprovable());
     assertEquals("1.9 / 5.0", lowRatingViewModel.getRatingText());
-    assertEquals("Rating dưới 2.0, backend sẽ từ chối duyệt Seller.", lowRatingViewModel.getNote());
+    assertEquals(
+        "Rating d\u01b0\u1edbi 2.0 n\u00ean ch\u01b0a \u0111\u1ee7 \u0111i\u1ec1u ki\u1ec7n duy\u1ec7t Seller.",
+        lowRatingViewModel.getNote());
   }
 
   @Test
