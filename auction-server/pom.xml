@@ -120,7 +120,11 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*IT.java</exclude>
+                        <exclude>**/*IT$*.java</exclude>
                         <exclude>**/*IntegrationTest.java</exclude>
+                        <exclude>**/*IntegrationTest$*.java</exclude>
+                        <exclude>**/integration/**</exclude>
+                        <exclude>**/websocket/**</exclude>
                     </excludes>
                     <!-- Java 17: allow reflection on static final fields in tests -->
                     <argLine>

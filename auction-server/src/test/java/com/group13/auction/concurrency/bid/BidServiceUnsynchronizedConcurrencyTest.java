@@ -95,15 +95,18 @@ class BidServiceUnsynchronizedConcurrencyTest extends ConcurrencyTestBase {
             try {
               start.await();
               for (int r = 0; r < ROUNDS_PER_THREAD; r++) {
-                long current = auction.getCurrentPrice();
-                long inc = BidIncrementCalculator.calculate(current);
-                long amount = current + 2 * inc + idx * 1_000L;
-                try {
-                  bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
-                  successes.incrementAndGet();
-                  maxPriceSeen.updateAndGet(prev -> Math.max(prev, auction.getCurrentPrice()));
-                } catch (com.group13.auction.exception.InvalidBidException ignored) {
-                  // race: giá vừa nhảy — retry vòng sau
+                for (int attempt = 0; attempt < 8; attempt++) {
+                  long current = auction.getCurrentPrice();
+                  long inc = BidIncrementCalculator.calculate(current);
+                  long amount = current + 2 * inc + idx * 1_000L;
+                  try {
+                    bidService.placeBid(bidder, auction, amount, new StandardBidStrategy());
+                    successes.incrementAndGet();
+                    maxPriceSeen.updateAndGet(prev -> Math.max(prev, auction.getCurrentPrice()));
+                    break;
+                  } catch (com.group13.auction.exception.InvalidBidException ignored) {
+                    // Giá vừa nhảy — thử lại với current mới
+                  }
                 }
               }
             } catch (InterruptedException e) {

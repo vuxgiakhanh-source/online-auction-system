@@ -169,7 +169,8 @@
 
                 <configuration>
                     <configLocation>google_checks.xml</configLocation>
-                    <consoleOutput>true</consoleOutput>
+                    <!-- Tắt in WARN ra console — CI GitHub Actions bị nghẽn log (hàng trăm dòng DTO naming). -->
+                    <consoleOutput>false</consoleOutput>
                     <failsOnError>true</failsOnError>
                 </configuration>
 

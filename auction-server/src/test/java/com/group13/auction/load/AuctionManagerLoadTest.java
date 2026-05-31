@@ -356,7 +356,8 @@ class AuctionManagerLoadTest {
                     gate.await();
                     for (int i = 0; i < 20; i++) {
                       manager.getAllUsers();
-                      manager.findUserByUsername(seeds.get(seed % seeds.size()).getUsername());
+                      manager.findUserByUsernameInMemoryOnly(
+                          seeds.get(seed % seeds.size()).getUsername());
                     }
                   } catch (Error e) {
                     crashes.incrementAndGet();

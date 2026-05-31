@@ -2,6 +2,7 @@ package com.group13.auction.concurrency.autobid;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.group13.auction.concurrency.ConcurrencyTestBase;
 import com.group13.auction.strategy.AutoBidRegistry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 @DisplayName("AutoBidRegistry concurrency")
-class AutoBidRegistryConcurrencyTest {
+class AutoBidRegistryConcurrencyTest extends ConcurrencyTestBase {
 
   private final AutoBidRegistry registry = AutoBidRegistry.getInstance();
 

@@ -11,6 +11,7 @@ import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.service.WalletService;
 import com.group13.auction.service.iservice.IRatingService;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import org.junit.jupiter.api.*;
@@ -36,9 +37,11 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
   private FinancialTransactionDAO mockFinancialDAO;
   private UserDAO mockUserDAO;
   private IRatingService mockRatingService;
+  private final Map<String, NormalUser> usersByUsername = new ConcurrentHashMap<>();
 
   @BeforeEach
   void setUp() {
+    usersByUsername.clear();
     mockFinancialDAO = mock(FinancialTransactionDAO.class);
     mockUserDAO = mock(UserDAO.class);
     mockRatingService = mock(IRatingService.class);
@@ -48,10 +51,28 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
     when(mockRatingService.isWalletOperationAllowed(any())).thenReturn(true);
 
     when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
-    when(mockUserDAO.addBalance(any(), anyLong())).thenReturn(true);
+    when(mockUserDAO.addBalance(anyString(), anyLong()))
+        .thenAnswer(
+            inv -> {
+              String userId = inv.getArgument(0);
+              long amount = inv.getArgument(1);
+              usersByUsername.values().stream()
+                  .filter(u -> u.getId().equals(userId))
+                  .findFirst()
+                  .ifPresent(u -> u.setBalance(u.getBalance() + amount));
+              return true;
+            });
+    when(mockUserDAO.findUserCoreByUsername(anyString()))
+        .thenAnswer(inv -> usersByUsername.get(inv.getArgument(0)));
     when(mockUserDAO.saveUserAuctionActivity(any(), any(), any())).thenReturn(true);
 
     walletService = new WalletService(mockFinancialDAO, mockUserDAO, mockRatingService);
+  }
+
+  private NormalUser walletUser(String username, long balance) {
+    NormalUser user = buildUser(username, balance);
+    usersByUsername.put(user.getUsername(), user);
+    return user;
   }
 
   // ── G2-1 ─────────────────────────────────────────────────────────────────
@@ -74,7 +95,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
     //   → sau lần 1 balance = 1_200_000 → lần 2 vẫn đủ tiền → 2 successes
     long initialBalance = finalPrice;
 
-    NormalUser winner = buildUser("winner-G2-1", initialBalance);
+    NormalUser winner = walletUser("winner-G2-1", initialBalance);
     winner.lockDeposit(depositPaid);
 
     String auctionId = java.util.UUID.randomUUID().toString();
@@ -121,7 +142,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
       "G2-2: 5 threads concurrent deposit() — synchronized(user) atomic, không lost update")
   @Timeout(value = 5)
   void concurrentDeposit_5Threads_balanceIsExact() throws InterruptedException {
-    NormalUser user = buildUser("user-G2-2", 0L);
+    NormalUser user = walletUser("user-G2-2", 0L);
     long depositAmount = 100_000L;
     int threadCount = 5;
 
@@ -158,7 +179,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
   @Timeout(value = 5)
   void concurrentLockAndDeposit_balanceNeverNegative() throws InterruptedException {
     long initial = 1_000_000L;
-    NormalUser user = buildUser("user-G2-3", initial);
+    NormalUser user = walletUser("user-G2-3", initial);
 
     int threadCount = 10;
     long lockAmount = 50_000L;
@@ -206,7 +227,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
       "G5-1: concurrent getAvailableBalance() + lockDeposit() — balance thực tế không bao giờ âm")
   @Timeout(value = 8)
   void concurrentBalanceRead_neverActuallyNegative() throws InterruptedException {
-    NormalUser user = buildUser("user-G5-1", 2_000_000L);
+    NormalUser user = walletUser("user-G5-1", 2_000_000L);
     long lockAmt = 200_000L;
 
     int writerCount = 5;
@@ -279,7 +300,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
   @Timeout(value = 5)
   void concurrentWithdraw_exactBalance_onlyOneSucceeds() throws InterruptedException {
     long exact = 500_000L;
-    NormalUser user = buildUser("user-G5-2", exact);
+    NormalUser user = walletUser("user-G5-2", exact);
 
     CountDownLatch gate = new CountDownLatch(1);
     CountDownLatch done = new CountDownLatch(2);

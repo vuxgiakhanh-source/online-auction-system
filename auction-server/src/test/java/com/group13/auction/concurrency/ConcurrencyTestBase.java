@@ -7,11 +7,16 @@ import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
+import com.group13.auction.strategy.AutoBidRegistry;
+import com.group13.auction.unit.TestFixture;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +32,18 @@ public abstract class ConcurrencyTestBase {
   protected static final long RESERVE_PRICE = 800_000L;
   protected static final long USER_BALANCE = 50_000_000L;
   protected static final long TIMEOUT_MS = 10_000L;
+
+  /**
+   * Concurrency tests gọi {@link BidService#placeBid}, {@link AutoBidRegistry#register}, … — các
+   * Singleton này mặc định chạm DB (NotificationDAO, AutoBidDAO). Không mock → HikariCP block tới
+   * 6–30s/call, làm CI timeout và flaky giữa các test.
+   */
+  @BeforeEach
+  void prepareConcurrencyTestEnvironment() throws Exception {
+    TestFixture.silenceGlobalSingletons();
+    TestFixture.resetSystemBankBalance();
+    clearAutoBidRegistry();
+  }
 
   // ── Fixture builders ────────────────────────────────────────────────────
 
@@ -133,6 +150,14 @@ public abstract class ConcurrencyTestBase {
     } catch (Exception e) {
       log.warn("[TEST WARN] Không add SELLER role: {}", e.getMessage());
     }
+  }
+
+  /** Xóa in-memory AutoBidRegistry để tránh state leak giữa các concurrency test. */
+  protected void clearAutoBidRegistry() throws Exception {
+    AutoBidRegistry registry = AutoBidRegistry.getInstance();
+    Field registryField = AutoBidRegistry.class.getDeclaredField("registry");
+    registryField.setAccessible(true);
+    ((ConcurrentHashMap<?, ?>) registryField.get(registry)).clear();
   }
 
   /** Reset allUsers map trong AuctionManager Singleton để tránh state leak. */

@@ -49,7 +49,14 @@ public class DatabaseConnection {
         this.username = (envUsername != null) ? envUsername : "";
         this.password = (envPassword != null) ? envPassword : "";
         log.warn("Database config loaded from environment variables (Docker mode).");
-        buildPool();
+        try {
+          buildPool();
+        } catch (Exception poolEx) {
+          // CI đặt DB_URL cho MySQL service; integration test sẽ gọi reconfigure(Testcontainers).
+          log.warn(
+              "DB_URL pool init failed (Testcontainers/ensureReady sẽ cấu hình lại). Lỗi: {}",
+              poolEx.getMessage());
+        }
       } else {
         Properties props = new Properties();
         InputStream is = getClass().getClassLoader().getResourceAsStream("data.properties");

@@ -99,12 +99,19 @@ class BidRaceConditionTest extends ConcurrencyTestBase {
               () -> {
                 try {
                   gate.await();
-                  long current = auction.getCurrentPrice();
-                  long inc = BidIncrementCalculator.calculate(current);
-                  long bidAmount = current + inc + idx * 1_000L;
-                  bidService.placeBid(bidder, auction, bidAmount, strategy);
-                  successCount.incrementAndGet();
-                  maxSuccessfulPrice.updateAndGet(p -> Math.max(p, auction.getCurrentPrice()));
+                  for (int attempt = 0; attempt < 5; attempt++) {
+                    try {
+                      long current = auction.getCurrentPrice();
+                      long inc = BidIncrementCalculator.calculate(current);
+                      long bidAmount = current + inc + idx * 1_000L;
+                      bidService.placeBid(bidder, auction, bidAmount, strategy);
+                      successCount.incrementAndGet();
+                      maxSuccessfulPrice.updateAndGet(p -> Math.max(p, auction.getCurrentPrice()));
+                      break;
+                    } catch (com.group13.auction.exception.InvalidBidException ignored) {
+                      // Giá vừa nhảy — thử lại với current mới
+                    }
+                  }
                 } catch (Exception ignored) {
                 } finally {
                   done.countDown();

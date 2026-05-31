@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +29,20 @@ public class AutoBidRegistry {
   private static final Logger log = LoggerFactory.getLogger(AutoBidRegistry.class);
 
   private static final AutoBidRegistry INSTANCE = new AutoBidRegistry();
+
+  /** Persist DB ngoài luồng register — tránh block 32+ thread concurrent trên HikariCP. */
+  private static final ExecutorService PERSIST_EXECUTOR =
+      Executors.newSingleThreadExecutor(
+          new ThreadFactory() {
+            private final AtomicInteger index = new AtomicInteger();
+
+            @Override
+            public Thread newThread(Runnable r) {
+              Thread t = new Thread(r, "autobid-persist-" + index.incrementAndGet());
+              t.setDaemon(true);
+              return t;
+            }
+          });
 
   /** Map lưu toàn bộ auto-bid. Key = "{userId}:{auctionId}" */
   private final ConcurrentHashMap<String, AutoBidEntry> registry = new ConcurrentHashMap<>();
@@ -53,13 +71,17 @@ public class AutoBidRegistry {
               return new AutoBidEntry(userId, auctionId, maxBid, registeredAt);
             });
 
-    // Persist xuống DB (graceful: nếu DB chưa sẵn sàng — test env — bỏ qua)
+    // Persist xuống DB bất đồng bộ — register() chỉ cập nhật RAM (hot path).
     if (autoBidDAO != null) {
-      try {
-        autoBidDAO.upsert(userId, auctionId, maxBid, entry.getRegisteredAt());
-      } catch (Exception e) {
-        log.warn("auto-bid DB upsert failed (non-critical): {}", e.getMessage());
-      }
+      LocalDateTime registeredAt = entry.getRegisteredAt();
+      PERSIST_EXECUTOR.submit(
+          () -> {
+            try {
+              autoBidDAO.upsert(userId, auctionId, maxBid, registeredAt);
+            } catch (Exception e) {
+              log.warn("auto-bid DB upsert failed (non-critical): {}", e.getMessage());
+            }
+          });
     }
 
     log.info("auto-bid registered: userId={} auctionId={} maxBid={}", userId, auctionId, maxBid);

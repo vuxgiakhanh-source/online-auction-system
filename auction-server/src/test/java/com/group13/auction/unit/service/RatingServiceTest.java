@@ -43,7 +43,8 @@ class RatingServiceTest {
   private RatingService ratingService;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
+    TestFixture.silenceGlobalSingletons();
     ratingService = new RatingService(userDAO, notificationDAO);
     lenient().when(userDAO.updateRating(anyString(), anyDouble())).thenReturn(true);
     lenient().when(userDAO.updateAccountStatus(anyString(), anyString())).thenReturn(true);
