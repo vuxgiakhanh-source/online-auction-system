@@ -436,6 +436,7 @@ public final class LiveBiddingController implements ClientEventListener {
     if (notify == null || !isCurrentAuction(notify.getAuctionId())) {
       return;
     }
+    if (notify == null) return;
 
     FxThreadUtil.runOnFxThread(
         () -> {
@@ -486,12 +487,16 @@ public final class LiveBiddingController implements ClientEventListener {
     if (dto == null || !isCurrentAuction(dto.getAuctionId())) {
       return;
     }
+    if (dto == null) return;
 
     FxThreadUtil.runOnFxThread(
         () -> {
-          endTimeLabel.setText(DateTimeUtil.formatDateTime(dto.getNewEndTime()));
-          auctionEndTime = dto.getNewEndTime();
-          startCountdownTimer();
+          var newEndTime = dto.getNewEndTime();
+          if (newEndTime != null) {
+            endTimeLabel.setText(DateTimeUtil.formatDateTime(newEndTime));
+            auctionEndTime = newEndTime;
+            startCountdownTimer();
+          }
           setMessage("Phiên được gia hạn thêm " + dto.getExtendedBySeconds() + " giây.");
         });
   }
@@ -537,6 +542,7 @@ public final class LiveBiddingController implements ClientEventListener {
     if (dto == null || !isCurrentAuction(dto.getAuctionId())) {
       return;
     }
+    if (dto == null) return;
 
     FxThreadUtil.runOnFxThread(
         () ->
@@ -551,6 +557,7 @@ public final class LiveBiddingController implements ClientEventListener {
     if (update == null || !isCurrentAuction(update.getAuctionId())) {
       return;
     }
+    if (update == null) return;
 
     FxThreadUtil.runOnFxThread(
         () -> {
