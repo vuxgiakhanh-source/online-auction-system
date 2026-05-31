@@ -43,7 +43,7 @@ public class AuctionService implements IAuctionService {
   private final FinancialTransactionDAO financialTransactionDAO;
   private final SystemBank systemBank = SystemBank.getInstance();
 
-  /** Map<auctionId, observers> - tập trung quản lý observer. */
+  /** Danh sách observer theo từng phiên đấu giá. */
   private final Map<String, List<AuctionObserver>> observersMap = new ConcurrentHashMap<>();
 
   /** Lock theo auctionId cho addObserver (tránh duplicate khi nhiều thread join). */
@@ -300,9 +300,9 @@ public class AuctionService implements IAuctionService {
   @Override
   public void cancelAuction(Auction auction, Admin.CancelReason reason) {
     auction.transitionToCancel();
-    String log =
+    String actionLog =
         String.format("[SYSTEM AUTO-CANCEL] Phiên %s bị hủy | Lý do: %s", auction.getId(), reason);
-    system.addActionLog(log);
+    system.addActionLog(actionLog);
     AuctionService.log.info("SYSTEM AUTO-CANCEL: auctionId={} reason={}", auction.getId(), reason);
 
     // Persist DB trước khi notify để đảm bảo nhất quán
