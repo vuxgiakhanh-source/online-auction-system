@@ -99,7 +99,11 @@
             </HBox>
 
             <HBox spacing="18.0" styleClass="admin-card-row">
-                <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                <VBox spacing="12.0"
+                      styleClass="admin-nav-card"
+                      visible="false"
+                      managed="false"
+                      HBox.hgrow="ALWAYS">
                     <Label text="Duyệt quyền Seller" styleClass="card-title"/>
                     <Label
                             text="Duyệt quyền Seller cho các tài khoản đủ điều kiện."

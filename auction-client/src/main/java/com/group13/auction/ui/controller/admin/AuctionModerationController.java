@@ -1,6 +1,9 @@
 package com.group13.auction.ui.controller.admin;
 
+import com.group13.auction.core.context.AppContext;
 import com.group13.auction.core.navigation.Navigator;
+import com.group13.auction.core.navigation.Route;
+import com.group13.auction.core.state.ScreenStateKeys;
 import com.group13.auction.service.admin.AdminAuctionService;
 import com.group13.auction.viewmodel.admin.AuctionModerationViewModel;
 import java.util.List;
@@ -43,6 +46,8 @@ public final class AuctionModerationController {
 
   @FXML private Button refreshButton;
   @FXML private Button cancelButton;
+  @FXML private Button watchRealtimeButton;
+  @FXML private Button viewHistoryButton;
   @FXML private Button backButton;
 
   /** Khởi tạo bảng quản lý phiên đấu giá và tải dữ liệu lần đầu. */
@@ -52,7 +57,7 @@ public final class AuctionModerationController {
     configureCancelReasons();
     configureSelectionBinding();
     setBusy(false);
-    setCancelButtonDisabled(true);
+    syncActionButtons(null);
     showEmptyState("Chưa có dữ liệu phiên đấu giá.");
     loadAuctions();
   }
@@ -82,6 +87,42 @@ public final class AuctionModerationController {
     adminAuctionService
         .cancelAuctionAsAdmin(selectedAuction.getAuctionId(), reason)
         .whenComplete((updatedAuction, throwable) -> handleMutationResult(throwable));
+  }
+
+  @FXML
+  private void handleWatchRealtime() {
+    AuctionModerationViewModel selectedAuction = getSelectedAuction();
+    if (selectedAuction == null) {
+      showStatus("Vui lòng chọn phiên đấu giá cần theo dõi.");
+      return;
+    }
+
+    if (!selectedAuction.isLiveWatchable()) {
+      showStatus("Phiên này không còn ở trạng thái realtime. Hãy xem lịch sử phiên.");
+      return;
+    }
+
+    AppContext.getInstance()
+        .getScreenStateStore()
+        .put(ScreenStateKeys.SELECTED_AUCTION_ID, selectedAuction.getAuctionId());
+    AppContext.getInstance()
+        .getScreenStateStore()
+        .put(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE, Route.ADMIN_AUCTIONS.name());
+    Navigator.getInstance().goToLiveBidding();
+  }
+
+  @FXML
+  private void handleViewHistory() {
+    AuctionModerationViewModel selectedAuction = getSelectedAuction();
+    if (selectedAuction == null) {
+      showStatus("Vui lòng chọn phiên đấu giá cần xem lịch sử.");
+      return;
+    }
+
+    AppContext.getInstance()
+        .getScreenStateStore()
+        .put(ScreenStateKeys.LIVE_BIDDING_RETURN_ROUTE, Route.ADMIN_AUCTIONS.name());
+    Navigator.getInstance().goToLiveBiddingReadOnly(selectedAuction.getAuctionId());
   }
 
   @FXML
@@ -142,8 +183,7 @@ public final class AuctionModerationController {
     auctionTable
         .getSelectionModel()
         .selectedItemProperty()
-        .addListener(
-            (observable, oldValue, selectedAuction) -> updateCancelButton(selectedAuction));
+        .addListener((observable, oldValue, selectedAuction) -> syncActionButtons(selectedAuction));
   }
 
   private void handleAuctionsResult(
@@ -155,7 +195,7 @@ public final class AuctionModerationController {
           if (throwable != null) {
             showStatus(errorMessage(throwable, "Không tải được danh sách phiên đấu giá."));
             showEmptyState("Không tải được danh sách phiên đấu giá.");
-            setCancelButtonDisabled(true);
+            disableActionButtons();
             return;
           }
 
@@ -172,7 +212,7 @@ public final class AuctionModerationController {
             showEmptyState("");
           }
 
-          updateCancelButton(getSelectedAuction());
+          syncActionButtons(getSelectedAuction());
         });
   }
 
@@ -182,7 +222,7 @@ public final class AuctionModerationController {
           if (throwable != null) {
             setBusy(false);
             showStatus(errorMessage(throwable, "Không hủy được phiên đấu giá."));
-            updateCancelButton(getSelectedAuction());
+            syncActionButtons(getSelectedAuction());
             return;
           }
 
@@ -191,15 +231,27 @@ public final class AuctionModerationController {
         });
   }
 
-  private void updateCancelButton(AuctionModerationViewModel selectedAuction) {
+  private void syncActionButtons(AuctionModerationViewModel selectedAuction) {
     if (cancelButton != null) {
       cancelButton.setDisable(selectedAuction == null || !selectedAuction.isCancellable());
     }
+    if (watchRealtimeButton != null) {
+      watchRealtimeButton.setDisable(selectedAuction == null || !selectedAuction.isLiveWatchable());
+    }
+    if (viewHistoryButton != null) {
+      viewHistoryButton.setDisable(selectedAuction == null || !selectedAuction.isHistoryViewable());
+    }
   }
 
-  private void setCancelButtonDisabled(boolean disabled) {
+  private void disableActionButtons() {
     if (cancelButton != null) {
-      cancelButton.setDisable(disabled);
+      cancelButton.setDisable(true);
+    }
+    if (watchRealtimeButton != null) {
+      watchRealtimeButton.setDisable(true);
+    }
+    if (viewHistoryButton != null) {
+      viewHistoryButton.setDisable(true);
     }
   }
 
@@ -224,9 +276,9 @@ public final class AuctionModerationController {
     }
 
     if (busy) {
-      setCancelButtonDisabled(true);
+      disableActionButtons();
     } else {
-      updateCancelButton(getSelectedAuction());
+      syncActionButtons(getSelectedAuction());
     }
   }
 

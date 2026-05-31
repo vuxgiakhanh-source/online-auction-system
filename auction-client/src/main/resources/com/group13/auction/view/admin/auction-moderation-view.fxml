@@ -71,6 +71,16 @@
                         styleClass="secondary-button"
                         onAction="#handleRefresh"/>
                 <Button
+                        fx:id="watchRealtimeButton"
+                        text="Theo dõi realtime"
+                        styleClass="primary-button"
+                        onAction="#handleWatchRealtime"/>
+                <Button
+                        fx:id="viewHistoryButton"
+                        text="Xem lịch sử"
+                        styleClass="secondary-button"
+                        onAction="#handleViewHistory"/>
+                <Button
                         fx:id="cancelButton"
                         text="Hủy phiên"
                         styleClass="danger-button"
