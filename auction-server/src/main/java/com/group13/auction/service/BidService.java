@@ -25,6 +25,7 @@ import com.group13.auction.strategy.AutoBidRegistry;
 import com.group13.auction.strategy.BidStrategy;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +45,7 @@ public class BidService implements IBidService {
     public final boolean ratingPenalized;
     public final long newAvailableBalance;
 
-    /** Giá trước khi leader rời phiên — dùng để tính priceChange trong broadcast. */
+    /** Giá trước khi xếp lại bảng (sau khi hủy bid người rời) — dùng priceChange trong broadcast. */
     public final long previousPrice;
 
     /** true nếu leader rời trong cửa sổ anti-sniping và phiên được gia hạn. */
@@ -386,7 +387,7 @@ public class BidService implements IBidService {
         isPastTwoThirds = isPastTwoThirdsTime(auction);
         shouldPenalize = isCurrentLeader || isPastTwoThirds;
 
-        // Hủy mọi bid ACCEPTED của người rời (kể cả không phải leader).
+        // Hủy mọi bid hợp lệ của người rời, rồi xếp lại bảng (người sau lên thay người trước).
         int cancelledRows = bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
         if (cancelledRows > 0) {
           log.info(
@@ -396,44 +397,39 @@ public class BidService implements IBidService {
               cancelledRows);
         }
 
-        if (isCurrentLeader) {
-          previousPrice = auction.getCurrentPrice(); // capture trước khi reset
-          BidTransaction nextBid =
-              bidTransactionDAO.findHighestValidBidExcept(auctionId, bidder.getId());
+        previousPrice = auction.getCurrentPrice();
+        String previousLeaderId =
+            auction.getCurrentLeader() != null ? auction.getCurrentLeader().getId() : null;
 
-          if (nextBid != null && nextBid.getBidder() != null) {
-            long nextPrice = nextBid.getAmount();
-            NormalUser nextUser = nextBid.getBidder();
-            auction.resetLeader(nextPrice, nextUser);
-            bidTransactionDAO.updateLeaderAfterLeave(auctionId, nextUser.getId(), nextPrice);
-            log.info(
-                "Leader rolled back to next bidder: auctionId={}, newLeader={}, newPrice={}",
-                auctionId,
-                nextUser.getUsername(),
-                nextPrice);
-          } else {
-            // FIX: khi không còn ai bid, giá về startingPrice chứ KHÔNG về 0.
-            // Nếu về 0 → AutoBidProcessor tính nextBid từ 0 → autobid bắn với giá rất thấp.
-            long fallbackPrice = auction.getItem().getStartingPrice();
-            auction.resetLeader(fallbackPrice, null);
-            bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, fallbackPrice);
-            log.info(
-                "Leader rolled back to empty (no other bids), price reset to startingPrice:"
-                    + " auctionId={}, startingPrice={}",
-                auctionId,
-                fallbackPrice);
-          }
-          leaderChanged = true;
-          if (applyAntiSnipingExtension(auction)) {
-            extendedForAntiSniping = true;
-            leavingLeader = bidder;
-            auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
-            log.info(
-                "Anti-sniping on leader leave: auctionId={}, leaderId={}, newEndTime={}",
-                auctionId,
-                bidder.getId(),
-                auction.getEndTime());
-          }
+        recalculateAuctionRanking(auction, auctionId);
+
+        String newLeaderId =
+            auction.getCurrentLeader() != null ? auction.getCurrentLeader().getId() : null;
+        leaderChanged =
+            previousPrice != auction.getCurrentPrice()
+                || !Objects.equals(previousLeaderId, newLeaderId);
+
+        if (leaderChanged) {
+          log.info(
+              "Auction ranking recalculated after leave: auctionId={}, leaverId={},"
+                  + " previousPrice={}, newPrice={}, previousLeaderId={}, newLeaderId={}",
+              auctionId,
+              bidder.getId(),
+              previousPrice,
+              auction.getCurrentPrice(),
+              previousLeaderId,
+              newLeaderId);
+        }
+
+        if (isCurrentLeader && applyAntiSnipingExtension(auction)) {
+          extendedForAntiSniping = true;
+          leavingLeader = bidder;
+          auctionDAO.updateEndTime(auction.getId(), auction.getEndTime());
+          log.info(
+              "Anti-sniping on leader leave: auctionId={}, leaderId={}, newEndTime={}",
+              auctionId,
+              bidder.getId(),
+              auction.getEndTime());
         }
 
         // Capture penalty info trước khi unlock — giá trị này nhất quán với state trong lock
@@ -522,6 +518,34 @@ public class BidService implements IBidService {
         newBalance,
         extendedForAntiSniping,
         previousPrice);
+  }
+
+  /**
+   * Xếp lại hạng 1 từ bid hợp lệ cao nhất còn lại; không còn bid → giá khởi điểm, chưa có leader.
+   */
+  private void recalculateAuctionRanking(Auction auction, String auctionId) {
+    BidTransaction topBid = bidTransactionDAO.findHighestValidBid(auctionId);
+
+    if (topBid != null && topBid.getBidder() != null) {
+      long topPrice = topBid.getAmount();
+      NormalUser topBidder = topBid.getBidder();
+      auction.resetLeader(topPrice, topBidder);
+      bidTransactionDAO.updateLeaderAfterLeave(auctionId, topBidder.getId(), topPrice);
+      log.info(
+          "Ranking head set from valid bids: auctionId={}, leader={}, price={}",
+          auctionId,
+          topBidder.getUsername(),
+          topPrice);
+      return;
+    }
+
+    long fallbackPrice = auction.getItem().getStartingPrice();
+    auction.resetLeader(fallbackPrice, null);
+    bidTransactionDAO.updateLeaderAfterLeave(auctionId, null, fallbackPrice);
+    log.info(
+        "Ranking empty after leave — reset to startingPrice: auctionId={}, startingPrice={}",
+        auctionId,
+        fallbackPrice);
   }
 
   /**

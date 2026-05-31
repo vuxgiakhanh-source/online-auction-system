@@ -180,18 +180,17 @@ public class BidTransactionDAO {
    * 3. Lấy toàn bộ lịch sử đặt giá HỢP LỆ theo auctionId, sắp xếp theo thời gian tăng dần. Dùng cho
    * GET_BID_HISTORY (vẽ line chart).
    *
-   * <p>FIX BUG #1: Thêm WHERE result != 'REJECTED' để không đưa bid bị từ chối lên chart. Bid
-   * REJECTED là bid không hợp lệ (giá thấp hơn giá hiện tại, phiên đã đóng...) — hiển thị chúng sẽ
-   * làm đường giá bị tụt xuống một cách sai.
+   * <p>FIX BUG #1: Loại REJECTED và CANCELLED_BY_LEAVE — bid hủy khi rời phiên không còn trong
+   * bảng xếp hạng, không được vẽ lên chart hay làm lệch giá hiển thị trên client.
    */
   public List<BidTransaction> findByAuctionId(String auctionId) {
     List<BidTransaction> result = new ArrayList<>();
 
-    // FIX BUG #1: Thêm "AND result != 'REJECTED'" — chỉ lấy bid hợp lệ để vẽ chart
     String sql =
         "SELECT id, auction_id, bidder_id, bid_amount, result, bid_time "
             + "FROM bid_transactions "
-            + "WHERE auction_id = ? AND result != 'REJECTED' "
+            + "WHERE auction_id = ? "
+            + "AND result NOT IN ('REJECTED', 'CANCELLED_BY_LEAVE') "
             + "ORDER BY bid_time ASC, seq ASC";
 
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -233,13 +232,38 @@ public class BidTransactionDAO {
   }
 
   /**
-   * 4. Tìm lượt đặt giá HỢP LỆ cao nhất, ngoại trừ người thắng cuộc (winner). Dùng để tìm Runner-up
-   * (người về nhì) cho Second Chance Offer.
+   * Bid hợp lệ cao nhất còn lại trong phiên (ACCEPTED hoặc ACCEPTED_RESERVE_NOT_MET). Dùng sau khi
+   * có người rời phiên để xếp lại bảng xếp hạng.
+   */
+  public BidTransaction findHighestValidBid(String auctionId) {
+    String sql =
+        "SELECT * FROM bid_transactions WHERE auction_id = ? "
+            + "AND result IN ('ACCEPTED', 'ACCEPTED_RESERVE_NOT_MET') "
+            + "ORDER BY bid_amount DESC LIMIT 1";
+
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, auctionId);
+
+      try (ResultSet rs = pstmt.executeQuery()) {
+        return mapHighestValidBidRow(rs);
+      }
+    } catch (SQLException e) {
+      log.error("Failed to find highest valid bid: auctionId={}", auctionId, e);
+    }
+    log.debug("No valid bid found for auction: auctionId={}", auctionId);
+    return null;
+  }
+
+  /**
+   * Bid hợp lệ cao nhất, ngoại trừ một bidder (runner-up cho Second Chance Offer).
    */
   public BidTransaction findHighestValidBidExcept(String auctionId, String excludedBidderId) {
     String sql =
-        "SELECT * FROM bid_transactions WHERE auction_id = ? AND bidder_id != ? AND result ="
-            + " 'ACCEPTED' ORDER BY bid_amount DESC LIMIT 1";
+        "SELECT * FROM bid_transactions WHERE auction_id = ? AND bidder_id != ? "
+            + "AND result IN ('ACCEPTED', 'ACCEPTED_RESERVE_NOT_MET') "
+            + "ORDER BY bid_amount DESC LIMIT 1";
 
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -248,30 +272,7 @@ public class BidTransactionDAO {
       pstmt.setString(2, excludedBidderId != null ? excludedBidderId : "");
 
       try (ResultSet rs = pstmt.executeQuery()) {
-        if (rs.next()) {
-          String id = rs.getString("id");
-          String fetchedAuctionId = rs.getString("auction_id");
-          String bidderId = rs.getString("bidder_id");
-          long amount = rs.getLong("bid_amount");
-          String resultStr = rs.getString("result");
-
-          java.sql.Timestamp bidTimeTs = rs.getTimestamp("bid_time");
-          java.time.LocalDateTime bidTime =
-              (bidTimeTs != null) ? bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
-
-          UserDAO userDAO = new UserDAO();
-          NormalUser bidder = userDAO.findNormalUserById(bidderId);
-
-          return BidTransaction.reconstitute(
-              id,
-              bidTime,
-              bidTime,
-              bidder,
-              null,
-              amount,
-              bidTime,
-              BidTransaction.BidResult.valueOf(resultStr));
-        }
+        return mapHighestValidBidRow(rs);
       }
     } catch (SQLException e) {
       log.error(
@@ -283,6 +284,32 @@ public class BidTransactionDAO {
     log.debug(
         "No runner-up bid found: auctionId={}, excludedBidderId={}", auctionId, excludedBidderId);
     return null;
+  }
+
+  private BidTransaction mapHighestValidBidRow(ResultSet rs) throws SQLException {
+    if (!rs.next()) {
+      return null;
+    }
+    String id = rs.getString("id");
+    String bidderId = rs.getString("bidder_id");
+    long amount = rs.getLong("bid_amount");
+    String resultStr = rs.getString("result");
+
+    java.sql.Timestamp bidTimeTs = rs.getTimestamp("bid_time");
+    java.time.LocalDateTime bidTime =
+        (bidTimeTs != null) ? bidTimeTs.toLocalDateTime() : java.time.LocalDateTime.now();
+
+    NormalUser bidder = userDAO.findNormalUserById(bidderId);
+
+    return BidTransaction.reconstitute(
+        id,
+        bidTime,
+        bidTime,
+        bidder,
+        null,
+        amount,
+        bidTime,
+        BidTransaction.BidResult.valueOf(resultStr));
   }
 
   /**
