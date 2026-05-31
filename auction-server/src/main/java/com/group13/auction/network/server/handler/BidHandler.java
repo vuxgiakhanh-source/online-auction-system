@@ -339,20 +339,11 @@ public class BidHandler implements PacketHandler {
                 : "Chưa có");
         sessionManager.broadcastToAuction(auctionId, Packet.of(PacketType.BID_UPDATE, update));
         log.info(
-            "Leader-change broadcast sent: auctionId={} newLeader={} newPrice={} previousPrice={}",
+            "Ranking-change broadcast sent: auctionId={} newLeader={} newPrice={} previousPrice={}",
             auctionId,
             auction.getCurrentLeader() != null ? auction.getCurrentLeader().getUsername() : "none",
             newPrice,
             result.previousPrice);
-
-        // // Khi leader rời phiên, giá drop về bidder thứ 2. Các auto-bidder khác
-        // cần được kích hoạt để counter bidder thứ 2 (nếu họ có đủ budget).
-        // triggeredByUserId = bidder.getId() (người vừa rời) để process() biết ai là
-        // "nguồn" trigger — dùng trong logging; logic bên trong dùng currentLeader để
-        // xác định ai cần counter.
-        final NormalUser leavingBidder = bidder;
-        final Auction triggerAuction = auction;
-        autoBidProcessor.submit(triggerAuction, leavingBidder.getId());
       }
 
       // Build response từ LeaveResult — không tính lại bất kỳ điều kiện nào
@@ -1075,7 +1066,8 @@ public class BidHandler implements PacketHandler {
       for (BidTransaction tx : txList) {
         // Defensive check — lọc thêm ở tầng handler phòng trường hợp
         // findByAuctionId() trả về cả REJECTED (ví dụ dùng phiên bản DAO cũ)
-        if (tx.getResult() == BidTransaction.BidResult.REJECTED) {
+        if (tx.getResult() == BidTransaction.BidResult.REJECTED
+            || tx.getResult() == BidTransaction.BidResult.CANCELLED_BY_LEAVE) {
           continue;
         }
 

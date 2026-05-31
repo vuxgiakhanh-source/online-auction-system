@@ -797,7 +797,8 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    points.forEach(this::appendHistoryPoint);
+    // Chỉ vẽ chart/list — giá hiện tại lấy từ watch/BID_UPDATE, tránh bid đã hủy ghi đè currentPriceRaw.
+    points.forEach(point -> appendHistoryPoint(point, false));
     setMessage("Đã tải " + points.size() + " điểm lịch sử bid.");
   }
 
@@ -832,6 +833,14 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   private void appendHistoryPoint(BidHistoryPointViewModel point) {
+    appendHistoryPoint(point, true);
+  }
+
+  /**
+   * @param syncDisplayedPrice true khi điểm mới từ realtime (bid vừa chấp nhận); false khi nạp lịch
+   *     sử — tránh bid cũ/đã hủy ghi đè giá hiện tại sau khi leader rời phiên.
+   */
+  private void appendHistoryPoint(BidHistoryPointViewModel point, boolean syncDisplayedPrice) {
     if (point == null) {
       return;
     }
@@ -841,12 +850,13 @@ public final class LiveBiddingController implements ClientEventListener {
     bidHistoryListView.getItems().add(0, formatBidHistoryListRow(point));
     trimBidHistoryIfNeeded();
 
-    // Cập nhật Y-axis bounds sau mỗi thay đổi dữ liệu để mốc giá không bị mất
     updateChartYAxisBounds();
 
-    currentPriceRaw = point.price();
-    currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
-    updateMinimumBidHint();
+    if (syncDisplayedPrice) {
+      currentPriceRaw = point.price();
+      currentPriceLabel.setText(CurrencyUtil.formatVnd(point.price()));
+      updateMinimumBidHint();
+    }
   }
 
   private LineChart<String, Number> createExpandedBidLineChart() {

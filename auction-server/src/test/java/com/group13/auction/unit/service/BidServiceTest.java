@@ -775,7 +775,7 @@ class BidServiceTest {
       LocalDateTime endBefore = auction.getEndTime();
 
       when(bidTransactionDAO.cancelBidsByBidder(auction.getId(), leader.getId())).thenReturn(1);
-      when(bidTransactionDAO.findHighestValidBidExcept(auction.getId(), leader.getId()))
+      when(bidTransactionDAO.findHighestValidBid(auction.getId()))
           .thenReturn(
               BidTransaction.create(
                   runnerUp, auction.getId(), STARTING_PRICE + 300_000L, BidResult.ACCEPTED));
@@ -791,7 +791,7 @@ class BidServiceTest {
       Auction auction = snipingAuctionWithLeader();
 
       when(bidTransactionDAO.cancelBidsByBidder(any(), any())).thenReturn(1);
-      when(bidTransactionDAO.findHighestValidBidExcept(any(), eq(leader.getId())))
+      when(bidTransactionDAO.findHighestValidBid(any()))
           .thenReturn(
               BidTransaction.create(
                   runnerUp, auction.getId(), STARTING_PRICE + 300_000L, BidResult.ACCEPTED));
@@ -816,9 +816,15 @@ class BidServiceTest {
       LocalDateTime endBefore = auction.getEndTime();
 
       when(bidTransactionDAO.cancelBidsByBidder(auction.getId(), runnerUp.getId())).thenReturn(0);
+      when(bidTransactionDAO.findHighestValidBid(auction.getId()))
+          .thenReturn(
+              BidTransaction.create(
+                  leader, auction.getId(), STARTING_PRICE + 500_000L, BidResult.ACCEPTED));
 
       bidService.leaveAuction(runnerUp, auction);
 
+      assertThat(auction.getCurrentPrice()).isEqualTo(STARTING_PRICE + 500_000L);
+      assertThat(auction.getCurrentLeader()).isSameAs(leader);
       assertThat(auction.getEndTime()).isEqualTo(endBefore);
       verify(auctionDAO, never()).updateEndTime(any(), any());
     }
@@ -842,12 +848,33 @@ class BidServiceTest {
       LocalDateTime endBefore = auction.getEndTime();
 
       when(bidTransactionDAO.cancelBidsByBidder(any(), any())).thenReturn(1);
-      when(bidTransactionDAO.findHighestValidBidExcept(any(), any())).thenReturn(null);
+      when(bidTransactionDAO.findHighestValidBid(any())).thenReturn(null);
 
       bidService.leaveAuction(leader, auction);
 
+      assertThat(auction.getCurrentPrice()).isEqualTo(STARTING_PRICE);
+      assertThat(auction.getCurrentLeader()).isNull();
       assertThat(auction.getEndTime()).isEqualTo(endBefore);
       verify(auctionDAO, never()).updateEndTime(any(), any());
+    }
+
+    @Test
+    @DisplayName("leader rời → rollback giá và leader về người đứng thứ 2")
+    void leaderLeave_recalculatesRankingToRunnerUp() {
+      Auction auction = snipingAuctionWithLeader();
+      long runnerUpPrice = STARTING_PRICE + 300_000L;
+
+      when(bidTransactionDAO.cancelBidsByBidder(auction.getId(), leader.getId())).thenReturn(1);
+      when(bidTransactionDAO.findHighestValidBid(auction.getId()))
+          .thenReturn(
+              BidTransaction.create(runnerUp, auction.getId(), runnerUpPrice, BidResult.ACCEPTED));
+
+      bidService.leaveAuction(leader, auction);
+
+      assertThat(auction.getCurrentPrice()).isEqualTo(runnerUpPrice);
+      assertThat(auction.getCurrentLeader()).isSameAs(runnerUp);
+      verify(bidTransactionDAO)
+          .updateLeaderAfterLeave(auction.getId(), runnerUp.getId(), runnerUpPrice);
     }
 
     @Test
