@@ -233,13 +233,26 @@ public class DatabaseConnection {
   }
 
   /**
-   * Trả về {@code true} nếu pool đã khởi tạo và chưa bị đóng.
+   * Trả về {@code true} nếu pool sẵn sàng nhận connection.
    *
-   * <p>Chỉ kiểm tra trạng thái object — không thực hiện kết nối thực tế. Dùng trong test-fixture
-   * để bỏ qua DB call nhanh khi pool chưa sẵn sàng (ví dụ: Testcontainer đã dừng).
+   * <p>Dùng trong test-fixture để bỏ qua DB call nhanh khi pool chưa sẵn sàng
+   * (pool null, đã đóng, hoặc Testcontainer đã dừng mà pool vẫn chưa được close()
+   * — trường hợp này isClosed() = false nhưng total=0/active=0/idle=0).
+   *
+   * <p>Không block: chỉ đọc MXBean counters, không thực hiện kết nối thực.
    */
   public boolean isPoolReady() {
-    return dataSource != null && !dataSource.isClosed();
+    if (dataSource == null || dataSource.isClosed()) {
+      return false;
+    }
+    // Khi TC container dừng, HikariCP vẫn giữ pool object (isClosed=false) nhưng
+    // tất cả connection đã bị evict — total=0, active=0, idle=0.
+    // Dùng MXBean để phát hiện nhanh mà không block.
+    var mxBean = dataSource.getHikariPoolMXBean();
+    if (mxBean == null) {
+      return false;
+    }
+    return mxBean.getTotalConnections() > 0 || mxBean.getIdleConnections() > 0;
   }
 
   public synchronized void close() {

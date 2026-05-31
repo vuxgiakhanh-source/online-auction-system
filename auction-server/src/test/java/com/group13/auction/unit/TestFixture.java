@@ -723,27 +723,24 @@ public final class TestFixture {
     field.set(target, value);
   }
 
-  /** Reset số dư SystemBank về 0 giữa các test (RAM; ghi DB nếu pool đã cấu hình). */
+  /**
+   * Reset số dư SystemBank về 0 giữa các test (chỉ RAM).
+   *
+   * <p>Tắt DB persistence trước khi reset: {@code setDbPersistenceEnabled(false)} đảm bảo
+   * SystemBank không gọi DAO trong suốt test. Không ghi DB ở đây — method này chỉ dành cho
+   * test mock/sandwich không cần DB thật, và gọi DAO khi pool trỏ vào Testcontainer đã dừng
+   * sẽ block HikariCP 30s rồi throw {@code SQLTransientConnectionException}.
+   */
   public static void resetSystemBankBalance() throws Exception {
     SystemBank bank = SystemBank.getInstance();
-    bank.setDbPersistenceEnabled(false);
+    bank.setDbPersistenceEnabled(false);  // tắt persistence TRƯỚC để SystemBank không tự ghi DB
 
     Field field = SystemBank.class.getDeclaredField("totalBalance");
     field.setAccessible(true);
     AtomicLong balance = (AtomicLong) field.get(bank);
     balance.set(0L);
-
-    // Chỉ ghi DB khi pool thực sự sẵn sàng. Nếu pool null / đã đóng (unit test, hoặc
-    // Testcontainer đã dừng sau IT trước đó) — bỏ qua hoàn toàn, tránh chờ HikariCP
-    // timeout 30 s rồi throw SQLTransientConnectionException vô ích.
-    if (!com.group13.auction.dao.DatabaseConnection.getInstance().isPoolReady()) {
-      return;
-    }
-    try {
-      new com.group13.auction.dao.SystemBankDAO().saveTotalBalance(0L);
-    } catch (Exception e) {
-      // Pool báo ready nhưng DB vẫn từ chối (race condition hiếm) — bỏ qua.
-    }
+    // Không gọi SystemBankDAO ở đây: method này reset RAM, không phải DB.
+    // IT test cần DB thật (TC-based) sẽ tự reconfigure() pool và ghi trực tiếp.
   }
   // Factory helpers (không cần DB)
 
