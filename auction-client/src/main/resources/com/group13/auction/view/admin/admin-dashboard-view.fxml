@@ -39,10 +39,10 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <Button
-                    fx:id="backButton"
-                    text="Về trang chính"
+                    fx:id="logoutButton"
+                    text="Đăng xuất"
                     styleClass="secondary-button"
-                    onAction="#handleBackToMain"/>
+                    onAction="#handleLogout"/>
         </HBox>
 
         <VBox spacing="10.0" styleClass="admin-info-panel">

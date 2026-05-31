@@ -87,7 +87,7 @@ public final class RegisterController {
         () -> {
           setFormDisabled(false);
           AlertUtil.showInfo("Đăng ký thành công. Xin chào " + session.getUsername() + "!");
-          Navigator.getInstance().goToMainLayout();
+          Navigator.getInstance().goToHomeForSession(session);
         });
   }
 

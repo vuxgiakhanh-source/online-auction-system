@@ -2,6 +2,7 @@ package com.group13.auction.ui.controller.admin;
 
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.admin.AdminModerationService;
+import com.group13.auction.service.auth.AuthService;
 import java.util.StringJoiner;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -17,6 +18,7 @@ import javafx.scene.layout.VBox;
 public final class AdminDashboardController {
 
   private final AdminModerationService adminModerationService = new AdminModerationService();
+  private final AuthService authService = new AuthService();
 
   @FXML private Label titleLabel;
   @FXML private Label accessStatusLabel;
@@ -27,7 +29,7 @@ public final class AdminDashboardController {
   @FXML private Button auctionsButton;
   @FXML private Button sellersButton;
   @FXML private Button reportsButton;
-  @FXML private Button backButton;
+  @FXML private Button logoutButton;
   @FXML private Button staffAdminButton;
 
   @FXML private VBox staffAdminCard;
@@ -94,8 +96,9 @@ public final class AdminDashboardController {
   }
 
   @FXML
-  private void handleBackToMain() {
-    Navigator.getInstance().goToMainLayout();
+  private void handleLogout() {
+    authService.logout();
+    Navigator.getInstance().goToLanding();
   }
 
   private void setAdminActionsEnabled(boolean enabled) {
