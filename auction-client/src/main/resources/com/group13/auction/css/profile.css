@@ -115,32 +115,29 @@
 
 .profile-section-card {
     -fx-background-color: rgba(255, 255, 255, 0.09);
-    -fx-background-radius: 26;
+    -fx-background-radius: 22;
 
     -fx-border-color: rgba(255, 255, 255, 0.11);
-    -fx-border-radius: 26;
+    -fx-border-radius: 22;
     -fx-border-width: 1;
 
-    -fx-padding: 22;
+    -fx-padding: 20;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.16), 16, 0.12, 0, 6);
 }
 
 .profile-info-list {
-    -fx-background-color: rgba(255, 255, 255, 0.055);
-    -fx-background-radius: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.08);
-    -fx-border-radius: 20;
-    -fx-border-width: 1;
-    -fx-padding: 14;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 2 0 0 0;
 }
 
 .profile-field-row {
-    -fx-padding: 10 12 10 12;
-    -fx-background-color: rgba(255, 255, 255, 0.055);
-    -fx-background-radius: 16;
-    -fx-border-color: rgba(255, 255, 255, 0.07);
-    -fx-border-radius: 16;
-    -fx-border-width: 1;
+    -fx-padding: 7 0 9 0;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 0;
+    -fx-border-width: 0 0 1 0;
 }
 
 

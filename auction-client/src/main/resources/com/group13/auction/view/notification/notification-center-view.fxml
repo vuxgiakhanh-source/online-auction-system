@@ -33,7 +33,7 @@
                 AnchorPane.rightAnchor="0.0">
         <VBox spacing="20.0">
         <padding>
-            <Insets top="28.0" right="42.0" bottom="132.0" left="42.0"/>
+            <Insets top="28.0" right="42.0" bottom="32.0" left="42.0"/>
         </padding>
 
         <HBox alignment="CENTER_LEFT" spacing="18.0">

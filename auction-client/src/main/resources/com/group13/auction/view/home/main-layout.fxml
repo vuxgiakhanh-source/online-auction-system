@@ -32,7 +32,7 @@
                 AnchorPane.rightAnchor="0.0">
         <VBox spacing="26.0" styleClass="main-shell">
             <padding>
-                <Insets top="28.0" right="42.0" bottom="132.0" left="42.0"/>
+                <Insets top="28.0" right="42.0" bottom="32.0" left="42.0"/>
             </padding>
 
             <!-- Header -->
@@ -101,10 +101,10 @@
             </VBox>
 
             <!-- Main module cards -->
-            <HBox alignment="CENTER" spacing="22.0" styleClass="main-card-row">
+            <HBox alignment="CENTER_LEFT" spacing="22.0" styleClass="main-card-row">
                 <VBox spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
+                      prefWidth="430.0"
+                      prefHeight="240.0"
                       styleClass="main-dashboard-card">
                     <ImageView fitHeight="46.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-auction.png"/>
@@ -114,6 +114,7 @@
                            styleClass="main-card-title"/>
 
                     <Label text="Xem danh sách phiên đấu giá, mở chi tiết sản phẩm và vào phòng đấu giá realtime."
+                           maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description"/>
 
@@ -126,8 +127,8 @@
                 </VBox>
 
                 <VBox spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
+                      prefWidth="430.0"
+                      prefHeight="240.0"
                       styleClass="main-dashboard-card">
                     <ImageView fitHeight="46.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-wallet.png"/>
@@ -137,6 +138,7 @@
                            styleClass="main-card-title"/>
 
                     <Label text="Xem số dư ví, nạp tiền và rút tiền qua server wallet flow."
+                           maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description"/>
 
@@ -149,10 +151,10 @@
                 </VBox>
             </HBox>
 
-            <HBox alignment="CENTER" spacing="22.0" styleClass="main-card-row">
+            <HBox alignment="CENTER_LEFT" spacing="22.0" styleClass="main-card-row">
                 <VBox spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
+                      prefWidth="430.0"
+                      prefHeight="240.0"
                       styleClass="main-dashboard-card-muted">
                     <ImageView fitHeight="46.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-gavel.png"/>
@@ -162,6 +164,7 @@
                            styleClass="main-card-title"/>
 
                     <Label text="Tạo phiên đấu giá, theo dõi các phiên của bạn và gửi yêu cầu hủy."
+                           maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description-muted"/>
 
@@ -175,8 +178,8 @@
                 </VBox>
 
                 <VBox spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
+                      prefWidth="430.0"
+                      prefHeight="240.0"
                       styleClass="main-dashboard-card">
                     <ImageView fitHeight="46.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-report.png"/>
@@ -186,6 +189,7 @@
                            styleClass="main-card-title"/>
 
                     <Label text="Xem các phiên đấu giá bạn đã thắng và gửi báo cáo chất lượng cho đơn hàng đã thanh toán."
+                           maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description"/>
 
@@ -205,8 +209,8 @@
 
                 <VBox fx:id="adminDashboardCard"
                       spacing="14.0"
-                      prefWidth="360.0"
-                      prefHeight="220.0"
+                      prefWidth="430.0"
+                      prefHeight="240.0"
                       styleClass="main-dashboard-card">
                     <ImageView fitHeight="46.0" preserveRatio="true">
                         <Image url="@../../assets/icons/accent/icon-admin.png"/>
@@ -216,6 +220,7 @@
                            styleClass="main-card-title"/>
 
                     <Label text="Quản lý người dùng, phiên đấu giá, duyệt Seller và xử lý báo cáo."
+                           maxWidth="Infinity"
                            wrapText="true"
                            styleClass="main-card-description"/>
 

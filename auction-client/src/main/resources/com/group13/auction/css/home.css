@@ -225,6 +225,8 @@
     -fx-font-size: 15px;
     -fx-font-weight: 600;
     -fx-text-fill: rgba(255, 255, 255, 0.78);
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
 }
 
 .main-card-description-muted {
@@ -232,6 +234,8 @@
     -fx-font-size: 15px;
     -fx-font-weight: 600;
     -fx-text-fill: rgba(255, 255, 255, 0.68);
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
 }
 
 .main-card-button,
