@@ -336,7 +336,7 @@ public class AuctionDAO {
     return ids;
   }
 
-  // ── SCOPE-AWARE LIST ──────────────────────────────────────────────────────
+  // SCOPE-AWARE LIST
 
   /**
    * Lấy danh sách auction theo scopeFilter + statusFilter.
@@ -480,7 +480,7 @@ public class AuctionDAO {
     return 0L;
   }
 
-  // ── SCOPE-AWARE SEARCH ────────────────────────────────────────────────────
+  // SCOPE-AWARE SEARCH
 
   /**
    * Tìm kiếm phiên đấu giá theo keyword + scopeFilter. Kết hợp LIKE tên sản phẩm với lọc theo user

@@ -68,11 +68,7 @@ class SessionManagerLoadTest {
     managedSockets.add(ws);
     return ws;
   }
-
-  // =========================================================================
   // Group 1 – register / authenticate / unregister song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – register/authenticate/unregister song song")
   class RegisterAuthLoadTest {
@@ -172,11 +168,7 @@ class SessionManagerLoadTest {
           .isEqualTo(countBefore);
     }
   }
-
-  // =========================================================================
   // Group 2 – broadcastToAuction dưới nhiều connection
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – broadcastToAuction dưới nhiều connection")
   class BroadcastLoadTest {
@@ -315,11 +307,7 @@ class SessionManagerLoadTest {
           .isZero();
     }
   }
-
-  // =========================================================================
   // Group 3 – sendToUser / isOnline dưới tải
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – sendToUser / isOnline dưới tải")
   class SendToUserLoadTest {
@@ -419,11 +407,7 @@ class SessionManagerLoadTest {
       assertThat(failures.get()).isZero();
     }
   }
-
-  // =========================================================================
   // Group 4 – getUserIdsWatchingAuction consistency
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – getUserIdsWatchingAuction consistency dưới concurrent mutation")
   class WatcherListConsistencyTest {

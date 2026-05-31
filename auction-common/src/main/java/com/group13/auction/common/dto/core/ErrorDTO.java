@@ -25,7 +25,7 @@ public class ErrorDTO {
     this.requestId = requestId;
   }
 
-  // ── Static factory ────────────────────────────────────────────────────────
+  // Static factory
 
   public static ErrorDTO of(String code, String message) {
     return new ErrorDTO(code, message);
@@ -35,7 +35,7 @@ public class ErrorDTO {
     return new ErrorDTO(code, message, requestId);
   }
 
-  // ── Common error codes ────────────────────────────────────────────────────
+  // Common error codes
 
   public static final String INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE";
   public static final String AUCTION_CLOSED = "AUCTION_CLOSED";
@@ -78,7 +78,7 @@ public class ErrorDTO {
 
   public static final String INSUFFICIENT_DEPOSIT = "INSUFFICIENT_DEPOSIT";
 
-  // ── Getters / Setters ─────────────────────────────────────────────────────
+  // Getters / Setters
 
   public String getCode() {
     return code;

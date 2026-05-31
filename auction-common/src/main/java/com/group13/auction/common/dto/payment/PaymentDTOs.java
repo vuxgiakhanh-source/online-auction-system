@@ -6,14 +6,8 @@ import java.time.LocalDateTime;
 public final class PaymentDTOs {
 
   private PaymentDTOs() {}
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Confirm Item Received
-  // ══════════════════════════════════════════════════════════════════════════//
-  // ══════════════════════════════════════════════════════════════════════════
   // Wallet / Deposit
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của DEPOSIT. */
   public static class DepositRequestDTO {
     private long amount;
@@ -90,11 +84,7 @@ public final class PaymentDTOs {
       this.availableBalance = availableBalance;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Payment (sau khi phiên kết thúc)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của PAYMENT_REQUEST. */
   public static class PaymentRequestDTO {
     private String auctionId;
@@ -218,11 +208,7 @@ public final class PaymentDTOs {
       this.ratingPenalty = ratingPenalty;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Deposit Refund / Forfeit
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của DEPOSIT_REFUND_NOTIFY (gửi cho bidder thua). */
   public static class DepositRefundDTO {
     private String auctionId;
@@ -288,11 +274,7 @@ public final class PaymentDTOs {
       this.newBalance = newBalance;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Second Chance Offer
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của SECOND_CHANCE_OFFER_NOTIFY. */
   public static class SecondChanceOfferDTO {
     private String offerId;
@@ -352,11 +334,7 @@ public final class PaymentDTOs {
       this.deadline = deadline;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Confirm Item Received
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Payload cua CONFIRM_ITEM_RECEIVED_SUCCESS. canSubmitReport = true — client dung de enable nut
    * bao cao chat luong.

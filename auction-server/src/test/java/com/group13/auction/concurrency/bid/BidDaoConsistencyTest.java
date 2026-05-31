@@ -82,7 +82,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── C1 ────────────────────────────────────────────────────────────────────
+  // C1
 
   @Test
   @Order(1)
@@ -105,7 +105,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
             any(), eq(auction.getId()), eq(bidAmount), eq(bidder.getId()));
   }
 
-  // ── C2 ────────────────────────────────────────────────────────────────────
+  // C2
 
   @Test
   @Order(2)
@@ -127,7 +127,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
         .saveTransactionAndUpdatePrice(any(), anyString(), anyLong(), anyString());
   }
 
-  // ── C3 ────────────────────────────────────────────────────────────────────
+  // C3
 
   @Test
   @Order(3)
@@ -158,7 +158,7 @@ class BidDaoConsistencyTest extends ConcurrencyTestBase {
     verify(mockAuctionDAO, atLeastOnce()).updateEndTime(eq(sniping.getId()), any());
   }
 
-  // ── C4 ────────────────────────────────────────────────────────────────────
+  // C4
 
   @Test
   @Order(4)

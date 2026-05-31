@@ -56,11 +56,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
   void tearDown() throws Exception {
     cleanupDB();
   }
-
-  // =========================================================================
   // TC-AW-01 — saveWinner()
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-AW-01 [CRITICAL] saveWinner()")
@@ -112,11 +108,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
       assertThat(saved).isFalse(); // UNIQUE constraint trên auction_id
     }
   }
-
-  // =========================================================================
   // TC-AW-02 — updatePaymentStatus()
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-AW-02 [CRITICAL] updatePaymentStatus()")
@@ -168,11 +160,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
       assertThat(updated).isFalse();
     }
   }
-
-  // =========================================================================
   // TC-AW-03 — hasPendingPayment()
-  // =========================================================================
-
   @Nested
   @Order(3)
   @DisplayName("TC-AW-03 hasPendingPayment()")
@@ -200,7 +188,7 @@ class AuctionWinnerDAOIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers
   record Context(NormalUser winner, Auction auction, long finalPrice, long deposit) {}
 
   private Context givenContext(String sellerUsername, String winnerUsername) {

@@ -42,11 +42,7 @@ class ImageUploadServerTest {
       walk.sorted(java.util.Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
     }
   }
-
-  // =========================================================================
   // POST /upload — happy paths
-  // =========================================================================
-
   @Nested
   @DisplayName("POST /upload — happy path")
   class UploadHappyPath {
@@ -124,11 +120,7 @@ class ImageUploadServerTest {
       assertThat(conn.getHeaderField("Access-Control-Allow-Origin")).isEqualTo("*");
     }
   }
-
-  // =========================================================================
   // POST /upload — error paths
-  // =========================================================================
-
   @Nested
   @DisplayName("POST /upload — error paths")
   class UploadErrorPaths {
@@ -173,11 +165,7 @@ class ImageUploadServerTest {
       assertThat(conn.getResponseCode()).isEqualTo(405);
     }
   }
-
-  // =========================================================================
   // GET /uploads/items/{filename} — serve
-  // =========================================================================
-
   @Nested
   @DisplayName("GET /uploads/items/ — serve")
   class ServeTests {
@@ -224,21 +212,13 @@ class ImageUploadServerTest {
       assertThat(conn.getResponseCode()).isEqualTo(405);
     }
   }
-
-  // =========================================================================
   // MAX_FILE_BYTES constant
-  // =========================================================================
-
   @Test
   @DisplayName("MAX_FILE_BYTES = 2_000_000")
   void maxFileBytesConstant() {
     assertThat(ImageUploadServer.MAX_FILE_BYTES).isEqualTo(2_000_000L);
   }
-
-  // =========================================================================
   // Helpers
-  // =========================================================================
-
   private static HttpURLConnection openPost(String path, String contentType) throws Exception {
     HttpURLConnection conn =
         (HttpURLConnection)

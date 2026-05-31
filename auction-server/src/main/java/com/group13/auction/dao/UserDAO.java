@@ -36,21 +36,7 @@ public class UserDAO {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // BUG FIX #1 — UserDAO không load SELLER role từ bảng sellers
-  //
-  // Tất cả 3 methods (findUserByUsername, findNormalUserById,
-  // findUserCoreByUsername) đều hardcode:
-  //     roles = EnumSet.of(UserRole.BIDDER)
-  // và không bao giờ đọc bảng sellers.
-  //
-  // Hậu quả: user được duyệt Seller vẫn thấy mình là BIDDER sau mỗi lần
-  // login, trừ khi vào trang Profile (lúc đó AuctionManager in-memory đã
-  // có role SELLER do autoApproveSellerRole() đã thêm vào object).
-  //
-  // Fix: thêm loadRoles() gọi query sellers trên cùng Connection để tránh
-  // tốn thêm connection-pool slot, rồi gọi nó trong mọi findUser* method.
-  // ═══════════════════════════════════════════════════════════════════════
+  // loadRoles() đọc bảng sellers để user có đúng role SELLER sau khi login.
 
   /**
    * Tải roles cho user từ DB. Luôn bao gồm BIDDER; thêm SELLER nếu approval_status = 'APPROVED'.
@@ -69,9 +55,6 @@ public class UserDAO {
     }
     return roles;
   }
-
-  // ═══════════════════════════════════════════════════════════════════════
-
   public String registerUser(String username, String passwordHash, String email) {
     String userId = UUID.randomUUID().toString();
     String sql = "INSERT INTO users (id, username, password_hash, email) VALUES (?, ?, ?, ?)";
@@ -182,7 +165,7 @@ public class UserDAO {
     }
   }
 
-  /** Tìm kiếm NormalUser theo ID. BUG FIX #1: gọi loadRoles() để lấy role thực tế từ DB. */
+  /** Tìm kiếm NormalUser theo ID. */
   public NormalUser findNormalUserById(String userId) {
     String sql = "SELECT * FROM users WHERE id = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -208,7 +191,7 @@ public class UserDAO {
           java.time.LocalDateTime suspendedAt =
               (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
 
-          // BUG FIX #1: load roles thực tế từ DB
+          // load roles thực tế từ DB
           Set<User.UserRole> roles = loadRoles(conn, id);
 
           NormalUser user =
@@ -283,8 +266,7 @@ public class UserDAO {
 
   /**
    * Tìm user nhanh để xác thực login — 1 query users + 1 query sellers, KHÔNG load joinedAuctionIds
-   * / watchListAuctionIds. BUG FIX #1: gọi loadRoles() để lấy role thực tế.
-   */
+   * / watchListAuctionIds. */
   public NormalUser findUserCoreByUsername(String username) {
     String sql =
         "SELECT id, username, password_hash, email, rating, balance, "
@@ -315,7 +297,7 @@ public class UserDAO {
           java.time.LocalDateTime suspendedAt =
               suspendedTs != null ? suspendedTs.toLocalDateTime() : null;
 
-          // BUG FIX #1: load roles thực tế từ DB
+          // load roles thực tế từ DB
           Set<User.UserRole> roles = loadRoles(conn, id);
 
           return NormalUser.reconstitute(
@@ -341,7 +323,7 @@ public class UserDAO {
     return null;
   }
 
-  /** Tìm kiếm NormalUser theo Username. BUG FIX #1: gọi loadRoles() để lấy role thực tế. */
+  /** Tìm kiếm NormalUser theo Username. */
   public NormalUser findUserByUsername(String username) {
     String sql = "SELECT * FROM users WHERE username = ?";
     try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -368,7 +350,7 @@ public class UserDAO {
           java.time.LocalDateTime suspendedAt =
               (suspendedTs != null) ? suspendedTs.toLocalDateTime() : null;
 
-          // BUG FIX #1: load roles thực tế từ DB
+          // load roles thực tế từ DB
           Set<User.UserRole> roles = loadRoles(conn, id);
 
           NormalUser user =
@@ -536,7 +518,7 @@ public class UserDAO {
    * @return tập userId có activity_type = 'JOINED' cho phiên này
    */
   /**
-   * BUG FIX: Trả về tất cả userId từng tham gia phiên (cả người đã LEFT).
+   * Trả về tất cả userId từng tham gia phiên (cả người đã LEFT).
    * Dùng khi cần gửi thông báo kết thúc phiên cho mọi người tẫm gia, bao gồm cả những người đã rời trước khi phín kết thúc.
    * Khác với {@link #findJoinedUserIdsByAuctionId} chỉ lấy người đang JOINED.
    */

@@ -124,7 +124,7 @@ public class AuctionManager {
     }
   }
 
-  // ── User management ───────────────────────────────────────────────────────
+  // User management
 
   /** Thêm user vào in-memory mà KHÔNG persist DB. */
   public void addToUserList(User user) {
@@ -183,7 +183,7 @@ public class AuctionManager {
     return null;
   }
 
-  // ── Auction management ────────────────────────────────────────────────────
+  // Auction management
 
   /** Đăng ký auction vào bộ nhớ runtime để phục vụ truy vấn nhanh. */
   public void registerAuction(Auction auction) {
@@ -194,7 +194,7 @@ public class AuctionManager {
     log.info("Auction registered: auctionId={}", auction.getId());
   }
 
-  // ── Observer management ───────────────────────────────────────────────────
+  // Observer management
 
   /** Thêm observer nhận toàn bộ sự kiện global của hệ thống. */
   public void addGlobalObserver(AuctionObserver observer) {
@@ -253,7 +253,7 @@ public class AuctionManager {
     }
   }
 
-  // ── Auction queries ───────────────────────────────────────────────────────
+  // Auction queries
 
   /** Lấy danh sách các phiên đang ở trạng thái RUNNING. */
   public List<Auction> getRunningAuctions() {

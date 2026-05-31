@@ -208,7 +208,7 @@ public class NotificationDAO {
     }
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────
+  // Private helpers
 
   private Notification mapRow(ResultSet rs) throws SQLException {
     Timestamp createdTs = rs.getTimestamp("created_at");

@@ -88,7 +88,7 @@ public class ImageUploadServer {
     }
   }
 
-  // ── POST /upload ──────────────────────────────────────────────────────────
+  // POST /upload
 
   private void handleUpload(HttpExchange exchange) throws IOException {
     if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -137,7 +137,7 @@ public class ImageUploadServer {
     }
   }
 
-  // ── GET /uploads/items/{filename} ─────────────────────────────────────────
+  // GET /uploads/items/{filename}
 
   private void handleServe(HttpExchange exchange) throws IOException {
     if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -175,7 +175,7 @@ public class ImageUploadServer {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private static void respond(HttpExchange exchange, int code, String body) throws IOException {
     byte[] bytes = body.getBytes();

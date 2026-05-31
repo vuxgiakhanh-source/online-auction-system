@@ -114,7 +114,7 @@ public final class SellerAuctionDetailController {
             .showAndWait()
             .ifPresent(
                 reason -> {
-                    // FIX [Qodana "Constant values"]: Optional.ifPresent() chỉ gọi lambda
+                    // Optional.ifPresent() chỉ gọi lambda
                     // khi value HIỆN DIỆN — reason không bao giờ null tại đây. Check
                     // `reason == null` luôn false → dead code. Chỉ giữ check isBlank().
                     if (reason.isBlank()) {

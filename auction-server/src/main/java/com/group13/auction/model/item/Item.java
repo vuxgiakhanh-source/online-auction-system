@@ -34,7 +34,7 @@ public abstract class Item extends Entity {
    */
   private final List<String> imageUrls;
 
-  // ── Constructors (khai sinh — không ảnh) ─────────────────────────────────
+  // Constructors (khai sinh — không ảnh)
 
   protected Item(
       String name,
@@ -51,7 +51,7 @@ public abstract class Item extends Entity {
     this.imageUrls = List.of();
   }
 
-  // ── Constructors (khai sinh — có ảnh) ────────────────────────────────────
+  // Constructors (khai sinh — có ảnh)
 
   protected Item(
       String name,
@@ -69,7 +69,7 @@ public abstract class Item extends Entity {
     this.imageUrls = imageUrls != null ? Collections.unmodifiableList(imageUrls) : List.of();
   }
 
-  // ── Constructors (hồi sinh — không ảnh) ──────────────────────────────────
+  // Constructors (hồi sinh — không ảnh)
 
   protected Item(
       String id,
@@ -89,7 +89,7 @@ public abstract class Item extends Entity {
     this.imageUrls = List.of();
   }
 
-  // ── Constructors (hồi sinh — có ảnh) ─────────────────────────────────────
+  // Constructors (hồi sinh — có ảnh)
 
   protected Item(
       String id,
@@ -110,7 +110,7 @@ public abstract class Item extends Entity {
     this.imageUrls = imageUrls != null ? Collections.unmodifiableList(imageUrls) : List.of();
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public String getName() {
     return name;

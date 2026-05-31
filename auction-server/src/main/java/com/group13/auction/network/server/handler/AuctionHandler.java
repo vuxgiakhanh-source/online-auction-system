@@ -97,7 +97,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── CREATE ────────────────────────────────────────────────────────────────
+  // CREATE
 
   private void handleCreate(ClientSession session, JsonElement payload, String requestId) {
     String savedItemId = null;
@@ -223,7 +223,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── GET LIST ──────────────────────────────────────────────────────────────
+  // GET LIST
 
   private void handleGetList(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -300,7 +300,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── GET DETAIL ────────────────────────────────────────────────────────────
+  // GET DETAIL
 
   private void handleGetDetail(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -340,7 +340,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── UPDATE ────────────────────────────────────────────────────────────────
+  // UPDATE
 
   private void handleUpdate(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -420,7 +420,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── CANCEL REQUEST ────────────────────────────────────────────────────────
+  // CANCEL REQUEST
 
   private void handleCancelRequest(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -456,7 +456,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── ADMIN CANCEL ──────────────────────────────────────────────────────────
+  // ADMIN CANCEL
 
   private void handleAdminCancel(ClientSession session, JsonElement payload, String requestId) {
     if (!session.isAdmin()) {
@@ -493,7 +493,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── ADMIN GET ALL ─────────────────────────────────────────────────────────
+  // ADMIN GET ALL
 
   private void handleAdminGetAll(ClientSession session, JsonElement payload, String requestId) {
     if (!session.isAdmin()) {
@@ -514,7 +514,7 @@ public class AuctionHandler implements PacketHandler {
             requestId));
   }
 
-  // ── SEARCH ────────────────────────────────────────────────────────────────
+  // SEARCH
 
   /**
    * Tìm kiếm phiên đấu giá theo tên sản phẩm.
@@ -616,7 +616,7 @@ public class AuctionHandler implements PacketHandler {
     }
   }
 
-  // ── Helper ────────────────────────────────────────────────────────────────
+  // Helper
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
     User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());

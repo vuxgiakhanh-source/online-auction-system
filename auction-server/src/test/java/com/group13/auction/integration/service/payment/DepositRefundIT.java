@@ -20,19 +20,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════ DepositRefundIT —
- * Integration Tests cho luồng hoàn cọc Kỹ thuật: Bottom-up (PaymentService + WalletService + DAO
- * thực) ════════════════════════════════════════════════════════════════════
- *
- * <p>Scope: Kiểm tra PaymentService.refundDeposits() — phương thức hoàn cọc cho tất cả bidder khi
- * phiên bị CANCELED hoặc kết thúc.
- *
- * <p>TC-02 [CRITICAL]: BUG RISK: refundDeposits() gọi bidTransactionDAO.findBiddersByAuction() để
- * lấy danh sách, rồi walletService.unlockDeposit() cho từng người. depositAmount tính bằng
- * startingPrice * 3/10 thay vì query từ financial_transactions → số tiền hoàn có thể không khớp số
- * tiền đã lock. Winner không được hoàn (cọc tính vào finalPrice) — nếu logic sai → mất tiền.
- */
+/** Integration test hoàn cọc khi phiên hủy/kết thúc (PaymentService + DAO thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -96,11 +84,7 @@ class DepositRefundIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // TC-02 — refundDeposits() khi Auction CANCELED
-  // =========================================================================
-
   @Test
   @Order(1)
   @DisplayName("TC-02a: 3 bidders đều nhận lại đúng số tiền cọc sau khi phiên bị CANCELED")
@@ -234,7 +218,7 @@ class DepositRefundIT extends IntegrationTestBase {
         .isEqualTo(balanceAfterFirst);
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);

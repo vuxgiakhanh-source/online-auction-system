@@ -207,7 +207,7 @@ public final class ClientNetworkFacade {
     }
   }
 
-  // ── Auth ────────────────────────────────────────────────────────────────
+  // Auth
 
   public void login(String username, String password) {
     send(ClientRequestFactory.login(username, password));
@@ -221,7 +221,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.logout());
   }
 
-  // ── User / profile ──────────────────────────────────────────────────────
+  // User / profile
 
   public void getMyProfile() {
     send(ClientRequestFactory.getMyProfile());
@@ -235,7 +235,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.requestSellerRole());
   }
 
-  // ── Wallet / payment ────────────────────────────────────────────────────
+  // Wallet / payment
 
   public void deposit(long amount) {
     send(ClientRequestFactory.deposit(amount));
@@ -261,7 +261,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.declineSecondChance(auctionId));
   }
 
-  // ── Auction ─────────────────────────────────────────────────────────────
+  // Auction
 
   public void createAuction(AuctionDTOs.CreateAuctionRequestDTO request) {
     send(ClientRequestFactory.createAuction(request));
@@ -295,7 +295,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.adminGetAllAuctions());
   }
 
-  // ── Bidding / realtime auction session ──────────────────────────────────
+  // Bidding / realtime auction session
 
   public void joinAuction(String auctionId) {
     send(ClientRequestFactory.joinAuction(auctionId));
@@ -333,7 +333,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.getBidHistory(auctionId));
   }
 
-  // ── Admin / moderation ──────────────────────────────────────────────────
+  // Admin / moderation
 
   public void adminBanUser(AdminDTOs.AdminBanUserDTO request) {
     send(ClientRequestFactory.adminBanUser(request));
@@ -359,7 +359,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.adminApproveSellerRole(userId));
   }
 
-  // ── Rating ──────────────────────────────────────────────────────────────
+  // Rating
 
   public void rateSeller(RatingDTOs.RateSellerRequestDTO request) {
     send(ClientRequestFactory.rateSeller(request));
@@ -373,7 +373,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.getUserRatings(userId));
   }
 
-  // ── Quality report ──────────────────────────────────────────────────────
+  // Quality report
 
   public void submitQualityReport(ReportDTOs.QualityReportRequestDTO request) {
     send(ClientRequestFactory.submitQualityReport(request));
@@ -391,7 +391,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.adminRejectQualityReport(reportId));
   }
 
-  // ── Notification / system ───────────────────────────────────────────────
+  // Notification / system
 
   public void getNotifications() {
     send(ClientRequestFactory.getNotifications());
@@ -405,7 +405,7 @@ public final class ClientNetworkFacade {
     send(ClientRequestFactory.ping());
   }
 
-  // ── Chatbot ─────────────────────────────────────────────────────────────
+  // Chatbot
 
   public void chatbotAsk(
       com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {

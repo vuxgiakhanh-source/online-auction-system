@@ -44,7 +44,7 @@ public class SystemAdmin extends Admin {
   private UserDAO userDAO;
   private AccountBanDAO accountBanDAO;
 
-  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // Bootstrap
 
   public static synchronized SystemAdmin bootstrap(String password) {
     if (INSTANCE == null) {
@@ -97,7 +97,7 @@ public class SystemAdmin extends Admin {
     return true;
   }
 
-  // ── Auto-ban logic ────────────────────────────────────────────────────────
+  // Auto-ban logic
 
   /** Tự động ban user nếu rating dưới ngưỡng. */
   public void autoBanIfNeeded(User user) {

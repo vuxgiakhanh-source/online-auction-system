@@ -55,7 +55,7 @@ public class Packet<T> {
     this.timestamp = System.currentTimeMillis();
   }
 
-  // ── Static factory helpers ────────────────────────────────────────────────
+  // Static factory helpers
 
   public static <T> Packet<T> of(PacketType type, T payload) {
     return new Packet<>(type, payload);
@@ -76,7 +76,7 @@ public class Packet<T> {
     return of(type, payload, requestId);
   }
 
-  // ── Getters / Setters ──────────────────────────────────────────────────────
+  // Getters / Setters
 
   public PacketType getType() {
     return type;

@@ -19,21 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════ WalletPaymentIT —
- * Integration Tests cho WalletService (Tài chính) Kỹ thuật: Bottom-up (WalletService + DAO trực
- * tiếp, không mock) ════════════════════════════════════════════════════════════════════
- *
- * <p>Scope: Kiểm tra tầng WalletService tích hợp với DAO + DB thực.
- *
- * <p>Bao gồm: - TC-01: executePaymentToBank() — Rollback nhất quán RAM + DB BUG RISK:
- * systemBank.receive() gọi trước DB persist → không rollback được khi DB fail. batchTx ghi
- * financialTransactionDAO trước exception → duplicate.
- *
- * <p>- TC-06: withdraw() — Không rút vào tiền đang lock (availableBalance boundary) BUG RISK:
- * getAvailableBalance() = balance - lockedDeposit, nếu logic sai → user rút vào tiền cọc →
- * lockedDeposit hụt → mất cọc khi thanh toán.
- */
+/** Integration test WalletService: payment, withdraw, available balance (DAO + DB thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -75,11 +61,7 @@ class WalletPaymentIT extends IntegrationTestBase {
   void tearDown() throws Exception {
     cleanupDB();
   }
-
-  // =========================================================================
   // TC-01 — executePaymentToBank() Rollback Consistency
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-01 [CRITICAL] executePaymentToBank() — RAM/DB Rollback Consistency")
@@ -223,11 +205,7 @@ class WalletPaymentIT extends IntegrationTestBase {
                   .isEqualTo(15_000_000L - finalPrice));
     }
   }
-
-  // =========================================================================
   // TC-06 — withdraw() không rút vào tiền đang lock
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-06 [HIGH] withdraw() — Không rút vào tiền đang lock (availableBalance boundary)")
@@ -313,7 +291,7 @@ class WalletPaymentIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);

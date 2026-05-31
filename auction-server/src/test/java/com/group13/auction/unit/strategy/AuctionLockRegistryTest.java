@@ -58,11 +58,7 @@ class AuctionLockRegistryTest {
     // trong khoảng giữa các test (JUnit chạy test tuần tự trong cùng thread).
     registry.clearAll();
   }
-
-  // =========================================================================
   // Singleton contract
-  // =========================================================================
-
   @Nested
   @DisplayName("Singleton: getInstance() luôn trả về cùng một instance")
   class SingletonContract {
@@ -80,11 +76,7 @@ class AuctionLockRegistryTest {
       assertSame(second, third, "getInstance() lần 2 và 3 phải trả về cùng instance");
     }
   }
-
-  // =========================================================================
   // getLock — object identity
-  // =========================================================================
-
   @Nested
   @DisplayName("getLock: object identity và non-null")
   class GetLockIdentity {
@@ -182,11 +174,7 @@ class AuctionLockRegistryTest {
       ids.forEach(registry::release);
     }
   }
-
-  // =========================================================================
   // getLock — returned lock usability
-  // =========================================================================
-
   @Nested
   @DisplayName("getLock: lock trả về có thể sử dụng bình thường")
   class LockUsability {
@@ -268,11 +256,7 @@ class AuctionLockRegistryTest {
       registry.release(auctionId);
     }
   }
-
-  // =========================================================================
   // release()
-  // =========================================================================
-
   @Nested
   @DisplayName("release: xóa lock khỏi registry")
   class ReleaseContract {
@@ -357,11 +341,7 @@ class AuctionLockRegistryTest {
       registry.release(idB);
     }
   }
-
-  // =========================================================================
   // size()
-  // =========================================================================
-
   @Nested
   @DisplayName("size: phản ánh đúng số lock đang tồn tại trong registry")
   class SizeContract {
@@ -447,11 +427,7 @@ class AuctionLockRegistryTest {
           "size() phải trở về giá trị trước khi getLock sau khi release");
     }
   }
-
-  // =========================================================================
   // Edge case: null, empty, whitespace, special chars, very long id
-  // =========================================================================
-
   @Nested
   @DisplayName("Edge case: các giá trị auctionId bất thường")
   class EdgeCases {
@@ -598,11 +574,7 @@ class AuctionLockRegistryTest {
       registry.release(" ");
     }
   }
-
-  // =========================================================================
   // Determinism & no side effect
-  // =========================================================================
-
   @Nested
   @DisplayName("Determinism: hành vi nhất quán, không có side effect")
   class DeterminismAndSideEffect {
@@ -675,11 +647,7 @@ class AuctionLockRegistryTest {
       registry.release(idB);
     }
   }
-
-  // =========================================================================
   // Concurrency contract: nhiều thread cùng getLock cùng id
-  // =========================================================================
-
   @Nested
   @DisplayName("Concurrency contract: nhiều thread cùng getLock phải nhận cùng instance")
   class ConcurrencyContract {

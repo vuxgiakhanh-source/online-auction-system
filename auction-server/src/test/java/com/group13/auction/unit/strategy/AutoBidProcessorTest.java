@@ -57,33 +57,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AutoBidProcessor")
 class AutoBidProcessorTest {
-
-  // =========================================================================
   // Constants — tier thấp: increment = 50_000
-  // =========================================================================
-
   private static final long STARTING_PRICE = 500_000L;
   private static final long INCREMENT_LOW = 50_000L;
-
-  // =========================================================================
   // Mocks — chỉ external dependency
-  // =========================================================================
-
   @Mock private BidService bidService;
   @Mock private SessionManager sessionManager;
   @Mock private UserDAO userDAO;
   @Mock private NotificationDAO notificationDAO;
-
-  // =========================================================================
   // SUT
-  // =========================================================================
-
   private AutoBidProcessor sut;
-
-  // =========================================================================
   // Fixtures thật
-  // =========================================================================
-
   /** Singleton thật, reset trước/sau mỗi test */
   private AutoBidRegistry registry;
 
@@ -91,11 +75,7 @@ class AutoBidProcessorTest {
   private NormalUser bidderA;
   private NormalUser bidderB;
   private Auction runningAuction;
-
-  // =========================================================================
   // Setup / Teardown
-  // =========================================================================
-
   @BeforeEach
   void setUp() throws Exception {
     sut = new AutoBidProcessor(bidService, sessionManager);
@@ -147,11 +127,7 @@ class AutoBidProcessorTest {
       ((java.util.concurrent.ConcurrentHashMap<?, ?>) f.get(null)).clear();
     }
   }
-
-  // =========================================================================
   // Reflection helpers
-  // =========================================================================
-
   /** Inject UserDAO mock vào field private trong AutoBidProcessor */
   private static void injectUserDAOMock(AutoBidProcessor processor, UserDAO mockDao)
       throws Exception {
@@ -202,11 +178,7 @@ class AutoBidProcessorTest {
     daoField.setAccessible(true);
     daoField.set(registry, null);
   }
-
-  // =========================================================================
   // Stub helpers
-  // =========================================================================
-
   /**
    * Khi bidService.placeBid() được gọi, simulate side effect thật: auction.updateBid(amount,
    * bidder) — đúng như production. Không simulate thì auction.getCurrentLeader() vẫn null → loop
@@ -259,11 +231,7 @@ class AutoBidProcessorTest {
       Thread.sleep(30);
     }
   }
-
-  // =========================================================================
   // 1. No auto-bidder registered
-  // =========================================================================
-
   @Nested
   @DisplayName("Không có auto-bid nào được đăng ký")
   class NoAutoBidder {
@@ -300,11 +268,7 @@ class AutoBidProcessorTest {
       assertDoesNotThrow(() -> submitAndAwait(runningAuction, bidderA.getId()));
     }
   }
-
-  // =========================================================================
   // 2. Single auto-bidder — không phải current leader
-  // =========================================================================
-
   @Nested
   @DisplayName("Một auto-bidder bị vượt — có thể counter")
   class SingleAutoBidder {
@@ -368,11 +332,7 @@ class AutoBidProcessorTest {
       verify(bidService, never()).placeBid(any(), any(), anyLong(), any());
     }
   }
-
-  // =========================================================================
   // 3. maxBid exhausted — không đủ counter
-  // =========================================================================
-
   @Nested
   @DisplayName("Auto-bidder hết budget (maxBid cạn)")
   class MaxBidExhausted {
@@ -439,11 +399,7 @@ class AutoBidProcessorTest {
       assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
     }
   }
-
-  // =========================================================================
   // 4. Two competing auto-bidders — different maxBid
-  // =========================================================================
-
   @Nested
   @DisplayName("Hai auto-bidder cạnh tranh — maxBid khác nhau")
   class TwoCompetingBiddersDifferentMaxBid {
@@ -517,13 +473,9 @@ class AutoBidProcessorTest {
       assertTrue(runningAuction.getCurrentPrice() >= maxBidB, "Giá cuối phải vượt maxBidB");
     }
   }
-
-  // =========================================================================
   // 5. Tie: same maxBid — tie-breaking theo registeredAt
   //    (dùng AutoBidEntry constructor trực tiếp để kiểm soát registeredAt
   //     mà không cần Thread.sleep)
-  // =========================================================================
-
   @Nested
   @DisplayName("Tie: hai auto-bidder cùng maxBid — tie-breaking theo registeredAt")
   class SameMaxBidTieBreaking {
@@ -602,11 +554,7 @@ class AutoBidProcessorTest {
       map.put(userId + ":" + auctionId, entry);
     }
   }
-
-  // =========================================================================
   // 6. Escalation chain termination — không infinite loop
-  // =========================================================================
-
   @Nested
   @DisplayName("Chuỗi escalation phải terminate đúng")
   class EscalationTermination {
@@ -671,18 +619,14 @@ class AutoBidProcessorTest {
       assertFalse(registry.hasActiveBid(bidderB.getId(), runningAuction.getId()));
     }
   }
-
-  // =========================================================================
   // 7. User không tìm thấy — fallback DB trả về null
-  // =========================================================================
-
   @Nested
   @DisplayName("User không tìm thấy — fallback DB trả về null")
   class UserNotFound {
 
     @Test
-    @DisplayName("user không tồn tại → entry bị cancel khỏi registry")
-    void process_userNotFound_entryCancelled() {
+    @DisplayName("user không tồn tại → entry giữ lại (chain skip, không cancel vĩnh viễn)")
+    void process_userNotFound_entryRetained() {
       // Arrange
       String ghostUserId = "ghost-user-id-9999";
       registry.register(ghostUserId, runningAuction.getId(), 2_000_000L);
@@ -691,8 +635,8 @@ class AutoBidProcessorTest {
       // Act
       submitAndAwait(runningAuction, seller.getId());
 
-      // Assert
-      assertFalse(registry.hasActiveBid(ghostUserId, runningAuction.getId()));
+      // Assert: resolveUser thất bại chỉ skip iteration, không cancel registry
+      assertTrue(registry.hasActiveBid(ghostUserId, runningAuction.getId()));
     }
 
     @Test
@@ -713,11 +657,11 @@ class AutoBidProcessorTest {
     @Test
     @DisplayName("ghost user bị skip, valid user vẫn counter bình thường")
     void process_ghostUserSkipped_validUserStillCounters() {
-      // Arrange
+      // Arrange: bidderA maxBid cao hơn ghost → được chọn trước khi chain dừng
       String ghostId = "ghost-user-id-7777";
-      registry.register(ghostId, runningAuction.getId(), 3_000_000L);
+      registry.register(ghostId, runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW);
       registry.register(
-          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 2);
+          bidderA.getId(), runningAuction.getId(), STARTING_PRICE + INCREMENT_LOW * 4);
 
       when(userDAO.findNormalUserById(ghostId)).thenReturn(null);
       stubPlaceBidWithSideEffect(runningAuction);
@@ -729,11 +673,7 @@ class AutoBidProcessorTest {
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
     }
   }
-
-  // =========================================================================
   // 8. Race condition — InvalidBidException không được cancel auto-bid entry
-  // =========================================================================
-
   @Nested
   @DisplayName("Race condition: InvalidBidException → entry KHÔNG bị cancel")
   class RaceConditionHandling {
@@ -789,11 +729,7 @@ class AutoBidProcessorTest {
       assertFalse(registry.hasActiveBid(bidderA.getId(), runningAuction.getId()));
     }
   }
-
-  // =========================================================================
   // 9. Auction ở trạng thái không hợp lệ
-  // =========================================================================
-
   @Nested
   @DisplayName("Auction ở trạng thái không hợp lệ")
   class InvalidAuctionState {
@@ -847,11 +783,7 @@ class AutoBidProcessorTest {
       assertDoesNotThrow(() -> submitAndAwait(canceledAuction, seller.getId()));
     }
   }
-
-  // =========================================================================
   // 10. triggeredByUserId edge case
-  // =========================================================================
-
   @Nested
   @DisplayName("triggeredByUserId edge case")
   class TriggeredByEdgeCase {
@@ -924,11 +856,7 @@ class AutoBidProcessorTest {
       verify(bidService, atLeastOnce()).placeBid(eq(bidderA), eq(runningAuction), anyLong(), any());
     }
   }
-
-  // =========================================================================
   // 11. Notification correctness
-  // =========================================================================
-
   @Nested
   @DisplayName("Notification: autobid counter broadcast, không gửi TRIGGERED notify")
   class NotificationCorrectness {
@@ -983,11 +911,7 @@ class AutoBidProcessorTest {
       verify(sessionManager, never()).broadcastToAuction(anyString(), any());
     }
   }
-
-  // =========================================================================
   // 12. Repeated processing consistency
-  // =========================================================================
-
   @Nested
   @DisplayName("Repeated processing: gọi process() nhiều lần")
   class RepeatedProcessing {
@@ -1014,11 +938,7 @@ class AutoBidProcessorTest {
       assertEquals(leaderAfterFirst, leaderAfterSecond);
     }
   }
-
-  // =========================================================================
   // 13. AutoBidEntry.calculateNextBid — unit test pure logic
-  // =========================================================================
-
   @Nested
   @DisplayName("AutoBidEntry.calculateNextBid — pure logic (không qua process())")
   class AutoBidEntryCalculateNextBid {

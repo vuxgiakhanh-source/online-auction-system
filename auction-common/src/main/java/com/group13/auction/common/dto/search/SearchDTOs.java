@@ -14,11 +14,7 @@ import java.util.List;
 public final class SearchDTOs {
 
   private SearchDTOs() {}
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Request
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Payload Client → Server cho packet {@code SEARCH_ITEMS}.
    *
@@ -105,11 +101,7 @@ public final class SearchDTOs {
       this.scopeFilter = scopeFilter;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Response
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Payload Server → Client cho packet {@code SEARCH_ITEMS_SUCCESS}.
    *

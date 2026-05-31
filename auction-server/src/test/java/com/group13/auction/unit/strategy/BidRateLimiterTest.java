@@ -30,11 +30,7 @@ class BidRateLimiterTest {
   void tearDown() {
     limiter.clearAll();
   }
-
-  // =========================================================================
   // Happy path
-  // =========================================================================
-
   @Nested
   @DisplayName("tryConsume — trong giới hạn")
   class WithinLimit {
@@ -68,11 +64,7 @@ class BidRateLimiterTest {
       assertThat(limiter.size()).isEqualTo(1);
     }
   }
-
-  // =========================================================================
   // Rate limit triggered
-  // =========================================================================
-
   @Nested
   @DisplayName("tryConsume — vượt giới hạn")
   class ExceedLimit {
@@ -99,11 +91,7 @@ class BidRateLimiterTest {
       assertThat(blocked).isEqualTo(5);
     }
   }
-
-  // =========================================================================
   // Window reset
-  // =========================================================================
-
   @Nested
   @DisplayName("tryConsume — window reset")
   class WindowReset {
@@ -126,11 +114,7 @@ class BidRateLimiterTest {
           .isTrue();
     }
   }
-
-  // =========================================================================
   // remove + clearAll
-  // =========================================================================
-
   @Nested
   @DisplayName("remove() và clearAll()")
   class Removal {
@@ -173,11 +157,7 @@ class BidRateLimiterTest {
       assertThat(limiter.size()).isZero();
     }
   }
-
-  // =========================================================================
   // Thread safety
-  // =========================================================================
-
   @Nested
   @DisplayName("Thread safety — concurrent tryConsume")
   class ThreadSafety {

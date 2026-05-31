@@ -7,11 +7,7 @@ import java.util.List;
 public final class BidDTOs {
 
   private BidDTOs() {}
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Manual Bid
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của PLACE_BID. */
   public static class BidRequestDTO {
     private String auctionId;
@@ -203,11 +199,7 @@ public final class BidDTOs {
       this.newEndTime = newEndTime;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Auto-Bid
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Payload của REGISTER_AUTO_BID và UPDATE_AUTO_BID. */
   public static class AutoBidRequestDTO {
     private String auctionId;
@@ -445,11 +437,7 @@ public final class BidDTOs {
       this.leadingBidderUsername = leadingBidderUsername;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Bid History (cho line chart)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Một điểm dữ liệu trên line chart. */
   public static class BidChartPointDTO {
     private String auctionId;
@@ -544,11 +532,7 @@ public final class BidDTOs {
       this.reservePrice = reservePrice;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Viewer Count
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Payload của {@code VIEWER_COUNT_UPDATE}.
    *

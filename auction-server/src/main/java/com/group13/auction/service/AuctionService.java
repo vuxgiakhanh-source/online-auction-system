@@ -31,12 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Quản lý vòng đời phiên đấu giá. Xử lý nghiệp vụ liên quan đến Auction. Seller là chủ thể quyết
- * định tạo phiên; sau khi tạo, phiên được đăng ký vào {@link
- * com.group13.auction.manager.AuctionManager} để tra cứu (in-memory). Nhận {@link IRatingService}
- * qua constructor — không new cứng (DIP). Đã thực hiện TODO: inject AuctionDAO để persist xuống DB.
- */
+/** Tạo, mở, đóng và hủy phiên đấu giá; đồng bộ RAM với DB. */
 public class AuctionService implements IAuctionService {
 
   private static final Logger log = LoggerFactory.getLogger(AuctionService.class);
@@ -51,11 +46,7 @@ public class AuctionService implements IAuctionService {
   /** Map<auctionId, observers> - tập trung quản lý observer. */
   private final Map<String, List<AuctionObserver>> observersMap = new ConcurrentHashMap<>();
 
-  /**
-   * Per-auction lock dùng cho thao tác contains+add trên observer list. FIX Bug addObserver:
-   * synchronized(localVar) vi phạm Qodana "Synchronization on local variable". Thay bằng lock
-   * object gắn với auctionId — tương tự pattern đã dùng trong WalletService.
-   */
+  /** Lock theo auctionId cho addObserver (tránh duplicate khi nhiều thread join). */
   private final ConcurrentHashMap<String, Object> observerLocks = new ConcurrentHashMap<>();
 
   private Object observerLockFor(String auctionId) {
@@ -202,8 +193,7 @@ public class AuctionService implements IAuctionService {
 
     } else if (!auction.isReserveMet()) {
       // TH1.2: có leader nhưng chưa đạt reserve -> SYSTEM auto-cancel.
-      // FIX: Không gọi updateAuctionResult() ở đây để tránh ghi sai winning_bidder_id
-      // (leader ≠ winner khi reserve chưa đạt).
+      // Không gọi updateAuctionResult() — leader ≠ winner khi reserve chưa đạt.
       // cancelAuction() đã gọi updateAuctionStatus() để persist CANCELED.
       NormalUser leader = auction.getCurrentLeader();
       notify(
@@ -233,7 +223,7 @@ public class AuctionService implements IAuctionService {
           AuctionWinner.create(
               winner, auction.getId(), auction.getCurrentPrice(), depositPaid, false);
 
-      // BUG FIX: persist winner TRƯỚC khi transition state và updateAuctionResult.
+      // persist winner TRƯỚC khi transition state và updateAuctionResult.
       // Thứ tự cũ: setWinner → transitionToClose → saveWinner (fail silently) → updateAuctionResult
       // Nguy cơ: saveWinner fail không throw → auction bị đánh dấu FINISHED trong DB
       // mà không có record trong auction_winners → restart: resolveWinner() = null
@@ -262,8 +252,7 @@ public class AuctionService implements IAuctionService {
           winner.getUsername(),
           auction.getCurrentPrice());
 
-      // FIX: updateAuctionResult() chỉ gọi ở TH2 (có winner) để tránh ghi sai
-      // winning_bidder_id cho auction CANCELED (TH1.2).
+      // updateAuctionResult() chỉ khi có winner thật (TH2), không khi CANCELED (TH1.2).
       auctionDAO.updateAuctionResult(auction);
     }
   }
@@ -283,9 +272,7 @@ public class AuctionService implements IAuctionService {
     AuctionWinner auctionWinner = auction.getWinner();
     if (auctionWinner != null) {
       auctionWinner.markFundsHeld();
-      // FIX: persist confirmReceiptDeadline và payment status FUNDS_HELD vào DB.
-      // Trước đây dòng này là TODO bỏ trống → restart server mất deadline → auto-release không bao
-      // giờ chạy.
+      // Persist confirmReceiptDeadline và FUNDS_HELD — cần cho auto-release sau restart.
       auctionWinnerDAO.updateFundsHeld(
           auctionWinner.getId(),
           auctionWinner.getPaymentStatus().name(),
@@ -328,17 +315,7 @@ public class AuctionService implements IAuctionService {
         .notifyStaffObservers(
             new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
 
-    // FIX: bỏ lệnh updateAuctionStatus thừa phía dưới (đã persist ở trên)
     cleanupObservers(auction.getId());
-    // FIX [Memory/Thread leak]: cancelAuction trước đây chỉ cleanupObservers — nhưng auction
-    // bị cancel cũng phải dọn AutoBid state. Nếu không:
-    //   - AutoBidRegistry vẫn giữ entries cho user đã đăng ký auto-bid của phiên này.
-    //   - AutoBidProcessor giữ executor (single-thread per auction) + 4 ConcurrentHashMap
-    //     state — thread leak.
-    //   - Worst: auto-bid logic có thể tiếp tục submit task vào auction đã CANCELED → các
-    //     bid sau đó throw IllegalStateException hoặc bid lên auction "ma".
-    // Bug này áp dụng cho mọi đường gọi cancelAuction: SystemAdmin, PaymentService.expirePayment,
-    // PaymentService.expireSecondChanceOfferIfDue, autoHandleCancelRequest.
     cleanupAutoBidState(auction.getId());
   }
 
@@ -381,15 +358,14 @@ public class AuctionService implements IAuctionService {
 
     auctionDAO.updateAuctionStatus(auction.getId(), auction.getStatus().name());
 
-    // FIX Bug 1: staff cancel phải notify observers — trước đây thiếu dòng này nên
-    // bidder đang xem phiên không nhận được AUCTION_CANCELED khi staff hủy thủ công.
+    // Staff cancel phải notify observers để client nhận AUCTION_CANCELED.
     notify(auction, AuctionEvent.AuctionEventType.AUCTION_CANCELED, null, 0L);
     AuctionManager.getInstance()
         .notifyStaffObservers(
             new AuctionEvent(AuctionEvent.AuctionEventType.AUCTION_CANCELED, auction, null, 0L));
 
     cleanupObservers(auction.getId());
-    // FIX [Memory/Thread leak]: xem giải thích ở cancelAuction(Auction, Admin.CancelReason).
+    // xem giải thích ở cancelAuction(Auction, Admin.CancelReason).
     cleanupAutoBidState(auction.getId());
   }
 
@@ -430,10 +406,7 @@ public class AuctionService implements IAuctionService {
     // computeIfAbsent và get() tách biệt.
     List<AuctionObserver> observers =
         observersMap.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
-    // FIX: synchronized trên lock object theo auctionId, không synchronized trên local variable
-    // (Qodana "Synchronization on local variable" violation).
-    // Lock đảm bảo contains()+add() là atomic — tránh duplicate observer khi nhiều thread
-    // đồng thời join cùng một phiên.
+    // Lock theo auctionId: contains()+add() atomic, tránh duplicate observer.
     synchronized (observerLockFor(auctionId)) {
       if (!observers.contains(observer)) {
         observers.add(observer);
@@ -482,22 +455,7 @@ public class AuctionService implements IAuctionService {
     return false;
   }
 
-  /**
-   * Filter trước khi dispatch event cho observer.
-   *
-   * <p>FIX: trước đây require {@code bidder.hasJoined(auctionId)} cho BidderObserver — sai logic vì:
-   *
-   * <ul>
-   *   <li>Watcher (gọi {@code watchAuction()}) có observer được đăng ký nhưng chưa join → không bao
-   *       giờ nhận thông báo, dù đó chính là mục đích đăng ký watch.
-   *   <li>Vi phạm hợp đồng Observer pattern: addObserver xong PHẢI được notify.
-   *   <li>Isolation giữa các phiên đã được bảo đảm bởi {@code observersMap} per-auction, không cần
-   *       check trùng lặp ở đây.
-   *   <li>Khi user leave, {@code removeObserverForUserLeaving()} đã xóa observer khỏi map.
-   * </ul>
-   *
-   * <p>Giờ chỉ chặn null cho an toàn — mọi observer được đăng ký đều nhận event.
-   */
+  /** Watcher chưa join vẫn nhận event nếu đã addObserver; chỉ lọc null. */
   private boolean shouldNotifyObserver(AuctionObserver observer, String auctionId) {
     return observer != null;
   }
@@ -572,29 +530,10 @@ public class AuctionService implements IAuctionService {
       observers.clear();
       log.info("Cleaned up {} observers for auction {}", count, auctionId);
     }
-    // FIX: dọn lock entry để tránh memory leak khi nhiều phiên kết thúc
     observerLocks.remove(auctionId);
   }
 
-  /**
-   * Dọn AutoBid state khi phiên đóng (cancel/end).
-   *
-   * <p>FIX [Memory/Thread leak]: Trước đây mọi đường cancelAuction đều thiếu cleanup này — chỉ
-   * {@code AuctionTimerService.closeAuctionsDueByTime} mới gọi qua chuỗi
-   * {@code autoBidRegistry.clearAuction() + AutoBidProcessor.clearAuctionActivity()}. Vậy khi
-   * SystemAdmin / Staff / PaymentService cancel auction:
-   *
-   * <ul>
-   *   <li>AutoBidRegistry vẫn giữ entries user đăng ký auto-bid → DB row rác, RAM rác.
-   *   <li>AutoBidProcessor giữ executor single-thread per auction + 4 ConcurrentHashMap state
-   *       — thread leak: server long-running tích lũy hàng nghìn executor zombie.
-   *   <li>Chain auto-bid có thể đang queued tiếp tục trigger bid vào auction CANCELED →
-   *       BidService phát hiện status sai, log error spam.
-   * </ul>
-   *
-   * <p>Cô lập trong helper để mọi cancel path đều dùng chung — tránh quên đồng bộ logic.
-   * Try/catch defensive: cleanup không được làm fail cancel flow chính.
-   */
+  /** Dọn AutoBid registry/processor khi phiên đóng — tránh thread leak và bid vào phiên đã hủy. */
   private void cleanupAutoBidState(String auctionId) {
     try {
       com.group13.auction.strategy.AutoBidRegistry.getInstance().clearAuction(auctionId);

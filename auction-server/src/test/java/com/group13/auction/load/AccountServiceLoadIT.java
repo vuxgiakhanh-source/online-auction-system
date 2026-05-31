@@ -140,11 +140,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
     clearAuctionManagerSingletons();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // Group 1 — banUser() song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – banUser() song song (DB thật)")
   class BanUserLoadTest {
@@ -251,11 +247,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
       assertThat(fromDB.getAccountStatus()).isEqualTo(User.AccountStatus.BANNED);
     }
   }
-
-  // =========================================================================
   // Group 2 — autoApproveSellerRole() song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – autoApproveSellerRole() song song (DB thật)")
   class AutoApproveSellerLoadTest {
@@ -348,11 +340,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
       assertThat(sharedUser.hasRole(User.UserRole.SELLER)).isTrue();
     }
   }
-
-  // =========================================================================
   // Group 3 — createStaffAdmin() song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – createStaffAdmin() song song (DB thật)")
   class CreateStaffAdminLoadTest {
@@ -448,11 +436,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
           .isEqualTo(1);
     }
   }
-
-  // =========================================================================
   // Group 4 — deposit/withdraw + banUser xen kẽ (mixed workload)
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – Mixed: deposit/withdraw + banUser đồng thời")
   class MixedAccountWorkloadTest {
@@ -535,11 +519,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Group 5 — requestCancelAuction() song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 5 – requestCancelAuction() song song — AuctionManager observer không bị race")
   class RequestCancelAuctionLoadTest {
@@ -679,11 +659,7 @@ class AccountServiceLoadIT extends IntegrationTestBase {
           .isZero();
     }
   }
-
-  // =========================================================================
   // Private helpers
-  // =========================================================================
-
   /** Tạo Admin qua AdminFactory — không qua AccountService để tránh vòng lặp. */
   private Admin buildAdmin(String username) {
     com.group13.auction.model.user.AdminFactory factory =

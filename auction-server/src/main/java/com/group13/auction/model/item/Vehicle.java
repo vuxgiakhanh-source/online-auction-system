@@ -15,7 +15,7 @@ public class Vehicle extends Item {
   private final int year;
   private final double mileage;
 
-  // ── Static factory methods ────────────────────────────────────────────────
+  // Static factory methods
 
   /** Khai sinh — không ảnh (backward-compatible). */
   protected static Vehicle create(
@@ -97,7 +97,7 @@ public class Vehicle extends Item {
         imageUrls);
   }
 
-  // ── Private constructors ──────────────────────────────────────────────────
+  // Private constructors
 
   private Vehicle(
       String name,
@@ -141,7 +141,7 @@ public class Vehicle extends Item {
     this.mileage = mileage;
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public String getManufacturer() {
     return manufacturer;

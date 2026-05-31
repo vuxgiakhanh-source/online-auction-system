@@ -22,21 +22,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
 /**
- * ════════════════════════════════════════════════════════════════════
- * UserRegistrationIntegrationIT — Integration Tests cho User Registration Kỹ thuật: Bottom-up
- * (UserDAO + DB thật) ════════════════════════════════════════════════════════════════════
- *
- * <p>TC-26 [HIGH]: registerUser() — unique constraint username/email TC-27 [HIGH]: deposit() +
- * withdraw() end-to-end — balance floor = 0 TC-28 [MEDIUM]: findNormalUserById() và
- * findUserByUsername() — reconstitute đúng TC-28e [HIGH] FIX BUG #1: SELLER role được load từ DB
- * khi có approved record TC-28f [HIGH] FIX BUG #1: findUserByUsername() cũng load SELLER role
- * TC-28g [HIGH] FIX BUG #1: findUserCoreByUsername() cũng load SELLER role TC-28h: user không có
- * seller record → chỉ có BIDDER role
- *
- * <p>TC-29 [HIGH] FIX BUG #2: SellerDAO.approveSellerRole() — UPSERT đảm bảo persist TC-29a:
- * approveSellerRole() khi user chưa có sellers record → INSERT thành công TC-29b:
- * approveSellerRole() khi user đã có PENDING → UPDATE → APPROVED TC-29c: approveSellerRole() lặp
- * lại → idempotent, không throw exception
+ * Integration test đăng ký user (UserDAO + DB thật).
+ * TC-26..TC-29: register, deposit/withdraw, reconstitute, seller role approval.
  */
 @RequiresDocker
 @Testcontainers
@@ -83,11 +70,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
   void tearDown() throws Exception {
     cleanupDB();
   }
-
-  // =========================================================================
   // TC-26 — Unique constraints
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-26 [HIGH] registerUser() — Unique constraints enforcement")
@@ -145,11 +128,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
       assertThat(userDAO.existsByEmail("nonexistent@test.vn")).isFalse();
     }
   }
-
-  // =========================================================================
   // TC-27 — deposit() + withdraw() end-to-end
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-27 [HIGH] deposit()/withdraw() — Balance floor + DB consistency")
@@ -208,11 +187,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
-
-  // =========================================================================
   // TC-28 — reconstitute từ DB
-  // =========================================================================
-
   @Nested
   @Order(3)
   @DisplayName("TC-28 [MEDIUM] findNormalUserById() — reconstitute đúng tất cả fields")
@@ -280,7 +255,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
           .contains(auctionId);
     }
 
-    // ── FIX BUG #1: SELLER role phải được load từ DB ──────────────────────
+    // FIX BUG #1: SELLER role phải được load từ DB
 
     @Test
     @Order(5)
@@ -372,11 +347,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
           .isFalse();
     }
   }
-
-  // =========================================================================
   // TC-29 — SellerDAO.approveSellerRole() UPSERT (FIX BUG #2)
-  // =========================================================================
-
   @Nested
   @Order(4)
   @DisplayName("TC-29 [HIGH] SellerDAO.approveSellerRole() — UPSERT đảm bảo persist")
@@ -450,7 +421,7 @@ class UserRegistrationIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser givenUser(String username) {
     return buildUserWithBalance(username, 0L, userDAO);

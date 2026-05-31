@@ -24,7 +24,7 @@ class LocalDateTimeAdapterTest {
             .create();
   }
 
-  // ── serialize ─────────────────────────────────────────────────────────────
+  // serialize
   @Nested
   @DisplayName("serialize()")
   class SerializeTest {
@@ -47,7 +47,7 @@ class LocalDateTimeAdapterTest {
     }
   }
 
-  // ── deserialize ───────────────────────────────────────────────────────────
+  // deserialize
   @Nested
   @DisplayName("deserialize()")
   class DeserializeTest {
@@ -82,7 +82,7 @@ class LocalDateTimeAdapterTest {
     }
   }
 
-  // ── roundtrip ─────────────────────────────────────────────────────────────
+  // roundtrip
   @Nested
   @DisplayName("Roundtrip serialize → deserialize")
   class RoundtripTest {

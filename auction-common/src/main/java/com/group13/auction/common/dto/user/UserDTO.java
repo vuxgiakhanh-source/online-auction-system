@@ -46,7 +46,7 @@ public class UserDTO {
 
   public UserDTO() {}
 
-  // ── Getters / Setters ──────────────────────────────────────────────────────
+  // Getters / Setters
 
   public String getId() {
     return id;

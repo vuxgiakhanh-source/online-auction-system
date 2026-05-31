@@ -87,7 +87,7 @@ public class AuthHandler implements PacketHandler {
     }
   }
 
-  // ── REGISTER ──────────────────────────────────────────────────────────────
+  // REGISTER
 
   /**
    * Tạo tài khoản mới:
@@ -217,7 +217,7 @@ public class AuthHandler implements PacketHandler {
     }
   }
 
-  // ── LOGIN ─────────────────────────────────────────────────────────────────
+  // LOGIN
 
   private void handleLogin(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -295,7 +295,7 @@ public class AuthHandler implements PacketHandler {
     }
   }
 
-  // ── LOGOUT ────────────────────────────────────────────────────────────────
+  // LOGOUT
 
   private void handleLogout(ClientSession session, String requestId) {
     log.info("Logout: username={}, requestId={}", session.getUsername(), requestId);
@@ -303,7 +303,7 @@ public class AuthHandler implements PacketHandler {
     session.send(Packet.of(PacketType.LOGOUT_SUCCESS, null, requestId));
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private String resolveRole(com.group13.auction.model.user.User user) {
     if (user instanceof com.group13.auction.model.user.SystemAdmin) {

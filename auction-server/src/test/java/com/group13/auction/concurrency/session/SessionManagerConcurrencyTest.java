@@ -84,7 +84,7 @@ class SessionManagerConcurrencyTest extends ConcurrencyTestBase {
     return ws;
   }
 
-  // ── GAP-SESSION-1 ─────────────────────────────────────────────────────────
+  // GAP-SESSION-1
 
   @Nested
   @Order(1)
@@ -194,7 +194,7 @@ class SessionManagerConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── GAP-SESSION-2 ─────────────────────────────────────────────────────────
+  // GAP-SESSION-2
 
   @Nested
   @Order(2)
@@ -248,7 +248,7 @@ class SessionManagerConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── GAP-SESSION-3 ─────────────────────────────────────────────────────────
+  // GAP-SESSION-3
 
   @Nested
   @Order(3)

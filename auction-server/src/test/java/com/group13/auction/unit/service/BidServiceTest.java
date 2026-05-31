@@ -57,11 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BidService")
 class BidServiceTest {
-
-  // =========================================================================
   // Mocks — toàn bộ external dependency
-  // =========================================================================
-
   @Mock private IAuctionService auctionService;
   @Mock private IRatingService ratingService;
   @Mock private IWalletService walletService;
@@ -102,11 +98,7 @@ class BidServiceTest {
                 any(), anyString(), anyLong(), anyString()))
         .thenReturn(true);
   }
-
-  // =========================================================================
   // placeBid — happy path
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — happy path")
   class PlaceBidHappyPath {
@@ -207,11 +199,7 @@ class BidServiceTest {
       assertThat(bidder.getBidHistory().get(0).getAmount()).isEqualTo(bidAmount);
     }
   }
-
-  // =========================================================================
   // placeBid — reserve price chưa đạt
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — reserve price chưa đạt")
   class PlaceBidReserveNotMet {
@@ -267,11 +255,7 @@ class BidServiceTest {
       assertThat(runningAuction.getCurrentLeader()).isSameAs(bidder);
     }
   }
-
-  // =========================================================================
   // placeBid — auction không nhận bid (closed / canceled / open)
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — auction không ở trạng thái RUNNING")
   class PlaceBidClosedAuction {
@@ -354,11 +338,7 @@ class BidServiceTest {
               anyString());
     }
   }
-
-  // =========================================================================
   // placeBid — user chưa join auction
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — user chưa join auction")
   class PlaceBidNotJoined {
@@ -413,11 +393,7 @@ class BidServiceTest {
       assertThat(runningAuction.getCurrentLeader()).isNull();
     }
   }
-
-  // =========================================================================
   // placeBid — invalid bid (không đủ bước giá)
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — invalid bid amount")
   class PlaceBidInvalidAmount {
@@ -523,11 +499,7 @@ class BidServiceTest {
           () -> bidService.placeBid(bidder, runningAuction, -1L, strategy));
     }
   }
-
-  // =========================================================================
   // placeBid — user không đủ điều kiện (ineligible)
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — user không đủ điều kiện")
   class PlaceBidIneligibleUser {
@@ -618,11 +590,7 @@ class BidServiceTest {
       verify(ratingService).isEligible(banned);
     }
   }
-
-  // =========================================================================
   // placeBid — anti-sniping behavior
-  // =========================================================================
-
   @Nested
   @DisplayName("placeBid — anti-sniping")
   class PlaceBidAntiSniping {
@@ -769,11 +737,7 @@ class BidServiceTest {
       assertThat(sniping.getEndTime()).isEqualTo(endTimeBefore.plusSeconds(60));
     }
   }
-
-  // =========================================================================
   // leaveAuction — anti-sniping khi leader rời gần cuối phiên
-  // =========================================================================
-
   @Nested
   @DisplayName("leaveAuction — anti-sniping (leader rời)")
   class LeaveLeaderAntiSniping {
@@ -901,11 +865,7 @@ class BidServiceTest {
       verify(userDAO).markUserLeftAuction(bidder.getId(), runningAuction.getId());
     }
   }
-
-  // =========================================================================
   // joinAuction — NormalUser happy path
-  // =========================================================================
-
   @Nested
   @DisplayName("joinAuction — NormalUser")
   class JoinAuctionNormalUser {

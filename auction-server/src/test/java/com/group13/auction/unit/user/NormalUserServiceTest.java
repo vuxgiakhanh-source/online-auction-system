@@ -26,20 +26,12 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 @DisplayName("NormalUser — Wallet & Deposit State")
 class NormalUserWalletTest {
-
-  // =========================================================================
   // Constants
-  // =========================================================================
-
   private static final long BALANCE_10M = 10_000_000L;
   private static final long BALANCE_1M = 1_000_000L;
   private static final long DEPOSIT_300K = 300_000L;
   private static final long DEPOSIT_500K = 500_000L;
-
-  // =========================================================================
   // Available Balance = Balance − LockedDeposit
-  // =========================================================================
-
   @Nested
   @DisplayName("getAvailableBalance()")
   class AvailableBalance {
@@ -87,11 +79,7 @@ class NormalUserWalletTest {
       assertThat(user.getAvailableBalance()).isNegative();
     }
   }
-
-  // =========================================================================
   // lockDeposit / unlockDeposit
-  // =========================================================================
-
   @Nested
   @DisplayName("lockDeposit() and unlockDeposit()")
   class LockUnlock {
@@ -155,11 +143,7 @@ class NormalUserWalletTest {
       assertThat(user.getAvailableBalance()).isEqualTo(BALANCE_10M);
     }
   }
-
-  // =========================================================================
   // addBalance / restoreBalances
-  // =========================================================================
-
   @Nested
   @DisplayName("addBalance() and restoreBalances()")
   class BalanceMutation {
@@ -212,11 +196,7 @@ class NormalUserWalletTest {
       assertThat(user.getAvailableBalance()).isZero();
     }
   }
-
-  // =========================================================================
   // tryMarkJoined / hasJoined / removeJoinedAuction — atomic gate
-  // =========================================================================
-
   @Nested
   @DisplayName("tryMarkJoined() atomic gate")
   class TryMarkJoined {
@@ -302,11 +282,7 @@ class NormalUserWalletTest {
           .isEqualTo(1);
     }
   }
-
-  // =========================================================================
   // markPenalized
-  // =========================================================================
-
   @Nested
   @DisplayName("markPenalized()")
   class PenalizedFlag {
@@ -322,11 +298,7 @@ class NormalUserWalletTest {
       assertThat(user.isHasEverBeenPenalized()).isTrue();
     }
   }
-
-  // =========================================================================
   // addToWatchList (idempotent)
-  // =========================================================================
-
   @Nested
   @DisplayName("addToWatchList() idempotency")
   class WatchList {

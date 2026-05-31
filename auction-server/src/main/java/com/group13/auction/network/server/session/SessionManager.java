@@ -82,7 +82,7 @@ public class SessionManager {
     return INSTANCE;
   }
 
-  // ── Session lifecycle ─────────────────────────────────────────────────────
+  // Session lifecycle
 
   /**
    * Đăng ký session mới khi WebSocket onOpen.
@@ -170,7 +170,7 @@ public class SessionManager {
     session.deauthenticate();
   }
 
-  // ── Lookup ────────────────────────────────────────────────────────────────
+  // Lookup
 
   public ClientSession getByConnection(WebSocket connection) {
     return byConnection.get(connection);
@@ -196,7 +196,7 @@ public class SessionManager {
     return byUserId.size();
   }
 
-  // ── Broadcast ─────────────────────────────────────────────────────────────
+  // Broadcast
 
   /**
    * Gửi packet tới MỘT user cụ thể (nếu đang online).

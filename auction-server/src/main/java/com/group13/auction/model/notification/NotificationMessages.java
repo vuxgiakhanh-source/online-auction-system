@@ -28,7 +28,7 @@ public final class NotificationMessages {
     return auction.getId();
   }
 
-  // ── Auction flow ──────────────────────────────────────────────────────────
+  // Auction flow
 
   public static String outbidTitle() {
     return "Bạn vừa bị vượt giá";
@@ -112,7 +112,7 @@ public final class NotificationMessages {
         itemName(auction), auction.getId(), winnerName, formatVnd(finalPrice));
   }
 
-  // ── Second chance offer ───────────────────────────────────────────────────
+  // Second chance offer
 
   public static String scoReceivedTitle() {
     return "Bạn nhận Second Chance Offer";
@@ -209,7 +209,7 @@ public final class NotificationMessages {
         itemName(auction), auction.getId(), formatVnd(offerPrice));
   }
 
-  // ── Payment & order ─────────────────────────────────────────────────────
+  // Payment & order
 
   public static String paymentSuccessWinnerTitle() {
     return "Thanh toán thành công";
@@ -299,7 +299,24 @@ public final class NotificationMessages {
     return user != null && user.getUsername() != null ? user.getUsername() : "Người dùng";
   }
 
-  // ── Leave auction ─────────────────────────────────────────────────────────
+  // Leader promoted after previous leader left
+
+  public static String leaderPromotedTitle() {
+    return "Bạn đang dẫn đầu phiên đấu giá";
+  }
+
+  public static String leaderPromotedBody(
+      Auction auction, String previousLeaderName, long currentPrice) {
+    return String.format(
+        "Người dẫn đầu trước (%s) đã rời phiên \"%s\" (mã %s). "
+            + "Bạn đang dẫn đầu với giá %s. Phiên vẫn đang diễn ra — đây chưa phải kết quả thắng/thua.",
+        previousLeaderName,
+        itemName(auction),
+        auction.getId(),
+        formatVnd(currentPrice));
+  }
+
+  // Leave auction
 
   public static String leaveAuctionTitle() {
     return "Bạn đã thoát phiên đấu giá";

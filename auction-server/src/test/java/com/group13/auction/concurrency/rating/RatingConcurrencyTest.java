@@ -41,7 +41,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
     when(mockUserDAO.updateBalances(any(), anyLong(), anyLong())).thenReturn(true);
   }
 
-  // ── G3-1 ─────────────────────────────────────────────────────────────────
+  // G3-1
 
   @Test
   @Order(1)
@@ -87,7 +87,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
         .isCloseTo(3.0, within(0.01));
   }
 
-  // ── G3-2 ─────────────────────────────────────────────────────────────────
+  // G3-2
 
   @Test
   @Order(2)
@@ -129,7 +129,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
         .isBetween(0.0, 5.0);
   }
 
-  // ── G9-1 ─────────────────────────────────────────────────────────────────
+  // G9-1
 
   @Test
   @Order(3)
@@ -182,7 +182,7 @@ class RatingConcurrencyTest extends ConcurrencyTestBase {
         .isCloseTo(expected, within(0.01));
   }
 
-  // ── G9-2 ─────────────────────────────────────────────────────────────────
+  // G9-2
 
   @Test
   @Order(4)

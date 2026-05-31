@@ -53,11 +53,7 @@ import org.testcontainers.mysql.MySQLContainer;
 @TestMethodOrder(OrderAnnotation.class)
 @DisplayName("Persistence Layer — Bottom-up Integration Tests")
 class DAOIntegrationIT {
-
-  // =========================================================================
   // Testcontainers setup — MySQL thực tế, isolated mỗi test run
-  // =========================================================================
-
   @Container
   static final MySQLContainer mysql =
       new MySQLContainer("mysql:8.0")
@@ -66,11 +62,7 @@ class DAOIntegrationIT {
           .withPassword("test_pass")
           .withInitScript(
               "database/schema.sql"); // đặt trong src/test/resources/database/schema.sql
-
-  // =========================================================================
   // DAO instances — khởi tạo sau khi container đã up
-  // =========================================================================
-
   private UserDAO userDAO;
   private ItemDAO itemDAO;
   private AuctionDAO auctionDAO;
@@ -84,11 +76,7 @@ class DAOIntegrationIT {
   private final List<String> createdAuctionIds = new ArrayList<>();
   private final List<String> createdBidTxIds = new ArrayList<>();
   private final List<String> createdFinTxIds = new ArrayList<>();
-
-  // =========================================================================
   // Lifecycle hooks
-  // =========================================================================
-
   @BeforeAll
   static void configureDataSource() throws Exception {
     // Reconfigure HikariCP pool to point to the Testcontainer instance.
@@ -135,11 +123,7 @@ class DAOIntegrationIT {
       }
     }
   }
-
-  // =========================================================================
   // TẦNG 1 — DatabaseConnection (Bottom: tầng cơ sở hạ tầng)
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("Tầng 1 — DatabaseConnection")
@@ -204,11 +188,7 @@ class DAOIntegrationIT {
       }
     }
   }
-
-  // =========================================================================
   // TẦNG 2 — UserDAO (DAO độc lập, không phụ thuộc DAO khác)
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("Tầng 2 — UserDAO (không phụ thuộc DAO khác)")
@@ -427,11 +407,7 @@ class DAOIntegrationIT {
           .isEqualTo("DELETED".equals(status) ? "BANNED" : status);
     }
   }
-
-  // =========================================================================
   // TẦNG 2B — FinancialTransactionDAO (DAO độc lập)
-  // =========================================================================
-
   @Nested
   @Order(3)
   @DisplayName("Tầng 2B — FinancialTransactionDAO (không phụ thuộc DAO khác)")
@@ -540,11 +516,7 @@ class DAOIntegrationIT {
       }
     }
   }
-
-  // =========================================================================
   // TẦNG 3 — ItemDAO (phụ thuộc UserDAO — tích hợp 2 DAO)
-  // =========================================================================
-
   @Nested
   @Order(4)
   @DisplayName("Tầng 3 — ItemDAO × UserDAO (tích hợp seller→item)")
@@ -672,11 +644,7 @@ class DAOIntegrationIT {
       assertThat(found.getImageUrls()).isNotNull().isEmpty();
     }
   }
-
-  // =========================================================================
   // TẦNG 4 — AuctionDAO (phụ thuộc ItemDAO + UserDAO)
-  // =========================================================================
-
   @Nested
   @Order(5)
   @DisplayName("Tầng 4 — AuctionDAO × ItemDAO × UserDAO (tích hợp đầy đủ)")
@@ -913,11 +881,7 @@ class DAOIntegrationIT {
       assertThat(unfinished).doesNotContain(canceledAuction.getId());
     }
   }
-
-  // =========================================================================
   // TẦNG 5A — BidTransactionDAO (phụ thuộc UserDAO + AuctionDAO)
-  // =========================================================================
-
   @Nested
   @Order(6)
   @DisplayName("Tầng 5A — BidTransactionDAO × UserDAO × AuctionDAO")
@@ -1008,13 +972,9 @@ class DAOIntegrationIT {
           .containsExactly(2_200_000L, 2_500_000L, 2_800_000L);
     }
   }
-
-  // =========================================================================
   // TẦNG 5B — TÍNH TOÀN VẸN TRANSACTION (Atomicity)
   // Đây là yêu cầu quan trọng nhất: trừ tiền + ghi FinancialTransaction
   // phải thành công cùng lúc hoặc rollback hoàn toàn.
-  // =========================================================================
-
   @Nested
   @Order(7)
   @DisplayName("Tầng 5B — Tính toàn vẹn Transaction (Atomicity)")
@@ -1281,11 +1241,7 @@ class DAOIntegrationIT {
                   .isZero());
     }
   }
-
-  // =========================================================================
   // TẦNG 6 — Cross-DAO Integrity (AuctionDAO + UserDAO + BidTransactionDAO)
-  // =========================================================================
-
   @Nested
   @Order(8)
   @DisplayName("Tầng 6 — Cross-DAO: Tính toàn vẹn dữ liệu liên bảng")
@@ -1429,11 +1385,7 @@ class DAOIntegrationIT {
       //  sẽ fail nếu dữ liệu bị rò rỉ sang username trùng)
     }
   }
-
-  // =========================================================================
   // Private helpers
-  // =========================================================================
-
   /**
    * Thực thi lockDeposit trong 1 DB Transaction (atomicity thực sự). Bao gồm: 1. Cập nhật balance
    * và lockedBalance trong bảng users 2. Lưu FinancialTransaction kiểu DEPOSIT_LOCK Nếu bất kỳ bước

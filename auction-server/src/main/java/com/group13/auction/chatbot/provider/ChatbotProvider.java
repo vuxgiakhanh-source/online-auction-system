@@ -75,11 +75,7 @@ public class ChatbotProvider {
     this.allFaqs = Collections.unmodifiableList(loadedFaqs);
     this.faqIndexById = Collections.unmodifiableMap(indexById);
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Public API — Phương thức tìm kiếm chính
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Tìm câu trả lời theo mã FAQ. */
   public ChatbotResponse getAnswerByQuestionId(String faqId) {
     if (faqId == null || faqId.isBlank()) {
@@ -119,7 +115,7 @@ public class ChatbotProvider {
       return ChatbotResponse.ofNotFound(query);
     }
 
-    // ── CHIẾN LƯỢC 1: ƯU TIÊN KHỚP NGUYÊN CỤM (Exact Phrase Containment) ──
+    // CHIẾN LƯỢC 1: ƯU TIÊN KHỚP NGUYÊN CỤM (Exact Phrase Containment)
     for (FAQ faq : allFaqs) {
       String normalizedFaqQuestion = normalize(faq.getQuestion());
 
@@ -144,7 +140,7 @@ public class ChatbotProvider {
       }
     }
 
-    // ── CHIẾN LƯỢC 2: TÍNH ĐIỂM MATCHING RATIO THEO TỪ KHÓA (Từ câu ngắn của User) ──
+    // CHIẾN LƯỢC 2: TÍNH ĐIỂM MATCHING RATIO THEO TỪ KHÓA (Từ câu ngắn của User)
     Optional<MatchedFaq> bestMatch =
         allFaqs.stream()
             .map(faq -> new MatchedFaq(faq, calculateMatchingScore(faq, queryWords)))
@@ -193,11 +189,7 @@ public class ChatbotProvider {
   public int getTotalFaqCount() {
     return allFaqs.size();
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Private helpers (Đã refactor cô đọng và loại bỏ duplicate logic)
-  // ══════════════════════════════════════════════════════════════════════════
-
   private List<FAQ> loadFaqsFromClasspath() throws IOException {
     InputStream inputStream = getClass().getResourceAsStream(FAQ_DATA_RESOURCE_PATH);
 
@@ -299,7 +291,7 @@ public class ChatbotProvider {
     return normalized.replaceAll("\\s+", " ").trim();
   }
 
-  // ── Inner class phụ trợ — Cập nhật tên trường để khớp ý nghĩa mới ─────────
+  // Inner class phụ trợ — Cập nhật tên trường để khớp ý nghĩa mới
 
   private static class MatchedFaq {
     final FAQ faq;

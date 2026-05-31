@@ -7,11 +7,7 @@ import java.util.List;
 public final class AuctionDTOs {
 
   private AuctionDTOs() {}
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Item DTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Thông tin sản phẩm đấu giá (nhúng trong AuctionDTO). */
   public static class ItemDTO {
     private String id;
@@ -108,11 +104,7 @@ public final class AuctionDTOs {
       return imageUrls != null && !imageUrls.isEmpty();
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionDTO {
     private String id;
     private ItemDTO item;
@@ -311,11 +303,7 @@ public final class AuctionDTOs {
       this.leftByCurrentUser = leftByCurrentUser;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionListDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionListDTO {
     private List<AuctionDTO> auctions;
     private int totalCount;
@@ -361,11 +349,7 @@ public final class AuctionDTOs {
       this.pageSize = pageSize;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // CreateAuctionRequestDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class CreateAuctionRequestDTO {
     private String itemName;
     private String itemDescription;
@@ -456,11 +440,7 @@ public final class AuctionDTOs {
       this.imageUrls = imageUrls;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionListRequestDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionListRequestDTO {
     private String statusFilter;
     private String sortBy;
@@ -526,11 +506,7 @@ public final class AuctionDTOs {
       this.scopeFilter = scopeFilter;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // UpdateAuctionDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class UpdateAuctionDTO {
     private String auctionId;
     private LocalDateTime newEndTime;
@@ -562,11 +538,7 @@ public final class AuctionDTOs {
       this.newReservePrice = newReservePrice;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // CancelAuctionRequestDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class CancelAuctionRequestDTO {
     private String auctionId;
     private String reason;
@@ -589,11 +561,7 @@ public final class AuctionDTOs {
       this.reason = reason;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AdminCancelAuctionDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AdminCancelAuctionDTO {
     private String auctionId;
     private String reason;
@@ -616,11 +584,7 @@ public final class AuctionDTOs {
       this.reason = reason;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionUpdateDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionUpdateDTO {
     private String auctionId;
     private String newStatus;
@@ -697,11 +661,7 @@ public final class AuctionDTOs {
       this.message = message;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionExtendedDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionExtendedDTO {
     private String auctionId;
     private LocalDateTime newEndTime;
@@ -733,11 +693,7 @@ public final class AuctionDTOs {
       this.extendedBySeconds = extendedBySeconds;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // SellerCancelRequestNotifyDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class SellerCancelRequestNotifyDTO {
     private String auctionId;
     private String auctionName;
@@ -787,11 +743,7 @@ public final class AuctionDTOs {
       this.requestTime = requestTime;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // JoinAuctionResponseDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class JoinAuctionResponseDTO {
     private AuctionDTO auction;
     private double depositAmount;
@@ -823,11 +775,7 @@ public final class AuctionDTOs {
       this.newAvailableBalance = newAvailableBalance;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // LeaveAuctionResponseDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Payload của LEAVE_AUCTION_SUCCESS. Mang thông tin về cọc bị tịch thu (nếu có) để client hiển
    * thị cảnh báo.
@@ -889,11 +837,7 @@ public final class AuctionDTOs {
       this.newAvailableBalance = v;
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AuctionUpcomingEndDTO
-  // ══════════════════════════════════════════════════════════════════════════
-
   public static class AuctionUpcomingEndDTO {
     private String auctionId;
     private long remainingSeconds;

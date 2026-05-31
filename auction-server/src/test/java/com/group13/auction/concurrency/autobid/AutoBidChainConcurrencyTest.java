@@ -88,7 +88,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── D1 ────────────────────────────────────────────────────────────────────
+  // D1
 
   @Test
   @Order(1)
@@ -129,7 +129,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         .isLessThanOrEqualTo(maxBid);
   }
 
-  // ── D2 ────────────────────────────────────────────────────────────────────
+  // D2
 
   @Test
   @Order(2)
@@ -165,7 +165,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         .isFalse();
   }
 
-  // ── D3 ────────────────────────────────────────────────────────────────────
+  // D3
 
   @Test
   @Order(3)
@@ -214,7 +214,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         .isLessThanOrEqualTo(winnerMaxBid);
   }
 
-  // ── D4 ────────────────────────────────────────────────────────────────────
+  // D4
 
   @Test
   @Order(4)
@@ -337,7 +337,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
     assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(maxBid);
   }
 
-  // ── D3b: Luồng đăng ký autobid (giống BidHandler.register) ─────────────────
+  // D3b: Luồng đăng ký autobid (giống BidHandler.register)
 
   @Test
   @Order(35)
@@ -452,7 +452,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
     assertThat(auction.getCurrentPrice()).isLessThanOrEqualTo(maxBid);
   }
 
-  // ── D5 ────────────────────────────────────────────────────────────────────
+  // D5
 
   @Test
   @Order(6)
@@ -497,7 +497,7 @@ class AutoBidChainConcurrencyTest extends ConcurrencyTestBase {
         .isLessThanOrEqualTo(sameMaxBid);
   }
 
-  // ── Helpers (reflection — không đụng production code) ─────────────────────
+  // Helpers (reflection — không đụng production code)
 
   private void clearAutoBidProcessorState() {
     try {

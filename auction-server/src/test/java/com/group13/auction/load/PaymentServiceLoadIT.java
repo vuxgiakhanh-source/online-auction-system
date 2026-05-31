@@ -121,11 +121,7 @@ class PaymentServiceLoadIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // Group 1 – lockDeposit song song nhiều user
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – lockDeposit song song nhiều user (DB thật)")
   class LockDepositLoadTest {
@@ -198,11 +194,7 @@ class PaymentServiceLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Group 2 – refundDeposits nhiều phiên đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – refundDeposits nhiều phiên đồng thời (DB thật)")
   class RefundDepositsLoadTest {
@@ -287,11 +279,7 @@ class PaymentServiceLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Group 3 – WalletService deposit/withdraw xen kẽ dưới tải
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – WalletService deposit/withdraw xen kẽ — balance không âm")
   class WalletDepositWithdrawLoadTest {
@@ -407,11 +395,7 @@ class PaymentServiceLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Group 4 – completePayment nhiều phiên đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – completePayment nhiều phiên đồng thời (DB thật)")
   class CompletePaymentLoadTest {

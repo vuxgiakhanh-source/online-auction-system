@@ -16,19 +16,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════ RatingServiceIntegrationIT —
- * Integration Tests cho RatingService Kỹ thuật: Bottom-up (RatingService + UserDAO + DB thật)
- * ════════════════════════════════════════════════════════════════════
- *
- * <p>TC-08 [HIGH]: Rating penalty chain BUG RISK: penalizeLatePayment() phải trừ rating, set
- * penalized flag, auto-suspend nếu rating ≤ 1.5, persist tất cả xuống DB — atomic. Nếu persist một
- * phần (rating OK nhưng flag quên) → user có thể tiếp tục đặt giá dù đã vi phạm.
- *
- * <p>TC-09 [HIGH]: checkAndRestoreSuspended() — chỉ 1 lần, đúng threshold BUG RISK: restore nhiều
- * lần → user phục hồi rating vô hạn. Restore khi chưa đủ 3 tháng → bypass suspension bằng trick
- * time.
- */
+/** Integration test RatingService: penalty, suspend/restore (UserDAO + DB thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -62,11 +50,7 @@ class RatingServiceIntegrationIT extends IntegrationTestBase {
   void tearDown() throws Exception {
     cleanupDB();
   }
-
-  // =========================================================================
   // TC-08 — penalizeLatePayment() chain
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-08 [HIGH] penalizeLatePayment() — Rating trừ, flag set, persist DB")
@@ -150,11 +134,7 @@ class RatingServiceIntegrationIT extends IntegrationTestBase {
           .isFalse();
     }
   }
-
-  // =========================================================================
   // TC-09 — checkAndRestoreSuspended()
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-09 [HIGH] checkAndRestoreSuspended() — 1 lần duy nhất, đúng threshold")
@@ -283,7 +263,7 @@ class RatingServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   /** Tạo NormalUser với rating cụ thể bằng cách override sau khi tạo. */
   private NormalUser givenUser(String username, double rating) {

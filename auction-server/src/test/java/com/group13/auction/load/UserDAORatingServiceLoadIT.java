@@ -79,11 +79,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
   void tearDown() throws Exception {
     cleanupDB();
   }
-
-  // =========================================================================
   // Group 1 – registerUser() song song — unique constraint
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – registerUser() song song — unique constraint enforcement")
   class RegisterUserLoadTest {
@@ -182,11 +178,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
           .isEqualTo(1);
     }
   }
-
-  // =========================================================================
   // Group 2 – addBalance() song song cùng user
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – addBalance() song song cùng user — tổng đúng")
   class AddBalanceLoadTest {
@@ -281,11 +273,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
       assertThat(failures.get()).isZero();
     }
   }
-
-  // =========================================================================
   // Group 3 – RatingService: penalizeLatePayment song song nhiều user
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – RatingService.penalizeLatePayment song song (DB thật)")
   class RatingPenaltyLoadTest {
@@ -414,11 +402,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
           .isBetween(0.0, 5.0);
     }
   }
-
-  // =========================================================================
   // Group 4 – existsByUsername / existsByEmail dưới tải đọc cao
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – existsByUsername / existsByEmail dưới tải đọc cao")
   class ExistenceCheckLoadTest {
@@ -531,11 +515,7 @@ class UserDAORatingServiceLoadIT extends IntegrationTestBase {
           .isZero();
     }
   }
-
-  // =========================================================================
   // Group 5 – WalletService.deposit song song nhiều user (riêng lẻ, không dùng DB load test khác)
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 5 – Tổng hợp: register + deposit + ratingCheck đồng thời")
   class ComprehensiveMixedLoadTest {

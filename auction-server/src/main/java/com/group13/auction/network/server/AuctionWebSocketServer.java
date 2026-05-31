@@ -77,7 +77,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
     log.info("AuctionWebSocketServer initialized: port={}", port);
   }
 
-  // ── WebSocketServer lifecycle callbacks ───────────────────────────────────
+  // WebSocketServer lifecycle callbacks
 
   @Override
   public void onOpen(WebSocket conn, ClientHandshake handshake) {

@@ -48,7 +48,7 @@ public class RatingService implements IRatingService {
     this.notificationDAO = notificationDAO;
   }
 
-  // ── Eligibility ────────────────────────────────────────────────────────
+  // Eligibility
 
   @Override
   public boolean isEligible(User user) {
@@ -78,7 +78,7 @@ public class RatingService implements IRatingService {
         && seller.getRating() >= MIN_RATING_SELLER;
   }
 
-  // ── Rewards ────────────────────────────────────────────────────────────
+  // Rewards
 
   @Override
   public void rewardBidder(NormalUser bidder) {
@@ -120,7 +120,7 @@ public class RatingService implements IRatingService {
             REWARD_SELLER_SALE, seller.getRating()));
   }
 
-  // ── Penalties ──────────────────────────────────────────────────────────
+  // Penalties
 
   @Override
   public void penalizeLatePayment(NormalUser bidder) {
@@ -206,7 +206,7 @@ public class RatingService implements IRatingService {
             bidder.getAccountStatus() == AccountStatus.SUSPENDED ? " Tài khoản bị tạm khóa." : ""));
   }
 
-  // ── Suspend restore ────────────────────────────────────────────────────
+  // Suspend restore
 
   @Override
   public void checkAndRestoreSuspended(User user) {
@@ -264,7 +264,7 @@ public class RatingService implements IRatingService {
             user.getRating(), user.getAccountStatus().name()));
   }
 
-  // ── User-submitted rating (RATE_SELLER / RATE_BIDDER) ─────────────────
+  // User-submitted rating (RATE_SELLER / RATE_BIDDER)
 
   /**
    * Áp dụng đánh giá từ user (thang 1–5) lên điểm uy tín của target.
@@ -310,7 +310,7 @@ public class RatingService implements IRatingService {
             raterName, score, sign, delta, target.getRating()));
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────
+  // Private helpers
 
   /**
    * Kiểm tra và tự động suspend nếu rating xuống dưới ngưỡng.

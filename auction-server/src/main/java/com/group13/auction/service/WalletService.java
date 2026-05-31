@@ -60,7 +60,7 @@ public class WalletService implements IWalletService {
     this.userDAO = userDAO;
   }
 
-  // ─── Private helper ───────────────────────────────────────────────────────
+  // Private helper
 
   /**
    * Lấy lock object theo userId từ registry. FIX: Thay synchronized(user/bidder/winner) — lock trên
@@ -110,7 +110,7 @@ public class WalletService implements IWalletService {
         lockedDeposit);
   }
 
-  // ─── Deposit ──────────────────────────────────────────────────────────────
+  // Deposit
 
   /** Nạp tiền vào tài khoản NormalUser. */
   @Override
@@ -134,7 +134,7 @@ public class WalletService implements IWalletService {
     }
   }
 
-  // ─── Withdraw ─────────────────────────────────────────────────────────────
+  // Withdraw
 
   /**
    * Rút tiền từ tài khoản NormalUser. Chỉ rút được phần availableBalance (không rút vào tiền đang
@@ -168,7 +168,7 @@ public class WalletService implements IWalletService {
     }
   }
 
-  // ─── Deposit (cọc) ────────────────────────────────────────────────────────
+  // Deposit (cọc)
 
   /** Khóa cọc khi joinAuction thành công. */
   @Override
@@ -191,7 +191,7 @@ public class WalletService implements IWalletService {
       tx.printInfo();
       financialTransactionDAO.saveTransaction(tx);
 
-      // BUG FIX: sync lockedDeposit mới về session cache.
+      // sync lockedDeposit mới về session cache.
       // lockDeposit() được gọi từ 2 nơi:
       // (1) BidService.joinAsNormalUser() — bidder là session.cachedUser → update in-place ✓
       // (2) PaymentService.acceptSecondChanceOffer() — runnerUp là fresh DB object,
@@ -304,7 +304,7 @@ public class WalletService implements IWalletService {
     }
   }
 
-  // ─── Payment ──────────────────────────────────────────────────────────────
+  // Payment
 
   /**
    * Chuyển tiền từ Winner -> SystemBank (FUNDS_HELD). Seller CHƯA nhận tiền - chỉ nhận qua
@@ -367,7 +367,7 @@ public class WalletService implements IWalletService {
         // depositPaid đã được receive() trong recordWinnerDepositHeldInBank() tại closeAuction().
         systemBank.receive(remaining);
 
-        // BUG FIX: syncBalance sau thanh toán thành công.
+        // syncBalance sau thanh toán thành công.
         // Tất cả method khác (deposit, withdraw, unlock, forfeit) đều gọi sync.
         // executePaymentToBank bị bỏ sót → winner.cachedUser giữ balance cũ
         // → getAvailableBalance() trả sai cho các request tiếp theo trong session.

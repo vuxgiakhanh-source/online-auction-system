@@ -82,7 +82,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
             mockUserDAO);
   }
 
-  // ── P1 ────────────────────────────────────────────────────────────────────
+  // P1
   // BUG ROOT: seller.setBalance(seller.getBalance() + payout) — 2 threads đọc
   //   cùng lúc, tính ra cùng giá trị, ghi đè nhau → sinh tiền ảo.
   // FIX CẦN: synchronized(seller) { seller.setBalance(seller.getBalance() + payout) }
@@ -152,7 +152,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(expectedPayoutPerCall);
   }
 
-  // ── P2 ────────────────────────────────────────────────────────────────────
+  // P2
   // BUG ROOT: winner.setBalance(winner.getBalance() + finalPrice) — race condition.
   // FIX CẦN: synchronized(winner) quanh read-modify-write.
   // EXPECTED SAU FIX: balance == finalPrice (1 lần refund).
@@ -218,7 +218,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     assertThat(actualBalance).as("Balance không được âm").isGreaterThanOrEqualTo(0L);
   }
 
-  // ── P3 ────────────────────────────────────────────────────────────────────
+  // P3
   // Không thay đổi — WalletService.executePaymentToBank đã synchronized đúng.
 
   @Test
@@ -273,7 +273,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     assertThat(winner.getBalance()).as("Balance sau 1 payment phải = 0").isEqualTo(0L);
   }
 
-  // ── P4 ────────────────────────────────────────────────────────────────────
+  // P4
   // Không thay đổi logic, chỉ thêm assert chặt hơn.
 
   @Test
@@ -339,7 +339,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
         .isLessThanOrEqualTo(finalPrice);
   }
 
-  // ── P5 ────────────────────────────────────────────────────────────────────
+  // P5
 
   @Test
   @Order(5)
@@ -424,7 +424,7 @@ class PaymentServiceConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── Helper ────────────────────────────────────────────────────────────────
+  // Helper
 
   private void injectSeller(Auction auction, NormalUser seller) {
     try {

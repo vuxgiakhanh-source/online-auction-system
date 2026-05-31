@@ -95,11 +95,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // TC-20 — approveReport()
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-20 [HIGH] approveReport() — Seller penalized, winner refunded")
@@ -187,11 +183,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
           .isInstanceOf(IllegalStateException.class);
     }
   }
-
-  // =========================================================================
   // TC-21 — rejectReport()
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-21 [MEDIUM] rejectReport() — Tiền không hoàn, report REJECTED")
@@ -257,7 +249,7 @@ class QualityReportIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers (giữ nguyên) ───────────────────────────────────────────────────────────────
+  // Helpers (giữ nguyên)
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);
   }

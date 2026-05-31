@@ -36,7 +36,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
     /** Singleton — một ứng dụng client chỉ cần 1 kết nối. */
     private static volatile AuctionWebSocketClient instance;
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
+    // Handlers
 
     private final List<ServerResponseHandler> handlers = new CopyOnWriteArrayList<>();
 
@@ -46,16 +46,11 @@ public class AuctionWebSocketClient extends WebSocketClient {
      */
     private final ConcurrentHashMap<String, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
 
-    // ── Reconnect ─────────────────────────────────────────────────────────────
+    // Reconnect
 
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final long BASE_RECONNECT_DELAY_MS = 1_000;
-    /**
-     * FIX [Qodana "Non-atomic operation on volatile field"]: trước đây dùng
-     * {@code private volatile int reconnectAttempts = 0;} rồi {@code reconnectAttempts++}.
-     * volatile chỉ đảm bảo visibility, KHÔNG đảm bảo atomicity của read-modify-write — nếu
-     * hai luồng cùng increment có thể mất tăng. Thay bằng {@link AtomicInteger} để CAS đúng.
-     */
+    /** Số lần reconnect; AtomicInteger vì increment phải atomic. */
     private final AtomicInteger reconnectAttempts = new AtomicInteger(0);
     private volatile boolean shuttingDown = false;
     private final ScheduledExecutorService reconnectScheduler =
@@ -65,7 +60,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
             return t;
         });
 
-    // ── Heartbeat ─────────────────────────────────────────────────────────────
+    // Heartbeat
 
     private static final long PING_INTERVAL_MS = 30_000;
     private final ScheduledExecutorService heartbeatScheduler =
@@ -76,13 +71,13 @@ public class AuctionWebSocketClient extends WebSocketClient {
         });
     private ScheduledFuture<?> heartbeatFuture;
 
-    // ── Auth state ────────────────────────────────────────────────────────────
+    // Auth state
 
     private volatile String authToken;
     private volatile String currentUserId;
     private volatile String currentUsername;
 
-    // ── Constructor ───────────────────────────────────────────────────────────
+    // Constructor
 
     private AuctionWebSocketClient(URI serverUri) {
         super(serverUri);
@@ -106,7 +101,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         return instance;
     }
 
-    // ── WebSocketClient callbacks ─────────────────────────────────────────────
+    // WebSocketClient callbacks
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
@@ -179,7 +174,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         log.severe("[CLIENT] WebSocket error: " + ex.getMessage());
     }
 
-    // ── Send API ──────────────────────────────────────────────────────────────
+    // Send API
 
     /**
      * Gửi packet tới server (fire-and-forget).
@@ -280,7 +275,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         }, 10, TimeUnit.SECONDS);
     }
 
-    // ── Handler management ────────────────────────────────────────────────────
+    // Handler management
 
     public void addHandler(ServerResponseHandler handler) {
         if (!handlers.contains(handler)) handlers.add(handler);
@@ -290,7 +285,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         handlers.remove(handler);
     }
 
-    // ── Auth state ────────────────────────────────────────────────────────────
+    // Auth state
 
     public void setAuthState(String token, String userId, String username) {
         this.authToken = token;
@@ -309,7 +304,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
     public String getCurrentUserId() { return currentUserId; }
     public String getCurrentUsername() { return currentUsername; }
 
-    // ── Heartbeat ─────────────────────────────────────────────────────────────
+    // Heartbeat
 
     private void startHeartbeat() {
         stopHeartbeat();
@@ -328,7 +323,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         }
     }
 
-    // ── Reconnect ─────────────────────────────────────────────────────────────
+    // Reconnect
 
     private void scheduleReconnect() {
         if (shuttingDown || reconnectScheduler.isShutdown()) {
@@ -381,7 +376,7 @@ public class AuctionWebSocketClient extends WebSocketClient {
         instance = null;
     }
 
-    // ── Inner classes ─────────────────────────────────────────────────────────
+    // Inner classes
 
     private static class PendingRequest {
         final PacketType successType;

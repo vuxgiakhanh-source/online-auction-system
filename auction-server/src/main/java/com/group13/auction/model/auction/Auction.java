@@ -13,26 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Phiên đấu giá - chỉ lưu data và trạng thái.
- *
- * <p>═══════════════════════════════════════════════════════════ Thread safety cho shared mutable
- * state:
- *
- * <p>currentPrice, currentLeader — volatile: BidService giữ ReentrantLock khi WRITE. volatile đảm
- * bảo visibility sau khi release lock (Java Memory Model). READ không cần lock vì volatile đủ cho
- * primitive long / reference.
- *
- * <p>endTime — AtomicReference<LocalDateTime>: extendEndTime() là read-modify-write. volatile không
- * đủ (non-atomic: read → compute → write). AtomicReference.updateAndGet() là truly atomic, loại bỏ
- * Qodana "Non-atomic operation on volatile".
- *
- * <p>state, winner — AtomicReference: Compound write (set + side-effect). AtomicReference đảm bảo
- * visibility ngay cả khi không có lock phía caller.
- *
- * <p>bidTransactionIds — Collections.synchronizedList: addBidTransactionId() gọi trong lock,
- * getBidTransactionIds() gọi ngoài. ═══════════════════════════════════════════════════════════
- */
+/** Phiên đấu giá; giá/leader/endTime dùng volatile hoặc atomic cho thread-safe. */
 public class Auction extends Entity {
 
   private static final Logger log = LoggerFactory.getLogger(Auction.class);
@@ -86,15 +67,9 @@ public class Auction extends Entity {
    */
   private final AtomicReference<AuctionWinner> winner = new AtomicReference<>(null);
 
-  /**
-   * FIX: AtomicInteger thay volatile int — viewerCount++ là read-modify-write, không atomic nếu
-   * dùng volatile.
-   */
+  /** viewerCount dùng AtomicInteger vì increment phải atomic. */
   private final AtomicInteger viewerCount = new AtomicInteger(0);
 
-  // =========================================================================
-  // Static factory methods
-  // =========================================================================
 
   public static Auction create(
       Item item, LocalDateTime startTime, LocalDateTime endTime, long reservePrice) {
@@ -119,16 +94,7 @@ public class Auction extends Entity {
         id, createdAt, updatedAt, item, startTime, endTime, currentPrice, status, reservePrice);
   }
 
-  /**
-   * FIX: Hồi sinh Auction từ DB kèm viewer_count đã lưu.
-   *
-   * <p>Overload này dùng khi AuctionDAO đọc được cột {@code viewer_count} từ ResultSet. Trước đây
-   * {@link #reconstitute(String, LocalDateTime, LocalDateTime, Item, LocalDateTime, LocalDateTime,
-   * long, AuctionStatus, long)} không nhận viewerCount, nên mỗi lần server restart thì viewerCount
-   * trong memory bị reset = 0 dù DB vẫn lưu đúng giá trị.
-   *
-   * @param savedViewerCount giá trị viewer_count đọc từ DB (phải >= 0; âm sẽ bị clamp về 0)
-   */
+  /** Hồi sinh từ DB kèm viewer_count đã lưu (tránh reset về 0 sau restart). */
   public static Auction reconstitute(
       String id,
       LocalDateTime createdAt,
@@ -147,9 +113,6 @@ public class Auction extends Entity {
     return auction;
   }
 
-  // =========================================================================
-  // Private constructors
-  // =========================================================================
 
   private Auction(Item item, LocalDateTime startTime, LocalDateTime endTime, long reservePrice) {
     super();
@@ -201,9 +164,6 @@ public class Auction extends Entity {
     }
   }
 
-  // =========================================================================
-  // Getters
-  // =========================================================================
 
   public Item getItem() {
     return item;
@@ -257,9 +217,6 @@ public class Auction extends Entity {
     return Collections.unmodifiableList(bidTransactionIds);
   }
 
-  // =========================================================================
-  // State transitions — chỉ AuctionService gọi
-  // =========================================================================
 
   public void transitionToRunning() {
     this.state.updateAndGet(AuctionState::start);
@@ -281,9 +238,6 @@ public class Auction extends Entity {
     markUpdated();
   }
 
-  // =========================================================================
-  // Setters — chỉ BidService / AuctionService gọi
-  // =========================================================================
 
   /**
    * Cập nhật giá và leader.

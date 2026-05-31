@@ -84,7 +84,7 @@ class BidEdgeCasesTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── E1 ────────────────────────────────────────────────────────────────────
+  // E1
 
   @Test
   @Order(1)
@@ -99,7 +99,7 @@ class BidEdgeCasesTest extends ConcurrencyTestBase {
         .isInstanceOf(AuctionBusinessException.class);
   }
 
-  // ── E2 ────────────────────────────────────────────────────────────────────
+  // E2
 
   @Test
   @Order(2)
@@ -117,7 +117,7 @@ class BidEdgeCasesTest extends ConcurrencyTestBase {
         .isInstanceOf(AuthenticationException.class);
   }
 
-  // ── E3 ────────────────────────────────────────────────────────────────────
+  // E3
 
   @Test
   @Order(3)
@@ -143,7 +143,7 @@ class BidEdgeCasesTest extends ConcurrencyTestBase {
         .isInstanceOf(AuctionClosedException.class);
   }
 
-  // ── E4 ────────────────────────────────────────────────────────────────────
+  // E4
 
   @Test
   @Order(4)
@@ -157,7 +157,7 @@ class BidEdgeCasesTest extends ConcurrencyTestBase {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  // ── E5 ────────────────────────────────────────────────────────────────────
+  // E5
 
   @Test
   @Order(5)

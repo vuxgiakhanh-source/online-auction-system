@@ -28,41 +28,7 @@ import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Xử lý nghiệp vụ đặt giá: join, watch, placeBid.
- *
- * <p>═══════════════════════════════════════════════════════════════════ PERFORMANCE & CORRECTNESS
- * FIXES:
- *
- * <p>FIX #1 — Logging: hot path không có log.debug/info → logback.xml BidService level=WARN +
- * AsyncAppender
- *
- * <p>FIX #2 — Rejected bid KHÔNG ghi DB → Cũ: mọi reject đều INSERT vào bid_transactions → Mới: chỉ
- * throw exception, không INSERT
- *
- * <p>FIX #3 — Per-auction lock (ReentrantLock từ AuctionLockRegistry) → Validate nhanh
- * (eligibility, isOpen, hasJoined) chạy NGOÀI lock → Trong lock: isValidBid + updateBid + tạo TX
- * object
- *
- * <p>FIX #4 — joinAsNormalUser() dùng tryMarkJoined() atomic gate
- *
- * <p>FIX #5 — DB writes NGOÀI lock để giảm lock hold time → bidTransactionDAO.saveTransaction(tx):
- * TX object tạo trong lock, lưu DB ngoài lock (TX có UUID rồi, không cần lock để persist) →
- * auctionDAO.updateHighestPrice(): dùng conditional SQL (WHERE current_price < ?) để tránh
- * stale-write race condition
- *
- * <p>FIX #6 — Race condition stale-write (BUG CHÍNH trong load test): TRƯỚC: Thread A unlock →
- * Thread B unlock+writeDB(giá cao) → Thread A writeDB(giá cũ) → OVERWRITE giá cao! ✗ SAU: WHERE
- * current_price < ? → Thread A's stale write = no-op ✓ → Giá DB luôn = giá CAO NHẤT đã được chấp
- * nhận trong RAM
- *
- * <p>FIX #7 — Ghost bid khi non-leader rời phiên: BUG: cancelBidsByBidder() CHỈ gọi khi
- * isCurrentLeader=true. → Non-leader rời phiên mà bids vẫn ACCEPTED trong DB. → Khi leader sau đó
- * rời, findHighestValidBidExcept() trả về bid của người đã rời → set họ làm leader mới dù đã out!
- * FIX: cancelBidsByBidder() gọi LUÔN LUÔN cho mọi người rời phiên, không phân biệt leader hay
- * không. Chỉ rollback leader khi cần.
- * ═══════════════════════════════════════════════════════════════════
- */
+/** Join, watch, đặt giá và rời phiên; dùng lock theo từng auction để tránh race. */
 public class BidService implements IBidService {
 
   private static final Logger log = LoggerFactory.getLogger(BidService.class);
@@ -70,10 +36,7 @@ public class BidService implements IBidService {
   private static final long ANTI_SNIPING_WINDOW_SECONDS = 30;
   private static final long ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
-  /**
-   * Kết quả trả về từ {@link #leaveAuction(User, Auction)}. Chứa đủ thông tin để BidHandler build
-   * response mà không cần tính lại độc lập (tránh race condition do tính 2 lần ngoài lock).
-   */
+  /** Kết quả leaveAuction; BidHandler dùng trực tiếp, không tính lại ngoài lock. */
   public static class LeaveResult {
     public final boolean leaderChanged;
     public final boolean depositForfeited;
@@ -182,7 +145,7 @@ public class BidService implements IBidService {
   @Override
   public void placeBid(NormalUser bidder, Auction auction, long amount, BidStrategy strategy) {
 
-    // ── NGOÀI LOCK: validate nhanh ─────────────────────────────────────────
+    // NGOÀI LOCK: validate nhanh
     if (!ratingService.isEligible(bidder)) {
       log.warn(
           "Bid rejected — ineligible: auctionId={}, bidderId={}, status={}",
@@ -234,7 +197,7 @@ public class BidService implements IBidService {
       }
     }
 
-    // ── TRONG LOCK: critical section per-auction ───────────────────────────
+    // TRONG LOCK: critical section per-auction
     java.util.concurrent.locks.ReentrantLock lock = lockRegistry.getLock(auction.getId());
     BidTransaction tx;
     boolean reserveMet;
@@ -279,7 +242,7 @@ public class BidService implements IBidService {
       lock.unlock();
     }
 
-    // ── NGOÀI LOCK: DB writes ──────────────────────────────────────────────
+    // NGOÀI LOCK: DB writes
     if (!bidTransactionDAO.saveTransactionAndUpdatePrice(
         tx, auction.getId(), amount, bidder.getId())) {
       log.error(
@@ -423,7 +386,7 @@ public class BidService implements IBidService {
         isPastTwoThirds = isPastTwoThirdsTime(auction);
         shouldPenalize = isCurrentLeader || isPastTwoThirds;
 
-        // FIX #7: cancel bids của bidder LUÔN LUÔN, không chỉ khi là leader.
+        // Hủy mọi bid ACCEPTED của người rời (kể cả không phải leader).
         int cancelledRows = bidTransactionDAO.cancelBidsByBidder(auctionId, bidder.getId());
         if (cancelledRows > 0) {
           log.info(

@@ -28,19 +28,7 @@ public class SellerDAO {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // BUG FIX #2 — SellerDAO.approveSellerRole() dùng UPDATE thuần
-  //
-  // Vấn đề: AccountService.autoApproveSellerRole() gọi thẳng approveSellerRole()
-  // mà không đảm bảo record trong bảng sellers đã tồn tại trước đó.
-  // Nếu user chưa từng gọi requestSellerRole() (hoặc record bị thiếu),
-  // câu UPDATE sẽ match 0 rows → silent fail → role SELLER KHÔNG được lưu DB.
-  // In-memory thì user có SELLER role (vì user.addRole() đã gọi),
-  // nhưng sau khi server restart hoặc login lại → mất role.
-  //
-  // Fix: dùng INSERT ... ON DUPLICATE KEY UPDATE (MySQL UPSERT) để đảm bảo
-  // record luôn tồn tại và được set APPROVED, bất kể trước đó có record chưa.
-  // ═══════════════════════════════════════════════════════════════════════
+  // Dùng UPSERT để luôn có bản ghi sellers khi duyệt role (tránh UPDATE 0 dòng).
 
   /**
    * Duyệt Role Seller — UPSERT: tạo record nếu chưa có, cập nhật nếu đã có.

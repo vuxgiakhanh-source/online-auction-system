@@ -96,11 +96,7 @@ class PacketRouterLoadTest {
     router.register(bidHandler);
     router.register(paymentHandler);
   }
-
-  // =========================================================================
   // Group 1 – route() song song nhiều loại packet
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – route() song song nhiều loại packet")
   class RouteConcurrentTest {
@@ -261,11 +257,7 @@ class PacketRouterLoadTest {
           .isGreaterThan(1000.0);
     }
   }
-
-  // =========================================================================
   // Group 2 – PacketCodec encode/decode dưới tải
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – PacketCodec encode/decode song song")
   class PacketCodecLoadTest {

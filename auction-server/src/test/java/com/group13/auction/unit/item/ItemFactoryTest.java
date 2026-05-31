@@ -48,11 +48,7 @@ class ItemFactoryTest {
   private void denySeller() {
     when(ratingService.canSellerCreateAuction(seller)).thenReturn(false);
   }
-
-  // =========================================================================
   // ArtFactory — createItem() — các test cũ không thay đổi
-  // =========================================================================
-
   @Nested
   @DisplayName("ArtFactory.createItem()")
   class ArtFactoryTests {
@@ -113,7 +109,7 @@ class ItemFactoryTest {
           .isInstanceOf(IllegalStateException.class);
     }
 
-    // ── imageUrls mới ──────────────────────────────────────────────────────
+    // imageUrls mới
 
     @Test
     @DisplayName("createItem không có imageUrls → imageUrls rỗng, không null")
@@ -137,11 +133,7 @@ class ItemFactoryTest {
       assertThat(item.hasImages()).isTrue();
     }
   }
-
-  // =========================================================================
   // ElectronicsFactory — createItem()
-  // =========================================================================
-
   @Nested
   @DisplayName("ElectronicsFactory.createItem()")
   class ElectronicsFactoryTests {
@@ -183,11 +175,7 @@ class ItemFactoryTest {
       assertThat(item.getImageUrls()).hasSize(1).containsExactly("/uploads/items/img1.jpg");
     }
   }
-
-  // =========================================================================
   // VehicleFactory — createItem()
-  // =========================================================================
-
   @Nested
   @DisplayName("VehicleFactory.createItem()")
   class VehicleFactoryTests {
@@ -223,11 +211,7 @@ class ItemFactoryTest {
       assertThat(item.getImageUrls()).hasSize(2);
     }
   }
-
-  // =========================================================================
   // ItemFactory.create() — facade dispatch
-  // =========================================================================
-
   @Nested
   @DisplayName("ItemFactory.create() — facade")
   class FacadeTests {
@@ -354,11 +338,7 @@ class ItemFactoryTest {
       assertInstanceOf(Art.class, item);
     }
   }
-
-  // =========================================================================
   // Item model — imageUrls contract
-  // =========================================================================
-
   @Nested
   @DisplayName("Item — imageUrls model contract")
   class ItemImageContractTests {

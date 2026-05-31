@@ -31,7 +31,7 @@ import java.util.Objects;
  */
 public class FAQ {
 
-  // ── Fields ────────────────────────────────────────────────────────────────
+  // Fields
 
   /**
    * Mã định danh duy nhất của câu hỏi (ví dụ: "FAQ_001"). Dùng để tra cứu trực tiếp qua {@code
@@ -56,7 +56,7 @@ public class FAQ {
   /** Nội dung câu trả lời chi tiết. */
   private String answer;
 
-  // ── Constructor ───────────────────────────────────────────────────────────
+  // Constructor
 
   /**
    * Constructor mặc định không tham số — bắt buộc để Gson deserialize từ JSON. Không dùng trực tiếp
@@ -82,7 +82,7 @@ public class FAQ {
     this.answer = answer;
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   /**
    * @return mã định danh FAQ (ví dụ: "FAQ_001")
@@ -119,7 +119,7 @@ public class FAQ {
     return answer;
   }
 
-  // ── Utility ───────────────────────────────────────────────────────────────
+  // Utility
 
   /**
    * Kiểm tra FAQ có chứa từ khóa cho trước không (so khớp không phân biệt hoa/thường).

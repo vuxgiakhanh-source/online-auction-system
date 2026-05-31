@@ -4,27 +4,12 @@ import com.group13.auction.model.auction.Auction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Kiểu đặt giá thông thường. Bid hợp lệ khi amount >= currentPrice + minIncrement.
- *
- * <p>═══════════════════════════════════════════════════════════ PERFORMANCE FIX #4 — Strategy
- * validation tối ưu:
- *
- * <p>1. Cache minIncrement theo price tier: BidIncrementCalculator.calculate() chỉ là 2 lần so sánh
- * long, nhưng được gọi hàng nghìn lần/giây trong load test. Cache 3 giá trị tier tránh method call
- * overhead.
- *
- * <p>2. Tính minBid một lần (currentPrice + increment) thay vì tính 2 lần.
- *
- * <p>3. Log level: chỉ log.warn khi reject — KHÔNG log.debug khi accept. Trong lock context
- * (BidService), mỗi log.debug là I/O block.
- * ═══════════════════════════════════════════════════════════
- */
+/** Đặt giá thường: amount phải >= giá hiện tại + bước giá tối thiểu. */
 public class StandardBidStrategy implements BidStrategy {
 
   private static final Logger log = LoggerFactory.getLogger(StandardBidStrategy.class);
 
-  // FIX #4: Cache các giá trị tier — tránh method call trong hot path
+  // Cache bước giá theo tier để validate nhanh hơn.
   private static final long TIER_LOW = 1_000_000L;
   private static final long TIER_MID = 10_000_000L;
   private static final long INCREMENT_LOW = 50_000L;

@@ -97,7 +97,7 @@ public class BidHandler implements PacketHandler {
   private final BidService bidService;
   private final IRatingService ratingService;
   private final SessionManager sessionManager;
-  // FIX Bug #1: bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
+  // bidTransactionDAO đã bị xóa — BidService.placeBid() tự persist.
   private final AutoBidRegistry autoBidRegistry = AutoBidRegistry.getInstance();
   private final AuctionLockRegistry lockRegistry = AuctionLockRegistry.getInstance();
   private final BidRateLimiter rateLimiter = BidRateLimiter.getInstance();
@@ -152,7 +152,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── JOIN ──────────────────────────────────────────────────────────────────
+  // JOIN
 
   private void handleJoin(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -184,7 +184,7 @@ public class BidHandler implements PacketHandler {
           bidder.getUsername(),
           requestId);
 
-      // FIX double-increment: BidService.registerJoin() đã gọi auction.incrementViewerCount()
+      // BidService.registerJoin() đã gọi auction.incrementViewerCount()
       // + auctionDAO.updateViewerCount() bên trong lock. Gọi lại ở đây → viewerCount +2 mỗi lần
       // join.
       // Xóa 2 dòng incrementViewerCount() + updateViewerCount() dư thừa này.
@@ -222,7 +222,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── WATCH ─────────────────────────────────────────────────────────────────
+  // WATCH
 
   private void handleWatch(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -293,7 +293,7 @@ public class BidHandler implements PacketHandler {
     session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS, auctionDto, requestId));
   }
 
-  // ── LEAVE ─────────────────────────────────────────────────────────────────
+  // LEAVE
 
   private void handleLeave(ClientSession session, JsonElement payload, String requestId) {
     String auctionId = PacketCodec.fromElement(payload, String.class);
@@ -303,7 +303,7 @@ public class BidHandler implements PacketHandler {
     NormalUser bidder = requireNormalUser(session, requestId);
 
     if (bidder != null) {
-      // FIX race condition: leaveAuction() tính isLeader + isPastTwoThirds TRONG lock,
+      // leaveAuction() tính isLeader + isPastTwoThirds TRONG lock,
       // trả về LeaveResult nhất quán — không tính lại ở đây tránh kết quả khác nhau
       // khi anti-snipe extend xảy ra đúng lúc rời phiên.
       BidService.LeaveResult result = bidService.leaveAuction(bidder, auction);
@@ -316,9 +316,14 @@ public class BidHandler implements PacketHandler {
           result.leaderChanged,
           requestId);
 
+      if (result.leaderChanged && auction != null && auction.getCurrentLeader() != null) {
+        ServerBroadcastNotifier.getInstance()
+            .notifyLeaderPromotedAfterLeave(
+                auction.getCurrentLeader(), auction, bidder.getUsername());
+      }
+
       if (result.leaderChanged && auction != null) {
-        // FIX BUG PRICE-ON-LEAVE:
-        // Dùng result.previousPrice (giá của leader vừa rời) làm previousPrice,
+        // // Dùng result.previousPrice (giá của leader vừa rời) làm previousPrice,
         // và auction.getCurrentPrice() (giá của người đứng thứ 2) làm newCurrentPrice.
         // Trước đây cả 2 đều dùng auction.getCurrentPrice() → priceChange = 0,
         // client không hiển thị giá trị đã giảm đúng cách.
@@ -340,8 +345,7 @@ public class BidHandler implements PacketHandler {
             newPrice,
             result.previousPrice);
 
-        // FIX AUTO-BID AFTER LEAVE:
-        // Khi leader rời phiên, giá drop về bidder thứ 2. Các auto-bidder khác
+        // // Khi leader rời phiên, giá drop về bidder thứ 2. Các auto-bidder khác
         // cần được kích hoạt để counter bidder thứ 2 (nếu họ có đủ budget).
         // triggeredByUserId = bidder.getId() (người vừa rời) để process() biết ai là
         // "nguồn" trigger — dùng trong logging; logic bên trong dùng currentLeader để
@@ -390,7 +394,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── PLACE BID ─────────────────────────────────────────────────────────────
+  // PLACE BID
 
   private void handlePlaceBid(ClientSession session, JsonElement payload, String requestId) {
     BidDTOs.BidRequestDTO req;
@@ -445,7 +449,7 @@ public class BidHandler implements PacketHandler {
       return;
     }
 
-    // FIX PERFORMANCE #1: resolve user từ session cache — không hit DB mỗi bid.
+    // resolve user từ session cache — không hit DB mỗi bid.
     // Lần đầu tiên: load từ DB và cache vào session.
     // Các lần sau: trả về object trong memory (~0µs thay vì ~5ms DB round-trip).
     NormalUser bidder = requireNormalUser(session, requestId);
@@ -466,7 +470,7 @@ public class BidHandler implements PacketHandler {
     long previousPrice = auction.getCurrentPrice();
     LocalDateTime endTimeBefore = auction.getEndTime();
 
-    // FIX PERFORMANCE #2: BidHandler KHÔNG hold outer per-auction lock nữa.
+    // BidHandler KHÔNG hold outer per-auction lock nữa.
     //
     // Vấn đề cũ: BidHandler acquire lock → gọi bidService.placeBid() (bên trong
     // cũng lock, reentrant) → sau khi bidService unlock nội bộ, BidHandler vẫn
@@ -545,7 +549,7 @@ public class BidHandler implements PacketHandler {
       return;
     }
 
-    // ── Mọi thứ bên dưới chạy HOÀN TOÀN NGOÀI per-auction lock ──────────
+    // Mọi thứ bên dưới chạy HOÀN TOÀN NGOÀI per-auction lock
     // bidService.placeBid() đã hoàn tất: RAM update + DB write + observer notify.
 
     long confirmedAmount = req.getAmount(); // giá tại thời điểm bid được chấp nhận
@@ -590,7 +594,7 @@ public class BidHandler implements PacketHandler {
     autoBidProcessor.submit(auction, bidder.getId());
   }
 
-  // ── REGISTER AUTO-BID ─────────────────────────────────────────────────────
+  // REGISTER AUTO-BID
 
   private void handleRegisterAutoBid(ClientSession session, JsonElement payload, String requestId) {
     BidDTOs.AutoBidRequestDTO req;
@@ -612,7 +616,7 @@ public class BidHandler implements PacketHandler {
 
     String autoBidTriggerUserId = null;
 
-    // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+    // resolve user trước lock — DB read không được giữ per-auction lock
     NormalUser bidder = requireNormalUser(session, requestId);
     if (bidder == null) {
       return;
@@ -683,8 +687,7 @@ public class BidHandler implements PacketHandler {
           req.getMaxBid(),
           nextBid);
 
-      // FIX SELF-OUTBID BUG:
-      // Nếu user ĐANG là leader hiện tại → KHÔNG đặt bid lần đầu vì sẽ
+      // // Nếu user ĐANG là leader hiện tại → KHÔNG đặt bid lần đầu vì sẽ
       // tự bid cao hơn giá của chính mình. Chỉ đăng ký vào registry,
       // auto-bid sẽ kích hoạt khi người khác counter-bid.
       // Nếu user CHƯA phải leader → đặt bid ngay để vào cuộc.
@@ -757,13 +760,13 @@ public class BidHandler implements PacketHandler {
     } finally {
       lock.unlock();
     }
-    // FIX DEADLOCK: process ngoài lock — chỉ khi đăng ký thành công (không return sớm / lỗi)
+    // process ngoài lock — chỉ khi đăng ký thành công (không return sớm / lỗi)
     if (autoBidTriggerUserId != null) {
       autoBidProcessor.submit(auctionForRegister, autoBidTriggerUserId);
     }
   }
 
-  // ── UPDATE AUTO-BID ───────────────────────────────────────────────────────
+  // UPDATE AUTO-BID
 
   private void handleUpdateAutoBid(ClientSession session, JsonElement payload, String requestId) {
     BidDTOs.AutoBidRequestDTO req;
@@ -786,7 +789,7 @@ public class BidHandler implements PacketHandler {
     Auction updateAutoBidAuction = null;
     String updateAutoBidBidderId = null;
 
-    // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+    // resolve user trước lock — DB read không được giữ per-auction lock
     NormalUser bidder = requireNormalUser(session, requestId);
     if (bidder == null) {
       return;
@@ -931,19 +934,19 @@ public class BidHandler implements PacketHandler {
     } finally {
       lock.unlock();
     }
-    // FIX DEADLOCK: process ngoài lock — chỉ khi cập nhật thành công
+    // process ngoài lock — chỉ khi cập nhật thành công
     if (updateAutoBidAuction != null && updateAutoBidBidderId != null) {
       autoBidProcessor.submit(updateAutoBidAuction, updateAutoBidBidderId);
     }
   }
 
-  // ── CANCEL AUTO-BID ───────────────────────────────────────────────────────
+  // CANCEL AUTO-BID
 
   private void handleCancelAutoBid(ClientSession session, JsonElement payload, String requestId) {
     try {
       String auctionId = PacketCodec.fromElement(payload, String.class);
 
-      // FIX Bug 2: resolve user trước lock — DB read không được giữ per-auction lock
+      // resolve user trước lock — DB read không được giữ per-auction lock
       NormalUser bidder = requireNormalUser(session, requestId);
       if (bidder == null) {
         return;
@@ -984,7 +987,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── GET AUTO-BID STATUS ───────────────────────────────────────────────────
+  // GET AUTO-BID STATUS
 
   private void handleGetAutoBidStatus(
       ClientSession session, JsonElement payload, String requestId) {
@@ -1054,7 +1057,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── GET BID HISTORY ───────────────────────────────────────────────────────
+  // GET BID HISTORY
 
   private void handleGetBidHistory(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -1070,7 +1073,7 @@ public class BidHandler implements PacketHandler {
 
       List<BidDTOs.BidChartPointDTO> points = new ArrayList<>();
       for (BidTransaction tx : txList) {
-        // FIX BUG #1: Defensive check — lọc thêm ở tầng handler phòng trường hợp
+        // Defensive check — lọc thêm ở tầng handler phòng trường hợp
         // findByAuctionId() trả về cả REJECTED (ví dụ dùng phiên bản DAO cũ)
         if (tx.getResult() == BidTransaction.BidResult.REJECTED) {
           continue;
@@ -1102,7 +1105,7 @@ public class BidHandler implements PacketHandler {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private Auction requireAuction(ClientSession session, String auctionId, String requestId) {
     Auction auction = AuctionLookup.resolveForRead(auctionId);
@@ -1153,7 +1156,7 @@ public class BidHandler implements PacketHandler {
       return null;
     }
 
-    // FIX PERFORMANCE: kiểm tra session cache trước — tránh DB lookup mỗi bid.
+    // kiểm tra session cache trước — tránh DB lookup mỗi bid.
     // Cache được set lần đầu tiên khi load từ DB, sau đó tái dùng cho mọi request
     // của cùng session (bid, join, watch, leave). Object được update in-place bởi
     // các operation như joinAuction (addJoinedAuction) và leaveAuction (removeJoinedAuction).

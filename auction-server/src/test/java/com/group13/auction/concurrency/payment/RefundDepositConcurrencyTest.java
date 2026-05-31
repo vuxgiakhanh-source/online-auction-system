@@ -96,7 +96,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── R1 ────────────────────────────────────────────────────────────────────
+  // R1
 
   @Test
   @Order(1)
@@ -162,7 +162,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── R2 ────────────────────────────────────────────────────────────────────
+  // R2
 
   @Test
   @Order(2)
@@ -218,7 +218,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── R3 ────────────────────────────────────────────────────────────────────
+  // R3
 
   @Test
   @Order(3)
@@ -281,7 +281,7 @@ class RefundDepositsConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── R4 ────────────────────────────────────────────────────────────────────
+  // R4
 
   @Test
   @Order(4)

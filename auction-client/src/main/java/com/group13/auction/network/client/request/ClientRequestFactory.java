@@ -24,7 +24,7 @@ public final class ClientRequestFactory {
     // Utility class.
   }
 
-  // ── Auth ────────────────────────────────────────────────────────────────
+  // Auth
 
   public static Packet<LoginRequestDTO> login(String username, String password) {
     return Packet.of(PacketType.LOGIN, new LoginRequestDTO(username, password));
@@ -39,7 +39,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.LOGOUT);
   }
 
-  // ── User / profile ──────────────────────────────────────────────────────
+  // User / profile
 
   public static Packet<Void> getMyProfile() {
     return Packet.of(PacketType.GET_MY_PROFILE);
@@ -53,7 +53,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.REQUEST_SELLER_ROLE);
   }
 
-  // ── Wallet / payment ────────────────────────────────────────────────────
+  // Wallet / payment
 
   public static Packet<PaymentDTOs.DepositRequestDTO> deposit(long amount) {
     PaymentDTOs.DepositRequestDTO request = new PaymentDTOs.DepositRequestDTO(amount);
@@ -86,7 +86,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.SECOND_CHANCE_DECLINE, auctionId);
   }
 
-  // ── Auction ─────────────────────────────────────────────────────────────
+  // Auction
 
   public static Packet<AuctionDTOs.CreateAuctionRequestDTO> createAuction(
       AuctionDTOs.CreateAuctionRequestDTO request) {
@@ -130,7 +130,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.ADMIN_GET_ALL_AUCTIONS);
   }
 
-  // ── Bidding / realtime auction session ──────────────────────────────────
+  // Bidding / realtime auction session
 
   public static Packet<String> joinAuction(String auctionId) {
     return Packet.of(PacketType.JOIN_AUCTION, auctionId);
@@ -169,7 +169,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.GET_BID_HISTORY, auctionId);
   }
 
-  // ── Admin / moderation ──────────────────────────────────────────────────
+  // Admin / moderation
 
   public static Packet<AdminDTOs.AdminBanUserDTO> adminBanUser(AdminDTOs.AdminBanUserDTO request) {
     return Packet.of(PacketType.ADMIN_BAN_USER, request);
@@ -200,7 +200,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.ADMIN_APPROVE_SELLER_ROLE, userId);
   }
 
-  // ── Rating ──────────────────────────────────────────────────────────────
+  // Rating
 
   public static Packet<RatingDTOs.RateSellerRequestDTO> rateSeller(
       RatingDTOs.RateSellerRequestDTO request) {
@@ -216,7 +216,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.GET_USER_RATINGS, userId);
   }
 
-  // ── Quality report ──────────────────────────────────────────────────────
+  // Quality report
 
   public static Packet<ReportDTOs.QualityReportRequestDTO> submitQualityReport(
       ReportDTOs.QualityReportRequestDTO request) {
@@ -243,7 +243,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.ADMIN_REJECT_QUALITY_REPORT, reportId);
   }
 
-  // ── Notification / system ───────────────────────────────────────────────
+  // Notification / system
 
   public static Packet<Void> getNotifications() {
     return Packet.of(PacketType.GET_NOTIFICATIONS);
@@ -257,7 +257,7 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.PING, System.currentTimeMillis());
   }
 
-  // ── Chatbot ─────────────────────────────────────────────────────────────
+  // Chatbot
 
   public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO>
       chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {

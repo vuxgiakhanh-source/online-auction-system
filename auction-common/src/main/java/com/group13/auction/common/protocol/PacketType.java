@@ -17,11 +17,7 @@ package com.group13.auction.common.protocol;
  * @version 2.0
  */
 public enum PacketType {
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AUTH — Đăng ký / Đăng nhập / Đăng xuất
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client gửi yêu cầu đăng ký tài khoản mới. Payload: {@code RegisterRequestDTO}. */
   REGISTER,
 
@@ -51,11 +47,7 @@ public enum PacketType {
 
   /** Server xác nhận đã đăng xuất thành công. Payload: rỗng. */
   LOGOUT_SUCCESS,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // USER — Quản lý tài khoản & hồ sơ
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client yêu cầu lấy thông tin hồ sơ của chính mình. Payload: rỗng (lấy từ session). */
   GET_MY_PROFILE,
 
@@ -73,7 +65,7 @@ public enum PacketType {
   /** Server từ chối (user không tồn tại). Payload: {@code ErrorDTO}. */
   GET_USER_PROFILE_FAILED,
 
-  // ── Nâng cấp tài khoản ──────────────────────────────────────────────────
+  // Nâng cấp tài khoản
 
   /** Client gửi đơn yêu cầu nâng cấp lên Seller. Payload: rỗng. */
   REQUEST_SELLER_ROLE,
@@ -99,7 +91,7 @@ public enum PacketType {
    */
   SELLER_ROLE_REJECTED_NOTIFY,
 
-  // ── Rút tiền ────────────────────────────────────────────────────────────
+  // Rút tiền
 
   /** Client yêu cầu rút tiền khỏi ví. Payload: {@code WithdrawRequestDTO}. */
   WITHDRAW,
@@ -115,11 +107,7 @@ public enum PacketType {
    * ErrorDTO}.
    */
   WITHDRAW_FAILED,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // ADMIN — Quản lý tài khoản (chỉ Admin/SystemAdmin)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Admin gửi lệnh ban tài khoản user. Payload: {@code AdminBanUserDTO}. */
   ADMIN_BAN_USER,
 
@@ -176,11 +164,7 @@ public enum PacketType {
 
   /** Server từ chối approve. Payload: {@code ErrorDTO}. */
   ADMIN_APPROVE_SELLER_ROLE_FAILED,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // DEPOSIT — Nạp tiền / Quản lý ví
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client yêu cầu nạp tiền vào ví. Payload: {@code DepositRequestDTO}. */
   DEPOSIT,
 
@@ -204,11 +188,7 @@ public enum PacketType {
    * WalletBalanceResponseDTO}.
    */
   GET_WALLET_BALANCE_SUCCESS,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AUCTION — Quản lý phiên đấu giá
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client (Seller) yêu cầu tạo phiên đấu giá mới. Payload: {@code CreateAuctionRequestDTO}. */
   CREATE_AUCTION,
 
@@ -250,7 +230,7 @@ public enum PacketType {
    */
   UPDATE_AUCTION_FAILED,
 
-  // ── Seller yêu cầu hủy phiên ────────────────────────────────────────────
+  // Seller yêu cầu hủy phiên
 
   /**
    * Seller gửi yêu cầu hủy phiên để Staff Admin xem xét. Payload: {@code CancelAuctionRequestDTO}
@@ -273,7 +253,7 @@ public enum PacketType {
    */
   SELLER_CANCEL_REQUEST_NOTIFY,
 
-  // ── Admin hủy phiên ─────────────────────────────────────────────────────
+  // Admin hủy phiên
 
   /**
    * Admin/Staff xác nhận hủy phiên (approve seller cancel request hoặc chủ động hủy). Payload:
@@ -295,11 +275,7 @@ public enum PacketType {
 
   /** Server trả về danh sách phiên đấu giá. Payload: {@code AuctionListDTO}. */
   ADMIN_GET_ALL_AUCTIONS_SUCCESS,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // BID — Đấu giá thủ công
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Client yêu cầu tham gia phiên đấu giá (đóng cọc + nhận realtime updates). Payload: {@code
    * String auctionId}.
@@ -348,11 +324,7 @@ public enum PacketType {
    * ErrorDTO}.
    */
   PLACE_BID_FAILED,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // AUTO-BID — Đấu giá tự động
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client đăng ký Auto-Bid (maxBid). Payload: {@code AutoBidRequestDTO}. */
   REGISTER_AUTO_BID,
 
@@ -408,11 +380,7 @@ public enum PacketType {
    * thể tự bid tiếp). Payload: {@code AutoBidExhaustedDTO}.
    */
   AUTO_BID_EXHAUSTED_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // REALTIME UPDATE — Server push sự kiện tới client đang xem phiên
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Server broadcast khi có bid mới hợp lệ và reserve price đã đạt. Tất cả client đang watch/join
    * phiên đó đều nhận packet này. Payload: {@code BidUpdateDTO}.
@@ -472,7 +440,7 @@ public enum PacketType {
    */
   AUCTION_CANCELED_UPDATE,
 
-  // ── Anti-sniping ─────────────────────────────────────────────────────────
+  // Anti-sniping
 
   /**
    * Server push thông báo khi phiên được gia hạn do có bid trong giây cuối (Anti-sniping). Tất cả
@@ -480,11 +448,7 @@ public enum PacketType {
    * extendedEndTime mới).
    */
   AUCTION_EXTENDED_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // PAYMENT — Thanh toán sau đấu giá
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Người thắng gửi yêu cầu thanh toán. Payload: {@code PaymentRequestDTO}. */
   PAYMENT_REQUEST,
 
@@ -525,7 +489,7 @@ public enum PacketType {
    */
   PAYMENT_EXPIRED_NOTIFY,
 
-  // ── Hoàn cọc ─────────────────────────────────────────────────────────────
+  // Hoàn cọc
 
   /**
    * Server push thông báo hoàn cọc cho Bidder thua phiên. Payload: {@code DepositRefundDTO}
@@ -538,11 +502,7 @@ public enum PacketType {
    * DepositForfeitedDTO} (auctionId + forfeitedAmount).
    */
   DEPOSIT_FORFEITED_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // SECOND CHANCE — Đề nghị mua thứ cấp (runner-up)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Server push đề nghị Second Chance Offer tới runner-up. Payload: {@code SecondChanceOfferDTO}.
    */
@@ -581,11 +541,7 @@ public enum PacketType {
    * com.group13.auction.common.dto.auction.AuctionDTOs.AuctionUpdateDTO}.
    */
   SECOND_CHANCE_ACCEPTED_UPDATE,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // BID HISTORY — Lịch sử đấu giá (cho biểu đồ realtime)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Client yêu cầu toàn bộ lịch sử bid của một phiên (dùng để khởi tạo line chart). Payload: {@code
    * String auctionId}.
@@ -604,11 +560,7 @@ public enum PacketType {
    * bidderName).
    */
   BID_CHART_POINT_UPDATE,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // QUALITY REPORT — Báo cáo chất lượng sản phẩm
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Bidder thắng gửi báo cáo chất lượng sản phẩm. Payload: {@code QualityReportRequestDTO}. */
   SUBMIT_QUALITY_REPORT,
 
@@ -685,18 +637,14 @@ public enum PacketType {
    */
   QUALITY_REPORT_REJECTED_NOTIFY,
 
-  // ── Seller hoàn tiền sau khi report được approve ─────────────────────────
+  // Seller hoàn tiền sau khi report được approve
 
   /**
    * Server push khi Seller bị ban vĩnh viễn do không hoàn tiền trong 24h. Payload: {@code String
    * sellerId}.
    */
   SELLER_REFUND_OVERDUE_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // RATING — Đánh giá (Bidder ↔ Seller)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Bidder đánh giá Seller sau khi giao dịch hoàn tất. Payload: {@code RateSellerRequestDTO}
    * (sellerId + rating + comment).
@@ -728,11 +676,7 @@ public enum PacketType {
 
   /** Server trả về danh sách đánh giá. Payload: {@code RatingHistoryDTO}. */
   GET_USER_RATINGS_SUCCESS,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // RATING RESTORE — Khôi phục tài khoản SUSPENDED
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Server push thông báo khi hệ thống tự động restore tài khoản SUSPENDED sau 3 tháng. Payload:
    * {@code AccountRestoredDTO} (newRating + newStatus).
@@ -750,22 +694,14 @@ public enum PacketType {
    * (reason).
    */
   ACCOUNT_BANNED_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // FRAUD — Phát hiện gian lận (Admin only)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Server push khi hệ thống phát hiện gian lận (shill bidding, v.v.). Chỉ gửi cho
    * SystemAdmin/Staff Admin. Payload: {@code FraudDetectedDTO} (auctionId + suspectedUserId +
    * description).
    */
   FRAUD_DETECTED_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // NOTIFICATION GENERAL — Thông báo chung cho user
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client yêu cầu danh sách thông báo chưa đọc. Payload: rỗng. */
   GET_NOTIFICATIONS,
 
@@ -777,11 +713,7 @@ public enum PacketType {
 
   /** Server xác nhận đã đánh dấu đọc. Payload: rỗng. */
   MARK_NOTIFICATION_READ_SUCCESS,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // SYSTEM — Ping / Pong / Lỗi hệ thống
-  // ══════════════════════════════════════════════════════════════════════════
-
   /** Client gửi ping để kiểm tra kết nối còn sống. Payload: {@code long timestamp}. */
   PING,
 
@@ -805,11 +737,7 @@ public enum PacketType {
    * trạng thái. Payload: {@code SystemShutdownDTO} (reason + shutdownInSeconds).
    */
   SERVER_SHUTDOWN_NOTIFY,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // SEARCH — Tìm kiếm sản phẩm theo tên
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Client gửi yêu cầu tìm kiếm phiên đấu giá theo tên sản phẩm. Hỗ trợ phân trang và sắp xếp.
    * Payload: {@code SearchDTOs.ItemSearchRequestDTO}.
@@ -824,11 +752,7 @@ public enum PacketType {
 
   /** Server từ chối tìm kiếm (keyword rỗng, lỗi hệ thống, v.v.). Payload: {@code ErrorDTO}. */
   SEARCH_ITEMS_FAILED,
-
-  // ══════════════════════════════════════════════════════════════════════════
   // CHATBOT — Hỗ trợ khách hàng tự động (Rule-based FAQ)
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Client gửi câu hỏi tới chatbot, kèm id câu hỏi hoặc từ khóa tìm kiếm. Payload: {@code
    * ChatbotRequestDTO} (query + optional category).

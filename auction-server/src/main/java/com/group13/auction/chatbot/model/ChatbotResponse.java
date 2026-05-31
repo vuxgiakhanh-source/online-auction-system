@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class ChatbotResponse {
 
-  // ── Enum trạng thái phản hồi ──────────────────────────────────────────────
+  // Enum trạng thái phản hồi
 
   /**
    * Trạng thái phản hồi của chatbot.
@@ -42,7 +42,7 @@ public class ChatbotResponse {
     FAQ_LIST
   }
 
-  // ── Fields ────────────────────────────────────────────────────────────────
+  // Fields
 
   /** Mã FAQ tương ứng (null nếu NOT_FOUND hoặc FAQ_LIST). */
   private final String faqId;
@@ -68,7 +68,7 @@ public class ChatbotResponse {
   /** Thời gian tạo phản hồi — giúp client hiển thị timestamp trong chat UI. */
   private final String timestamp;
 
-  // ── Private Constructor ───────────────────────────────────────────────────
+  // Private Constructor
 
   /** Constructor nội bộ — chỉ được gọi qua Static Factory Methods bên dưới. */
   private ChatbotResponse(
@@ -87,7 +87,7 @@ public class ChatbotResponse {
     this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"));
   }
 
-  // ── Static Factory Methods ────────────────────────────────────────────────
+  // Static Factory Methods
 
   /**
    * Tạo phản hồi thành công khi tìm thấy câu trả lời phù hợp.
@@ -141,7 +141,7 @@ public class ChatbotResponse {
     return new ChatbotResponse(null, question, answer, category, ResponseStatus.FAQ_LIST, null);
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public String getFaqId() {
     return faqId;

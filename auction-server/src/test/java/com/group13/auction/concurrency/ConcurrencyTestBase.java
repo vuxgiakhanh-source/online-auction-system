@@ -45,7 +45,7 @@ public abstract class ConcurrencyTestBase {
     clearAutoBidRegistry();
   }
 
-  // ── Fixture builders ────────────────────────────────────────────────────
+  // Fixture builders
 
   protected NormalUser buildUser(String username, long balance) {
     return NormalUser.reconstitute(

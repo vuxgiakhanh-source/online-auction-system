@@ -81,7 +81,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── G1-1 ─────────────────────────────────────────────────────────────────
+  // G1-1
   // BUG ROOT: BidService.joinAuction() kiểm tra hasJoined() rồi mới gọi
   //   lockDeposit() nhưng không synchronized → 10 threads đều thấy false,
   //   đều chạy lockDeposit().
@@ -130,7 +130,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     log.info("[G1-1] successes={}, failures={}", successes.get(), failures.get());
   }
 
-  // ── G1-2 ─────────────────────────────────────────────────────────────────
+  // G1-2
 
   @Test
   @Order(2)
@@ -174,7 +174,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── G1-3 ─────────────────────────────────────────────────────────────────
+  // G1-3
 
   @Test
   @Order(3)
@@ -189,7 +189,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     verify(mockWalletService, times(1)).lockDeposit(any(), anyLong(), any());
   }
 
-  // ── G6-1 ─────────────────────────────────────────────────────────────────
+  // G6-1
 
   @Test
   @Order(4)
@@ -221,7 +221,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     assertThat(auction.getViewerCount()).isEqualTo(N);
   }
 
-  // ── G6-2 ─────────────────────────────────────────────────────────────────
+  // G6-2
 
   @Test
   @Order(5)
@@ -275,7 +275,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
     assertThat(count).isLessThanOrEqualTo(total);
   }
 
-  // ── G7-1 ─────────────────────────────────────────────────────────────────
+  // G7-1
   // BUG ROOT: race window giữa hasJoined() check và lockDeposit() call.
   //   Delay 50ms nhân tạo phóng đại window → mọi thread đều lọt qua check.
   // FIX CẦN: synchronized(bidder) bao trùm cả check lẫn lockDeposit.
@@ -336,7 +336,7 @@ class JoinAuctionConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(1);
   }
 
-  // ── G7-2 ─────────────────────────────────────────────────────────────────
+  // G7-2
 
   @Test
   @Order(7)

@@ -105,7 +105,7 @@ public class ClientSession {
     this.connection = connection;
   }
 
-  // ── Send helpers ──────────────────────────────────────────────────────────
+  // Send helpers
 
   /**
    * Gửi packet tới client này (thread-safe, kiểm tra connection open).
@@ -136,7 +136,7 @@ public class ClientSession {
     }
   }
 
-  // ── Authentication ────────────────────────────────────────────────────────
+  // Authentication
 
   /**
    * Đánh dấu session đã xác thực thành công.
@@ -170,7 +170,7 @@ public class ClientSession {
     log.info("Session deauthenticated: username={}", prev.username);
   }
 
-  // ── Auction watch management ──────────────────────────────────────────────
+  // Auction watch management
 
   public void addWatchingAuction(String auctionId) {
     watchingAuctionIds.add(auctionId);
@@ -206,7 +206,7 @@ public class ClientSession {
     return true;
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public WebSocket getConnection() {
     return connection;

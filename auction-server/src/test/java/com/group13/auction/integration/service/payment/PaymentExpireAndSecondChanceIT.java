@@ -22,21 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════
- * PaymentExpireAndSecondChanceIT — Integration Tests cho luồng hết hạn thanh toán và chào hàng lần
- * 2 (Second Chance Offer) Kỹ thuật: Sandwich (Service giữa + DAO thật + mock-free)
- * ════════════════════════════════════════════════════════════════════
- *
- * <p>TC-03 [CRITICAL] — expirePayment() full chain: BUG RISK: expirePayment() nối 5 thành phần:
- * forfeitDeposit → penalizeLatePayment → autoBanIfNeeded → status EXPIRED → offerSecondChance →
- * SecondChanceOffer tạo + lưu DB Mỗi bước fail có thể dừng chuỗi giữa chừng → trạng thái không nhất
- * quán.
- *
- * <p>TC-07 [HIGH] — SecondChanceOffer lifecycle: BUG RISK: 3 nhánh ACCEPTED/DECLINED/EXPIRED chưa
- * được test tích hợp. ACCEPTED phải lockDeposit runnerUp + tạo AuctionWinner mới. DECLINED/EXPIRED
- * phải cancelAuction ngay.
- */
+/** Integration test hết hạn thanh toán và second chance offer (DAO + DB thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -100,11 +86,7 @@ class PaymentExpireAndSecondChanceIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // TC-03 — expirePayment() Full Chain
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-03 [CRITICAL] expirePayment() — Full chain khi winner không thanh toán")
@@ -256,11 +238,7 @@ class PaymentExpireAndSecondChanceIT extends IntegrationTestBase {
                   .isEqualTo(lockedBefore));
     }
   }
-
-  // =========================================================================
   // TC-07 — SecondChanceOffer Lifecycle
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-07 [HIGH] SecondChanceOffer — PENDING → ACCEPTED / DECLINED / EXPIRED")
@@ -380,7 +358,7 @@ class PaymentExpireAndSecondChanceIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);

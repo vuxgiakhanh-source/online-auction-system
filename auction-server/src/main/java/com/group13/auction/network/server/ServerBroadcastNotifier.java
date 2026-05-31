@@ -27,16 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Cầu nối giữa Observer pattern phía server và WebSocket broadcast.
- *
- * <p>Khi {@link com.group13.auction.observer.AuctionObserver} nhận event từ service, nó gọi {@link
- * ServerBroadcastNotifier} để push packet tới đúng client(s).
- *
- * <p>Đây là lớp được inject vào Observer để tránh observer biết về WebSocket trực tiếp.
- *
- * <p>Singleton — toàn server dùng 1 instance.
- */
+/** Gửi WebSocket và lưu thông báo inbox khi có sự kiện phiên đấu giá (singleton). */
 public class ServerBroadcastNotifier {
 
   private static final Logger log = LoggerFactory.getLogger(ServerBroadcastNotifier.class);
@@ -44,9 +35,7 @@ public class ServerBroadcastNotifier {
 
   private final SessionManager sessionManager = SessionManager.getInstance();
 
-  // FIX [P2 — test isolation]: 2 field bên dưới KHÔNG `final` (production code không
-  // bao giờ reassign). Lý do: cho phép test inject mock DAO qua reflection để
-  // tránh chạm DB thật từ Singleton trong unit test. Xem TestFixture.silenceGlobalSingletons().
+  // Không final để unit test inject mock DAO (xem TestFixture.silenceGlobalSingletons).
   private NotificationDAO notificationDAO = new NotificationDAO();
   private UserDAO userDAO = new UserDAO();
 
@@ -129,7 +118,10 @@ public class ServerBroadcastNotifier {
         || type == AuctionEvent.AuctionEventType.BID_PLACED
         || type == AuctionEvent.AuctionEventType.BID_RESERVE_NOT_MET
         || type == AuctionEvent.AuctionEventType.PAYMENT_COMPLETED
-        || type == AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED) {
+        || type == AuctionEvent.AuctionEventType.SECOND_CHANCE_OFFERED
+        || type == AuctionEvent.AuctionEventType.AUCTION_ENDED) {
+      // AUCTION_ENDED: inbox won/lost được gửi riêng trong notifyAuctionOutcome() — tránh trùng
+      // hoặc lệch title/body khi leader đã rời phiên trước khi kết thúc.
       return;
     }
     String auctionId = event.getAuction().getId();
@@ -138,31 +130,7 @@ public class ServerBroadcastNotifier {
         event.getMessage() != null && !event.getMessage().isBlank()
             ? event.getMessage()
             : eventBody(event);
-    // Với AUCTION_ENDED: event.getBidder() không phải lúc nào cũng được set.
-    // Ưu tiên bidder trong event nếu có, fallback sang currentLeader của auction.
-    String excludeUserId = null;
-    if (type == AuctionEvent.AuctionEventType.AUCTION_ENDED) {
-      if (event.getBidder() != null) {
-        excludeUserId = event.getBidder().getId();
-      } else if (event.getAuction().getCurrentLeader() != null) {
-        excludeUserId = event.getAuction().getCurrentLeader().getId();
-      }
-    }
-    // BUG FIX: AUCTION_ENDED uses everJoined to reach users who left before end
-    if (type == AuctionEvent.AuctionEventType.AUCTION_ENDED) {
-      notifyParticipants(userDAO.findEverJoinedUserIdsByAuctionId(auctionId),
-          auctionId, NotificationTypes.SYSTEM, title, body, excludeUserId);
-    } else {
-      notifyJoinedParticipants(auctionId, title, body, excludeUserId);
-    }
-  }
-
-  private void notifyParticipants(java.util.Set<String> userIds, String auctionId,
-                                  String notificationType, String title, String body, String excludeUserId) {
-    for (String userId : userIds) {
-      if (excludeUserId != null && excludeUserId.equals(userId)) continue;
-      persistNotification(userId, auctionId, notificationType, title, body);
-    }
+    notifyJoinedParticipants(auctionId, title, body, null);
   }
 
   private static String eventTitle(AuctionEvent.AuctionEventType type) {
@@ -207,6 +175,27 @@ public class ServerBroadcastNotifier {
     };
   }
 
+  /**
+   * Inbox cho bidder được thăng lên dẫn đầu khi leader hiện tại rời phiên (không phải thắng/thua).
+   */
+  public void notifyLeaderPromotedAfterLeave(
+      NormalUser newLeader, Auction auction, String previousLeaderUsername) {
+    if (newLeader == null || auction == null) {
+      return;
+    }
+    String previousName =
+        previousLeaderUsername != null && !previousLeaderUsername.isBlank()
+            ? previousLeaderUsername
+            : "Người dẫn đầu trước";
+    persistNotification(
+        newLeader.getId(),
+        auction.getId(),
+        NotificationTypes.AUCTION,
+        NotificationMessages.leaderPromotedTitle(),
+        NotificationMessages.leaderPromotedBody(
+            auction, previousName, auction.getCurrentPrice()));
+  }
+
   /** Lưu thông báo inbox khi người dùng chủ động rời phiên. */
   public void notifyUserLeftAuction(
       NormalUser user,
@@ -230,7 +219,7 @@ public class ServerBroadcastNotifier {
         body);
   }
 
-  // ── Bid events ────────────────────────────────────────────────────────────
+  // Bid events
 
   /** Xóa cờ đã báo exhausted — gọi khi user đăng ký/cập nhật auto-bid mới trong phiên. */
   public void clearAutoBidExhaustedFlag(String userId, String auctionId) {
@@ -385,7 +374,7 @@ public class ServerBroadcastNotifier {
     return userId + ":" + auctionId;
   }
 
-  // ── Auction lifecycle ─────────────────────────────────────────────────────
+  // Auction lifecycle
 
   public void notifyAuctionStarted(Auction auction) {
     AuctionDTOs.AuctionUpdateDTO update = DTOMapper.toAuctionUpdateDTO(auction, null);
@@ -409,7 +398,7 @@ public class ServerBroadcastNotifier {
     if (auction == null || packet == null) {
       return;
     }
-    // BUG FIX: include users who already LEFT before auction ended
+    // include users who already LEFT before auction ended
     Set<String> targets =
         new HashSet<>(userDAO.findEverJoinedUserIdsByAuctionId(auction.getId()));
     if (auction.getItem() != null && auction.getItem().getSeller() != null) {
@@ -420,53 +409,64 @@ public class ServerBroadcastNotifier {
 
   /** Thông báo won/lost cho người tham gia và seller sau khi phiên có winner hợp lệ. */
   public void notifyAuctionOutcome(Auction auction) {
-    if (auction == null || auction.getCurrentLeader() == null) {
+    NormalUser winner = resolveWinningBidder(auction);
+    if (auction == null || winner == null || winner.getId() == null) {
       return;
     }
-    NormalUser winner = auction.getCurrentLeader();
     long finalPrice = auction.getCurrentPrice();
     long depositPaid =
         auction.getWinner() != null
             ? auction.getWinner().getDepositPaid()
             : auction.getItem().getStartingPrice() * 3 / 10;
-
-    persistNotification(
-        winner.getId(),
-        auction.getId(),
-        NotificationTypes.AUCTION,
-        NotificationMessages.auctionWonTitle(),
-        NotificationMessages.auctionWonBody(auction, finalPrice, depositPaid));
-
-    if (auction.getItem() != null && auction.getItem().getSeller() != null) {
-      NormalUser seller = auction.getItem().getSeller();
-      persistNotification(
-          seller.getId(),
-          auction.getId(),
-          NotificationTypes.AUCTION,
-          NotificationMessages.auctionEndedSellerTitle(),
-          NotificationMessages.auctionEndedSellerBody(
-              auction, NotificationMessages.username(winner), finalPrice));
-    }
-
     String winnerId = winner.getId();
+    String winnerName = NotificationMessages.username(winner);
     String sellerId =
         auction.getItem() != null && auction.getItem().getSeller() != null
             ? auction.getItem().getSeller().getId()
             : null;
-    // BUG FIX: use everJoined to send lost notification to users who left before end
-    var joinedUserIds = userDAO.findEverJoinedUserIdsByAuctionId(auction.getId());
-    for (String userId : joinedUserIds) {
-      if (winnerId.equals(userId) || (sellerId != null && sellerId.equals(userId))) {
-        continue;
-      }
+
+    if (sellerId != null) {
       persistNotification(
-          userId,
+          sellerId,
           auction.getId(),
           NotificationTypes.AUCTION,
-          NotificationMessages.auctionLostTitle(),
-          NotificationMessages.auctionLostBody(
-              auction, NotificationMessages.username(winner), finalPrice));
+          NotificationMessages.auctionEndedSellerTitle(),
+          NotificationMessages.auctionEndedSellerBody(auction, winnerName, finalPrice));
     }
+
+    // Một vòng lặp — mỗi user nhận đúng cặp title/body (tránh winner nhận nhầm "thua").
+    var participantIds = userDAO.findEverJoinedUserIdsByAuctionId(auction.getId());
+    for (String userId : participantIds) {
+      if (userId == null || userId.isBlank() || userId.equals(sellerId)) {
+        continue;
+      }
+      if (winnerId.equals(userId)) {
+        persistNotification(
+            userId,
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.auctionWonTitle(),
+            NotificationMessages.auctionWonBody(auction, finalPrice, depositPaid));
+      } else {
+        persistNotification(
+            userId,
+            auction.getId(),
+            NotificationTypes.AUCTION,
+            NotificationMessages.auctionLostTitle(),
+            NotificationMessages.auctionLostBody(auction, winnerName, finalPrice));
+      }
+    }
+  }
+
+  /** Ưu tiên winner đã persist; fallback currentLeader (RAM) khi phiên vừa đóng. */
+  private static NormalUser resolveWinningBidder(Auction auction) {
+    if (auction == null) {
+      return null;
+    }
+    if (auction.getWinner() != null && auction.getWinner().getWinner() != null) {
+      return auction.getWinner().getWinner();
+    }
+    return auction.getCurrentLeader();
   }
 
   public void notifyAuctionNoWinner(Auction auction) {
@@ -536,7 +536,7 @@ public class ServerBroadcastNotifier {
         null);
   }
 
-  // ── Payment ───────────────────────────────────────────────────────────────
+  // Payment
 
   public void notifyDepositRefund(
       String userId, String auctionId, long refundAmount, long newBalance) {
@@ -799,7 +799,7 @@ public class ServerBroadcastNotifier {
             auction, NotificationMessages.username(seller), messageText));
   }
 
-  // ── Account ───────────────────────────────────────────────────────────────
+  // Account
 
   public void notifyAccountSuspended(
       String userId, double currentRating, double threshold, String reason) {

@@ -27,7 +27,7 @@ public enum AutoBidPhase {
     return multiplier;
   }
 
-  // ── Detection constants ───────────────────────────────────────────────────
+  // Detection constants
 
   /** Số bid tối thiểu trong {@link #HOT_WINDOW_SEC} giây để coi là VERY_HOT. */
   public static final int HOT_BID_THRESHOLD = 3;

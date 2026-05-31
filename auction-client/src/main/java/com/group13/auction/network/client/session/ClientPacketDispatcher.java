@@ -73,7 +73,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
 
     private void dispatch(PacketType type, JsonElement payload, String requestId) {
         switch (type) {
-            // ── AUTH ──────────────────────────────────────────────────────────
+            // AUTH
             case LOGIN_SUCCESS -> {
                 var resp = PacketCodec.fromElement(payload,
                     com.group13.auction.common.dto.auth.LoginResponseDTO.class);
@@ -96,7 +96,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
             }
             case LOGOUT_SUCCESS -> listeners.forEach(ClientEventListener::onLogoutSuccess);
 
-            // ── AUCTION LIST / DETAIL ─────────────────────────────────────────
+            // AUCTION LIST / DETAIL
             case GET_AUCTION_LIST_SUCCESS -> {
                 var list = PacketCodec.fromElement(payload, AuctionDTOs.AuctionListDTO.class);
                 listeners.forEach(l -> l.onAuctionListReceived(list));
@@ -115,7 +115,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAuctionCreateFailed(err));
             }
 
-            // ── JOIN / WATCH ──────────────────────────────────────────────────
+            // JOIN / WATCH
             case JOIN_AUCTION_SUCCESS -> {
                 var resp = PacketCodec.fromElement(payload, AuctionDTOs.JoinAuctionResponseDTO.class);
                 listeners.forEach(l -> l.onJoinAuctionSuccess(resp));
@@ -130,7 +130,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onWatchAuctionSuccess(auction));
             }
 
-            // ── BID REALTIME ──────────────────────────────────────────────────
+            // BID REALTIME
             case BID_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, BidDTOs.BidUpdateDTO.class);
                 listeners.forEach(l -> l.onBidUpdate(update));
@@ -161,7 +161,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onBidHistoryReceived(history));
             }
 
-            // ── AUTO-BID ──────────────────────────────────────────────────────
+            // AUTO-BID
             case REGISTER_AUTO_BID_SUCCESS -> {
                 var reg = PacketCodec.fromElement(payload, BidDTOs.AutoBidRegistrationDTO.class);
                 listeners.forEach(l -> l.onAutoBidRegistered(reg));
@@ -180,7 +180,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAutoBidExhausted(notify));
             }
 
-            // ── AUCTION LIFECYCLE ─────────────────────────────────────────────
+            // AUCTION LIFECYCLE
             case AUCTION_STARTED_UPDATE -> {
                 var update = PacketCodec.fromElement(payload, AuctionDTOs.AuctionUpdateDTO.class);
                 listeners.forEach(l -> l.onAuctionStarted(update));
@@ -218,7 +218,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAuctionUpcomingEnd(upcoming));
             }
 
-            // ── PAYMENT ───────────────────────────────────────────────────────
+            // PAYMENT
             case DEPOSIT_SUCCESS -> {
                 var resp = PacketCodec.fromElement(payload, PaymentDTOs.WalletBalanceResponseDTO.class);
                 listeners.forEach(l -> l.onDepositSuccess(resp));
@@ -279,7 +279,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onSecondChanceOffer(offer));
             }
 
-            // ── USER / PROFILE ────────────────────────────────────────────────
+            // USER / PROFILE
             case GET_MY_PROFILE_SUCCESS, GET_USER_PROFILE_SUCCESS -> {
                 var user = PacketCodec.fromElement(payload,
                     com.group13.auction.common.dto.user.UserDTO.class);
@@ -311,7 +311,7 @@ public class ClientPacketDispatcher implements ServerResponseHandler {
                 listeners.forEach(l -> l.onAccountRestored(restored));
             }
 
-            // ── SYSTEM ────────────────────────────────────────────────────────
+            // SYSTEM
             case SYSTEM_ERROR -> {
                 var err = PacketCodec.fromElement(payload,
                     com.group13.auction.common.dto.core.ErrorDTO.class);

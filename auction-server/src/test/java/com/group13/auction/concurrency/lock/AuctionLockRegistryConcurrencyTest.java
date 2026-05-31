@@ -38,7 +38,7 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
     lockRegistry.clearAll();
   }
 
-  // ── A1 ────────────────────────────────────────────────────────────────────
+  // A1
 
   @Test
   @Order(1)
@@ -50,7 +50,7 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
     assertThat(l1).isSameAs(l2);
   }
 
-  // ── A2 ────────────────────────────────────────────────────────────────────
+  // A2
 
   @Test
   @Order(2)
@@ -65,7 +65,7 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
     lockRegistry.release(id2);
   }
 
-  // ── A3 ────────────────────────────────────────────────────────────────────
+  // A3
 
   @Test
   @Order(3)
@@ -111,7 +111,7 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(1);
   }
 
-  // ── A4 ────────────────────────────────────────────────────────────────────
+  // A4
 
   @Test
   @Order(4)
@@ -125,7 +125,7 @@ class AuctionLockRegistryConcurrencyTest extends ConcurrencyTestBase {
     assertThat(lockRegistry.size()).isEqualTo(before);
   }
 
-  // ── A5 ────────────────────────────────────────────────────────────────────
+  // A5
 
   @Test
   @Order(5)

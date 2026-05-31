@@ -34,10 +34,7 @@ class ChatbotProviderTest {
     // Lấy instance Singleton đã được nạp dữ liệu từ faq_data.json
     provider = ChatbotProvider.getInstance();
   }
-
-  // =========================================================================
   // 1. TEST KIỂM TRA ĐẢM BẢO PATTERN SINGLETON
-  // =========================================================================
   @Nested
   @DisplayName("1. Kiến trúc Singleton & Khởi tạo ban đầu")
   class SingletonTests {
@@ -61,10 +58,7 @@ class ChatbotProviderTest {
       assertNotNull(provider.getAllFaqs(), "Danh sách FAQ lưu trữ không được null");
     }
   }
-
-  // =========================================================================
   // 2. TEST LOGIC TÌM KIẾM THEO ID (getAnswerByQuestionId)
-  // =========================================================================
   @Nested
   @DisplayName("2. Tra cứu câu trả lời trực tiếp bằng ID (getAnswerByQuestionId)")
   class GetAnswerByIdTests {
@@ -112,10 +106,7 @@ class ChatbotProviderTest {
           "Fallback message phải chứa mã ID không tìm thấy");
     }
   }
-
-  // =========================================================================
   // 3. TEST CORE LOGIC MATCHING MỚI (searchByQuery)
-  // =========================================================================
   @Nested
   @DisplayName("3. Thuật toán tìm kiếm thông minh bằng từ khóa & cụm từ (searchByQuery)")
   class SearchByQueryTests {
@@ -181,10 +172,7 @@ class ChatbotProviderTest {
           "Fallback message phải chứa câu hỏi vô nghĩa của user");
     }
   }
-
-  // =========================================================================
   // 4. TEST LỌC THEO CATEGORY (getFaqsByCategory)
-  // =========================================================================
   @Nested
   @DisplayName("4. Phân loại danh mục kiến thức (getFaqsByCategory)")
   class CategoryTests {
@@ -218,10 +206,7 @@ class ChatbotProviderTest {
           "Khi category trống, phải fallback trả về toàn bộ dữ liệu hiện có");
     }
   }
-
-  // =========================================================================
   // 5. TEST ĐA LUỒNG ĐỒNG THỜI (THREAD-SAFETY)
-  // =========================================================================
   @Nested
   @DisplayName("5. Kiểm tra an toàn đa luồng (Thread-Safety)")
   class ConcurrentTests {

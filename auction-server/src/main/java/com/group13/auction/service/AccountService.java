@@ -121,7 +121,7 @@ public class AccountService implements IAccountService {
     walletService.withdraw(user, amount);
   }
 
-  // ── Ban ───────────────────────────────────────────────────────────────────
+  // Ban
 
   /** Ban tài khoản với lý do cụ thể — chỉ Admin gọi. */
   @Override
@@ -190,7 +190,7 @@ public class AccountService implements IAccountService {
     return accountBanDAO;
   }
 
-  // ── Admin STAFF ───────────────────────────────────────────────────────────
+  // Admin STAFF
 
   /** Tạo tài khoản Admin STAFF mới — chỉ SystemAdmin gọi method này. */
   @Override
@@ -245,7 +245,7 @@ public class AccountService implements IAccountService {
         null);
   }
 
-  // ── Seller role ───────────────────────────────────────────────────────────
+  // Seller role
 
   /** Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating. */
   @Override
@@ -279,7 +279,7 @@ public class AccountService implements IAccountService {
             + " giờ.");
   }
 
-  // ── Seller cancel request ─────────────────────────────────────────────────
+  // Seller cancel request
 
   /** Seller gửi yêu cầu hủy phiên đấu giá lên hệ thống. */
   public void requestCancelAuction(NormalUser seller, Auction auction, String reason) {
@@ -313,7 +313,7 @@ public class AccountService implements IAccountService {
         reason);
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // Private helpers
 
   private void saveNotification(String userId, String auctionId, String title, String body) {
     try {

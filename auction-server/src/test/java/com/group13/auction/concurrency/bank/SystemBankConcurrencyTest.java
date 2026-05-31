@@ -37,7 +37,7 @@ class SystemBankConcurrencyTest extends ConcurrencyTestBase {
     ((java.util.concurrent.atomic.AtomicLong) balanceField.get(bank)).set(0L);
   }
 
-  // ── B1 ────────────────────────────────────────────────────────────────────
+  // B1
 
   @Test
   @Order(1)
@@ -74,7 +74,7 @@ class SystemBankConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(expected);
   }
 
-  // ── B2 ────────────────────────────────────────────────────────────────────
+  // B2
 
   @Test
   @Order(2)
@@ -144,7 +144,7 @@ class SystemBankConcurrencyTest extends ConcurrencyTestBase {
     assertThat(bank.getTotalBalance()).as("totalBalance không được âm").isGreaterThanOrEqualTo(0L);
   }
 
-  // ── B3 ────────────────────────────────────────────────────────────────────
+  // B3
 
   @Test
   @Order(3)
@@ -223,7 +223,7 @@ class SystemBankConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(baseline + expectedNet);
   }
 
-  // ── B4 ────────────────────────────────────────────────────────────────────
+  // B4
 
   @Test
   @Order(4)

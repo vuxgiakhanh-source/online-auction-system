@@ -145,7 +145,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── USER PROFILE ──────────────────────────────────────────────────────────
+  // USER PROFILE
 
   private void handleGetMyProfile(ClientSession session, String requestId) {
     User user = userDAO.findUserCoreByUsername(session.getUsername());
@@ -195,7 +195,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── SELLER ROLE ───────────────────────────────────────────────────────────
+  // SELLER ROLE
 
   private void handleRequestSellerRole(ClientSession session, String requestId) {
     try {
@@ -231,7 +231,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── ADMIN BAN / UNBAN ─────────────────────────────────────────────────────
+  // ADMIN BAN / UNBAN
 
   private void handleBanUser(ClientSession session, JsonElement payload, String requestId) {
     if (!session.isAdmin()) {
@@ -467,7 +467,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── RATING ────────────────────────────────────────────────────────────────
+  // RATING
 
   /**
    * Bidder đánh giá Seller sau khi phiên hoàn tất.
@@ -696,7 +696,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── QUALITY REPORT ────────────────────────────────────────────────────────
+  // QUALITY REPORT
 
   private void handleSubmitReport(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -1026,7 +1026,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+  // NOTIFICATIONS
 
   /** Load tất cả notifications của user từ DB, map sang DTO rồi trả về client. */
   private void handleGetNotifications(ClientSession session, String requestId) {
@@ -1091,7 +1091,7 @@ public class UserAdminHandler implements PacketHandler {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
     User user = AuctionManager.getInstance().findUserByUsername(session.getUsername());

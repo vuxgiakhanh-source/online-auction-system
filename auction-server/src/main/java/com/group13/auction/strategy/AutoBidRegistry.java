@@ -57,7 +57,7 @@ public class AutoBidRegistry {
     return INSTANCE;
   }
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
+  // CRUD
 
   /** Đăng ký hoặc cập nhật auto-bid. Persist xuống DB để không mất khi server restart. */
   public void register(String userId, String auctionId, long maxBid) {
@@ -179,13 +179,13 @@ public class AutoBidRegistry {
     }
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // Private helpers
 
   private static String buildKey(String userId, String auctionId) {
     return userId + ":" + auctionId;
   }
 
-  // ── Inner class: AutoBidEntry ─────────────────────────────────────────────
+  // Inner class: AutoBidEntry
 
   /** Immutable auto-bid entry. Thread-safe khi đọc song song. */
   public static final class AutoBidEntry {

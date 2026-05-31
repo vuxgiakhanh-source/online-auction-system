@@ -127,11 +127,7 @@ class PaymentStateTransitionIT {
     TestFixture.resetSystemAdmin();
     TestFixture.resetSystemBankBalance();
   }
-
-  // =========================================================================
   // Happy Path
-  // =========================================================================
-
   @Nested
   @DisplayName("Happy Path — thanh toán thành công")
   class HappyPath {
@@ -246,11 +242,7 @@ class PaymentStateTransitionIT {
       verify(userDAO, atLeastOnce()).updateBalances(eq(winner.getId()), anyLong(), anyLong());
     }
   }
-
-  // =========================================================================
   // Failure Path
-  // =========================================================================
-
   @Nested
   @DisplayName("Failure Path — thanh toán thất bại")
   class FailurePath {
@@ -345,11 +337,7 @@ class PaymentStateTransitionIT {
       verify(auctionDAO, never()).updateAuctionStatus(anyString(), eq(AuctionStatus.PAID.name()));
     }
   }
-
-  // =========================================================================
   // Boundary Values
-  // =========================================================================
-
   @Nested
   @DisplayName("Boundary Values — giá trị biên")
   class BoundaryValues {
@@ -399,11 +387,7 @@ class PaymentStateTransitionIT {
       assertThat(a.getStatus()).isEqualTo(AuctionStatus.PAID);
     }
   }
-
-  // =========================================================================
   // State Integrity
-  // =========================================================================
-
   @Nested
   @DisplayName("State Integrity — nhất quán trạng thái")
   class StateIntegrity {
@@ -475,7 +459,7 @@ class PaymentStateTransitionIT {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers
 
   /** Auction FINISHED với finalPrice = FINAL_PRICE, không qua closeAuction(). */
   private Auction buildFinishedAuction(NormalUser customWinner) {

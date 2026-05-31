@@ -98,7 +98,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── DEPOSIT ───────────────────────────────────────────────────────────────
+  // DEPOSIT
 
   private void handleDeposit(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -150,7 +150,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── WITHDRAW ──────────────────────────────────────────────────────────────
+  // WITHDRAW
 
   private void handleWithdraw(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -199,7 +199,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── GET WALLET BALANCE ────────────────────────────────────────────────────
+  // GET WALLET BALANCE
 
   private void handleGetBalance(ClientSession session, String requestId) {
     try {
@@ -231,7 +231,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── CONFIRM ITEM RECEIVED ─────────────────────────────────────────────────
+  // CONFIRM ITEM RECEIVED
 
   private void handleConfirmItemReceived(
       ClientSession session, JsonElement payload, String requestId) {
@@ -327,7 +327,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── PAYMENT ───────────────────────────────────────────────────────────────
+  // PAYMENT
 
   private void handlePayment(ClientSession session, JsonElement payload, String requestId) {
     try {
@@ -450,7 +450,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── SECOND CHANCE ACCEPT ─────────────────────────────────────────────────
+  // SECOND CHANCE ACCEPT
 
   private void handleSecondChanceAccept(
       ClientSession session, JsonElement payload, String requestId) {
@@ -560,7 +560,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── SECOND CHANCE DECLINE ─────────────────────────────────────────────────
+  // SECOND CHANCE DECLINE
 
   private void handleSecondChanceDecline(
       ClientSession session, JsonElement payload, String requestId) {
@@ -665,7 +665,7 @@ public class PaymentHandler implements PacketHandler {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
     // Luôn đọc balance/lockedDeposit từ DB — tránh object in-memory cũ (vd. sau server restart

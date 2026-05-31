@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 @DisplayName("ErrorDTO — unit")
 class ErrorDTOTest {
 
-  // ── Constructors ──────────────────────────────────────────────────────────
+  // Constructors
   @Nested
   @DisplayName("Constructors")
   class ConstructorTest {
@@ -44,7 +44,7 @@ class ErrorDTOTest {
     }
   }
 
-  // ── Static factories ──────────────────────────────────────────────────────
+  // Static factories
   @Nested
   @DisplayName("Static factory — of()")
   class StaticFactoryTest {
@@ -76,7 +76,7 @@ class ErrorDTOTest {
     }
   }
 
-  // ── Error code constants ──────────────────────────────────────────────────
+  // Error code constants
   @Nested
   @DisplayName("Error code constants — tất cả constants định nghĩa đúng")
   class ErrorCodeConstantsTest {
@@ -116,7 +116,7 @@ class ErrorDTOTest {
     }
   }
 
-  // ── toString ──────────────────────────────────────────────────────────────
+  // toString
   @Nested
   @DisplayName("toString()")
   class ToStringTest {
@@ -130,7 +130,7 @@ class ErrorDTOTest {
     }
   }
 
-  // ── Setters/Getters ───────────────────────────────────────────────────────
+  // Setters/Getters
   @Nested
   @DisplayName("Setters / Getters")
   class SettersGettersTest {

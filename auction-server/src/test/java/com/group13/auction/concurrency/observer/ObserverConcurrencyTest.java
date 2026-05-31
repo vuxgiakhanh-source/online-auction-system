@@ -77,7 +77,7 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
     resetAuctionManagerUsers();
   }
 
-  // ── G4-1 ─────────────────────────────────────────────────────────────────
+  // G4-1
 
   @Test
   @Order(1)
@@ -120,7 +120,7 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
     assertThat(notifyCount.get()).as("Tất cả %d observers phải nhận notify()", N).isEqualTo(N);
   }
 
-  // ── G4-2 ─────────────────────────────────────────────────────────────────
+  // G4-2
 
   @Test
   @Order(2)
@@ -173,7 +173,7 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
         .isGreaterThanOrEqualTo(1);
   }
 
-  // ── G8-1 ─────────────────────────────────────────────────────────────────
+  // G8-1
 
   @Test
   @Order(3)
@@ -214,7 +214,7 @@ class ObserverConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(N);
   }
 
-  // ── G8-2 ─────────────────────────────────────────────────────────────────
+  // G8-2
 
   @Test
   @Order(4)

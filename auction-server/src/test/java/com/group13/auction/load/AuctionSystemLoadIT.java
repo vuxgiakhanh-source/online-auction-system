@@ -73,7 +73,7 @@ import org.testcontainers.mysql.MySQLContainer;
 @DisplayName("AuctionSystemLoadIT — Load test toàn hệ thống (DB thật)")
 class AuctionSystemLoadIT extends IntegrationTestBase {
 
-  // ── Testcontainer ────────────────────────────────────────────────────────
+  // Testcontainer
   @Container
   static final MySQLContainer mysql =
       new MySQLContainer("mysql:8.0")
@@ -82,14 +82,14 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
           .withPassword("test_pass")
           .withInitScript("database/schema.sql");
 
-  // ── DAOs ─────────────────────────────────────────────────────────────────
+  // DAOs
   private UserDAO userDAO;
   private ItemDAO itemDAO;
   private AuctionDAO auctionDAO;
   private BidTransactionDAO bidTransactionDAO;
   private FinancialTransactionDAO financialTransactionDAO;
 
-  // ── Services ─────────────────────────────────────────────────────────────
+  // Services
   private RatingService ratingService;
   private WalletService walletService;
   private AuctionService auctionService;
@@ -146,11 +146,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
       // Nếu không clear được thì chấp nhận — test vẫn độc lập theo từng phiên
     }
   }
-
-  // =========================================================================
   // Group 1 – WalletService: deposit song song nhiều user
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – WalletService: deposit song song (DB thật)")
   class WalletServiceLoadTest {
@@ -244,11 +240,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
           .isEqualTo((long) threads * depositEach);
     }
   }
-
-  // =========================================================================
   // Group 2 – Multi-auction: nhiều phiên đấu giá chạy đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – Multi-auction: nhiều phiên đồng thời (DB thật)")
   class MultiAuctionLoadTest {
@@ -413,11 +405,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Group 3 – Auto-bid dưới tải: nhiều auto-bidder + manual bidder
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – Auto-bid dưới tải")
   class AutoBidLoadTest {
@@ -569,11 +557,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
       AutoBidRegistry.getInstance().clearAuction(auctionId);
     }
   }
-
-  // =========================================================================
   // Group 4 – AuctionSortService: sort/filter danh sách lớn dưới tải
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – AuctionSortService: sort/filter dưới tải (không cần DB)")
   class AuctionSortServiceLoadTest {
@@ -713,11 +697,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
       assertThat(failures.get()).isZero();
     }
   }
-
-  // =========================================================================
   // Group 5 – Join storm: nhiều user join cùng 1 phiên đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 5 – Join storm: nhiều user join cùng phiên (DB thật)")
   class JoinStormLoadTest {
@@ -843,11 +823,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
           .isPositive();
     }
   }
-
-  // =========================================================================
   // Group 6 – RatingService: isEligible song song nhiều user
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 6 – RatingService: isEligible song song (không cần DB)")
   class RatingServiceLoadTest {
@@ -953,11 +929,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
           .isZero();
     }
   }
-
-  // =========================================================================
   // Group 7 – Mixed workload: bid + deposit + sort cùng lúc
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 7 – Mixed workload: bid + deposit + sort đồng thời (DB thật)")
   class MixedWorkloadLoadTest {
@@ -1170,11 +1142,7 @@ class AuctionSystemLoadIT extends IntegrationTestBase {
           .isGreaterThan(5.0);
     }
   }
-
-  // =========================================================================
   // Group 8 – AuctionLockRegistry dưới tải lớn (không cần DB)
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 8 – AuctionLockRegistry dưới tải lớn (không cần DB)")
   class LockRegistryLoadTest {

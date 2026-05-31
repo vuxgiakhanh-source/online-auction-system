@@ -75,7 +75,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
     return user;
   }
 
-  // ── G2-1 ─────────────────────────────────────────────────────────────────
+  // G2-1
 
   @Test
   @Order(1)
@@ -134,7 +134,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(expectedBalance);
   }
 
-  // ── G2-2 ─────────────────────────────────────────────────────────────────
+  // G2-2
 
   @Test
   @Order(2)
@@ -171,7 +171,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         .isEqualTo(depositAmount * threadCount);
   }
 
-  // ── G2-3 ─────────────────────────────────────────────────────────────────
+  // G2-3
 
   @Test
   @Order(3)
@@ -219,7 +219,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
         .isGreaterThanOrEqualTo(0L);
   }
 
-  // ── G5-1 ─────────────────────────────────────────────────────────────────
+  // G5-1
 
   @Test
   @Order(4)
@@ -292,7 +292,7 @@ class WalletConcurrencyTest extends ConcurrencyTestBase {
     }
   }
 
-  // ── G5-2 ─────────────────────────────────────────────────────────────────
+  // G5-2
 
   @Test
   @Order(5)

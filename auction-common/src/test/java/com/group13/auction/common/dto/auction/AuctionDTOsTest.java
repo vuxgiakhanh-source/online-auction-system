@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Test;
 
 @DisplayName("AuctionDTOs — unit")
 class AuctionDTOsTest {
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("ItemDTO")
   class ItemDTOTest {
@@ -68,7 +66,7 @@ class AuctionDTOsTest {
       }
     }
 
-    // ── imageUrls mới ──────────────────────────────────────────────────────
+    // imageUrls mới
 
     @Test
     @DisplayName("imageUrls set/get — roundtrip")
@@ -96,8 +94,6 @@ class AuctionDTOsTest {
       assertThat(dto.hasImages()).isFalse();
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("AuctionDTO")
   class AuctionDTOTest {
@@ -156,8 +152,6 @@ class AuctionDTOsTest {
       }
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("AuctionListDTO")
   class AuctionListDTOTest {
@@ -190,8 +184,6 @@ class AuctionDTOsTest {
       assertThat(dto.getPageSize()).isEqualTo(10);
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("CreateAuctionRequestDTO")
   class CreateAuctionRequestDTOTest {
@@ -248,11 +240,7 @@ class AuctionDTOsTest {
       assertThat(dto.getImageUrls()).isNull();
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   // Tất cả các test cũ bên dưới giữ nguyên 100%
-  // ═══════════════════════════════════════════════════════════════════════════
-
   @Nested
   @DisplayName("AuctionListRequestDTO")
   class AuctionListRequestDTOTest {

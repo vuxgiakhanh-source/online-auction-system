@@ -92,11 +92,7 @@ class RealtimeNotificationIntegrationTest {
     TestFixture.resetSystemBankBalance();
     resetAuctionManagerSingleton();
   }
-
-  // =========================================================================
   // Top-Down — AuctionService dispatch event
-  // =========================================================================
-
   @Nested
   @DisplayName("Top-Down — AuctionService dispatch AuctionEvent")
   class TopDownEventDispatch {
@@ -176,11 +172,7 @@ class RealtimeNotificationIntegrationTest {
       assertThat(types).contains(AuctionEventType.RESERVE_NOT_MET_CLOSED);
     }
   }
-
-  // =========================================================================
   // Bottom-Up — Observer xử lý event
-  // =========================================================================
-
   @Nested
   @DisplayName("Bottom-Up — BidderObserver và SellerObserver xử lý event")
   class BottomUpObserverBehavior {
@@ -233,11 +225,7 @@ class RealtimeNotificationIntegrationTest {
       assertThatCode(() -> obs.onBidPlaced(event)).doesNotThrowAnyException();
     }
   }
-
-  // =========================================================================
   // Sandwich — AuctionService + Observer thực tích hợp
-  // =========================================================================
-
   @Nested
   @DisplayName("Sandwich — AuctionService + Observer thực tích hợp")
   class SandwichIntegration {
@@ -319,11 +307,7 @@ class RealtimeNotificationIntegrationTest {
       verify(spy, times(1)).onAuctionEnded(any());
     }
   }
-
-  // =========================================================================
   // Big Bang — End-to-End
-  // =========================================================================
-
   @Nested
   @DisplayName("Big Bang — End-to-End notification pipeline")
   class BigBangEndToEnd {
@@ -395,11 +379,7 @@ class RealtimeNotificationIntegrationTest {
           () -> assertThat(event.getBidAmount()).isEqualTo(amount));
     }
   }
-
-  // =========================================================================
   // Boundary & Error
-  // =========================================================================
-
   @Nested
   @DisplayName("Boundary & Error — edge cases")
   class BoundaryAndError {
@@ -446,7 +426,7 @@ class RealtimeNotificationIntegrationTest {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers
 
   /**
    * Reset trạng thái nội tại của AuctionManager singleton sau mỗi test.

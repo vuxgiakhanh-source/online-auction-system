@@ -140,7 +140,7 @@ public class AdminObserver implements AuctionObserver {
     }
   }
 
-  // ── Private ───────────────────────────────────────────────────────────
+  // Private
 
   private void saveNotification(String auctionId, String title, String body) {
     try {

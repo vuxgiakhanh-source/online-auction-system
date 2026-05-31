@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("PacketCodec — unit")
 class PacketCodecTest {
 
-  // ── encode() ──────────────────────────────────────────────────────────────
+  // encode()
   @Nested
   @DisplayName("encode()")
   class EncodeTest {
@@ -49,7 +49,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── decode(String, Class) ─────────────────────────────────────────────────
+  // decode(String, Class)
   @Nested
   @DisplayName("decode(String, Class)")
   class DecodeClassTest {
@@ -103,7 +103,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── peekType() ────────────────────────────────────────────────────────────
+  // peekType()
   @Nested
   @DisplayName("peekType()")
   class PeekTypeTest {
@@ -125,7 +125,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── peekPayload() ─────────────────────────────────────────────────────────
+  // peekPayload()
   @Nested
   @DisplayName("peekPayload()")
   class PeekPayloadTest {
@@ -149,7 +149,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── fromElement() ─────────────────────────────────────────────────────────
+  // fromElement()
   @Nested
   @DisplayName("fromElement()")
   class FromElementTest {
@@ -166,7 +166,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── LocalDateTime support ─────────────────────────────────────────────────
+  // LocalDateTime support
   @Nested
   @DisplayName("LocalDateTime — serialize/deserialize qua LocalDateTimeAdapter")
   class LocalDateTimeTest {
@@ -183,7 +183,7 @@ class PacketCodecTest {
     }
   }
 
-  // ── gson() ────────────────────────────────────────────────────────────────
+  // gson()
   @Nested
   @DisplayName("gson()")
   class GsonTest {

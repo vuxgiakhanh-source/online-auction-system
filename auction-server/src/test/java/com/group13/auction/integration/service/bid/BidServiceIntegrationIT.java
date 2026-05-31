@@ -28,19 +28,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════ BidServiceIntegrationIT —
- * Integration Tests cho BidService Kỹ thuật: Bottom-up (BidService + tất cả DAO thật + DB thật)
- * ════════════════════════════════════════════════════════════════════
- *
- * <p>Scope: Kiểm tra luồng joinAuction + placeBid với DB thực.
- *
- * <p>TC-04 [CRITICAL]: joinAuction — deposit lock + DB persist + seller guard BUG RISK: lockDeposit
- * RAM và DB mất đồng bộ; seller tự bid; double-join không chặn (duplicate deposit).
- *
- * <p>TC-05 [CRITICAL]: placeBid — anti-sniping, reserve tracking, concurrent bids BUG RISK: 10
- * thread cùng bid → race condition → currentPrice sai; ACCEPTED_RESERVE_NOT_MET ghi sai DB.
- */
+/** Integration test BidService: joinAuction, placeBid, concurrent bids (DAO + DB thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -94,11 +82,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // TC-04 — joinAuction()
-  // =========================================================================
-
   @Nested
   @Order(1)
   @DisplayName("TC-04 [CRITICAL] joinAuction() — Deposit lock + DB consistency + Guard conditions")
@@ -211,11 +195,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
           () -> assertThat(bidder.hasJoined(auction.getId())).isFalse());
     }
   }
-
-  // =========================================================================
   // TC-05 — placeBid()
-  // =========================================================================
-
   @Nested
   @Order(2)
   @DisplayName("TC-05 [CRITICAL] placeBid() — BidTransaction, currentPrice, concurrent safety")
@@ -399,7 +379,7 @@ class BidServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // Helpers
 
   private NormalUser givenUserWithBalance(String username, long balance) {
     return buildUserWithBalance(username, balance, userDAO);

@@ -57,7 +57,7 @@ public class ServerMain {
   public static void main(String[] args) throws Exception {
     log.info("=== Auction WebSocket Server starting... ===");
 
-    // ── 0. Database ───────────────────────────────────────────────────────
+    // 0. Database
     try {
       DatabaseConnection.getInstance().ensureReady(30, 2_000);
     } catch (Exception e) {
@@ -65,7 +65,7 @@ public class ServerMain {
       System.exit(1);
     }
 
-    // ── 1. Cổng WebSocket ────────────────────────────────────────────────
+    // 1. Cổng WebSocket
     int port = 8080;
     String portEnv = System.getenv("SERVER_PORT");
     if (portEnv != null && !portEnv.isBlank()) {
@@ -76,7 +76,7 @@ public class ServerMain {
       }
     }
 
-    // ── 2. Cổng Image HTTP server ─────────────────────────────────────────
+    // 2. Cổng Image HTTP server
     int imagePort = 8081;
     String imagePortEnv = System.getenv("IMAGE_SERVER_PORT");
     if (imagePortEnv != null && !imagePortEnv.isBlank()) {
@@ -92,10 +92,10 @@ public class ServerMain {
       uploadDir = "uploads/items";
     }
 
-    // ── 3. Bootstrap SystemAdmin ──────────────────────────────────────────
+    // 3. Bootstrap SystemAdmin
     SystemAdmin systemAdmin = SystemAdmin.bootstrap("system_secret");
 
-    // ── 4. Khởi tạo DAOs ─────────────────────────────────────────────────
+    // 4. Khởi tạo DAOs
     UserDAO userDAO = new UserDAO();
     AuctionDAO auctionDAO = new AuctionDAO();
     BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
@@ -107,7 +107,7 @@ public class ServerMain {
     QualityReportDAO qualityReportDAO = new QualityReportDAO();
     NotificationDAO notificationDAO = new NotificationDAO(); // NEW
 
-    // ── 5. Khởi tạo Services ─────────────────────────────────────────────
+    // 5. Khởi tạo Services
     // NotificationDAO được inject vào RatingService và AccountService
     // để chúng có thể lưu thông báo sau mỗi sự kiện liên quan đến user.
     RatingService ratingService = new RatingService(userDAO, notificationDAO);
@@ -145,19 +145,19 @@ public class ServerMain {
     SellerSanctionCoordinator.initialize(
         auctionService, paymentService, auctionDAO, qualityReportDAO, secondChanceOfferDAO);
 
-    // ── 6. Tải dữ liệu vào in-memory ─────────────────────────────────────
+    // 6. Tải dữ liệu vào in-memory
     AuctionManager.getInstance().loadDataFromDatabase();
     AutoBidRegistry.getInstance().loadFromDatabase();
 
-    // ── 7. Khởi động AuctionTimerService ─────────────────────────────────
+    // 7. Khởi động AuctionTimerService
     IAuctionTimerService auctionTimer = AuctionTimerService.getInstance();
     auctionTimer.start(auctionService, paymentService, SessionManager.getInstance());
 
-    // ── 8. Khởi động ImageUploadServer (HTTP, cổng 8081) ─────────────────
+    // 8. Khởi động ImageUploadServer (HTTP, cổng 8081)
     ImageUploadServer imageServer = new ImageUploadServer(imagePort, uploadDir);
     imageServer.start();
 
-    // ── 9. Khởi động WebSocket Server ─────────────────────────────────────
+    // 9. Khởi động WebSocket Server
     ItemFactory itemFactory = new ElectronicsFactory(ratingService);
 
     AuctionWebSocketServer server =
@@ -172,7 +172,7 @@ public class ServerMain {
             userService,
             itemFactory);
 
-    // ── 10. Graceful shutdown ─────────────────────────────────────────────
+    // 10. Graceful shutdown
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(

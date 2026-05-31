@@ -22,7 +22,7 @@ public class Notification extends Entity {
   private final String body;
   private boolean isRead;
 
-  // ── Static factory methods ─────────────────────────────────────────────
+  // Static factory methods
 
   /** Tạo mới notification (chưa có ID — Entity tự sinh UUID). */
   public static Notification create(String userId, String auctionId, String title, String body) {
@@ -49,7 +49,7 @@ public class Notification extends Entity {
         id, createdAt, updatedAt, userId, auctionId, notificationType, title, body, isRead);
   }
 
-  // ── Constructors ───────────────────────────────────────────────────────
+  // Constructors
 
   private Notification(
       String userId, String auctionId, String notificationType, String title, String body) {
@@ -81,14 +81,14 @@ public class Notification extends Entity {
     this.isRead = isRead;
   }
 
-  // ── Mutation ───────────────────────────────────────────────────────────
+  // Mutation
 
   public void markRead() {
     this.isRead = true;
     markUpdated();
   }
 
-  // ── Getters ────────────────────────────────────────────────────────────
+  // Getters
 
   public String getUserId() {
     return userId;

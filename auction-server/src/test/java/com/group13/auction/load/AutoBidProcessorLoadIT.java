@@ -132,11 +132,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
     cleanupDB();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // Group 1 — Chain auto-bid nhiều auto-bidder dưới tải (1 phiên)
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – Chain auto-bid nhiều auto-bidder, 1 phiên (DB thật)")
   class AutoBidChainLoadTest {
@@ -271,11 +267,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
       AuctionLockRegistry.getInstance().release(auction.getId());
     }
   }
-
-  // =========================================================================
   // Group 2 — Auto-bid chain qua nhiều phiên đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – Auto-bid chain qua nhiều phiên song song (DB thật)")
   class MultiAuctionAutoBidLoadTest {
@@ -378,11 +370,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
       assertThat(success.get()).isPositive();
     }
   }
-
-  // =========================================================================
   // Group 3 — process() gọi liên tiếp trong lock dưới tải cao
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – process() gọi liên tiếp trong lock — không NPE, không vòng lặp vô tận")
   class ProcessUnderHighLoadTest {
@@ -527,11 +515,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
       AuctionLockRegistry.getInstance().release(auction.getId());
     }
   }
-
-  // =========================================================================
   // Group 4 — AutoBidProcessor DB fallback dưới tải
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – AutoBidProcessor DB fallback dưới tải")
   class AutoBidProcessorDBFallbackTest {
@@ -645,11 +629,7 @@ class AutoBidProcessorLoadIT extends IntegrationTestBase {
       }
     }
   }
-
-  // =========================================================================
   // Private helpers
-  // =========================================================================
-
   private Auction givenRunningAuction(String sellerPrefix, long startingPrice, long reservePrice) {
     NormalUser seller = buildUserWithBalance(sellerPrefix, 80_000_000L, userDAO);
     String itemId = buildItem(seller.getId(), "ABP-Item-" + sellerPrefix, startingPrice, itemDAO);

@@ -15,7 +15,7 @@ public class Art extends Item {
   private final int yearCreated;
   private final String medium;
 
-  // ── Static factory methods ────────────────────────────────────────────────
+  // Static factory methods
 
   /** Khai sinh — không ảnh (backward-compatible, test cũ dùng). */
   protected static Art create(
@@ -97,7 +97,7 @@ public class Art extends Item {
         imageUrls);
   }
 
-  // ── Private constructors ──────────────────────────────────────────────────
+  // Private constructors
 
   private Art(
       String name,
@@ -141,7 +141,7 @@ public class Art extends Item {
     this.medium = medium;
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public String getArtist() {
     return artist;

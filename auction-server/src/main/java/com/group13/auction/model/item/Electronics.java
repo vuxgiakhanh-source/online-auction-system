@@ -15,7 +15,7 @@ public class Electronics extends Item {
   private final int warrantyMonths;
   private final String condition;
 
-  // ── Static factory methods ────────────────────────────────────────────────
+  // Static factory methods
 
   /** Khai sinh — không ảnh (backward-compatible). */
   protected static Electronics create(
@@ -97,7 +97,7 @@ public class Electronics extends Item {
         imageUrls);
   }
 
-  // ── Private constructors ──────────────────────────────────────────────────
+  // Private constructors
 
   private Electronics(
       String name,
@@ -141,7 +141,7 @@ public class Electronics extends Item {
     this.condition = condition;
   }
 
-  // ── Getters ───────────────────────────────────────────────────────────────
+  // Getters
 
   public String getBrand() {
     return brand;

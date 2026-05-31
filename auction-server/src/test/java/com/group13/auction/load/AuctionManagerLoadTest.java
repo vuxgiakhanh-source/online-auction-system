@@ -72,11 +72,7 @@ class AuctionManagerLoadTest {
     clearAllState();
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // Group 1 — registerAuction / findAuctionById song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 1 – registerAuction / findAuctionById song song")
   class RegisterAndFindAuctionLoadTest {
@@ -250,11 +246,7 @@ class AuctionManagerLoadTest {
       assertThat(notFound).isZero();
     }
   }
-
-  // =========================================================================
   // Group 2 — addToUserList / getAllUsers song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 2 – addToUserList / getAllUsers song song")
   class UserManagementLoadTest {
@@ -374,11 +366,7 @@ class AuctionManagerLoadTest {
       assertThat(crashes.get()).as("Mixed user ops không được gây JVM Error").isZero();
     }
   }
-
-  // =========================================================================
   // Group 3 — addGlobalObserver / notifyGlobalObservers song song
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 3 – addGlobalObserver / notifyGlobalObservers song song")
   class ObserverLoadTest {
@@ -612,11 +600,7 @@ class AuctionManagerLoadTest {
       assertThat(crashes.get()).as("remove + notify đồng thời không được gây JVM Error").isZero();
     }
   }
-
-  // =========================================================================
   // Group 4 — getAuctionsByStatus / getAllAuctions dưới write storm
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 4 – getAuctionsByStatus / getAllAuctions dưới write storm")
   class AuctionQueryLoadTest {
@@ -744,11 +728,7 @@ class AuctionManagerLoadTest {
           .isZero();
     }
   }
-
-  // =========================================================================
   // Group 5 — Mixed workload: register + find + notify + addUser đồng thời
-  // =========================================================================
-
   @Nested
   @DisplayName("Group 5 – Mixed workload tổng hợp (giống production)")
   class MixedWorkloadTest {
@@ -911,11 +891,7 @@ class AuctionManagerLoadTest {
           .isGreaterThan(10_000.0);
     }
   }
-
-  // =========================================================================
   // Private helpers
-  // =========================================================================
-
   /** Reset toàn bộ state của AuctionManager Singleton. */
   private void clearAllState() throws Exception {
     Field f1 = AuctionManager.class.getDeclaredField("allAuctions");

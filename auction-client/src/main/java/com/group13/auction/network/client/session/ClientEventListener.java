@@ -41,7 +41,7 @@ import java.util.List;
  */
 public interface ClientEventListener {
 
-    // ── AUTH ──────────────────────────────────────────────────────────────────
+    // AUTH
 
     default void onLoginSuccess(LoginResponseDTO response) {}
     default void onLoginFailed(ErrorDTO error) {}
@@ -49,7 +49,7 @@ public interface ClientEventListener {
     default void onRegisterFailed(ErrorDTO error) {}
     default void onLogoutSuccess() {}
 
-    // ── USER / PROFILE ────────────────────────────────────────────────────────
+    // USER / PROFILE
 
     /** Nhận profile (cả GET_MY_PROFILE_SUCCESS và GET_USER_PROFILE_SUCCESS). */
     default void onUserProfileReceived(UserDTO user) {}
@@ -70,7 +70,7 @@ public interface ClientEventListener {
     /** Server push thông báo khi tài khoản SUSPENDED được khôi phục (ACCOUNT_RESTORED_NOTIFY). */
     default void onAccountRestored(RatingDTOs.AccountRestoredDTO dto) {}
 
-    // ── AUCTION — List / Detail / Create / Update ─────────────────────────────
+    // AUCTION — List / Detail / Create / Update
 
     default void onAuctionListReceived(AuctionDTOs.AuctionListDTO list) {}
     default void onAuctionDetailReceived(AuctionDTOs.AuctionDTO auction) {}
@@ -83,7 +83,7 @@ public interface ClientEventListener {
     /** Server từ chối cập nhật phiên (UPDATE_AUCTION_FAILED). */
     default void onAuctionUpdateFailed(ErrorDTO error) {}
 
-    // ── AUCTION — Cancel request ──────────────────────────────────────────────
+    // AUCTION — Cancel request
 
     /** Server xác nhận đã nhận đơn hủy phiên của Seller (CANCEL_AUCTION_REQUEST_SUCCESS). */
     default void onCancelAuctionRequestSuccess(String auctionId) {}
@@ -95,7 +95,7 @@ public interface ClientEventListener {
      */
     default void onSellerCancelRequestNotify(AuctionDTOs.SellerCancelRequestNotifyDTO dto) {}
 
-    // ── AUCTION — Admin actions ───────────────────────────────────────────────
+    // AUCTION — Admin actions
 
     /** Server xác nhận Admin đã hủy phiên thành công (ADMIN_CANCEL_AUCTION_SUCCESS). */
     default void onAdminCancelAuctionSuccess(AuctionDTOs.AuctionDTO auction) {}
@@ -104,7 +104,7 @@ public interface ClientEventListener {
     /** Server trả về danh sách tất cả phiên cho Admin (ADMIN_GET_ALL_AUCTIONS_SUCCESS). */
     default void onAdminAllAuctionsReceived(AuctionDTOs.AuctionListDTO list) {}
 
-    // ── JOIN / WATCH / LEAVE ──────────────────────────────────────────────────
+    // JOIN / WATCH / LEAVE
 
     default void onJoinAuctionSuccess(AuctionDTOs.JoinAuctionResponseDTO response) {}
     default void onJoinAuctionFailed(ErrorDTO error) {}
@@ -133,7 +133,7 @@ public interface ClientEventListener {
     default void onLeaveAuctionPenalty(boolean depositForfeited, long forfeitedAmount,
                                        boolean ratingPenalized, long newAvailableBalance) {}
 
-    // ── AUCTION LIFECYCLE (realtime broadcast) ────────────────────────────────
+    // AUCTION LIFECYCLE (realtime broadcast)
 
     default void onAuctionStarted(AuctionDTOs.AuctionUpdateDTO update) {}
     default void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {}
@@ -143,7 +143,7 @@ public interface ClientEventListener {
     default void onAuctionExtended(AuctionDTOs.AuctionExtendedDTO dto) {}
     default void onAuctionUpcomingEnd(AuctionDTOs.AuctionUpcomingEndDTO dto) {}
 
-    // ── BID ───────────────────────────────────────────────────────────────────
+    // BID
 
     default void onPlaceBidSuccess(BidDTOs.BidResultDTO result) {}
     default void onPlaceBidFailed(ErrorDTO error) {}
@@ -155,7 +155,7 @@ public interface ClientEventListener {
     default void onBidHistoryFailed(ErrorDTO err) {}
     default void onBidChartPointUpdate(BidDTOs.BidChartPointDTO point) {}
 
-    // ── AUTO-BID ──────────────────────────────────────────────────────────────
+    // AUTO-BID
 
     /** Nhận sau REGISTER_AUTO_BID_SUCCESS hoặc GET_AUTO_BID_STATUS_SUCCESS. */
     default void onAutoBidRegistered(BidDTOs.AutoBidRegistrationDTO registration) {}
@@ -169,7 +169,7 @@ public interface ClientEventListener {
     default void onAutoBidTriggered(BidDTOs.AutoBidTriggeredDTO notify) {}
     default void onAutoBidExhausted(BidDTOs.AutoBidExhaustedDTO notify) {}
 
-    // ── PAYMENT / WALLET ──────────────────────────────────────────────────────
+    // PAYMENT / WALLET
 
     default void onDepositSuccess(PaymentDTOs.WalletBalanceResponseDTO balance) {}
     default void onDepositFailed(ErrorDTO error) {}
@@ -200,7 +200,7 @@ public interface ClientEventListener {
     /** Server push khi Second Chance Offer hết hạn (SECOND_CHANCE_EXPIRED_NOTIFY). */
     default void onSecondChanceExpiredNotify(String auctionId) {}
 
-    // ── ADMIN — User management ───────────────────────────────────────────────
+    // ADMIN — User management
 
     /** Server xác nhận Admin ban user thành công (ADMIN_BAN_USER_SUCCESS). */
     default void onAdminBanUserSuccess(UserDTO user) {}
@@ -223,7 +223,7 @@ public interface ClientEventListener {
     /** Server từ chối Admin approve Seller role (ADMIN_APPROVE_SELLER_ROLE_FAILED). */
     default void onAdminApproveSellerRoleFailed(ErrorDTO error) {}
 
-    // ── RATING ────────────────────────────────────────────────────────────────
+    // RATING
 
     /** Server xác nhận Bidder đánh giá Seller thành công (RATE_SELLER_SUCCESS). */
     default void onRateSellerSuccess() {}
@@ -236,7 +236,7 @@ public interface ClientEventListener {
     /** Server trả về lịch sử đánh giá (GET_USER_RATINGS_SUCCESS). */
     default void onUserRatingsReceived(RatingDTOs.RatingHistoryDTO history) {}
 
-    // ── QUALITY REPORT ────────────────────────────────────────────────────────
+    // QUALITY REPORT
 
     /** Server xác nhận nhận báo cáo chất lượng (SUBMIT_QUALITY_REPORT_SUCCESS). */
     default void onSubmitQualityReportSuccess(ReportDTOs.QualityReportDTO report) {}
@@ -271,7 +271,7 @@ public interface ClientEventListener {
      */
     default void onSellerRefundOverdueNotify(String sellerId) {}
 
-    // ── FRAUD ─────────────────────────────────────────────────────────────────
+    // FRAUD
 
     /**
      * Server push cho SystemAdmin/Staff khi phát hiện gian lận
@@ -279,14 +279,14 @@ public interface ClientEventListener {
      */
     default void onFraudDetectedNotify(AdminDTOs.FraudDetectedDTO dto) {}
 
-    // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+    // NOTIFICATIONS
 
     /** Server trả về danh sách thông báo chưa đọc (GET_NOTIFICATIONS_SUCCESS). */
     default void onNotificationsReceived(List<AdminDTOs.NotificationDTO> notifications) {}
     /** Server xác nhận đã đánh dấu thông báo là đã đọc (MARK_NOTIFICATION_READ_SUCCESS). */
     default void onMarkNotificationReadSuccess() {}
 
-    // ── SYSTEM ────────────────────────────────────────────────────────────────
+    // SYSTEM
 
     default void onSystemError(ErrorDTO error) {}
     default void onSystemAnnouncement(AdminDTOs.SystemAnnouncementDTO dto) {}
@@ -296,7 +296,7 @@ public interface ClientEventListener {
     /** Server phản hồi PONG sau khi client gửi PING. timestamp là echo của client. */
     default void onPong(long timestamp) {}
 
-    // ── CHATBOT ───────────────────────────────────────────────────────────────
+    // CHATBOT
 
     default void onChatbotAnswer(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}
     default void onChatbotNotFound(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotResponseDTO response) {}

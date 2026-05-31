@@ -38,11 +38,7 @@ class DTOMapperTest {
   void tearDown() throws Exception {
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // toUserDTO — tất cả test cũ giữ nguyên
-  // =========================================================================
-
   @Nested
   @DisplayName("toUserDTO")
   class ToUserDTO {
@@ -123,11 +119,7 @@ class DTOMapperTest {
       assertThat(DTOMapper.toUserDTO(staff, false).getAdminType()).isEqualTo(Admin.LEVEL_STAFF);
     }
   }
-
-  // =========================================================================
   // toAuctionDTO — tất cả test cũ giữ nguyên
-  // =========================================================================
-
   @Nested
   @DisplayName("toAuctionDTO")
   class ToAuctionDTO {
@@ -165,11 +157,7 @@ class DTOMapperTest {
       assertThat(DTOMapper.toAuctionDTO(runningAuction).isReserveMet()).isTrue();
     }
   }
-
-  // =========================================================================
   // toItemDTO — test cũ giữ nguyên + test mới imageUrls
-  // =========================================================================
-
   @Nested
   @DisplayName("toItemDTO")
   class ToItemDTO {
@@ -252,11 +240,7 @@ class DTOMapperTest {
       assertThat(auctionDto.getItem().getImageUrls()).containsExactly("/uploads/items/main.jpg");
     }
   }
-
-  // =========================================================================
   // toAuctionUpdateDTO — tất cả test cũ giữ nguyên
-  // =========================================================================
-
   @Nested
   @DisplayName("toAuctionUpdateDTO")
   class ToAuctionUpdateDTO {
@@ -298,11 +282,7 @@ class DTOMapperTest {
               });
     }
   }
-
-  // =========================================================================
   // toBidUpdateDTO — tất cả test cũ giữ nguyên
-  // =========================================================================
-
   @Nested
   @DisplayName("toBidUpdateDTO")
   class ToBidUpdateDTO {
@@ -318,11 +298,7 @@ class DTOMapperTest {
       assertThat(dto.getTimestamp()).isNotNull();
     }
   }
-
-  // =========================================================================
   // toBidChartPoint — tất cả test cũ giữ nguyên
-  // =========================================================================
-
   @Nested
   @DisplayName("toBidChartPoint")
   class ToBidChartPoint {

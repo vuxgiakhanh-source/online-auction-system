@@ -28,7 +28,7 @@ public final class DTOMapper {
 
   private DTOMapper() {}
 
-  // ── User ──────────────────────────────────────────────────────────────────
+  // User
 
   public static UserDTO toUserDTO(User user, boolean showBalance) {
     UserDTO dto = new UserDTO();
@@ -94,7 +94,7 @@ public final class DTOMapper {
     return dto;
   }
 
-  // ── Auction ───────────────────────────────────────────────────────────────
+  // Auction
 
   public static AuctionDTOs.AuctionDTO toAuctionDTO(Auction auction) {
     AuctionDTOs.AuctionDTO dto = new AuctionDTOs.AuctionDTO();
@@ -196,7 +196,7 @@ public final class DTOMapper {
     return dto;
   }
 
-  // ── Bid ───────────────────────────────────────────────────────────────────
+  // Bid
 
   /**
    * Tạo BidUpdateDTO với đầy đủ thông tin bao gồm delta giá.

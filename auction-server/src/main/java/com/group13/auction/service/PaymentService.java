@@ -44,15 +44,7 @@ public class PaymentService implements IPaymentService {
   private final BidTransactionDAO bidTransactionDAO;
   private final UserDAO userDAO;
 
-  /**
-   * Per-winner idempotency lock, keyed by AuctionWinner.getId(). Tránh synchronized trên method
-   * parameter (Qodana violation).
-   *
-   * <p>FIX [Memory leak]: trước đây {@code winnerLocks} / {@code auctionPaymentLocks} chỉ thêm,
-   * không bao giờ remove → server long-running mỗi nghìn auction tích lũy nghìn entry rác.
-   * {@link #cleanupAuctionLocks(String, String)} được gọi từ {@link AuctionService} ở mọi
-   * terminal path (cancel/end) để dọn entry.
-   */
+  /** Lock theo winner/phiên; dọn qua cleanupAuctionLocks khi phiên kết thúc hoặc hủy. */
   private final ConcurrentHashMap<String, Object> winnerLocks = new ConcurrentHashMap<>();
 
   /** Serialize completePayment / expirePayment / second-chance trên cùng một phiên. */
@@ -221,7 +213,7 @@ public class PaymentService implements IPaymentService {
     auctionWinnerDAO.updatePaymentStatus(
         auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
 
-    // FIX [Memory leak]: terminal path — dọn lock entries cho auction + winner. Idempotent.
+    // Phiên đã xong: dọn lock trong map (gọi nhiều lần cũng được).
     cleanupAuctionLocks(auction.getId(), auctionWinner.getId());
   }
 
@@ -255,7 +247,7 @@ public class PaymentService implements IPaymentService {
         auctionWinner.getFinalPrice(),
         winner.getUsername());
 
-    // FIX [Memory leak]: terminal path — winner đã được hoàn tiền, không còn payment action.
+    // Winner đã xử lý xong, bỏ lock của winner đó.
     cleanupAuctionLocks(auction.getId(), auctionWinner.getId());
   }
 
@@ -322,7 +314,7 @@ public class PaymentService implements IPaymentService {
           auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
       ServerBroadcastNotifier.getInstance().notifyPaymentFailed(auction);
 
-      // FIX [Memory leak]: chỉ cleanup lock nếu phiên đã CANCELED (terminal). Branch second-chance
+      // Chỉ dọn lock khi phiên đã CANCELED (nhánh second-chance
       // mới phát sinh không terminal — vẫn cần lock cho accept/decline/expire offer sau này.
       if (terminalCancel) {
         cleanupAuctionLocks(auction.getId(), auctionWinner.getId());
@@ -341,7 +333,7 @@ public class PaymentService implements IPaymentService {
         return;
       }
       finalizeSecondChanceOfferExpired(offer, auction);
-      // FIX [Memory leak]: finalize... → cancelAuction → CANCELED. Terminal.
+      // Hết hạn offer → hủy phiên → dọn lock.
       // winnerId null vì runner-up không persist auctionWinner row.
       cleanupAuctionLocks(auction.getId(), null);
     }
@@ -571,15 +563,7 @@ public class PaymentService implements IPaymentService {
     if (!offer.isExpired()) {
       return;
     }
-    // FIX: trước đây có thêm bước query DB:
-    //   SecondChanceOffer pending = secondChanceOfferDAO.findPendingOfferByAuctionId(...);
-    //   if (pending == null || !pending.isExpired()) return;
-    //   offer = pending;
-    // → Vấn đề: khi caller (acceptSecondChanceOffer hoặc test) cầm 1 offer trong memory
-    //   (chưa persist xuống DB), findPendingOfferByAuctionId() trả null → early return →
-    //   status không bao giờ chuyển sang EXPIRED, auction không bị CANCELED.
-    //   Lookup này là defensive thừa thãi: caller đã verify offer cần finalize, chúng ta
-    //   tin tham số. Caller {@link #expireSecondChanceOfferIfDue} đã tự fetch từ DB rồi truyền vào.
+    // Caller đã truyền offer đúng (đã load từ DB nếu cần), không query lại tránh null sai.
 
     offer.setStatus(SecondChanceOffer.OfferStatus.EXPIRED);
     secondChanceOfferDAO.updateOfferStatus(offer.getId(), offer.getStatus().name());
@@ -591,14 +575,10 @@ public class PaymentService implements IPaymentService {
   }
 
   /**
-   * Dọn lock entries khi phiên đến terminal state (PAID/CANCELED/end).
+   * Dọn lock khi phiên kết thúc hoặc hủy. Gọi nhiều lần vẫn an toàn.
    *
-   * <p>FIX [Memory leak]: Gọi từ {@link AuctionService#cancelAuction} và terminal handlers khác.
-   * Idempotent — gọi nhiều lần an toàn (remove trả null là OK).
-   *
-   * @param auctionId id phiên cần dọn lock (bắt buộc)
-   * @param winnerId id winner cần dọn lock; {@code null} nếu phiên không có winner
-   *     (cancel-no-winner)
+   * @param auctionId mã phiên
+   * @param winnerId mã winner, hoặc null nếu không có winner
    */
   public void cleanupAuctionLocks(String auctionId, String winnerId) {
     if (auctionId != null) {

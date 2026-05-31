@@ -48,11 +48,7 @@ class TaskSchedulerTest {
       sut.shutdownNow();
     }
   }
-
-  // =========================================================================
   // Constructor validation
-  // =========================================================================
-
   @Nested
   @DisplayName("constructor validation")
   class ConstructorValidation {
@@ -109,11 +105,7 @@ class TaskSchedulerTest {
               });
     }
   }
-
-  // =========================================================================
   // scheduleAtFixedRate — execution behavior
-  // =========================================================================
-
   @Nested
   @DisplayName("scheduleAtFixedRate — execution behavior")
   class ScheduleAtFixedRate {
@@ -174,11 +166,7 @@ class TaskSchedulerTest {
       assertThat(executed).isTrue();
     }
   }
-
-  // =========================================================================
   // Error isolation — task exception must NOT kill the scheduler
-  // =========================================================================
-
   @Nested
   @DisplayName("error isolation — task exception must not kill scheduler")
   class ErrorIsolation {
@@ -265,11 +253,7 @@ class TaskSchedulerTest {
       assertThat(secondRun.await(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
     }
   }
-
-  // =========================================================================
   // shutdownNow — lifecycle
-  // =========================================================================
-
   @Nested
   @DisplayName("shutdownNow — lifecycle")
   class ShutdownNow {
@@ -339,11 +323,7 @@ class TaskSchedulerTest {
       assertThatNoException().isThrownBy(() -> sut.shutdownNow());
     }
   }
-
-  // =========================================================================
   // Thread properties
-  // =========================================================================
-
   @Nested
   @DisplayName("thread properties")
   class ThreadProperties {
@@ -391,11 +371,7 @@ class TaskSchedulerTest {
           .isEqualTo(threadName);
     }
   }
-
-  // =========================================================================
   // IScheduler contract — interface compliance
-  // =========================================================================
-
   @Nested
   @DisplayName("IScheduler contract compliance")
   class ISchedulerContract {

@@ -31,16 +31,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
-/**
- * ════════════════════════════════════════════════════════════════════ AuctionServiceIntegrationIT
- * — Integration Tests cho AuctionService Kỹ thuật: Bottom-up (AuctionService + AuctionDAO + DB
- * thật) ════════════════════════════════════════════════════════════════════
- *
- * <p>TC-A1 [CRITICAL]: createAuction() — persist xuống DB, status OPEN TC-A2 [CRITICAL]:
- * startAuction() — OPEN → RUNNING, DB cập nhật TC-A3 [HIGH]: closeAuction() — RUNNING → final
- * status, DB persist TC-A4 [HIGH]: cancelAuction() — hủy ở OPEN, DB CANCELED TC-A5 [CRITICAL]: Full
- * lifecycle OPEN → RUNNING → final status
- */
+/** Integration test AuctionService: lifecycle create/start/close/cancel (DAO + DB thật). */
 @RequiresDocker
 @Testcontainers
 @TestMethodOrder(OrderAnnotation.class)
@@ -85,7 +76,7 @@ class AuctionServiceIntegrationIT extends IntegrationTestBase {
     TestFixture.resetSystemAdmin();
   }
 
-  // ── TC-A1: createAuction() ───────────────────────────────────────────────
+  // TC-A1: createAuction()
 
   @Nested
   @Order(1)
@@ -148,7 +139,7 @@ class AuctionServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── TC-A2: startAuction() ────────────────────────────────────────────────
+  // TC-A2: startAuction()
 
   @Nested
   @Order(2)
@@ -200,7 +191,7 @@ class AuctionServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── TC-A3: closeAuction() ────────────────────────────────────────────────
+  // TC-A3: closeAuction()
 
   @Nested
   @Order(3)
@@ -256,7 +247,7 @@ class AuctionServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── TC-A4: cancelAuction() ───────────────────────────────────────────────
+  // TC-A4: cancelAuction()
 
   @Nested
   @Order(4)
@@ -328,7 +319,7 @@ class AuctionServiceIntegrationIT extends IntegrationTestBase {
     }
   }
 
-  // ── TC-A5: Full lifecycle ────────────────────────────────────────────────
+  // TC-A5: Full lifecycle
 
   @Nested
   @Order(5)

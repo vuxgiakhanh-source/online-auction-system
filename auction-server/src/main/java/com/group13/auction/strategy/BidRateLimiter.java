@@ -34,7 +34,7 @@ public final class BidRateLimiter {
 
   private static final Logger log = LoggerFactory.getLogger(BidRateLimiter.class);
 
-  // ── Config ────────────────────────────────────────────────────────────────
+  // Config
   /** Số bid tối đa trong 1 window. */
   private static final int MAX_BIDS_PER_WINDOW = 5;
 
@@ -51,14 +51,14 @@ public final class BidRateLimiter {
     return INSTANCE;
   }
 
-  // ── State ─────────────────────────────────────────────────────────────────
+  // State
 
   /** Map userId → BidBucket. */
   private final ConcurrentHashMap<String, BidBucket> buckets = new ConcurrentHashMap<>();
 
   private BidRateLimiter() {}
 
-  // ── Public API ────────────────────────────────────────────────────────────
+  // Public API
 
   /**
    * Kiểm tra và tiêu thụ 1 token cho user.
@@ -107,7 +107,7 @@ public final class BidRateLimiter {
     return buckets.size();
   }
 
-  // ── Inner: BidBucket ──────────────────────────────────────────────────────
+  // Inner: BidBucket
 
   private static final class BidBucket {
     private long count = 0;

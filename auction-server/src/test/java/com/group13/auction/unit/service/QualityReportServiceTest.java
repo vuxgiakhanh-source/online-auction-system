@@ -44,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("QualityReportService")
 class QualityReportServiceTest {
 
-  // ── Mocks ────────────────────────────────────────────────────────────────
+  // Mocks
 
   @Mock IRatingService ratingService;
   @Mock IPaymentService paymentService;
@@ -58,7 +58,7 @@ class QualityReportServiceTest {
 
   QualityReportService qualityReportService;
 
-  // ── Fixtures ──────────────────────────────────────────────────────────────
+  // Fixtures
 
   NormalUser seller;
   NormalUser winner;
@@ -87,11 +87,7 @@ class QualityReportServiceTest {
   void tearDown() throws Exception {
     TestFixture.resetSystemAdmin();
   }
-
-  // =========================================================================
   // submitReport
-  // =========================================================================
-
   @Nested
   @DisplayName("submitReport()")
   class SubmitReport {
@@ -158,11 +154,7 @@ class QualityReportServiceTest {
       verifyNoInteractions(paymentService);
     }
   }
-
-  // =========================================================================
   // approveReport
-  // =========================================================================
-
   @Nested
   @DisplayName("approveReport()")
   class ApproveReport {
@@ -312,11 +304,7 @@ class QualityReportServiceTest {
       verify(paymentService, never()).refundToWinnerFromBank(any());
     }
   }
-
-  // =========================================================================
   // rejectReport
-  // =========================================================================
-
   @Nested
   @DisplayName("rejectReport()")
   class RejectReport {
@@ -409,11 +397,7 @@ class QualityReportServiceTest {
       verify(qualityReportDAO, never()).updateReport(any());
     }
   }
-
-  // =========================================================================
   // approve vs reject idempotency
-  // =========================================================================
-
   @Nested
   @DisplayName("Idempotency / Double-call guard")
   class IdempotencyGuard {
@@ -486,11 +470,7 @@ class QualityReportServiceTest {
       verify(qualityReportDAO, times(1)).updateReport(any());
     }
   }
-
-  // =========================================================================
   // Helpers
-  // =========================================================================
-
   /** Tạo Admin không qua DB. Dùng AdminFactory như đúng luồng khởi tạo của production code. */
   private Admin buildAdmin(String username) {
     com.group13.auction.model.user.AdminFactory factory =

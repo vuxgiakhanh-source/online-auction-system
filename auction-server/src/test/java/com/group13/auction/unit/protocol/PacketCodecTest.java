@@ -20,11 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 @DisplayName("PacketCodec — serialize / deserialize")
 class PacketCodecTest {
-
-  // =========================================================================
   // encode / decode roundtrip
-  // =========================================================================
-
   @Nested
   @DisplayName("encode → decode roundtrip")
   class Roundtrip {
@@ -94,11 +90,7 @@ class PacketCodecTest {
       assertThat(decoded.getPayload().getTimestamp()).isEqualTo(ts);
     }
   }
-
-  // =========================================================================
   // peekType
-  // =========================================================================
-
   @Nested
   @DisplayName("peekType")
   class PeekType {
@@ -142,11 +134,7 @@ class PacketCodecTest {
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
-
-  // =========================================================================
   // peekPayload
-  // =========================================================================
-
   @Nested
   @DisplayName("peekPayload")
   class PeekPayload {
@@ -187,11 +175,7 @@ class PacketCodecTest {
       assertThat(decoded.getAmount()).isEqualTo(2_000_000L);
     }
   }
-
-  // =========================================================================
   // Timestamp trong encoded JSON
-  // =========================================================================
-
   @Nested
   @DisplayName("timestamp field")
   class TimestampField {

@@ -68,7 +68,7 @@ public class ChatbotHandler implements PacketHandler {
   /** Gson instance — tái sử dụng (thread-safe khi không custom TypeAdapter). */
   private final Gson gson;
 
-  // ── Constructor ───────────────────────────────────────────────────────────
+  // Constructor
 
   /**
    * Constructor — lấy instance Singleton của ChatbotProvider.
@@ -85,11 +85,7 @@ public class ChatbotHandler implements PacketHandler {
         "[ChatbotHandler] Khởi tạo — ChatbotProvider đang giữ {} FAQ.",
         chatbotProvider.getTotalFaqCount());
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // PacketHandler interface implementation
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Kiểm tra handler này có xử lý được PacketType cho trước không.
    *
@@ -122,11 +118,7 @@ public class ChatbotHandler implements PacketHandler {
       default -> log.warn("[ChatbotHandler] PacketType không mong đợi: {}", type);
     }
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Xử lý từng loại packet
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Xử lý packet {@code CHATBOT_ASK} — tìm câu trả lời cho câu hỏi của người dùng.
    *
@@ -253,11 +245,7 @@ public class ChatbotHandler implements PacketHandler {
         new Packet<>(PacketType.CHATBOT_FAQ_LIST_SUCCESS, combinedPayload, requestId);
     session.send(responsePacket);
   }
-
-  // ══════════════════════════════════════════════════════════════════════════
   // Private helpers
-  // ══════════════════════════════════════════════════════════════════════════
-
   /**
    * Gửi phản hồi CHATBOT_NOT_FOUND về client với câu hỏi gốc.
    *

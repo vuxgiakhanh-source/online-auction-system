@@ -33,62 +33,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Engine xử lý chuỗi Auto-Bid — phiên bản Async / Queue-based.
- *
- * <h2>Thiết kế tổng quát</h2>
- *
- * <pre>
- *  BidHandler.placeBid()  ──────► submit(auction, trigger)   [non-blocking — caller trả về ngay]
- *                                        │
- *                          ┌─────────────▼──────────────────┐
- *                          │  Per-Auction SingleThread       │
- *                          │  ExecutorService (isolated)     │
- *                          │                                 │
- *                          │  Task coalescing:               │
- *                          │  • nếu chain đang chạy →       │
- *                          │    set needsRecheck=true        │
- *                          │  • chain tự loop lại khi done  │
- *                          └─────────────────────────────────┘
- *                                        │
- *                               runChain() [isolated per auction]
- *                                        │
- *                              while(candidates) { placeBid() }
- * </pre>
- *
- * <h2>Những vấn đề đã giải quyết</h2>
- *
- * <ol>
- *   <li><b>Head-of-line blocking</b>: {@code submit()} trả về ngay (~1µs), chain chạy trên executor
- *       riêng, không bao giờ block thread bid.
- *   <li><b>Task stacking</b>: Cơ chế coalescing (pending flag + needsRecheck) đảm bảo mỗi phiên chỉ
- *       có tối đa 1 task pending + 1 "rerun signal".
- *   <li><b>User lookup O(n)</b>: {@link UserCache} TTL-based, không cần Caffeine, tra cứu O(1) với
- *       hit rate cao sau lần đầu.
- *   <li><b>CopyOnWriteArrayList + remove(0) O(n)</b>: Thay bằng {@link BidActivityRing} dùng {@link
- *       ConcurrentLinkedDeque} — addLast/pollFirst O(1), lock-free.
- *   <li><b>Thread.sleep() thô</b>: Thay bằng timestamp-check không blocking. Chain không sleep giữa
- *       các bid; throttle chỉ ảnh hưởng lần gọi tiếp theo.
- *   <li><b>Executor leak</b>: {@link #shutdownAuction(String)} đóng executor khi phiên kết thúc —
- *       gọi từ {@code AuctionTimerService} qua {@link #clearAuctionActivity(String)}.
- * </ol>
- *
- * <h2>Thread-safety</h2>
- *
- * <ul>
- *   <li>Mỗi auction có 1 SingleThreadExecutor riêng → không cần lock giữa các bước trong chain của
- *       cùng 1 auction.
- *   <li>{@code bidService.placeBid()} tự acquire per-auction ReentrantLock cho critical section RAM
- *       — không deadlock vì executor của AutoBid là thread khác với BidHandler thread.
- *   <li>Tất cả state dùng concurrent structures; không có shared mutable state truy cập đồng thời
- *       từ nhiều thread mà không có bảo vệ.
- * </ul>
- */
+/** Xử lý chuỗi auto-bid chạy nền; mỗi phiên một luồng riêng, submit() trả về ngay. */
 public class AutoBidProcessor {
 
   private static final Logger log = LoggerFactory.getLogger(AutoBidProcessor.class);
 
-  // ── Cấu hình ─────────────────────────────────────────────────────────────
+  // Cấu hình
 
   /** Giới hạn tuyệt đối vòng lặp chain — chống infinite loop. */
   private static final int MAX_CHAIN_ITERATIONS = 100;
@@ -108,14 +58,14 @@ public class AutoBidProcessor {
   /** Khớp {@link BidService} ANTI_SNIPING_EXTENSION_SECONDS — dùng trong broadcast. */
   private static final int ANTI_SNIPING_EXTENSION_SECONDS = 60;
 
-  // ── Dependencies ──────────────────────────────────────────────────────────
+  // Dependencies
 
   private final BidService bidService;
   private final SessionManager sessionManager;
   private final AutoBidRegistry registry = AutoBidRegistry.getInstance();
   private final UserDAO userDAO;
 
-  // ── Per-auction async infrastructure ─────────────────────────────────────
+  // Per-auction async infrastructure
 
   /**
    * Map auctionId → SingleThreadExecutor.
@@ -146,7 +96,7 @@ public class AutoBidProcessor {
   private static final ConcurrentHashMap<String, AtomicBoolean> chainNeedsRecheck =
       new ConcurrentHashMap<>();
 
-  // ── Shared state (static — tồn tại suốt vòng đời server) ─────────────────
+  // Shared state (static — tồn tại suốt vòng đời server)
 
   /** Recent bid tracker per auction — dùng để detect VERY_HOT phase. */
   private static final ConcurrentHashMap<String, BidActivityRing> bidActivityRings =
@@ -162,7 +112,7 @@ public class AutoBidProcessor {
   /** User cache chia sẻ toàn server — tránh DB lookup lặp lại. */
   private static final UserCache userCache = new UserCache(USER_CACHE_TTL_MS);
 
-  // ── Constructor ───────────────────────────────────────────────────────────
+  // Constructor
 
   /** Tạo bộ xử lý Auto-Bid với các dependency cần thiết cho đặt giá và broadcast. */
   public AutoBidProcessor(BidService bidService, SessionManager sessionManager) {
@@ -352,7 +302,7 @@ public class AutoBidProcessor {
 
       NormalUser autoBidder = resolveUser(winner.getUserId(), auctionId);
       if (autoBidder == null) {
-        // BUG FIX: Không cancel registry khi resolveUser thất bại (có thể do DB tạm chậm,
+        // Không cancel registry khi resolveUser thất bại (có thể do DB tạm chậm,
         // user chưa được load vào RAM, hoặc joinedAuctionIds chưa sync).
         // Cancel vĩnh viễn khiến chain dừng sớm dù maxBid rất cao — đây là nguyên nhân
         // chính khiến autobid chỉ chạy 1 bước khi 2 user có maxBid bằng nhau.
@@ -391,7 +341,7 @@ public class AutoBidProcessor {
           MAX_CHAIN_ITERATIONS,
           auctionId);
 
-      // BUG FIX: Nếu chain dừng do safety limit nhưng vẫn còn candidates hợp lệ
+      // Nếu chain dừng do safety limit nhưng vẫn còn candidates hợp lệ
       // (2 user cùng maxBid rất cao), không có gì trigger submit() lại vì
       // không có bid thủ công nào từ bên ngoài.
       // Giải pháp: dùng chainNeedsRecheck flag — cơ chế recheck đã có sẵn trong submit().
@@ -598,7 +548,7 @@ public class AutoBidProcessor {
     }
 
     // Fallback 2 (chỉ LATE/VERY_HOT): dùng toàn bộ maxBid — tận dụng hết budget.
-    // BUG FIX: maxBid phải >= currentPrice + base (đáp ứng minimum increment),
+    // maxBid phải >= currentPrice + base (đáp ứng minimum increment),
     // nếu không isValidBid() sẽ từ chối → retry 5 lần vô ích → return false → chain dừng sớm.
     if ((phase == AutoBidPhase.LATE || phase == AutoBidPhase.VERY_HOT) && maxBid >= currentPrice + base) {
       return maxBid;

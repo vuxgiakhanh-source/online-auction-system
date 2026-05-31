@@ -99,13 +99,13 @@ public class DatabaseConnection {
     config.setDriverClassName("com.mysql.cj.jdbc.Driver");
     config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
 
-    // ── Pool sizing ───────────────────────────────────────────────────
+    // Pool sizing
     int poolMax = parseEnvInt("DB_POOL_MAX", 40);
     int poolMin = parseEnvInt("DB_POOL_MIN", 5);
     config.setMaximumPoolSize(poolMax);
     config.setMinimumIdle(poolMin);
 
-    // ── Timeouts ──────────────────────────────────────────────────────
+    // Timeouts
     // FIX PERFORMANCE: connectionTimeout = 6000ms (6s).
     //
     // Client WebSocket timeout (AuctionWebSocketClient.sendAndExpect) = 10s.
@@ -125,7 +125,7 @@ public class DatabaseConnection {
     config.setIdleTimeout(idleTimeoutMs);
     config.setMaxLifetime(maxLifetimeMs);
 
-    // ── MySQL socket & query timeouts ─────────────────────────────────
+    // MySQL socket & query timeouts
     // socketTimeout: nếu DB hang (deadlock, slow query), MySQL driver
     // throw exception sau 8s → tránh thread block vô hạn.
     // connectTimeout: TCP handshake timeout khi tạo connection mới.
@@ -134,7 +134,7 @@ public class DatabaseConnection {
     config.addDataSourceProperty("socketTimeout", String.valueOf(socketTimeoutMs));
     config.addDataSourceProperty("connectTimeout", String.valueOf(connectTimeoutMs));
 
-    // ── MySQL prepared statement cache ────────────────────────────────
+    // MySQL prepared statement cache
     config.addDataSourceProperty("cachePrepStmts", "true");
     config.addDataSourceProperty("prepStmtCacheSize", "50");
     config.addDataSourceProperty("prepStmtCacheSqlLimit", "1024");

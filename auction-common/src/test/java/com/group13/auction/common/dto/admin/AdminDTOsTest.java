@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 /** Unit tests cho {@link AdminDTOs} — mọi inner DTO class. */
 @DisplayName("AdminDTOs — unit")
 class AdminDTOsTest {
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("AdminBanUserDTO")
   class AdminBanUserDTOTest {
@@ -44,8 +42,6 @@ class AdminDTOsTest {
       }
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("CreateStaffAdminDTO")
   class CreateStaffAdminDTOTest {
@@ -71,8 +67,6 @@ class AdminDTOsTest {
       assertThat(dto.getEmail()).isEqualTo("staff01@test.com");
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("FraudDetectedDTO")
   class FraudDetectedDTOTest {
@@ -101,8 +95,6 @@ class AdminDTOsTest {
       assertThat(dto.getDescription()).isEqualTo("Shill bidding detected");
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("SystemAnnouncementDTO")
   class SystemAnnouncementDTOTest {
@@ -135,8 +127,6 @@ class AdminDTOsTest {
       }
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("ServerShutdownDTO")
   class ServerShutdownDTOTest {
@@ -167,8 +157,6 @@ class AdminDTOsTest {
       assertThat(dto.getShutdownInSeconds()).isZero();
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   @Nested
   @DisplayName("NotificationDTO")
   class NotificationDTOTest {

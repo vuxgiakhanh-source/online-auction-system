@@ -53,11 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class TestFixture {
 
   private TestFixture() {}
-
-  // =========================================================================
   // Fake IRatingService
-  // =========================================================================
-
   /**
    * Fake IRatingService: mọi Seller đều được phép tạo phiên đấu giá. Dùng cho test luồng bình
    * thường (happy path).
@@ -143,11 +139,7 @@ public final class TestFixture {
       public void checkAndRestoreSuspended(User user) {}
     };
   }
-
-  // =========================================================================
   // NormalUser builder (không cần DB)
-  // =========================================================================
-
   /**
    * Tạo NormalUser với role BIDDER mặc định, balance = 0, rating = 3.0. username phải >= 8 ký tự.
    */
@@ -291,11 +283,7 @@ public final class TestFixture {
         0,
         null);
   }
-
-  // =========================================================================
   // Item builder (bypass ItemFactory, không cần IRatingService)
-  // =========================================================================
-
   /** Tạo Art trực tiếp qua reconstitute — dùng khi chỉ cần Item đơn giản. */
   public static Art art(String name, long startingPrice, NormalUser seller) {
     return Art.reconstitute(
@@ -340,11 +328,7 @@ public final class TestFixture {
         2019,
         50000.0);
   }
-
-  // =========================================================================
   // Auction builder
-  // =========================================================================
-
   /**
    * Tạo Auction OPEN với Art item, reserve = startingPrice * 2. startTime = 1 phút trước, endTime =
    * 1 giờ sau.
@@ -409,11 +393,7 @@ public final class TestFixture {
         status,
         startingPrice * 2);
   }
-
-  // =========================================================================
   // AuctionWinner builder
-  // =========================================================================
-
   /**
    * Tạo AuctionWinner PENDING với hạn thanh toán trong tương lai (24h từ now). Dùng cho happy path:
    * winner chưa thanh toán, chưa hết hạn.
@@ -530,11 +510,7 @@ public final class TestFixture {
       NormalUser runnerUp, String auctionId, long offerPrice, long depositPaid) {
     return AuctionWinner.create(runnerUp, auctionId, offerPrice, depositPaid, true);
   }
-
-  // =========================================================================
   // SecondChanceOffer builder
-  // =========================================================================
-
   /**
    * Tạo SecondChanceOffer PENDING với deadline trong tương lai (24h từ now). Dùng cho happy path:
    * offer mới tạo, runner-up chưa quyết định.
@@ -593,11 +569,7 @@ public final class TestFixture {
         LocalDateTime.now().plusHours(24),
         SecondChanceOffer.OfferStatus.DECLINED);
   }
-
-  // =========================================================================
   // QualityReport builder
-  // =========================================================================
-
   /**
    * Tạo QualityReport PENDING với 1 ảnh minh chứng. Dùng cho happy path: winner vừa gửi báo cáo,
    * chờ admin xét duyệt.
@@ -682,11 +654,7 @@ public final class TestFixture {
         null,
         false);
   }
-
-  // =========================================================================
   // SystemBank utility
-  // =========================================================================
-
   /**
    * Bootstrap SystemAdmin Singleton cho unit test — không chạm DB.
    *
@@ -724,25 +692,11 @@ public final class TestFixture {
   }
 
   /**
-   * Vô hiệu hoá I/O DB của các Singleton toàn cục trong unit test.
-   *
-   * <p>Vấn đề: {@link ServerBroadcastNotifier} hard-code {@code new NotificationDAO()} và
-   * {@code new UserDAO()} ở field-level → mọi {@code notify*()} gọi từ service đều chạm DB thật.
-   * Tương tự, {@link AutoBidRegistry} có {@code autoBidDAO} thật. Trong CI khi schema MySQL
-   * thiếu, mỗi call block 6s theo HikariCP {@code connectionTimeout} → test 80–170s.
-   *
-   * <p>Helper này dùng reflection thay 2 field DAO của ServerBroadcastNotifier bằng mock no-op
-   * (yêu cầu production đã bỏ {@code final} ở 2 field đó), và set {@code AutoBidRegistry.autoBidDAO
-   * = null} (đã có null-guard sẵn).
-   *
-   * <p>Idempotent — gọi nhiều lần an toàn. Đặt trong {@code @BeforeEach} của mọi test class có SUT
-   * gọi {@code closeAuction}, {@code completePayment}, {@code approveReport}, {@code notifyXxx}, …
-   *
-   * @throws Exception nếu reflection thất bại (không kỳ vọng xảy ra với JDK 17 + argLine
-   *     --add-opens java.base/java.lang.reflect=ALL-UNNAMED)
+   * Tắt DB thật cho singleton trong unit test (inject mock DAO qua reflection).
+   * Gọi trong @BeforeEach của test có notify/closeAuction/...
    */
   public static void silenceGlobalSingletons() throws Exception {
-    // ── ServerBroadcastNotifier ──────────────────────────────────────────
+    // ServerBroadcastNotifier
     ServerBroadcastNotifier broadcaster = ServerBroadcastNotifier.getInstance();
 
     UserDAO noOpUserDAO = mock(UserDAO.class);
@@ -757,8 +711,7 @@ public final class TestFixture {
     injectInstanceField(broadcaster, "userDAO", noOpUserDAO);
     injectInstanceField(broadcaster, "notificationDAO", noOpNotificationDAO);
 
-    // ── AutoBidRegistry ──────────────────────────────────────────────────
-    // Field `autoBidDAO` đã package-private và có null-guard trong production.
+    // AutoBidRegistry
     injectInstanceField(AutoBidRegistry.getInstance(), "autoBidDAO", null);
   }
 
@@ -770,30 +723,17 @@ public final class TestFixture {
     field.set(target, value);
   }
 
-  /**
-   * Reset totalBalance của SystemBank về 0 qua reflection.
-   *
-   * <p>Bắt buộc gọi trong {@code @BeforeEach} của mọi test class dùng SystemBank, để tránh state rò
-   * rỉ giữa các test (Singleton isolation).
-   *
-   * @throws Exception nếu reflection thất bại
-   */
+  /** Reset số dư SystemBank về 0 giữa các test. */
   public static void resetSystemBankBalance() throws Exception {
     Field field = SystemBank.class.getDeclaredField("totalBalance");
     field.setAccessible(true);
     AtomicLong balance = (AtomicLong) field.get(SystemBank.getInstance());
     balance.set(0L);
   }
-
-  // =========================================================================
   // Factory helpers (không cần DB)
-  // =========================================================================
 
-  /**
-   * Tạo NormalUserFactory không có UserDAO. Khi userDAO = null: bỏ qua kiểm tra unique
-   * username/email với DB. Dùng để test validation logic của factory trong môi trường unit test.
-   */
+  /** Factory không gọi DB — dùng test validation username/email. */
   public static NormalUserFactory normalUserFactory() {
-    return new NormalUserFactory(); // UserFactory() no-arg → userDAO = null
+    return new NormalUserFactory();
   }
 }

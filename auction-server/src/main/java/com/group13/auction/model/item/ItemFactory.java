@@ -15,7 +15,7 @@ public abstract class ItemFactory {
     this.ratingService = ratingService;
   }
 
-  // ── Facade create() — không ảnh (backward-compatible) ─────────────────────
+  // Facade create() — không ảnh (backward-compatible)
 
   /** Tạo item không có ảnh. API cũ — tất cả code hiện tại vẫn dùng được. */
   public Item create(
@@ -28,7 +28,7 @@ public abstract class ItemFactory {
     return create(itemCategory, name, description, startingPrice, seller, extraFields, List.of());
   }
 
-  // ── Facade create() — có ảnh ──────────────────────────────────────────────
+  // Facade create() — có ảnh
 
   /**
    * Tạo item với danh sách URL ảnh đã được upload lên ImageUploadServer.
@@ -85,7 +85,7 @@ public abstract class ItemFactory {
     };
   }
 
-  // ── Template method ───────────────────────────────────────────────────────
+  // Template method
 
   /**
    * createItem() — không ảnh (backward-compatible). Tất cả test cũ dùng signature này, không cần
@@ -101,7 +101,7 @@ public abstract class ItemFactory {
   protected abstract Item createProduct(
       String name, String description, long startingPrice, NormalUser seller, Object... args);
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  // Validation
 
   private void validateCommon(String name, long startingPrice, NormalUser seller) {
     if (name == null || name.isBlank()) {

@@ -25,7 +25,7 @@ public class ItemDAO {
 
   public ItemDAO() {}
 
-  // ── addItem — backward-compatible (không ảnh) ─────────────────────────────
+  // addItem — backward-compatible (không ảnh)
 
   /**
    * Thêm sản phẩm vào DB, không có ảnh. API cũ — tất cả test integration hiện tại vẫn dùng được.
@@ -40,7 +40,7 @@ public class ItemDAO {
     return addItem(itemId, sellerId, name, description, startingPrice, categoryType, List.of());
   }
 
-  // ── addItem — có ảnh ──────────────────────────────────────────────────────
+  // addItem — có ảnh
 
   /**
    * Thêm sản phẩm vào DB kèm danh sách URL ảnh.
@@ -186,7 +186,7 @@ public class ItemDAO {
     }
   }
 
-  // ── findItemById ──────────────────────────────────────────────────────────
+  // findItemById
 
   public Item findItemById(String itemId) {
     String sql = "SELECT * FROM items WHERE id = ?";
@@ -205,7 +205,7 @@ public class ItemDAO {
     return null;
   }
 
-  // ── findItemsBySellerId ───────────────────────────────────────────────────
+  // findItemsBySellerId
 
   public List<Item> findItemsBySellerId(String sellerId) {
     List<Item> items = new ArrayList<>();
@@ -228,7 +228,7 @@ public class ItemDAO {
     return items;
   }
 
-  // ── deleteItem ────────────────────────────────────────────────────────────
+  // deleteItem
 
   /** Xóa item theo ID — dùng rollback khi createAuction() thất bại. */
   public boolean deleteItem(String itemId) {
@@ -243,7 +243,7 @@ public class ItemDAO {
     }
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // Private helpers
 
   private Item mapRow(ResultSet rs) throws SQLException {
     String id = rs.getString("id");

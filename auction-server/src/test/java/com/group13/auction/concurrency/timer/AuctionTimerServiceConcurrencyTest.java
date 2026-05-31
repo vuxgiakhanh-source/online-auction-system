@@ -51,11 +51,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
   private AuctionWinnerDAO mockAuctionWinnerDAO;
 
   private ExecutorService executor;
-
-  // =========================================================================
   // Bootstrap
-  // =========================================================================
-
   private static void bootstrapSystemAdminForTest() throws Exception {
 
     java.lang.reflect.Field instanceField = SystemAdmin.class.getDeclaredField("INSTANCE");
@@ -139,11 +135,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     resetAuctionManagerUsers();
   }
-
-  // =========================================================================
   // T1
-  // =========================================================================
-
   @Test
   @Order(1)
   @Timeout(30)
@@ -246,11 +238,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     lockRegistry.release(auction.getId());
   }
-
-  // =========================================================================
   // T2
-  // =========================================================================
-
   @Test
   @Order(2)
   @Timeout(20)
@@ -284,11 +272,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     lockRegistry.release(auction.getId());
   }
-
-  // =========================================================================
   // T3
-  // =========================================================================
-
   @Test
   @Order(3)
   @Timeout(30)
@@ -342,11 +326,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     lockRegistry.release(auction.getId());
   }
-
-  // =========================================================================
   // T4
-  // =========================================================================
-
   @Test
   @Order(4)
   @Timeout(45)
@@ -444,11 +424,7 @@ class AuctionTimerServiceConcurrencyTest extends ConcurrencyTestBase {
 
     lockRegistry.release(auction.getId());
   }
-
-  // =========================================================================
   // Helpers
-  // =========================================================================
-
   private void executeWithAuctionLock(Auction auction, ThrowingRunnable runnable) throws Exception {
 
     boolean locked = lockRegistry.tryLock(auction.getId(), 5, TimeUnit.SECONDS);
