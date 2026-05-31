@@ -490,6 +490,22 @@ public class UserDAO {
     return findAuctionIdsByUserIdAndActivityType(userId, "LEFT");
   }
 
+  /**
+   * Nạp trạng thái tham gia phiên từ DB vào user in-memory.
+   *
+   * <p>{@link #findUserCoreByUsername(String)} cố ý không load các field này để login nhanh; gọi
+   * method này sau khi xác thực thành công để {@code placeBid}/{@code watch} nhận đúng JOINED.
+   */
+  public void hydrateParticipationState(NormalUser user) {
+    if (user == null || user.getId() == null) {
+      return;
+    }
+    String userId = user.getId();
+    user.setJoinedAuctionIds(findJoinedAuctionIdsByUserId(userId));
+    user.setWatchListAuctionIds(findWatchListByUserId(userId));
+    user.setLeftAuctionIds(findLeftAuctionIdsByUserId(userId));
+  }
+
   /** User còn đang tham gia đặt cọc phiên (activity_type = JOINED). */
   public boolean isActiveJoinedParticipant(String userId, String auctionId) {
     if (userId == null || auctionId == null) {

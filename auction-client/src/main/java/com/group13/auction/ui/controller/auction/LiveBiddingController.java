@@ -72,6 +72,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
   private String auctionId;
   private boolean readOnlyMode;
+  private boolean adminWatchOnly;
   private boolean bidAllowed;
   private long currentPriceRaw;
   private long activeAutoBidMaxRaw;
@@ -156,6 +157,13 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
+    adminWatchOnly =
+        AppContext.getInstance()
+            .getSessionManager()
+            .getCurrentSession()
+            .map(UserSession::isAdmin)
+            .orElse(false);
+
     networkFacade.addListener(this);
     watchCurrentAuction();
     loadBidHistory();
@@ -175,8 +183,11 @@ public final class LiveBiddingController implements ClientEventListener {
   /** Gửi yêu cầu đặt giá. */
   @FXML
   public void handlePlaceBid() {
-    if (readOnlyMode) {
-      AlertUtil.showWarning("Phiên đã kết thúc hoặc đã hủy — chỉ được xem lịch sử đặt giá.");
+    if (readOnlyMode || adminWatchOnly) {
+      AlertUtil.showWarning(
+          adminWatchOnly
+              ? "Tài khoản Admin chỉ được theo dõi phiên, không thể đặt giá."
+              : "Phiên đã kết thúc hoặc đã hủy — chỉ được xem lịch sử đặt giá.");
       return;
     }
     if (!bidAllowed) {
@@ -698,11 +709,13 @@ public final class LiveBiddingController implements ClientEventListener {
       return;
     }
 
-    bidAllowed = detail.liveBiddingAllowed() && joinedAuctionState.hasJoined(auctionId);
+    bidAllowed = !adminWatchOnly && detail.liveBiddingAllowed() && joinedAuctionState.hasJoined(auctionId);
     placeBidButton.setDisable(!bidAllowed);
-    syncAutoBidButtons(false);
+    syncAutoBidButtons(adminWatchOnly || !bidAllowed);
 
-    if (bidAllowed) {
+    if (adminWatchOnly) {
+      setLoading(false, "Chế độ Admin — chỉ theo dõi realtime, không thể đặt giá.");
+    } else if (bidAllowed) {
       setLoading(false, "Đã kết nối realtime. Bạn có thể đặt giá cho phiên này.");
     } else {
       setLoading(false, "Đã kết nối realtime ở chế độ theo dõi.");
@@ -977,6 +990,7 @@ public final class LiveBiddingController implements ClientEventListener {
 
     TableColumn<BidHistoryPointViewModel, String> amountColumn = new TableColumn<>("Giá đặt");
     amountColumn.setPrefWidth(300);
+    amountColumn.getStyleClass().add("right-aligned-column");
     amountColumn.setCellValueFactory(
         cellData -> new ReadOnlyStringWrapper(cellData.getValue().priceText()));
 

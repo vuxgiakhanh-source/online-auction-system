@@ -10,6 +10,7 @@ import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.BidTransaction;
 import com.group13.auction.model.bid.BidTransaction.BidResult;
+import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.ServerBroadcastNotifier;
@@ -139,18 +140,20 @@ public class BidService implements IBidService {
 
   @Override
   public void joinAuction(User user, Auction auction, AuctionObserver observer) {
-    if (!user.tryMarkJoined(auction.getId())) {
-      log.warn("User already joined: userId={}, auctionId={}", user.getId(), auction.getId());
+    if (user instanceof Admin) {
+      throw new AuctionBusinessException(AuctionBusinessException.Reason.ADMIN_CANNOT_PARTICIPATE);
+    }
+    if (!(user instanceof NormalUser bidder)) {
+      throw new IllegalArgumentException("Chỉ NormalUser mới được tham gia đặt giá.");
+    }
+    if (!bidder.tryMarkJoined(auction.getId())) {
+      log.warn("User already joined: userId={}, auctionId={}", bidder.getId(), auction.getId());
       return;
     }
     try {
-      if (user instanceof NormalUser) {
-        joinAsNormalUser((NormalUser) user, auction, observer);
-      } else {
-        joinAsAdmin(user, auction, observer);
-      }
+      joinAsNormalUser(bidder, auction, observer);
     } catch (RuntimeException e) {
-      user.removeJoinedAuction(auction.getId());
+      bidder.removeJoinedAuction(auction.getId());
       throw e;
     }
   }
@@ -195,6 +198,12 @@ public class BidService implements IBidService {
           auction.getId(),
           bidder.getId());
       throw new AuctionClosedException(auction.getStatus());
+    }
+
+    if (!bidder.hasJoined(auction.getId())) {
+      if (userDAO.isActiveJoinedParticipant(bidder.getId(), auction.getId())) {
+        bidder.addJoinedAuction(auction.getId());
+      }
     }
 
     if (!bidder.hasJoined(auction.getId())) {
@@ -342,10 +351,6 @@ public class BidService implements IBidService {
         auction.getId(),
         bidder.getId(),
         depositAmount);
-  }
-
-  private void joinAsAdmin(User admin, Auction auction, AuctionObserver observer) {
-    registerJoin(admin, auction, observer);
   }
 
   private void registerJoin(User user, Auction auction, AuctionObserver observer) {

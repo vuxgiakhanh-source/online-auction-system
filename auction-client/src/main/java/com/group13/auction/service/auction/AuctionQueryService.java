@@ -116,6 +116,8 @@ public final class AuctionQueryService {
       state.markLeft(id);
     } else if (Boolean.TRUE.equals(dto.getJoinedByCurrentUser())) {
       state.markJoined(id);
+    } else if (Boolean.FALSE.equals(dto.getJoinedByCurrentUser())) {
+      state.forgetJoined(id);
     }
   }
 

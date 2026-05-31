@@ -69,7 +69,8 @@ public class UserService implements IUserService {
       throw new AuthenticationException(Reason.WRONG_PASSWORD);
     }
 
-    // Đăng nhập thành công — ghi đè bản in-memory bằng dữ liệu vừa load từ DB
+    // Đăng nhập thành công — nạp JOINED/WATCHING từ DB rồi ghi đè bản in-memory
+    userDAO.hydrateParticipationState(user);
     AuctionManager.getInstance().refreshUser(user);
     log.info("Login success: username={}", username);
     return user;

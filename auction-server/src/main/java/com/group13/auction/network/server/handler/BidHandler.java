@@ -14,12 +14,15 @@ import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.bid.BidTransaction;
+import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.model.user.User;
 import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.ClientSession;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.AuctionLookup;
 import com.group13.auction.network.server.util.DTOMapper;
+import com.group13.auction.observer.AdminObserver;
 import com.group13.auction.observer.BidderObserver;
 import com.group13.auction.service.BidService;
 import com.group13.auction.service.iservice.IRatingService;
@@ -87,6 +90,9 @@ public class BidHandler implements PacketHandler {
           PacketType.CANCEL_AUTO_BID,
           PacketType.GET_AUTO_BID_STATUS,
           PacketType.GET_BID_HISTORY);
+
+  private static final String ADMIN_PARTICIPATION_MESSAGE =
+      "Tài khoản Admin chỉ được theo dõi phiên đấu giá, không thể tham gia đặt giá hay khóa cọc.";
 
   private final BidService bidService;
   private final IRatingService ratingService;
@@ -159,6 +165,9 @@ public class BidHandler implements PacketHandler {
           session, auction, requestId, PacketType.JOIN_AUCTION_FAILED)) {
         return;
       }
+      if (rejectIfAdminParticipation(session, requestId, PacketType.JOIN_AUCTION_FAILED)) {
+        return;
+      }
 
       NormalUser bidder = requireNormalUser(session, requestId);
       if (bidder == null) {
@@ -227,6 +236,11 @@ public class BidHandler implements PacketHandler {
         return;
       }
 
+      if (session.isAdmin()) {
+        handleWatchAsAdmin(session, auction, auctionId, requestId);
+        return;
+      }
+
       NormalUser user = requireNormalUser(session, requestId);
       if (user == null) {
         return;
@@ -256,6 +270,27 @@ public class BidHandler implements PacketHandler {
               ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId),
               requestId));
     }
+  }
+
+  private void handleWatchAsAdmin(
+      ClientSession session, Auction auction, String auctionId, String requestId) {
+    Admin admin = resolveAdminUser(session, requestId);
+    if (admin == null) {
+      return;
+    }
+
+    AdminObserver observer = new AdminObserver(admin);
+    bidService.watchAuction(admin, auction, observer);
+    sessionManager.addAuctionWatcher(session.getConnection(), auctionId);
+    log.info(
+        "Admin watch auction handled: auctionId={}, adminId={}, username={}, requestId={}",
+        auctionId,
+        admin.getId(),
+        admin.getUsername(),
+        requestId);
+
+    AuctionDTOs.AuctionDTO auctionDto = DTOMapper.toAuctionDTO(auction, admin);
+    session.send(Packet.of(PacketType.WATCH_AUCTION_SUCCESS, auctionDto, requestId));
   }
 
   // ── LEAVE ─────────────────────────────────────────────────────────────────
@@ -1105,6 +1140,19 @@ public class BidHandler implements PacketHandler {
   }
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
+    if (session.isAdmin()) {
+      log.warn(
+          "NormalUser required but session is admin: username={}, requestId={}",
+          session.getUsername(),
+          requestId);
+      session.send(
+          Packet.of(
+              PacketType.SYSTEM_ERROR,
+              ErrorDTO.of(ErrorDTO.UNAUTHORIZED, ADMIN_PARTICIPATION_MESSAGE, requestId),
+              requestId));
+      return null;
+    }
+
     // FIX PERFORMANCE: kiểm tra session cache trước — tránh DB lookup mỗi bid.
     // Cache được set lần đầu tiên khi load từ DB, sau đó tái dùng cho mọi request
     // của cùng session (bid, join, watch, leave). Object được update in-place bởi
@@ -1134,6 +1182,48 @@ public class BidHandler implements PacketHandler {
     NormalUser normalUser = (NormalUser) user;
     session.setCachedUser(normalUser); // cache để dùng lại cho các request tiếp theo
     return normalUser;
+  }
+
+  private Admin resolveAdminUser(ClientSession session, String requestId) {
+    String userId = session.getUserId();
+    if (userId != null) {
+      for (User user : AuctionManager.getInstance().getAllUsers()) {
+        if (userId.equals(user.getId()) && user instanceof Admin admin) {
+          return admin;
+        }
+      }
+    }
+
+    log.warn(
+        "Admin user not found in memory: userId={}, username={}, requestId={}",
+        userId,
+        session.getUsername(),
+        requestId);
+    session.send(
+        Packet.of(
+            PacketType.SYSTEM_ERROR,
+            ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, "Không tải được tài khoản Admin.", requestId),
+            requestId));
+    return null;
+  }
+
+  private boolean rejectIfAdminParticipation(
+      ClientSession session, String requestId, PacketType failureType) {
+    if (!session.isAdmin()) {
+      return false;
+    }
+
+    log.warn(
+        "Admin participation rejected: username={}, requestId={}, packet={}",
+        session.getUsername(),
+        requestId,
+        failureType);
+    session.send(
+        Packet.of(
+            failureType,
+            ErrorDTO.of(ErrorDTO.UNAUTHORIZED, ADMIN_PARTICIPATION_MESSAGE, requestId),
+            requestId));
+    return true;
   }
 
   private static long minimumMaxBidFor(Auction auction) {

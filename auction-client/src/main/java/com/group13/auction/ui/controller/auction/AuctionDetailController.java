@@ -123,6 +123,11 @@ public final class AuctionDetailController {
   /** Tham gia phiên rồi mở màn live bidding. */
   @FXML
   public void handleJoinLive() {
+    if (currentUserIsAdmin()) {
+      AlertUtil.showWarning("Tài khoản Admin chỉ được theo dõi phiên, không thể tham gia đặt giá.");
+      return;
+    }
+
     if (joinedAuctionState.hasJoined(auctionId)) {
       openLiveBidding();
       return;
@@ -311,10 +316,21 @@ public final class AuctionDetailController {
     remainingTimeLabel.setText(detail.remainingTimeText());
     renderProductSpecifications(detail);
 
-    boolean joinedByCurrentUser = joinedAuctionState.hasJoined(detail.auctionId());
-    currentUserLeftAuction = joinedAuctionState.hasLeft(detail.auctionId());
     currentAuctionJoinable = detail.joinable();
     currentArchiveViewable = !currentAuctionJoinable;
+
+    if (currentUserIsAdmin()) {
+      joinLiveButton.setVisible(false);
+      joinLiveButton.setManaged(false);
+      setCancelJoinButtonVisible(false);
+      watchLiveButton.setText("Theo dõi realtime (Admin)");
+      watchLiveButton.setDisable(!currentAuctionJoinable);
+      updatePaymentControls(detail);
+      return;
+    }
+
+    boolean joinedByCurrentUser = joinedAuctionState.hasJoined(detail.auctionId());
+    currentUserLeftAuction = joinedAuctionState.hasLeft(detail.auctionId());
 
     if (currentArchiveViewable) {
       joinLiveButton.setText("Phiên đã đóng");
@@ -526,6 +542,14 @@ public final class AuctionDetailController {
         .getCurrentSession()
         .map(UserSession::getUserId)
         .orElse("");
+  }
+
+  private boolean currentUserIsAdmin() {
+    return AppContext.getInstance()
+        .getSessionManager()
+        .getCurrentSession()
+        .map(UserSession::isAdmin)
+        .orElse(false);
   }
 
   private void openLiveBidding() {

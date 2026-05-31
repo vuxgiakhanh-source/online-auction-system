@@ -2,6 +2,8 @@ package com.group13.auction.service.auction;
 
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.protocol.PacketType;
+import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.mapper.AuctionViewModelMapper;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
@@ -70,6 +72,8 @@ public final class WatchAuctionService {
       state.markLeft(id);
     } else if (Boolean.TRUE.equals(dto.getJoinedByCurrentUser())) {
       state.markJoined(id);
+    } else if (Boolean.FALSE.equals(dto.getJoinedByCurrentUser())) {
+      state.forgetJoined(id);
     }
   }
 
@@ -85,6 +89,10 @@ public final class WatchAuctionService {
   public CompletableFuture<AuctionDTOs.JoinAuctionResponseDTO> joinAuction(String auctionId) {
     if (auctionId == null || auctionId.isBlank()) {
       return AuctionServiceSupport.failedFuture("Thiếu mã phiên đấu giá.");
+    }
+    if (currentUserIsAdmin()) {
+      return AuctionServiceSupport.failedFuture(
+          "Tài khoản Admin chỉ được theo dõi phiên, không thể tham gia đặt giá.");
     }
 
     JoinedAuctionState joinedAuctionState = JoinedAuctionState.getInstance();
@@ -134,5 +142,13 @@ public final class WatchAuctionService {
                 JoinedAuctionState.getInstance().markLeft(auctionId);
               }
             });
+  }
+
+  private static boolean currentUserIsAdmin() {
+    return AppContext.getInstance()
+        .getSessionManager()
+        .getCurrentSession()
+        .map(UserSession::isAdmin)
+        .orElse(false);
   }
 }

@@ -21,7 +21,10 @@ import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.StaffObserver;
 import com.group13.auction.service.iservice.IAccountService;
 import com.group13.auction.service.iservice.IRatingService;
+import com.group13.auction.dao.AdminDAO.AdminRow;
 import com.group13.auction.service.seller.SellerSanctionCoordinator;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,6 +219,30 @@ public class AccountService implements IAccountService {
     log.info("Tạo admin STAFF: username={}", username);
 
     return newAdmin;
+  }
+
+  /** Lấy toàn bộ Staff Admin từ DB — không phụ thuộc bộ nhớ in-memory. */
+  @Override
+  public List<Admin> getAllStaffAdmins() {
+    return adminDAO.findAll().stream()
+        .filter(row -> Admin.LEVEL_STAFF.equals(row.level()))
+        .map(AccountService::adminFromRow)
+        .toList();
+  }
+
+  private static Admin adminFromRow(AdminRow row) {
+    LocalDateTime created = row.createdAt() != null ? row.createdAt() : LocalDateTime.now();
+    return Admin.reconstitute(
+        row.id(),
+        created,
+        created,
+        row.username(),
+        row.passwordHash(),
+        row.email(),
+        AccountStatus.ACTIVE,
+        5.0,
+        row.level(),
+        null);
   }
 
   // ── Seller role ───────────────────────────────────────────────────────────

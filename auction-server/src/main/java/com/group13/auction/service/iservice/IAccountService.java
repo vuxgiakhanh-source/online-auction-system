@@ -3,6 +3,7 @@ package com.group13.auction.service.iservice;
 import com.group13.auction.model.user.Admin;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.User;
+import java.util.List;
 
 /** Hợp đồng quản lý tài khoản: ban, deposit, withdraw, tạo admin STAFF, quản lý role. */
 public interface IAccountService {
@@ -27,6 +28,9 @@ public interface IAccountService {
    * @throws IllegalArgumentException nếu email đã tồn tại cho NormalUser
    */
   Admin createStaffAdmin(String username, String password, String email);
+
+  /** Lấy danh sách Staff Admin (level STAFF) từ bảng {@code admins}. */
+  List<Admin> getAllStaffAdmins();
 
   /**
    * Hệ thống tự động duyệt role Seller nếu user chưa từng bị trừ rating.

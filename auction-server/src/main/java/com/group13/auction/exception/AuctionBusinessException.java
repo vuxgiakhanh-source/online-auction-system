@@ -10,6 +10,8 @@ public class AuctionBusinessException extends RuntimeException {
     INSUFFICIENT_DEPOSIT,
     /** Seller không được tự đấu giá món hàng của chính mình. */
     SELLER_CANNOT_BID_OWN_ITEM,
+    /** Admin chỉ được theo dõi phiên — không join, khóa cọc hay đặt giá. */
+    ADMIN_CANNOT_PARTICIPATE,
     /**
      * @deprecated Giữ mã lỗi tương thích client; phiên OPEN cho phép join lại sau leave.
      */
@@ -31,6 +33,8 @@ public class AuctionBusinessException extends RuntimeException {
         return "Số dư không đủ để đặt cọc (cần ít nhất 30% giá khởi điểm).";
       case SELLER_CANNOT_BID_OWN_ITEM:
         return "Seller không được tự đấu giá món hàng của chính mình.";
+      case ADMIN_CANNOT_PARTICIPATE:
+        return "Tài khoản Admin chỉ được theo dõi phiên đấu giá, không thể tham gia đặt giá hay khóa cọc.";
       case ALREADY_LEFT_AUCTION:
         return "Bạn đã rời phiên đấu giá này.";
       default:

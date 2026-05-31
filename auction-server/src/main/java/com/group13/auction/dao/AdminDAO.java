@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +75,35 @@ public class AdminDAO {
       log.error("Failed to find admin by username: username={}", username, e);
       return Optional.empty();
     }
+  }
+
+  /** Lấy toàn bộ admin từ bảng {@code admins} (nguồn dữ liệu cho danh sách Staff Admin). */
+  public List<AdminRow> findAll() {
+    String sql =
+        """
+        SELECT id, username, password_hash, email, level, created_at
+        FROM admins
+        ORDER BY username
+        """;
+    List<AdminRow> rows = new ArrayList<>();
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        Timestamp created = rs.getTimestamp("created_at");
+        rows.add(
+            new AdminRow(
+                rs.getString("id"),
+                rs.getString("username"),
+                rs.getString("password_hash"),
+                rs.getString("email"),
+                rs.getString("level"),
+                created != null ? created.toLocalDateTime() : LocalDateTime.now()));
+      }
+    } catch (SQLException e) {
+      log.error("Failed to list admins", e);
+    }
+    return rows;
   }
 
   /** Tạo Admin mới (STAFF hoặc MASTER) */

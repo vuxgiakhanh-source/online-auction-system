@@ -410,9 +410,8 @@ public class UserAdminHandler implements PacketHandler {
       return;
     }
     List<UserDTO> dtos =
-        AuctionManager.getInstance().getAllUsers().stream()
-            .filter(u -> u instanceof Admin)
-            .map(u -> DTOMapper.toUserDTO(u, false))
+        accountService.getAllStaffAdmins().stream()
+            .map(admin -> DTOMapper.toUserDTO(admin, false))
             .collect(Collectors.toList());
     session.send(Packet.of(PacketType.ADMIN_GET_ALL_STAFF_SUCCESS, dtos, requestId));
   }

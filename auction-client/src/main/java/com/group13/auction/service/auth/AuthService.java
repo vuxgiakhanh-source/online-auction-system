@@ -12,6 +12,7 @@ import com.group13.auction.core.session.UserSession;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.network.client.support.NetworkClientException;
+import com.group13.auction.service.auction.JoinedAuctionState;
 import com.group13.auction.viewmodel.auth.LoginFormState;
 import com.group13.auction.viewmodel.auth.RegisterFormState;
 import java.util.Objects;
@@ -130,6 +131,7 @@ public final class AuthService {
     if (networkFacade.isConnected()) {
       networkFacade.logout();
     }
+    JoinedAuctionState.getInstance().clear();
     sessionManager.clearSession();
   }
 

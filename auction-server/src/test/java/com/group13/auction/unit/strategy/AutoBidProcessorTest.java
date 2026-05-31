@@ -4,11 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.group13.auction.dao.NotificationDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.InvalidBidException;
 import com.group13.auction.manager.AuctionManager;
 import com.group13.auction.model.auction.Auction;
+import com.group13.auction.model.notification.Notification;
 import com.group13.auction.model.user.NormalUser;
+import com.group13.auction.network.server.ServerBroadcastNotifier;
 import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.service.BidService;
 import com.group13.auction.strategy.AutoBidProcessor;
@@ -69,6 +72,7 @@ class AutoBidProcessorTest {
   @Mock private BidService bidService;
   @Mock private SessionManager sessionManager;
   @Mock private UserDAO userDAO;
+  @Mock private NotificationDAO notificationDAO;
 
   // =========================================================================
   // SUT
@@ -120,11 +124,14 @@ class AutoBidProcessorTest {
     // Mặc định: sessionManager không làm gì
     lenient().doNothing().when(sessionManager).sendToUser(anyString(), any());
     lenient().doNothing().when(sessionManager).broadcastToAuctionAsync(anyString(), any());
+
+    wireServerBroadcastNotifier();
   }
 
   @AfterEach
   void tearDown() throws Exception {
     clearInternalRegistry();
+    clearAutoBidExhaustedKeys(ServerBroadcastNotifier.getInstance());
     // FIX: recentBidTimes đã được đổi sang bidActivityRings + các map mới.
     // Xóa tất cả static ConcurrentHashMap để tránh state rò rỉ giữa test.
     for (String fieldName :
@@ -151,6 +158,35 @@ class AutoBidProcessorTest {
     Field field = AutoBidProcessor.class.getDeclaredField("userDAO");
     field.setAccessible(true);
     field.set(processor, mockDao);
+  }
+
+  /** Gắn mock DAO/SessionManager vào ServerBroadcastNotifier cho test exhausted notify. */
+  private void wireServerBroadcastNotifier() throws Exception {
+    ServerBroadcastNotifier notifier = ServerBroadcastNotifier.getInstance();
+    lenient().when(userDAO.isActiveJoinedParticipant(anyString(), anyString())).thenReturn(true);
+    lenient().when(notificationDAO.save(any(Notification.class))).thenReturn(true);
+
+    Field userDaoField = ServerBroadcastNotifier.class.getDeclaredField("userDAO");
+    userDaoField.setAccessible(true);
+    userDaoField.set(notifier, userDAO);
+
+    Field notifDaoField = ServerBroadcastNotifier.class.getDeclaredField("notificationDAO");
+    notifDaoField.setAccessible(true);
+    notifDaoField.set(notifier, notificationDAO);
+
+    Field smField = ServerBroadcastNotifier.class.getDeclaredField("sessionManager");
+    smField.setAccessible(true);
+    smField.set(notifier, sessionManager);
+
+    clearAutoBidExhaustedKeys(notifier);
+  }
+
+  private static void clearAutoBidExhaustedKeys(ServerBroadcastNotifier notifier)
+      throws Exception {
+    Field keysField =
+        ServerBroadcastNotifier.class.getDeclaredField("autoBidExhaustedNotifiedKeys");
+    keysField.setAccessible(true);
+    ((java.util.Set<?>) keysField.get(notifier)).clear();
   }
 
   /** Reset ConcurrentHashMap nội bộ của Singleton AutoBidRegistry */
@@ -382,8 +418,9 @@ class AutoBidProcessorTest {
       // Act
       submitAndAwait(runningAuction, bidderB.getId());
 
-      // Assert
+      // Assert — push realtime + lưu inbox
       verify(sessionManager).sendToUser(eq(bidderA.getId()), any());
+      verify(notificationDAO).save(any(Notification.class));
     }
 
     @Test
