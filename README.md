@@ -67,10 +67,10 @@ Hệ thống tập trung **đấu giá đồng thời an toàn**, **cập nhật
 ## 🎬 Demo
 > Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
-|                    | Link                         |
-|--------------------|------------------------------|
-| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL.pdf)_ |
-| 🎥 **Video Demo**  | _[Cập nhật sau]_             |
+|                    | Link                           |
+|--------------------|--------------------------------|
+| 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL13.pdf)_ |
+| 🎥 **Video Demo**  | _[Cập nhật sau]_               |
 
 ---
 
@@ -241,7 +241,6 @@ online-auction-system/
 - MySQL 8.0 + JDBC — persistence layer
 - Logback — structured logging (3 file: business / dao / error)
 - JUnit 5 + Mockito + Testcontainers — testing pyramid
-- Lombok — giảm boilerplate
 
 **Frontend (Client)**
 - JavaFX 21 — desktop UI
@@ -321,10 +320,10 @@ db.password=your_password
 
 ```bash
 # Build nhanh để chạy app và install các module vào Maven local
-mvn clean install -DskipTests "-Dcheckstyle.skip"
+mvn clean install -DskipTests
 ```
 
-> `"-Dcheckstyle.skip"` được dùng vì repo hiện chưa kèm `google_checks.xml`. Trên PowerShell nên giữ dấu nháy cho các tham số `-D...` có dấu chấm.
+> Checkstyle dùng **Google Java Style** qua `<configLocation>google_checks.xml</configLocation>` trong `pom.xml` — file này do plugin/checkstyle resolve từ dependency, **không cần** copy `google_checks.xml` vào repo. Module `auction-client` mặc định `checkstyle.skip=true`. Trên PowerShell, nếu cần tham số `-D...` có dấu chấm thì bọc trong dấu nháy.
 
 #### 5. Khởi động Server
 
@@ -361,7 +360,7 @@ mvn -f auction-client/pom.xml javafx:run "-Dauction.server.host=localhost" "-Dau
 
 ### Vị trí file JAR
 
-Sau khi build xong (`mvn clean install -DskipTests "-Dcheckstyle.skip"`), các file JAR nằm tại:
+Sau khi build xong (`mvn clean install -DskipTests`), các file JAR nằm tại:
 
 | Module     | Đường dẫn                                                                                    |
 |------------|----------------------------------------------------------------------------------------------|
@@ -401,7 +400,7 @@ Compose khởi động MySQL + `auction-server` (WebSocket **8080**). Image uplo
 | `Address already in use: 8080`      | Port WebSocket bị chiếm        | Đổi `SERVER_PORT` khi chạy server |
 | `Address already in use: 8081`      | Port image server bị chiếm     | Đổi `IMAGE_SERVER_PORT` khi chạy server |
 | `JavaFX runtime components missing` | Chạy client JAR thiếu JavaFX   | Chạy `mvn -f auction-client/pom.xml javafx:run` |
-| `BUILD FAILURE` do Checkstyle       | Thiếu `google_checks.xml`      | Build với `"-Dcheckstyle.skip"` |
+| `BUILD FAILURE` do Checkstyle       | Vi phạm Google Java Style      | Sửa code theo báo lỗi, hoặc `"-Dcheckstyle.skip"` khi build nhanh local |
 | `BUILD FAILURE` do tests            | Test cần DB/Docker             | Dùng `-DskipTests` để chạy app nhanh, hoặc setup Docker trước khi test |
 
 ---
