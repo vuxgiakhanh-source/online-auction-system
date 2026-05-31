@@ -192,6 +192,8 @@ public final class DTOMapper {
       dto.setFinalPrice(auction.getWinner().getFinalPrice());
       dto.setWinnerId(auction.getWinner().getWinner().getId());
       dto.setWinnerUsername(auction.getWinner().getWinner().getUsername());
+    } else if (auction.getCurrentLeader() != null) {
+      dto.setFinalPrice(auction.getCurrentPrice());
     }
     return dto;
   }

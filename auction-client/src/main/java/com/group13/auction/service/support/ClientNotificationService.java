@@ -3,6 +3,8 @@ package com.group13.auction.service.support;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
+import com.group13.auction.core.context.AppContext;
+import com.group13.auction.core.session.UserSession;
 import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.session.ClientEventListener;
 import com.group13.auction.service.payment.SecondChanceRealtimeService;
@@ -139,7 +141,67 @@ public final class ClientNotificationService implements ClientEventListener {
 
   @Override
   public void onAuctionEnded(AuctionDTOs.AuctionUpdateDTO update) {
-    // Không hiển thị popup khi phiên kết thúc — UI màn hình đấu giá tự cập nhật trạng thái.
+    if (update == null) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(() -> showAuctionEndedPopup(update));
+  }
+
+  @Override
+  public void onAuctionNoWinner(AuctionDTOs.AuctionUpdateDTO update) {
+    if (update == null) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () ->
+            AlertUtil.showInfo(
+                prefixAuctionId(update)
+                    + "Phiên đấu giá đã kết thúc mà không có ai đặt giá.\n"
+                    + "Tiền cọc (nếu có) sẽ được hoàn trả theo quy định hệ thống."));
+  }
+
+  @Override
+  public void onAuctionReserveNotMet(AuctionDTOs.AuctionUpdateDTO update) {
+    if (update == null) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () -> {
+          StringBuilder message =
+              new StringBuilder(prefixAuctionId(update))
+                  .append("Phiên đấu giá đã kết thúc nhưng chưa đạt giá sàn (reserve price).");
+          long highestPrice = Math.round(update.getFinalPrice());
+          if (highestPrice > 0) {
+            message.append("\nGiá cao nhất: ").append(CurrencyUtil.formatVnd(highestPrice));
+          }
+          message.append("\nTiền cọc (nếu có) sẽ được hoàn trả theo quy định hệ thống.");
+          AlertUtil.showInfo(message.toString());
+        });
+  }
+
+  @Override
+  public void onAuctionCanceled(AuctionDTOs.AuctionUpdateDTO update) {
+    if (update == null) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(
+        () -> {
+          String reason =
+              update.getCancelReason() != null && !update.getCancelReason().isBlank()
+                  ? update.getCancelReason()
+                  : update.getMessage();
+          StringBuilder message =
+              new StringBuilder(prefixAuctionId(update)).append("Phiên đấu giá đã bị hủy.");
+          if (reason != null && !reason.isBlank()) {
+            message.append("\nLý do: ").append(reason);
+          }
+          message.append("\nTiền cọc (nếu có) sẽ được hoàn trả theo quy định hệ thống.");
+          AlertUtil.showWarning(message.toString());
+        });
   }
 
   @Override
@@ -259,6 +321,52 @@ public final class ClientNotificationService implements ClientEventListener {
                     + "\n"
                     + "Số dư mới: "
                     + CurrencyUtil.formatVnd(dto.getNewBalance())));
+  }
+
+  private void showAuctionEndedPopup(AuctionDTOs.AuctionUpdateDTO update) {
+    String currentUserId = resolveCurrentUserId();
+    String winnerId = update.getWinnerId();
+    long finalPrice = Math.round(update.getFinalPrice());
+    boolean currentUserWon =
+        currentUserId != null && winnerId != null && currentUserId.equals(winnerId);
+
+    StringBuilder message = new StringBuilder(prefixAuctionId(update));
+
+    if (currentUserWon) {
+      message.append("Chúc mừng! Bạn đã thắng phiên đấu giá này.\n");
+      if (finalPrice > 0) {
+        message.append("Giá chốt: ").append(CurrencyUtil.formatVnd(finalPrice)).append("\n");
+      }
+      message.append("Vui lòng thanh toán phần còn lại trong vòng 24 giờ để hoàn tất giao dịch.");
+      AlertUtil.showInfo(message.toString());
+      return;
+    }
+
+    message.append("Phiên đấu giá đã kết thúc.");
+    if (winnerId != null && !winnerId.isBlank()) {
+      message.append("\nNgười thắng: ").append(fallback(update.getWinnerUsername()));
+      if (finalPrice > 0) {
+        message.append("\nGiá chốt: ").append(CurrencyUtil.formatVnd(finalPrice));
+      }
+      if (currentUserId != null) {
+        message.append(
+            "\n\nTiền cọc của bạn (nếu có) sẽ được hoàn theo quy định hệ thống.");
+      }
+    }
+
+    AlertUtil.showInfo(message.toString());
+  }
+
+  private String prefixAuctionId(AuctionDTOs.AuctionUpdateDTO update) {
+    return "Mã phiên: " + fallback(update.getAuctionId()) + "\n\n";
+  }
+
+  private String resolveCurrentUserId() {
+    return AppContext.getInstance()
+        .getSessionManager()
+        .getCurrentSession()
+        .map(UserSession::getUserId)
+        .orElse(null);
   }
 
   private String fallback(String value) {
