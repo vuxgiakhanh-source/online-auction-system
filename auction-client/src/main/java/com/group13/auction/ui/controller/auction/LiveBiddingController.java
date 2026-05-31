@@ -553,6 +553,15 @@ public final class LiveBiddingController implements ClientEventListener {
   }
 
   @Override
+  public void onAuctionStarted(AuctionDTOs.AuctionUpdateDTO update) {
+    if (!isCurrentAuction(update == null ? null : update.getAuctionId())) {
+      return;
+    }
+
+    FxThreadUtil.runOnFxThread(() -> renderAuctionStarted(update));
+  }
+
+  @Override
   public void onAuctionCanceled(AuctionDTOs.AuctionUpdateDTO update) {
     if (update == null || !isCurrentAuction(update.getAuctionId())) {
       return;
@@ -742,6 +751,39 @@ public final class LiveBiddingController implements ClientEventListener {
       endTimeLabel.setText(DateTimeUtil.formatDateTime(update.getNewEndTime()));
       startCountdownTimer();
     }
+  }
+
+  private void renderAuctionStarted(AuctionDTOs.AuctionUpdateDTO update) {
+    if (statusLabel != null) {
+      statusLabel.setText("Đang đấu giá");
+    }
+
+    if (readOnlyMode) {
+      bidAllowed = false;
+      placeBidButton.setDisable(true);
+      syncAutoBidButtons(true);
+      setMessage("Phiên đã bắt đầu. Bạn đang xem phiên ở chế độ chỉ đọc.");
+      return;
+    }
+
+    bidAllowed = !adminWatchOnly && joinedAuctionState.hasJoined(auctionId);
+    placeBidButton.setDisable(!bidAllowed);
+    syncAutoBidButtons(adminWatchOnly || !bidAllowed);
+
+    if (adminWatchOnly) {
+      setMessage("Phiên đã bắt đầu. Tài khoản Admin chỉ được theo dõi realtime.");
+      return;
+    }
+
+    if (bidAllowed) {
+      setMessage(
+          update == null || update.getMessage() == null || update.getMessage().isBlank()
+              ? "Phiên đã bắt đầu. Bạn có thể đặt giá ngay bây giờ."
+              : update.getMessage());
+      return;
+    }
+
+    setMessage("Phiên đã bắt đầu. Hãy tham gia phiên trước khi đặt giá.");
   }
 
   private void renderAuctionClosed(

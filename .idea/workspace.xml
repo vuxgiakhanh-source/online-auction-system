@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="54e02acf-fc9e-48cc-a336-38882789db3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/af" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/LiveBiddingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/auction-client/src/main/java/com/group13/auction/ui/controller/auction/LiveBiddingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/erver" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,7 +19,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="829" />
+    <option name="cachedIndexableFilesCount" value="826" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -241,7 +247,7 @@
       <recent name="D:\online-auction-system\auction-server\src\test\java\com\group13\auction\unit\protocol" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ServerMain">
+  <component name="RunManager" selected="Application.Launcher">
     <configuration name="IntegrationTestLauncher" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.group13.auction.integration.base.IntegrationTestLauncher" />
       <module name="auction-server" />
@@ -332,8 +338,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ServerMain" />
         <item itemvalue="Application.Launcher" />
+        <item itemvalue="Application.ServerMain" />
         <item itemvalue="JUnit.PaymentStateTransitionIT" />
         <item itemvalue="Application.IntegrationTestLauncher" />
         <item itemvalue="JUnit.WalletConcurrencyTest" />

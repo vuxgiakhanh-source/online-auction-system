@@ -59,18 +59,19 @@ Hệ thống tập trung **đấu giá đồng thời an toàn**, **cập nhật
 
 **Phạm vi:** ứng dụng JavaFX trên máy người dùng, server WebSocket + MySQL; ba vai trò Bidder / Seller / Admin; không bao gồm thanh toán ngân hàng thật hay triển khai mobile/web public.
 
-> Add ảnh demo mô phỏng ứng dụng hoạt động (ghép 2-3 màn hình (Login, 
-> Auction List, Bidding Detail) vào một khung ảnh)
+<img width="1366" height="714" alt="login" src="https://github.com/user-attachments/assets/01a423a3-ddfb-4ccc-a977-03e2dce49856" />
+<img width="1366" height="718" alt="auction-list" src="https://github.com/user-attachments/assets/df8c87c9-5fe4-4810-b6ce-044f04e3189e" />
+<img width="1366" height="720" alt="live-bidding-room" src="https://github.com/user-attachments/assets/1fda4db8-975e-42b8-8ae4-31b8286ca58c" />
+
 
 ---
 
 ## 🎬 Demo
-> Ghép 2-3 màn hình (Login / Auction / Bidding Detail) vào 1 khung rồi add
 
 |                    | Link                           |
 |--------------------|--------------------------------|
 | 📄 **Báo cáo PDF** | _[Báo cáo](./BAOCAOBTL13.pdf)_ |
-| 🎥 **Video Demo**  | _[Cập nhật sau]_               |
+| 🎥 **Video Demo**  | https://drive.google.com/file/d/169bXlAm_PhxkFmzcMGVyu3k8yBPOSoyq/view?usp=sharing               |
 
 ---
 
@@ -86,11 +87,9 @@ Hệ thống tập trung **đấu giá đồng thời an toàn**, **cập nhật
 * __Phiên đấu giá linh hoạt (Smart Scheduler)__: Điều phối trạng thái phiên đấu giá hoàn toàn tự động theo thời gian thực (từ __OPEN → RUNNING → FINISHED__) nhờ __Scheduler__. Hệ thống đảm bảo tính chính xác tuyệt đối trong việc đóng/mở thầu.  
   > Tham khảo __Auction Life Sequence Diagram__ [tại đây](./AuctionLifecycleSequenceDiagram.md)  
 
-  > Add ảnh log của Server hiển thị chuyển trạng thái tự động (GIF)
 
 * __Đấu giá Realtime & Thông báo__: Cập nhật giá qua WebSocket (`BidHandler` → `SessionManager`); inbox và lifecycle events qua `AuctionService.notify` + `ServerBroadcastNotifier`.
   > Tham khảo __Realtime Broadcast via Observer__ [tại đây](./RealtimeBroadcastViaObserverSequenceDiagram.md)  
-  > Add ảnh 2 màn hình Client đang đấu giá với nhau và giá nhảy realtime (GIF)
 
 * __Hệ thống Tài chính & Hậu mãi__: Tích hợp ví nội bộ xử lý thanh toán tự động khi kết thúc phiên (PAID). Cung cấp cơ chế __Báo cáo chất lượng (Quality Report)__ và __Hoàn tiền (Refund)__ tự động nếu sản phẩm không đúng cam kết, bảo vệ tối đa quyền lợi người mua.
   > Tham khảo __Payment and Deposit Escrow__ [tại đây](./PaymentAndDepositEscrowSequenceDiagram.md), __Payment Expiration / Second Chance__ [tại đây](./PaymentExpirationSequenceDiagram.md), và __Seller Payout__ [tại đây](./SellerPayoutSequenceDiagram.md)
@@ -99,14 +98,12 @@ Hệ thống tập trung **đấu giá đồng thời an toàn**, **cập nhật
 * __Auto-Bidding (Đấu giá tự động)__: Cho phép người dùng thiết lập mức giá tối đa và bước giá để hệ thống tự động trả giá thay thế khi có đối thủ mới mà không cần trực tuyến liên tục.
   > Tham khảo __Auto-Bid Engine Sequence Diagram__ [tại đây](./AutoBidSequenceDiagram.md)
 
-  > Add ảnh chụp giao diện người dùng thiết lập AutoBidding
 
 
 * __Thuật toán Anti-Sniping__: Tự động gia hạn thời gian kết thúc nếu có lượt đặt giá phát sinh vào những giây cuối cùng, đảm bảo tính công bằng cho người dùng.
 
 
 * __Trực quan hóa dữ liệu__: Hiển thị biểu đồ đường (Line Chart) biểu diễn lịch sử đấu giá theo thời gian thực, giúp người dùng phân tích xu hướng và đưa ra quyết định đặt giá chính xác.
-  > Ảnh chụp LineChart trong chương trình
 
 * __Đề nghị Cơ hội Thứ hai (Second Chance Offer)__: Khi người thắng cuộc không thực hiện thanh toán đúng hạn, hệ thống sẽ tự động (nhờ __Scheduler__) gửi đề nghị cho người xếp thứ hai với mức giá cao nhất tiếp theo.
 
@@ -454,12 +451,12 @@ cd auction-client && mvn test
 ## 👥 Đội ngũ & Phân công nhiệm vụ (Team Section & Project Roadmap)
 
 ### 🧠 Đội ngũ
-|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                    |                Tiến độ                |   Trạng thái   |
-|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------|:-------------------------------------:|:--------------:|
-|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests <br/> · Integration tests | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
-| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Network tests <br/> · System tests                      | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
-|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer    | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
-|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                        | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+|                                            Thành viên                                               | Vai trò                                                      | Nhiệm vụ chính                                                                                                 |                Tiến độ                |   Trạng thái   |
+|:---------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------|:-------------------------------------:|:--------------:|
+|             <img src="https://github.com/hchyy.png" width="48px"/><br/>**Hồ Huyền Chi**             | **Trưởng nhóm** <br/> OOP Design <br/> Testing               | · Core auction logic <br/> · Code review & refactor <br/> · Tài liệu <br/> · Unit tests                        | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+| <img src="https://github.com/identicons/vuxgiakhanh-source.png" width="48px"/><br/>**Vũ Gia Khánh** | **Thành viên** <br/> Concurrency <br/> Testing <br/> Network | · Network & concurrency <br/> · Advanced features <br/> · Integration tests <br/> · Concurrency & Load tests   | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+|       <img src="https://github.com/thebrosaythree.png" width="48px"/><br/>**Bạch Quốc Thịnh**       | **Thành viên** <br/> Backend <br/> Database                  | · Database design <br/> · DAO layer <br/> · Anti-Sniping <br/> · Scheduler Building <br/> · Notification Layer | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
+|     <img src="https://github.com/identicons/bingbongg.png" width="48px"/><br/>**Trần Thảo Nhi**     | **Thành viên** <br/> Frontend                                | · Toàn bộ JavaFX UI <br/> · Client module <br/> · Tài liệu                                                     | ![100%](https://geps.dev/progress/100) |     ✅ DONE     |
 
 
 ### 📅 Tổng quan Timeline
