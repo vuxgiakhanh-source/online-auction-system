@@ -723,12 +723,21 @@ public final class TestFixture {
     field.set(target, value);
   }
 
-  /** Reset số dư SystemBank về 0 giữa các test. */
+  /** Reset số dư SystemBank về 0 giữa các test (RAM; ghi DB nếu pool đã cấu hình). */
   public static void resetSystemBankBalance() throws Exception {
+    SystemBank bank = SystemBank.getInstance();
+    bank.setDbPersistenceEnabled(false);
+
     Field field = SystemBank.class.getDeclaredField("totalBalance");
     field.setAccessible(true);
-    AtomicLong balance = (AtomicLong) field.get(SystemBank.getInstance());
+    AtomicLong balance = (AtomicLong) field.get(bank);
     balance.set(0L);
+
+    try {
+      new com.group13.auction.dao.SystemBankDAO().saveTotalBalance(0L);
+    } catch (Exception e) {
+      // Unit test không có DB — bỏ qua.
+    }
   }
   // Factory helpers (không cần DB)
 
