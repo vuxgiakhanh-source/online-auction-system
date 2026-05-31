@@ -35,6 +35,8 @@ public final class RestrictedAccessGuard {
       case DEPOSIT -> PacketType.DEPOSIT_FAILED;
       case WITHDRAW -> PacketType.WITHDRAW_FAILED;
       case GET_WALLET_BALANCE -> PacketType.SYSTEM_ERROR;
+      case ADMIN_GET_SYSTEM_BANK_SUMMARY -> PacketType.ADMIN_GET_SYSTEM_BANK_SUMMARY_FAILED;
+      case ADMIN_GET_FINANCIAL_TRANSACTIONS -> PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS_FAILED;
       default -> PacketType.SYSTEM_ERROR;
     };
   }

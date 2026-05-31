@@ -3,6 +3,7 @@ package com.group13.auction.network.client.facade;
 import com.google.gson.JsonElement;
 import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
+import com.group13.auction.common.dto.bank.SystemBankDTOs;
 import com.group13.auction.common.dto.rating.RatingDTOs;
 import com.group13.auction.common.dto.report.ReportDTOs;
 import com.group13.auction.common.protocol.Packet;
@@ -105,10 +106,9 @@ public final class ClientNetworkFacade {
       return wsClient.connectBlocking(timeout, unit);
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
-      throw new NetworkClientException("Kết nối bị gián đoạn. Vui lòng thử lại.", exception);
+      throw new NetworkClientException("Bị ngắt khi đang kết nối tới server.", exception);
     } catch (RuntimeException exception) {
-      throw new NetworkClientException(
-          "Không thể kết nối tới hệ thống. Vui lòng kiểm tra kết nối và thử lại." + serverUri, exception);
+      throw new NetworkClientException("Không thể kết nối tới server: " + serverUri, exception);
     }
   }
 
@@ -358,6 +358,15 @@ public final class ClientNetworkFacade {
 
   public void adminApproveSellerRole(String userId) {
     send(ClientRequestFactory.adminApproveSellerRole(userId));
+  }
+
+  public void adminGetSystemBankSummary() {
+    send(ClientRequestFactory.adminGetSystemBankSummary());
+  }
+
+  public void adminGetFinancialTransactions(
+      SystemBankDTOs.FinancialTransactionListRequestDTO request) {
+    send(ClientRequestFactory.adminGetFinancialTransactions(request));
   }
 
   // Rating

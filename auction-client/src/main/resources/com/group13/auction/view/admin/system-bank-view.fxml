@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane
+        prefWidth="1280.0"
+        prefHeight="720.0"
+        styleClass="screen-root"
+        stylesheets="@../../css/admin.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.group13.auction.ui.controller.admin.SystemBankController">
+
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                pannable="true"
+                styleClass="page-scroll-pane">
+        <VBox spacing="20.0" styleClass="admin-page">
+            <padding>
+                <Insets top="32.0" right="44.0" bottom="72.0" left="44.0"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="16.0">
+                <VBox spacing="6.0">
+                    <Label text="System Bank" styleClass="page-title"/>
+                    <Label
+                            text="Theo dõi dòng tiền giữ hộ, thuế hệ thống, hoàn tiền và giải ngân."
+                            wrapText="true"
+                            styleClass="page-subtitle"/>
+                    <Label fx:id="updatedAtLabel" text="Cập nhật: --" styleClass="muted-label"/>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Button
+                        fx:id="backButton"
+                        text="Về trang Admin"
+                        styleClass="secondary-button"
+                        onAction="#handleBackToDashboard"/>
+            </HBox>
+
+            <HBox spacing="18.0" styleClass="admin-card-row">
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Số dư System Bank" styleClass="card-description"/>
+                    <Label fx:id="totalBalanceLabel" text="--" styleClass="card-title"/>
+                </VBox>
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Tiền đang giữ hộ" styleClass="card-description"/>
+                    <Label fx:id="totalFundsHeldLabel" text="--" styleClass="card-title"/>
+                </VBox>
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Người thắng đã thanh toán" styleClass="card-description"/>
+                    <Label fx:id="totalPaymentReceivedLabel" text="--" styleClass="card-title"/>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="18.0" styleClass="admin-card-row">
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Thuế hệ thống" styleClass="card-description"/>
+                    <Label fx:id="totalTaxCollectedLabel" text="--" styleClass="card-title"/>
+                </VBox>
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Cọc bị tịch thu" styleClass="card-description"/>
+                    <Label fx:id="totalDepositForfeitedLabel" text="--" styleClass="card-title"/>
+                </VBox>
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Đã giải ngân seller" styleClass="card-description"/>
+                    <Label fx:id="totalPayoutToSellerLabel" text="--" styleClass="card-title"/>
+                </VBox>
+                <VBox spacing="8.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Đã hoàn người mua" styleClass="card-description"/>
+                    <Label fx:id="totalRefundedToWinnerLabel" text="--" styleClass="card-title"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="12.0" styleClass="table-panel" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <VBox spacing="4.0">
+                        <Label text="Lịch sử giao dịch tài chính" styleClass="section-title"/>
+                        <Label
+                                text="Theo dõi các khoản giữ hộ, hoàn tiền, thuế và giải ngân trong hệ thống."
+                                styleClass="muted-label"/>
+                    </VBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Label text="Loại" styleClass="form-label"/>
+                    <ChoiceBox fx:id="transactionTypeChoiceBox"
+                               prefWidth="220.0"
+                               styleClass="form-choice-box"/>
+
+                    <Label text="Mã phiên" styleClass="form-label"/>
+                    <TextField fx:id="auctionIdField"
+                               prefWidth="170.0"
+                               promptText="auctionId"
+                               styleClass="form-field"/>
+
+                    <Button
+                            fx:id="clearFilterButton"
+                            text="Xóa lọc"
+                            styleClass="secondary-button"
+                            onAction="#handleClearFilters"/>
+                    <Button
+                            fx:id="refreshButton"
+                            text="Tải lại"
+                            styleClass="primary-button"
+                            onAction="#handleRefresh"/>
+                </HBox>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <TableView fx:id="transactionTable" styleClass="data-table">
+                        <columns>
+                            <TableColumn fx:id="transactionIdColumn" text="Mã giao dịch" prefWidth="190.0"/>
+                            <TableColumn fx:id="typeColumn" text="Loại" prefWidth="190.0"/>
+                            <TableColumn fx:id="amountColumn" text="Số tiền" prefWidth="150.0"/>
+                            <TableColumn fx:id="senderColumn" text="Nguồn" prefWidth="170.0"/>
+                            <TableColumn fx:id="receiverColumn" text="Đích" prefWidth="170.0"/>
+                            <TableColumn fx:id="auctionColumn" text="Mã phiên" prefWidth="170.0"/>
+                            <TableColumn fx:id="createdAtColumn" text="Thời điểm" prefWidth="150.0"/>
+                        </columns>
+                    </TableView>
+
+                    <Label
+                            fx:id="emptyStateLabel"
+                            text="Chưa có giao dịch tài chính phù hợp."
+                            styleClass="empty-state-label"/>
+                </StackPane>
+            </VBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <ProgressIndicator
+                        fx:id="loadingIndicator"
+                        prefWidth="24.0"
+                        prefHeight="24.0"
+                        visible="false"
+                        managed="false"/>
+                <Label
+                        fx:id="statusLabel"
+                        text="Sẵn sàng."
+                        wrapText="true"
+                        styleClass="status-label"/>
+            </HBox>
+        </VBox>
+    </ScrollPane>
+
+    <Label styleClass="signature-label"
+           text="by CKNT team"
+           maxHeight="-Infinity"
+           maxWidth="-Infinity"
+           pickOnBounds="false"
+           StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets right="44.0" bottom="28.0"/>
+        </StackPane.margin>
+    </Label>
+</StackPane>

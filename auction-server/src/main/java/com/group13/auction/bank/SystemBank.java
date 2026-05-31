@@ -1,6 +1,8 @@
 package com.group13.auction.bank;
 
 import com.group13.auction.dao.SystemBankDAO;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,10 @@ public class SystemBank {
   /** Chỉ dùng trong test để tránh ghi DB. */
   public void setDbPersistenceEnabled(boolean enabled) {
     this.dbPersistenceEnabled = enabled;
+  }
+
+  public boolean isDbPersistenceEnabled() {
+    return dbPersistenceEnabled;
   }
 
   /** Khôi phục số dư từ DB — gọi từ {@link com.group13.auction.ServerMain} sau khi DB sẵn sàng. */
@@ -83,10 +89,36 @@ public class SystemBank {
     return payout;
   }
 
+  public synchronized long payoutToSeller(long salePrice, Connection conn) throws SQLException {
+    long tax = calculateTax(salePrice);
+    long payout = salePrice - tax;
+    long current = systemBankDAO.loadTotalBalanceForUpdate(conn) - payout;
+    if (!systemBankDAO.saveTotalBalance(conn, current)) {
+      throw new SQLException("Failed to persist SystemBank payout balance");
+    }
+    totalBalance.set(current);
+    log.info(
+        "Bank.payoutToSeller(tx): salePrice={}, tax={}, payout={}, totalBalance={}",
+        salePrice,
+        tax,
+        payout,
+        current);
+    return payout;
+  }
+
   public synchronized void refundToWinner(long amount) {
     long current = totalBalance.addAndGet(-amount);
     log.info("Bank.refundToWinner: amount={}, totalBalance={}", amount, current);
     persistBalance(current);
+  }
+
+  public synchronized void refundToWinner(long amount, Connection conn) throws SQLException {
+    long current = systemBankDAO.loadTotalBalanceForUpdate(conn) - amount;
+    if (!systemBankDAO.saveTotalBalance(conn, current)) {
+      throw new SQLException("Failed to persist SystemBank refund balance");
+    }
+    totalBalance.set(current);
+    log.info("Bank.refundToWinner(tx): amount={}, totalBalance={}", amount, current);
   }
 
   public synchronized void receiveForfeittedDeposit(long depositAmount) {
@@ -99,6 +131,10 @@ public class SystemBank {
   /** Số dư hiện tại (RAM, đã đồng bộ DB sau mỗi mutation nếu persistence bật). */
   public long getTotalBalance() {
     return totalBalance.get();
+  }
+
+  public synchronized void restoreTotalBalance(long value) {
+    totalBalance.set(Math.max(0L, value));
   }
 
   /** Đọc trực tiếp từ DB — dùng đối soát / admin, không thay thế hot path. */

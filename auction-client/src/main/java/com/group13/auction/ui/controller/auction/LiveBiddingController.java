@@ -825,11 +825,56 @@ public final class LiveBiddingController implements ClientEventListener {
     // Padding 10% range để đường giá không chạm sát viền trên/dưới
     long range = Math.max(max - min, 100_000L);
     long padding = range / 8;
-    yAxis.setLowerBound(Math.max(0, min - padding));
-    yAxis.setUpperBound(max + padding);
-    // Tick unit ~ 6–8 khoảng trên trục
-    long totalRange = (max + padding) - Math.max(0, min - padding);
-    yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
+    long lowerBound = niceFloor(Math.max(0, min - padding));
+    long upperBound = niceCeil(max + padding);
+    yAxis.setLowerBound(lowerBound);
+    yAxis.setUpperBound(upperBound);
+    yAxis.setTickUnit(niceTickUnit(upperBound - lowerBound, 6));
+  }
+
+  /**
+   * Tính tick unit "đẹp" (số tròn: 1, 2, 2.5, 5 × 10^n) để trục Y hiển thị mốc giá dễ đọc.
+   *
+   * @param totalRange khoảng giá trị cần chia
+   * @param targetTicks số khoảng mong muốn (thường 5–7)
+   */
+  private static long niceTickUnit(long totalRange, int targetTicks) {
+    if (totalRange <= 0 || targetTicks <= 0) {
+      return 500_000L;
+    }
+    double rawStep = (double) totalRange / targetTicks;
+    double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    double normalized = rawStep / magnitude;
+    double niceStep;
+    if (normalized <= 1.0) {
+      niceStep = 1.0;
+    } else if (normalized <= 2.0) {
+      niceStep = 2.0;
+    } else if (normalized <= 2.5) {
+      niceStep = 2.5;
+    } else if (normalized <= 5.0) {
+      niceStep = 5.0;
+    } else {
+      niceStep = 10.0;
+    }
+    long tick = Math.round(niceStep * magnitude);
+    return Math.max(tick, 100_000L);
+  }
+
+  /** Làm tròn xuống theo bội số gần nhất của niceTickUnit để lowerBound là số đẹp. */
+  private static long niceFloor(long value) {
+    if (value <= 0) return 0;
+    long magnitude = (long) Math.pow(10, Math.floor(Math.log10(value)));
+    long unit = Math.max(magnitude, 100_000L);
+    return (value / unit) * unit;
+  }
+
+  /** Làm tròn lên theo bội số gần nhất của niceTickUnit để upperBound là số đẹp. */
+  private static long niceCeil(long value) {
+    if (value <= 0) return 1_000_000L;
+    long magnitude = (long) Math.pow(10, Math.floor(Math.log10(value)));
+    long unit = Math.max(magnitude, 100_000L);
+    return ((value + unit - 1) / unit) * unit;
   }
 
   private void appendHistoryPoint(BidHistoryPointViewModel point) {
@@ -875,10 +920,11 @@ public final class LiveBiddingController implements ClientEventListener {
           historyPoints.stream().mapToLong(BidHistoryPointViewModel::price).max().getAsLong();
       long range = Math.max(max - min, 100_000L);
       long padding = range / 8;
-      yAxis.setLowerBound(Math.max(0, min - padding));
-      yAxis.setUpperBound(max + padding);
-      long totalRange = (max + padding) - Math.max(0, min - padding);
-      yAxis.setTickUnit(Math.max(50_000L, Math.round((double) totalRange / 7)));
+      long lowerBound = niceFloor(Math.max(0, min - padding));
+      long upperBound = niceCeil(max + padding);
+      yAxis.setLowerBound(lowerBound);
+      yAxis.setUpperBound(upperBound);
+      yAxis.setTickUnit(niceTickUnit(upperBound - lowerBound, 6));
     } else {
       yAxis.setLowerBound(0);
       yAxis.setUpperBound(1_000_000);

@@ -117,6 +117,16 @@ public class UserDAO {
     }
   }
 
+  /** Increment user balance using the caller transaction. */
+  public boolean addBalance(Connection conn, String userId, long amount) throws SQLException {
+    String sql = "UPDATE users SET balance = balance + ? WHERE id = ?";
+    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setLong(1, amount);
+      pstmt.setString(2, userId);
+      return pstmt.executeUpdate() > 0;
+    }
+  }
+
   public boolean saveUserAuctionActivity(String userId, String auctionId, String activityType) {
     // FIX: không bao giờ downgrade JOINED → WATCHING.
     // JOINED là trạng thái "cao hơn" WATCHING — user đã join thì mặc nhiên cũng đang watch.

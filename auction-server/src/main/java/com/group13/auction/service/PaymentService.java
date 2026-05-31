@@ -5,6 +5,8 @@ import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.BidTransactionDAO;
+import com.group13.auction.dao.DatabaseConnection;
+import com.group13.auction.dao.FinancialTransactionDAO;
 import com.group13.auction.dao.SecondChanceOfferDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.exception.PaymentException;
@@ -14,6 +16,8 @@ import com.group13.auction.model.auction.AuctionWinner;
 import com.group13.auction.model.auction.AuctionWinner.PaymentStatus;
 import com.group13.auction.model.auction.SecondChanceOffer;
 import com.group13.auction.model.bid.BidTransaction;
+import com.group13.auction.model.bid.FinancialTransaction;
+import com.group13.auction.model.bid.FinancialTransaction.TransactionType;
 import com.group13.auction.model.user.NormalUser;
 import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.network.server.ServerBroadcastNotifier;
@@ -22,6 +26,8 @@ import com.group13.auction.service.iservice.IAuctionService;
 import com.group13.auction.service.iservice.IPaymentService;
 import com.group13.auction.service.iservice.IRatingService;
 import com.group13.auction.service.iservice.IWalletService;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +49,7 @@ public class PaymentService implements IPaymentService {
   private final SecondChanceOfferDAO secondChanceOfferDAO;
   private final BidTransactionDAO bidTransactionDAO;
   private final UserDAO userDAO;
+  private final FinancialTransactionDAO financialTransactionDAO = new FinancialTransactionDAO();
 
   /** Lock theo winner/phiên; dọn qua cleanupAuctionLocks khi phiên kết thúc hoặc hủy. */
   private final ConcurrentHashMap<String, Object> winnerLocks = new ConcurrentHashMap<>();
@@ -183,6 +190,7 @@ public class PaymentService implements IPaymentService {
   public void releaseToSeller(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser seller = auction.getItem().getSeller();
+    long payout;
 
     synchronized (winnerLockFor(auctionWinner)) {
       // Idempotency guard: giải ngân khi FUNDS_HELD (winner chưa confirm) hoặc ITEM_RECEIVED (đã
@@ -196,22 +204,14 @@ public class PaymentService implements IPaymentService {
             auctionWinner.getPaymentStatus());
         return;
       }
-      auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+      payout =
+          systemBank.isDbPersistenceEnabled()
+              ? releaseToSellerPersisted(auction, auctionWinner, seller)
+              : releaseToSellerInMemory(auction, auctionWinner, seller);
     }
-
-    long payout = systemBank.payoutToSeller(auctionWinner.getFinalPrice());
-    // FIX: addBalance() dùng AtomicLong.addAndGet — atomic, không cần synchronized(seller)
-    // synchronized(seller) lock trên tham số ngoài → vi phạm Qodana + deadlock risk
-    seller.addBalance(payout);
-
-    userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
-
     ratingService.rewardSeller(seller);
 
     log.info("[PAYMENT] Giải ngân {} cho Seller {} từ SystemBank.", payout, seller.getUsername());
-
-    auctionWinnerDAO.updatePaymentStatus(
-        auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
 
     // Phiên đã xong: dọn lock trong map (gọi nhiều lần cũng được).
     cleanupAuctionLocks(auction.getId(), auctionWinner.getId());
@@ -221,6 +221,7 @@ public class PaymentService implements IPaymentService {
   public void refundToWinnerFromBank(Auction auction) {
     AuctionWinner auctionWinner = requireWinner(auction);
     NormalUser winner = auctionWinner.getWinner();
+    long refundAmount = auctionWinner.getFinalPrice();
 
     synchronized (winnerLockFor(auctionWinner)) {
       // Idempotency guard: hoàn tiền khi FUNDS_HELD hoặc ITEM_RECEIVED.
@@ -233,18 +234,15 @@ public class PaymentService implements IPaymentService {
             auctionWinner.getPaymentStatus());
         return;
       }
-      auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+      if (systemBank.isDbPersistenceEnabled()) {
+        refundToWinnerPersisted(auction, auctionWinner, winner, refundAmount);
+      } else {
+        refundToWinnerInMemory(auction, auctionWinner, winner, refundAmount);
+      }
     }
-
-    systemBank.refundToWinner(auctionWinner.getFinalPrice());
-    // FIX: addBalance() atomic — không cần synchronized(winner)
-    winner.addBalance(auctionWinner.getFinalPrice());
-
-    userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
-
     log.info(
         "[PAYMENT] SystemBank hoàn {} cho Winner {} (report thành công).",
-        auctionWinner.getFinalPrice(),
+        refundAmount,
         winner.getUsername());
 
     // Winner đã xử lý xong, bỏ lock của winner đó.
@@ -529,18 +527,174 @@ public class PaymentService implements IPaymentService {
     return offer;
   }
 
-  /**
-   * Lấy AuctionWinner, throw rõ ràng nếu null.
-   *
-   * <p>Dùng PaymentException thay IllegalStateException để PaymentHandler bắt đúng catch block và
-   * trả về error code có nghĩa cho client. IllegalStateException chỉ được bắt bởi generic {@code
-   * catch (Exception e)} → log ở level ERROR không phân biệt được "lỗi nghiệp vụ" vs "lỗi hệ
-   * thống".
-   *
-   * <p>Race condition: AuctionTimerService có thể gọi closeAuction() mà chưa setWinner() xong trước
-   * khi PaymentHandler gọi vào đây — lock theo auctionId ở cả hai phía giảm thiểu rủi ro, nhưng
-   * log.error ở đây là tuyến phòng thủ cuối.
-   */
+  /** Runs seller release as one DB transaction. */
+  private long releaseToSellerPersisted(
+      Auction auction, AuctionWinner auctionWinner, NormalUser seller) {
+    long previousBankBalance = systemBank.getTotalBalance();
+
+    synchronized (systemBank) {
+      try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+        boolean previousAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try {
+          long finalPrice = auctionWinner.getFinalPrice();
+          long payout = systemBank.payoutToSeller(finalPrice, conn);
+          saveSystemBankAudit(
+              conn,
+              "SYSTEM_BANK",
+              seller.getId(),
+              payout,
+              TransactionType.PAYOUT_TO_SELLER,
+              auction.getId());
+
+          long tax = Math.max(0L, finalPrice - payout);
+          if (tax > 0) {
+            saveSystemBankAudit(
+                conn,
+                "SYSTEM_BANK",
+                "SYSTEM_BANK",
+                tax,
+                TransactionType.TAX_COLLECTED,
+                auction.getId());
+          }
+
+          requireUpdated(
+              userDAO.addBalance(conn, seller.getId(), payout), "seller balance payout");
+          requireUpdated(
+              auctionWinnerDAO.updatePaymentStatus(
+                  conn, auctionWinner.getId(), PaymentStatus.COMPLETED.name()),
+              "auction winner payment status");
+
+          conn.commit();
+          seller.addBalance(payout);
+          auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+          return payout;
+        } catch (SQLException | RuntimeException e) {
+          rollbackQuietly(conn);
+          systemBank.restoreTotalBalance(previousBankBalance);
+          throw new IllegalStateException("Khong the giai ngan cho seller", e);
+        } finally {
+          restoreAutoCommit(conn, previousAutoCommit);
+        }
+      } catch (SQLException e) {
+        systemBank.restoreTotalBalance(previousBankBalance);
+        throw new IllegalStateException("Khong the mo transaction giai ngan", e);
+      }
+    }
+  }
+
+  private long releaseToSellerInMemory(
+      Auction auction, AuctionWinner auctionWinner, NormalUser seller) {
+    auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+    long finalPrice = auctionWinner.getFinalPrice();
+    long payout = systemBank.payoutToSeller(finalPrice);
+    recordSystemBankAudit(
+        "SYSTEM_BANK", seller.getId(), payout, TransactionType.PAYOUT_TO_SELLER, auction.getId());
+    long tax = Math.max(0L, finalPrice - payout);
+    if (tax > 0) {
+      recordSystemBankAudit(
+          "SYSTEM_BANK", "SYSTEM_BANK", tax, TransactionType.TAX_COLLECTED, auction.getId());
+    }
+    seller.addBalance(payout);
+    userDAO.updateBalances(seller.getId(), seller.getBalance(), seller.getLockedDeposit());
+    auctionWinnerDAO.updatePaymentStatus(
+        auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
+    return payout;
+  }
+
+  private void refundToWinnerPersisted(
+      Auction auction, AuctionWinner auctionWinner, NormalUser winner, long refundAmount) {
+    long previousBankBalance = systemBank.getTotalBalance();
+
+    synchronized (systemBank) {
+      try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+        boolean previousAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try {
+          systemBank.refundToWinner(refundAmount, conn);
+          saveSystemBankAudit(
+              conn,
+              "SYSTEM_BANK",
+              winner.getId(),
+              refundAmount,
+              TransactionType.REFUND_TO_WINNER,
+              auction.getId());
+          requireUpdated(
+              userDAO.addBalance(conn, winner.getId(), refundAmount), "winner refund balance");
+          requireUpdated(
+              auctionWinnerDAO.updatePaymentStatus(
+                  conn, auctionWinner.getId(), PaymentStatus.COMPLETED.name()),
+              "auction winner payment status");
+
+          conn.commit();
+          winner.addBalance(refundAmount);
+          auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+        } catch (SQLException | RuntimeException e) {
+          rollbackQuietly(conn);
+          systemBank.restoreTotalBalance(previousBankBalance);
+          throw new IllegalStateException("Khong the hoan tien cho winner", e);
+        } finally {
+          restoreAutoCommit(conn, previousAutoCommit);
+        }
+      } catch (SQLException e) {
+        systemBank.restoreTotalBalance(previousBankBalance);
+        throw new IllegalStateException("Khong the mo transaction hoan tien", e);
+      }
+    }
+  }
+
+  private void refundToWinnerInMemory(
+      Auction auction, AuctionWinner auctionWinner, NormalUser winner, long refundAmount) {
+    auctionWinner.setPaymentStatus(PaymentStatus.COMPLETED);
+    systemBank.refundToWinner(refundAmount);
+    recordSystemBankAudit(
+        "SYSTEM_BANK",
+        winner.getId(),
+        refundAmount,
+        TransactionType.REFUND_TO_WINNER,
+        auction.getId());
+    winner.addBalance(refundAmount);
+    userDAO.updateBalances(winner.getId(), winner.getBalance(), winner.getLockedDeposit());
+    auctionWinnerDAO.updatePaymentStatus(
+        auctionWinner.getId(), auctionWinner.getPaymentStatus().name());
+  }
+
+  private void saveSystemBankAudit(
+      Connection conn,
+      String senderId,
+      String receiverId,
+      long amount,
+      TransactionType type,
+      String auctionId)
+      throws SQLException {
+    FinancialTransaction tx =
+        FinancialTransaction.create(senderId, receiverId, amount, type, auctionId);
+    requireUpdated(financialTransactionDAO.saveTransaction(conn, tx), "system bank audit " + type);
+  }
+
+  private void requireUpdated(boolean updated, String operation) throws SQLException {
+    if (!updated) {
+      throw new SQLException("No row updated for " + operation);
+    }
+  }
+
+  private void rollbackQuietly(Connection conn) {
+    try {
+      conn.rollback();
+    } catch (SQLException rollbackEx) {
+      log.error("Payment transaction rollback failed", rollbackEx);
+    }
+  }
+
+  private void restoreAutoCommit(Connection conn, boolean autoCommit) {
+    try {
+      conn.setAutoCommit(autoCommit);
+    } catch (SQLException autoCommitEx) {
+      log.warn("Failed to restore autoCommit after payment transaction", autoCommitEx);
+    }
+  }
+
+  /** Returns the auction winner or throws a PaymentException with a client-safe reason. */
   private AuctionWinner requireWinner(Auction auction) {
     AuctionWinner w = auction.getWinner();
     if (w == null) {
@@ -554,6 +708,28 @@ public class PaymentService implements IPaymentService {
           "Phiên này chưa có người thắng cuộc (winner=null). Vui lòng thử lại sau.");
     }
     return w;
+  }
+
+  private void recordSystemBankAudit(
+      String senderId, String receiverId, long amount, TransactionType type, String auctionId) {
+    FinancialTransaction tx =
+        FinancialTransaction.create(senderId, receiverId, amount, type, auctionId);
+    if (!financialTransactionDAO.saveTransaction(tx)) {
+      if (systemBank.isDbPersistenceEnabled()) {
+        throw new IllegalStateException(
+            "Khong luu duoc audit SystemBank: type="
+                + type
+                + ", amount="
+                + amount
+                + ", auctionId="
+                + auctionId);
+      }
+      log.warn(
+          "[PAYMENT] Không lưu được audit SystemBank: type={}, amount={}, auctionId={}",
+          type,
+          amount,
+          auctionId);
+    }
   }
 
   private void finalizeSecondChanceOfferExpired(SecondChanceOffer offer, Auction auction) {

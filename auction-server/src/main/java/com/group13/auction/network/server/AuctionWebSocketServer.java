@@ -9,6 +9,7 @@ import com.group13.auction.network.server.handler.AuctionHandler;
 import com.group13.auction.network.server.handler.AuthHandler;
 import com.group13.auction.network.server.handler.BidHandler;
 import com.group13.auction.network.server.handler.PaymentHandler;
+import com.group13.auction.network.server.handler.SystemBankAdminHandler;
 import com.group13.auction.network.server.handler.UserAdminHandler;
 import com.group13.auction.network.server.router.PacketRouter;
 import com.group13.auction.network.server.session.ClientSession;
@@ -71,6 +72,7 @@ public class AuctionWebSocketServer extends WebSocketServer {
     // UserAdminHandler tự khởi tạo UserDAO bên trong — dùng cho ADMIN_UNBAN persist.
     router.register(
         new UserAdminHandler(accountService, ratingService, qualityReportService, sessionManager));
+    router.register(new SystemBankAdminHandler());
 
     router.register(new ChatbotHandler());
 

@@ -66,7 +66,19 @@ public class AuctionWinnerDAO {
     }
   }
 
-  /** Cập nhật trạng thái FUNDS_HELD và hạn xác nhận nhận hàng sau khi winner thanh toán. */
+  /** Update payment status using the caller transaction. */
+  public boolean updatePaymentStatus(Connection conn, String winnerId, String status)
+      throws SQLException {
+    String sql = "UPDATE auction_winners SET payment_status = ? WHERE id = ?";
+
+    try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setString(1, status);
+      pstmt.setString(2, winnerId);
+      return pstmt.executeUpdate() > 0;
+    }
+  }
+
+  /** Update FUNDS_HELD status and confirm-receipt deadline after winner payment. */
   public boolean updateFundsHeld(
       String winnerId, String status, java.time.LocalDateTime confirmReceiptDeadline) {
     String sql =

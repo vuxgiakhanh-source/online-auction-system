@@ -4,6 +4,7 @@ import com.group13.auction.common.dto.admin.AdminDTOs;
 import com.group13.auction.common.dto.auction.AuctionDTOs;
 import com.group13.auction.common.dto.auth.LoginRequestDTO;
 import com.group13.auction.common.dto.auth.RegisterRequestDTO;
+import com.group13.auction.common.dto.bank.SystemBankDTOs;
 import com.group13.auction.common.dto.bid.BidDTOs;
 import com.group13.auction.common.dto.payment.PaymentDTOs;
 import com.group13.auction.common.dto.rating.RatingDTOs;
@@ -128,6 +129,15 @@ public final class ClientRequestFactory {
 
   public static Packet<Void> adminGetAllAuctions() {
     return Packet.of(PacketType.ADMIN_GET_ALL_AUCTIONS);
+  }
+
+  public static Packet<Void> adminGetSystemBankSummary() {
+    return Packet.of(PacketType.ADMIN_GET_SYSTEM_BANK_SUMMARY);
+  }
+
+  public static Packet<SystemBankDTOs.FinancialTransactionListRequestDTO>
+  adminGetFinancialTransactions(SystemBankDTOs.FinancialTransactionListRequestDTO request) {
+    return Packet.of(PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS, request);
   }
 
   // Bidding / realtime auction session
@@ -260,13 +270,13 @@ public final class ClientRequestFactory {
   // Chatbot
 
   public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO>
-      chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
+  chatbotAsk(com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotAskRequestDTO request) {
     return Packet.of(PacketType.CHATBOT_ASK, request);
   }
 
   public static Packet<com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO>
-      chatbotGetFaqList(
-          com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
+  chatbotGetFaqList(
+      com.group13.auction.common.dto.chatbot.ChatbotDTOs.ChatbotFaqListRequestDTO request) {
     return Packet.of(PacketType.CHATBOT_GET_FAQ_LIST, request);
   }
 }

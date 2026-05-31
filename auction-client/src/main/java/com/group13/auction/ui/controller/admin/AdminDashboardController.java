@@ -27,8 +27,10 @@ public final class AdminDashboardController {
   @FXML private Button reportsButton;
   @FXML private Button logoutButton;
   @FXML private Button staffAdminButton;
+  @FXML private Button systemBankButton;
 
   @FXML private VBox staffAdminCard;
+  @FXML private VBox systemBankCard;
 
   /** Khởi tạo dashboard và kiểm tra quyền Admin. */
   @FXML
@@ -43,14 +45,23 @@ public final class AdminDashboardController {
       accessStatusLabel.setText(adminModerationService.getCurrentAdminAccessLabel());
     }
 
-    setAdminActionsEnabled(admin);
-    setMasterOnlyActionsVisible(adminModerationService.currentUserIsMasterAdmin());
+    boolean masterAdmin = adminModerationService.currentUserIsMasterAdmin();
+    setAdminActionsEnabled(admin, masterAdmin);
+    setStaffAdminActionsVisible(masterAdmin);
+    setSystemBankActionsVisible(admin);
   }
 
   @FXML
   private void handleOpenStaffAdminManagement() {
     if (adminModerationService.currentUserIsMasterAdmin()) {
       Navigator.getInstance().goToAdminStaffManagement();
+    }
+  }
+
+  @FXML
+  private void handleOpenSystemBank() {
+    if (adminModerationService.currentUserIsAdmin()) {
+      Navigator.getInstance().goToAdminSystemBank();
     }
   }
 
@@ -88,25 +99,28 @@ public final class AdminDashboardController {
     Navigator.getInstance().goToLanding();
   }
 
-  private void setAdminActionsEnabled(boolean enabled) {
+  private void setAdminActionsEnabled(boolean admin, boolean masterAdmin) {
     if (usersButton != null) {
-      usersButton.setDisable(!enabled);
+      usersButton.setDisable(!admin);
     }
     if (auctionsButton != null) {
-      auctionsButton.setDisable(!enabled);
+      auctionsButton.setDisable(!admin);
     }
     if (sellersButton != null) {
-      sellersButton.setDisable(!enabled);
+      sellersButton.setDisable(!admin);
     }
     if (reportsButton != null) {
-      reportsButton.setDisable(!enabled);
+      reportsButton.setDisable(!admin);
     }
     if (staffAdminButton != null) {
-      staffAdminButton.setDisable(!enabled || !adminModerationService.currentUserIsMasterAdmin());
+      staffAdminButton.setDisable(!masterAdmin);
+    }
+    if (systemBankButton != null) {
+      systemBankButton.setDisable(!admin);
     }
   }
 
-  private void setMasterOnlyActionsVisible(boolean visible) {
+  private void setStaffAdminActionsVisible(boolean visible) {
     if (staffAdminCard != null) {
       staffAdminCard.setVisible(visible);
       staffAdminCard.setManaged(visible);
@@ -118,4 +132,15 @@ public final class AdminDashboardController {
     }
   }
 
+  private void setSystemBankActionsVisible(boolean visible) {
+    if (systemBankCard != null) {
+      systemBankCard.setVisible(visible);
+      systemBankCard.setManaged(visible);
+    }
+    if (systemBankButton != null) {
+      systemBankButton.setVisible(visible);
+      systemBankButton.setManaged(visible);
+      systemBankButton.setDisable(!visible);
+    }
+  }
 }

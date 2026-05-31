@@ -110,6 +110,16 @@ public final class PacketExpectations {
         PacketType.ADMIN_CANCEL_AUCTION_SUCCESS,
         PacketType.ADMIN_CANCEL_AUCTION_FAILED);
     successOnly(map, PacketType.ADMIN_GET_ALL_AUCTIONS, PacketType.ADMIN_GET_ALL_AUCTIONS_SUCCESS);
+    put(
+        map,
+        PacketType.ADMIN_GET_SYSTEM_BANK_SUMMARY,
+        PacketType.ADMIN_GET_SYSTEM_BANK_SUMMARY_SUCCESS,
+        PacketType.ADMIN_GET_SYSTEM_BANK_SUMMARY_FAILED);
+    put(
+        map,
+        PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS,
+        PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS_SUCCESS,
+        PacketType.ADMIN_GET_FINANCIAL_TRANSACTIONS_FAILED);
 
     put(
         map,

@@ -275,6 +275,27 @@ public enum PacketType {
 
   /** Server trả về danh sách phiên đấu giá. Payload: {@code AuctionListDTO}. */
   ADMIN_GET_ALL_AUCTIONS_SUCCESS,
+  // SYSTEM BANK — Đối soát tài chính hệ thống cho Admin
+  /** Admin yêu cầu tổng quan System Bank. Payload: rỗng. */
+  ADMIN_GET_SYSTEM_BANK_SUMMARY,
+
+  /** Server trả về tổng quan System Bank. Payload: {@code SystemBankSummaryDTO}. */
+  ADMIN_GET_SYSTEM_BANK_SUMMARY_SUCCESS,
+
+  /** Server từ chối lấy tổng quan System Bank. Payload: {@code ErrorDTO}. */
+  ADMIN_GET_SYSTEM_BANK_SUMMARY_FAILED,
+
+  /**
+   * Admin yêu cầu danh sách giao dịch tài chính. Payload: {@code
+   * FinancialTransactionListRequestDTO}.
+   */
+  ADMIN_GET_FINANCIAL_TRANSACTIONS,
+
+  /** Server trả về danh sách giao dịch tài chính. Payload: {@code FinancialTransactionListDTO}. */
+  ADMIN_GET_FINANCIAL_TRANSACTIONS_SUCCESS,
+
+  /** Server từ chối lấy danh sách giao dịch tài chính. Payload: {@code ErrorDTO}. */
+  ADMIN_GET_FINANCIAL_TRANSACTIONS_FAILED,
   // BID — Đấu giá thủ công
   /**
    * Client yêu cầu tham gia phiên đấu giá (đóng cọc + nhận realtime updates). Payload: {@code

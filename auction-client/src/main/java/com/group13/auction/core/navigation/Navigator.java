@@ -277,4 +277,9 @@ public final class Navigator {
   public void goToAdminStaffManagement() {
     goTo(Route.ADMIN_STAFF_MANAGEMENT);
   }
+
+  /** Chuyển tới màn System Bank dành cho Admin. */
+  public void goToAdminSystemBank() {
+    goTo(Route.ADMIN_SYSTEM_BANK);
+  }
 }

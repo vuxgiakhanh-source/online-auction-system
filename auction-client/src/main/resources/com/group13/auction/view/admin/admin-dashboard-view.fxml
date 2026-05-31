@@ -23,114 +23,136 @@
                 pannable="true"
                 styleClass="page-scroll-pane">
         <VBox spacing="24.0" styleClass="admin-page">
-        <padding>
-            <Insets top="36.0" right="48.0" bottom="72.0" left="48.0"/>
-        </padding>
+            <padding>
+                <Insets top="36.0" right="48.0" bottom="72.0" left="48.0"/>
+            </padding>
 
-        <HBox alignment="CENTER_LEFT" spacing="16.0">
-            <VBox spacing="6.0">
-                <Label fx:id="titleLabel" text="Bảng điều khiển quản trị" styleClass="page-title"/>
-                <Label
-                        fx:id="accessStatusLabel"
-                        text="Đang kiểm tra quyền quản trị..."
-                        styleClass="page-subtitle"/>
-            </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="16.0">
+                <VBox spacing="6.0">
+                    <Label fx:id="titleLabel" text="Bảng điều khiển quản trị" styleClass="page-title"/>
+                    <Label
+                            fx:id="accessStatusLabel"
+                            text="Đang kiểm tra quyền quản trị..."
+                            styleClass="page-subtitle"/>
+                </VBox>
 
-            <Region HBox.hgrow="ALWAYS"/>
+                <Region HBox.hgrow="ALWAYS"/>
 
-            <Button
-                    fx:id="logoutButton"
-                    text="Đăng xuất"
-                    styleClass="secondary-button"
-                    onAction="#handleLogout"/>
-        </HBox>
-
-        <HBox spacing="18.0" styleClass="admin-card-row">
-            <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
-                <Label text="Người dùng" styleClass="card-title"/>
-                <Label
-                        text="Xem tài khoản, khóa hoặc mở khóa người dùng khi cần thiết."
-                        wrapText="true"
-                        styleClass="card-description"/>
-                <Region VBox.vgrow="ALWAYS"/>
                 <Button
-                        fx:id="usersButton"
-                        text="Quản lý người dùng"
-                        maxWidth="Infinity"
-                        styleClass="primary-button"
-                        onAction="#handleOpenUserModeration"/>
-            </VBox>
+                        fx:id="logoutButton"
+                        text="Đăng xuất"
+                        styleClass="secondary-button"
+                        onAction="#handleLogout"/>
+            </HBox>
 
-            <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
-                <Label text="Phiên đấu giá" styleClass="card-title"/>
-                <Label
-                        text="Xem toàn bộ phiên đấu giá và hủy phiên không hợp lệ theo lý do được hỗ trợ."
-                        wrapText="true"
-                        styleClass="card-description"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <Button
-                        fx:id="auctionsButton"
-                        text="Quản lý phiên đấu giá"
-                        maxWidth="Infinity"
-                        styleClass="primary-button"
-                        onAction="#handleOpenAuctionModeration"/>
-            </VBox>
+            <HBox spacing="18.0" styleClass="admin-card-row">
+                <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Người dùng" styleClass="card-title"/>
+                    <Label
+                            text="Xem tài khoản, khóa hoặc mở khóa người dùng khi cần thiết."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="usersButton"
+                            text="Quản lý người dùng"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenUserModeration"/>
+                </VBox>
 
-            <VBox
-                    fx:id="staffAdminCard"
-                    spacing="12.0"
-                    styleClass="admin-nav-card"
-                    visible="false"
-                    managed="false"
-                    HBox.hgrow="ALWAYS">
-                <Label text="Staff Admin" styleClass="card-title"/>
-                <Label
-                        text="Tạo tài khoản Staff Admin mới và xem danh sách Staff Admin hiện có."
-                        wrapText="true"
-                        styleClass="card-description"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <Button
-                        fx:id="staffAdminButton"
-                        text="Quản lý Staff Admin"
-                        maxWidth="Infinity"
-                        styleClass="primary-button"
-                        onAction="#handleOpenStaffAdminManagement"/>
-            </VBox>
-        </HBox>
+                <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Phiên đấu giá" styleClass="card-title"/>
+                    <Label
+                            text="Xem toàn bộ phiên đấu giá và hủy phiên không hợp lệ theo lý do được hỗ trợ."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="auctionsButton"
+                            text="Quản lý phiên đấu giá"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenAuctionModeration"/>
+                </VBox>
 
-        <HBox spacing="18.0" styleClass="admin-card-row">
-            <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
-                <Label text="Duyệt quyền Seller" styleClass="card-title"/>
-                <Label
-                        text="Duyệt quyền Seller cho các tài khoản đủ điều kiện."
-                        wrapText="true"
-                        styleClass="card-description"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <Button
-                        fx:id="sellersButton"
-                        text="Duyệt Seller"
-                        maxWidth="Infinity"
-                        styleClass="primary-button"
-                        onAction="#handleOpenSellerApproval"/>
-            </VBox>
+                <VBox
+                        fx:id="staffAdminCard"
+                        spacing="12.0"
+                        styleClass="admin-nav-card"
+                        visible="false"
+                        managed="false"
+                        HBox.hgrow="ALWAYS">
+                    <Label text="Staff Admin" styleClass="card-title"/>
+                    <Label
+                            text="Tạo tài khoản Staff Admin mới và xem danh sách Staff Admin hiện có."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="staffAdminButton"
+                            text="Quản lý Staff Admin"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenStaffAdminManagement"/>
+                </VBox>
+            </HBox>
 
-            <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
-                <Label text="Báo cáo chất lượng" styleClass="card-title"/>
-                <Label
-                        text="Xem các báo cáo chất lượng do người dùng gửi và duyệt hoặc từ chối."
-                        wrapText="true"
-                        styleClass="card-description"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <Button
-                        fx:id="reportsButton"
-                        text="Duyệt báo cáo"
-                        maxWidth="Infinity"
-                        styleClass="primary-button"
-                        onAction="#handleOpenReportReview"/>
-            </VBox>
-        </HBox>
+            <HBox spacing="18.0" styleClass="admin-card-row">
+                <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Duyệt quyền Seller" styleClass="card-title"/>
+                    <Label
+                            text="Duyệt quyền Seller cho các tài khoản đủ điều kiện."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="sellersButton"
+                            text="Duyệt Seller"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenSellerApproval"/>
+                </VBox>
+
+                <VBox spacing="12.0" styleClass="admin-nav-card" HBox.hgrow="ALWAYS">
+                    <Label text="Báo cáo chất lượng" styleClass="card-title"/>
+                    <Label
+                            text="Xem các báo cáo chất lượng do người dùng gửi và duyệt hoặc từ chối."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="reportsButton"
+                            text="Duyệt báo cáo"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenReportReview"/>
+                </VBox>
+
+                <VBox
+                        fx:id="systemBankCard"
+                        spacing="12.0"
+                        styleClass="admin-nav-card"
+                        visible="false"
+                        managed="false"
+                        HBox.hgrow="ALWAYS">
+                    <Label text="System Bank" styleClass="card-title"/>
+                    <Label
+                            text="Theo dõi dòng tiền giữ hộ, thuế hệ thống, hoàn tiền và giải ngân."
+                            wrapText="true"
+                            styleClass="card-description"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button
+                            fx:id="systemBankButton"
+                            text="Mở System Bank"
+                            maxWidth="Infinity"
+                            styleClass="primary-button"
+                            onAction="#handleOpenSystemBank"/>
+                </VBox>
+            </HBox>
         </VBox>
     </ScrollPane>
+
     <Label styleClass="signature-label"
            text="by CKNT team"
            maxHeight="-Infinity"
@@ -138,7 +160,7 @@
            pickOnBounds="false"
            StackPane.alignment="BOTTOM_RIGHT">
         <StackPane.margin>
-            <Insets top="0.0" right="44.0" bottom="28.0" left="0.0"/>
+            <Insets right="44.0" bottom="28.0"/>
         </StackPane.margin>
     </Label>
 </StackPane>
