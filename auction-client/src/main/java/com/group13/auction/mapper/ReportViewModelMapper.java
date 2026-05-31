@@ -70,7 +70,7 @@ public final class ReportViewModelMapper {
   public static QualityReportReviewViewModel toReviewViewModel(ReportDTOs.QualityReportDTO dto) {
     if (dto == null) {
       return new QualityReportReviewViewModel(
-          "--", "--", "--", "--", "--", "--", "--", "--", false);
+          "--", "--", "--", "--", "--", "--", "--", "--", List.of(), false);
     }
 
     String status = dto.getStatus();
@@ -84,6 +84,7 @@ public final class ReportViewModelMapper {
         fallback(dto.getDescription()),
         statusText(status),
         DateTimeUtil.formatDateTime(dto.getCreatedAt()),
+        dto.getEvidenceUrls() == null ? List.of() : List.copyOf(dto.getEvidenceUrls()),
         "PENDING".equalsIgnoreCase(fallback(status)));
   }
 

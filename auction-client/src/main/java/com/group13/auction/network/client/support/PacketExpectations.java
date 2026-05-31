@@ -77,6 +77,11 @@ public final class PacketExpectations {
         PacketType.SECOND_CHANCE_ACCEPT_SUCCESS,
         PacketType.SECOND_CHANCE_ACCEPT_FAILED);
     successOnly(map, PacketType.SECOND_CHANCE_DECLINE, PacketType.SECOND_CHANCE_DECLINE_SUCCESS);
+    put(
+        map,
+        PacketType.GET_MY_SECOND_CHANCE_OFFERS,
+        PacketType.GET_MY_SECOND_CHANCE_OFFERS_SUCCESS,
+        PacketType.GET_MY_SECOND_CHANCE_OFFERS_FAILED);
 
     put(
         map,

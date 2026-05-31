@@ -122,6 +122,36 @@ public class SecondChanceOfferDAO {
   }
 
   /** Các phiên có offer PENDING đã quá hạn — dùng cho scheduler. */
+  /** Tất cả Second Chance Offer PENDING dành cho runner-up (chưa hết hạn). */
+  public List<SecondChanceOffer> findPendingOffersByRunnerUpId(String runnerUpId) {
+    List<SecondChanceOffer> offers = new ArrayList<>();
+    if (runnerUpId == null || runnerUpId.isBlank()) {
+      return offers;
+    }
+
+    String sql =
+        "SELECT id, runner_up_id, auction_id, offer_price, deposit_paid, "
+            + "status, deadline, created_at FROM second_chance_offers "
+            + "WHERE runner_up_id = ? AND status = 'PENDING' AND deadline >= ? "
+            + "ORDER BY deadline ASC";
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+      pstmt.setString(1, runnerUpId);
+      pstmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+      try (ResultSet rs = pstmt.executeQuery()) {
+        while (rs.next()) {
+          SecondChanceOffer offer = mapOfferRow(rs);
+          if (offer != null) {
+            offers.add(offer);
+          }
+        }
+      }
+    } catch (SQLException e) {
+      log.error("Lỗi tìm Second Chance Offer PENDING theo runner-up: runnerUpId={}", runnerUpId, e);
+    }
+    return offers;
+  }
+
   /** Tất cả Second Chance Offer PENDING thuộc phiên của Seller (mọi trạng thái phiên). */
   public List<SecondChanceOffer> findPendingOffersBySellerId(String sellerId) {
     List<SecondChanceOffer> offers = new ArrayList<>();

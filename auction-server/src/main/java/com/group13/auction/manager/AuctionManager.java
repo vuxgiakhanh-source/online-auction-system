@@ -1,11 +1,17 @@
 package com.group13.auction.manager;
 
+import com.group13.auction.dao.AdminDAO;
 import com.group13.auction.dao.AuctionDAO;
 import com.group13.auction.dao.AuctionWinnerDAO;
 import com.group13.auction.dao.UserDAO;
 import com.group13.auction.model.auction.Auction;
 import com.group13.auction.model.auction.AuctionWinner;
+import com.group13.auction.model.user.Admin;
+import com.group13.auction.model.user.SystemAdmin;
 import com.group13.auction.model.user.User;
+import com.group13.auction.model.user.User.AccountStatus;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import com.group13.auction.observer.AuctionEvent;
 import com.group13.auction.observer.AuctionObserver;
 import java.util.ArrayList;
@@ -168,19 +174,73 @@ public class AuctionManager {
     return null;
   }
 
-  /** Tìm user theo username (ưu tiên DB, fallback in-memory). */
+  /**
+   * Tìm user theo username.
+   *
+   * <p>Username có thể trùng giữa bảng {@code admins} và {@code users} (vd. tài khoản demo). Ưu
+   * tiên Admin giống {@link com.group13.auction.service.UserService#login} để Staff Admin không bị
+   * nhầm thành NormalUser khi duyệt báo cáo / ban user.
+   */
   public User findUserByUsername(String username) {
+    if (username == null || username.isBlank()) {
+      return null;
+    }
+
+    for (User user : allUsers.values()) {
+      if (username.equals(user.getUsername()) && user instanceof Admin) {
+        return user;
+      }
+    }
+
+    AdminDAO adminDAO = new AdminDAO();
+    Optional<AdminDAO.AdminRow> adminRow = adminDAO.findByUsername(username);
+    if (adminRow.isPresent()) {
+      User admin = resolveAdminFromRow(adminRow.get());
+      allUsers.put(admin.getId(), admin);
+      return admin;
+    }
+
     User dbUser = userDAO.findUserByUsername(username);
     if (dbUser != null) {
       allUsers.put(dbUser.getId(), dbUser);
       return dbUser;
     }
     for (User u : allUsers.values()) {
-      if (u.getUsername().equals(username)) {
+      if (username.equals(u.getUsername())) {
         return u;
       }
     }
     return null;
+  }
+
+  private static User resolveAdminFromRow(AdminDAO.AdminRow row) {
+    if (Admin.LEVEL_MASTER.equals(row.level()) && isSystemAdminAccount(row.username())) {
+      try {
+        SystemAdmin system = SystemAdmin.getInstance();
+        if (system.getUsername().equalsIgnoreCase(row.username())) {
+          return system;
+        }
+      } catch (IllegalStateException ignored) {
+        // Chưa bootstrap — dùng reconstitute bên dưới
+      }
+    }
+
+    LocalDateTime created = row.createdAt() != null ? row.createdAt() : LocalDateTime.now();
+    return Admin.reconstitute(
+        row.id(),
+        created,
+        created,
+        row.username(),
+        row.passwordHash(),
+        row.email(),
+        AccountStatus.ACTIVE,
+        5.0,
+        row.level(),
+        null);
+  }
+
+  private static boolean isSystemAdminAccount(String username) {
+    return "SYSTEM".equalsIgnoreCase(username);
   }
 
   // Auction management

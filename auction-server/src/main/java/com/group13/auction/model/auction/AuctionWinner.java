@@ -244,22 +244,22 @@ public class AuctionWinner extends Entity {
   }
 
   /**
-   * Đánh dấu winner đã thanh toán; kích hoạt đếm 7 ngày "nhận hàng". Chỉ {@link
+   * Đánh dấu winner đã thanh toán; kích hoạt hạn xác nhận nhận hàng. Chỉ {@link
    * com.group13.auction.service.PaymentService} gọi sau khi tiền vào SystemBank.
    */
   public void markFundsHeld() {
     this.paymentStatus = PaymentStatus.FUNDS_HELD;
-    this.confirmReceiptDeadline = LocalDateTime.now().plusDays(7);
+    this.confirmReceiptDeadline = LocalDateTime.now().plusMinutes(30);
     markUpdated();
   }
 
   /**
-   * Winner bấm "Nhận hàng"; kích hoạt đếm 3 ngày cho phép report. Chỉ {@link
+   * Winner bấm "Nhận hàng"; kích hoạt hạn gửi báo cáo chất lượng. Chỉ {@link
    * com.group13.auction.service.PaymentService} gọi.
    */
   public void confirmReceipt() {
     this.paymentStatus = PaymentStatus.ITEM_RECEIVED;
-    this.reportDeadline = LocalDateTime.now().plusDays(3);
+    this.reportDeadline = LocalDateTime.now().plusMinutes(30);
     markUpdated();
   }
 

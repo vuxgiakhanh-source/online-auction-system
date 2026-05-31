@@ -16,9 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Runtime store cho Second Chance Offer phía client.
  *
- * <p>Server hiện có realtime event {@code SECOND_CHANCE_OFFER_NOTIFY}, nhưng chưa có API lấy danh
- * sách pending Second Chance Offer. Vì vậy service này chỉ lưu các offer mà client nhận được trong
- * phiên chạy hiện tại.
+ * <p>Lưu offer nhận qua realtime và có thể được bổ sung từ API {@code GET_MY_SECOND_CHANCE_OFFERS}.
  */
 public final class SecondChanceRealtimeService implements ClientEventListener {
 
@@ -80,6 +78,24 @@ public final class SecondChanceRealtimeService implements ClientEventListener {
   /** Xóa toàn bộ offer runtime, thường dùng khi logout. */
   public void clear() {
     pendingOffers.clear();
+  }
+
+  /**
+   * Gộp offer từ server vào runtime store (ưu tiên dữ liệu server).
+   *
+   * @param offers danh sách offer server trả về
+   */
+  public void mergeServerOffers(List<PaymentDTOs.SecondChanceOfferDTO> offers) {
+    if (offers == null || offers.isEmpty()) {
+      return;
+    }
+
+    for (PaymentDTOs.SecondChanceOfferDTO offer : offers) {
+      if (offer == null || offer.getAuctionId() == null || offer.getAuctionId().isBlank()) {
+        continue;
+      }
+      pendingOffers.put(offer.getAuctionId(), offer);
+    }
   }
 
   @Override

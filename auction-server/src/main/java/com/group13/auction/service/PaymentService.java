@@ -417,7 +417,7 @@ public class PaymentService implements IPaymentService {
     // FIX: persist new winner vào DB ngay lập tức.
     // Trước đây không có dòng này → sau restart getWinner() = null → PaymentHandler crash.
     // Đây là trường hợp song song với closeAuction() (winner thường) — phải saveWinner().
-    if (!auctionWinnerDAO.saveWinner(newWinner)) {
+    if (!auctionWinnerDAO.saveOrReplaceWinner(newWinner)) {
       log.error(
           "[PAYMENT] Không thể lưu second-chance AuctionWinner vào DB: auctionId={} runnerId={}",
           auction.getId(),

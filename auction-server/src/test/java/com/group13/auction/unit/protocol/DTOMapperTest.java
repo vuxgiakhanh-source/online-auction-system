@@ -151,6 +151,18 @@ class DTOMapperTest {
     }
 
     @Test
+    @DisplayName("auction có winner → winnerId và paymentStatus được map")
+    void auctionWithWinner_winnerFieldsMapped() {
+      Auction auction = TestFixture.finishedAuction(seller, bidder, 1_000_000L, 2_500_000L);
+      auction.setWinner(TestFixture.pendingWinner(bidder, auction.getId(), 2_500_000L, 300_000L));
+      AuctionDTOs.AuctionDTO dto = DTOMapper.toAuctionDTO(auction);
+
+      assertThat(dto.getWinnerId()).isEqualTo(bidder.getId());
+      assertThat(dto.getWinnerUsername()).isEqualTo(bidder.getUsername());
+      assertThat(dto.getPaymentStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
     @DisplayName("reserveMet = true khi currentPrice >= reservePrice")
     void reserveMet_mappedCorrectly() {
       runningAuction.updateBid(runningAuction.getReservePrice() + 100_000L, bidder);

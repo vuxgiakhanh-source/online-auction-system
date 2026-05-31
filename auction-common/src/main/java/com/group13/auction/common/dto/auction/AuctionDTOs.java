@@ -135,6 +135,14 @@ public final class AuctionDTOs {
     private LocalDateTime reportDeadline;
 
     /**
+     * Người thắng cuộc thực tế (từ bảng auction_winners). Khác {@link #currentLeaderId} khi có
+     * Second Chance Offer — runner-up promoted vẫn là currentLeader cũ trên bảng bids.
+     */
+    private String winnerId;
+
+    private String winnerUsername;
+
+    /**
      * User hiện tại đã JOIN phiên này chưa (đặt cọc thành công, được quyền bid). Server điền dựa
      * trên {@code user.hasJoined(auctionId)}. Null nếu request không gắn với user cụ thể (ví dụ:
      * anonymous watch, broadcast list). Client dùng để khôi phục trạng thái join sau khi tắt/mở lại
@@ -285,6 +293,22 @@ public final class AuctionDTOs {
 
     public void setReportDeadline(LocalDateTime reportDeadline) {
       this.reportDeadline = reportDeadline;
+    }
+
+    public String getWinnerId() {
+      return winnerId;
+    }
+
+    public void setWinnerId(String winnerId) {
+      this.winnerId = winnerId;
+    }
+
+    public String getWinnerUsername() {
+      return winnerUsername;
+    }
+
+    public void setWinnerUsername(String winnerUsername) {
+      this.winnerUsername = winnerUsername;
     }
 
     public Boolean getJoinedByCurrentUser() {

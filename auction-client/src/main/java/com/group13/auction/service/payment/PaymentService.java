@@ -8,6 +8,9 @@ import com.group13.auction.network.client.facade.ClientNetworkFacade;
 import com.group13.auction.network.client.request.ClientRequestFactory;
 import com.group13.auction.service.auction.AuctionServiceSupport;
 import com.group13.auction.viewmodel.payment.PaymentResultViewModel;
+import com.group13.auction.viewmodel.payment.SecondChanceOfferViewModel;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -119,5 +122,32 @@ public final class PaymentService {
         ClientRequestFactory.declineSecondChance(auctionId.trim()),
         PacketType.SECOND_CHANCE_DECLINE_SUCCESS,
         "Không từ chối được Second Chance Offer.");
+  }
+
+  /**
+   * Lấy danh sách Second Chance Offer đang PENDING của runner-up hiện tại từ server.
+   *
+   * @return future chứa danh sách offer DTO
+   */
+  public CompletableFuture<List<PaymentDTOs.SecondChanceOfferDTO>> fetchMyPendingSecondChanceOfferDtos() {
+    return AuctionServiceSupport.sendRequest(
+            networkFacade,
+            ClientRequestFactory.getMySecondChanceOffers(),
+            PacketType.GET_MY_SECOND_CHANCE_OFFERS_SUCCESS,
+            PaymentDTOs.SecondChanceOfferDTO[].class,
+            "Không tải được Second Chance Offer.")
+        .thenApply(Arrays::asList);
+  }
+
+  /**
+   * Lấy danh sách Second Chance Offer đang PENDING của runner-up hiện tại từ server.
+   *
+   * @return future chứa danh sách offer đã format cho UI
+   */
+  public CompletableFuture<List<SecondChanceOfferViewModel>> getMyPendingSecondChanceOffers() {
+    return fetchMyPendingSecondChanceOfferDtos()
+        .thenApply(
+            offers ->
+                offers.stream().map(PaymentViewModelMapper::toSecondChanceOfferViewModel).toList());
   }
 }

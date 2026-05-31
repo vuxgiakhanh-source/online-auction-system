@@ -124,6 +124,51 @@ public class AuctionWinnerDAO {
     }
   }
 
+  /** Cập nhật winner khi runner-up chấp nhận Second Chance (đã có row từ winner cũ). */
+  public boolean replaceWinnerForSecondChance(AuctionWinner winner) {
+    String sql =
+        "UPDATE auction_winners SET winner_id = ?, final_price = ?, deposit_paid = ?, "
+            + "payment_status = ?, payment_deadline = ?, confirm_receipt_deadline = NULL, "
+            + "report_deadline = NULL, is_second_offer = 1 "
+            + "WHERE auction_id = ?";
+
+    try (Connection conn = DatabaseConnection.getInstance().getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+      pstmt.setString(1, winner.getWinner().getId());
+      pstmt.setLong(2, winner.getFinalPrice());
+      pstmt.setLong(3, winner.getDepositPaid());
+      pstmt.setString(4, winner.getPaymentStatus().name());
+      pstmt.setTimestamp(
+          5,
+          winner.getPaymentDeadline() != null
+              ? java.sql.Timestamp.valueOf(winner.getPaymentDeadline())
+              : null);
+      pstmt.setString(6, winner.getAuctionId());
+
+      return pstmt.executeUpdate() > 0;
+    } catch (SQLException e) {
+      log.error(
+          "Lỗi cập nhật winner second-chance: auctionId={}, winnerUserId={}",
+          winner != null ? winner.getAuctionId() : null,
+          winner != null && winner.getWinner() != null ? winner.getWinner().getId() : null,
+          e);
+      return false;
+    }
+  }
+
+  /** Lưu hoặc thay winner — dùng khi chấp nhận Second Chance sau khi winner cũ đã EXPIRED. */
+  public boolean saveOrReplaceWinner(AuctionWinner winner) {
+    if (winner == null || winner.getAuctionId() == null) {
+      return false;
+    }
+
+    if (findByAuctionId(winner.getAuctionId(), new UserDAO()) != null) {
+      return replaceWinnerForSecondChance(winner);
+    }
+    return saveWinner(winner);
+  }
+
   /**
    * Khôi phục AuctionWinner từ DB theo auction_id. Dùng khi server restart để restore winner vào
    * in-memory Auction object.

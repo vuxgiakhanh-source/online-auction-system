@@ -2,6 +2,7 @@ package com.group13.auction.ui.controller.admin;
 
 import com.group13.auction.core.navigation.Navigator;
 import com.group13.auction.service.report.QualityReportService;
+import com.group13.auction.ui.util.ImageLoader;
 import com.group13.auction.viewmodel.admin.QualityReportReviewViewModel;
 import java.util.List;
 import java.util.concurrent.CompletionException;
@@ -18,6 +19,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.FlowPane;
 
 /**
  * Controller cho màn Admin review báo cáo chất lượng.
@@ -47,6 +49,7 @@ public final class QualityReportReviewController {
   @FXML private TableColumn<QualityReportReviewViewModel, String> createdAtColumn;
 
   @FXML private TextArea reportDetailArea;
+  @FXML private FlowPane evidenceGalleryPane;
 
   @FXML private Label statusLabel;
   @FXML private Label emptyStateLabel;
@@ -286,6 +289,10 @@ public final class QualityReportReviewController {
               + selectedReport.getDescription());
     }
 
+    if (evidenceGalleryPane != null) {
+      ImageLoader.fillPreviewableGallery(evidenceGalleryPane, selectedReport.getEvidenceUrls());
+    }
+
     updateReviewButtons(selectedReport);
   }
 
@@ -326,6 +333,9 @@ public final class QualityReportReviewController {
   private void clearDetail() {
     if (reportDetailArea != null) {
       reportDetailArea.clear();
+    }
+    if (evidenceGalleryPane != null) {
+      evidenceGalleryPane.getChildren().clear();
     }
   }
 

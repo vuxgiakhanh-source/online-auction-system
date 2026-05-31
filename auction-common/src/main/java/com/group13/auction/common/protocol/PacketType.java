@@ -550,6 +550,15 @@ public enum PacketType {
   /** Server xác nhận đã ghi nhận từ chối. Payload: rỗng. */
   SECOND_CHANCE_DECLINE_SUCCESS,
 
+  /** Runner-up lấy danh sách Second Chance Offer đang PENDING. Payload: rỗng. */
+  GET_MY_SECOND_CHANCE_OFFERS,
+
+  /** Server trả về danh sách offer pending. Payload: {@code List<SecondChanceOfferDTO>}. */
+  GET_MY_SECOND_CHANCE_OFFERS_SUCCESS,
+
+  /** Server từ chối lấy danh sách offer. Payload: {@code ErrorDTO}. */
+  GET_MY_SECOND_CHANCE_OFFERS_FAILED,
+
   /**
    * Server push thông báo Second Chance Offer đã hết hạn (không phản hồi trong 24h). Payload:
    * {@code String auctionId}.

@@ -95,7 +95,7 @@
                         <Label styleClass="notification-muted-text"
                                textAlignment="CENTER"
                                wrapText="true"
-                               text="Offer đang chờ từ realtime; lịch sử thông báo SCO hiển thị bên dưới."/>
+                               text="Offer đang chờ sẽ hiển thị ở đây sau khi tải từ server."/>
                     </VBox>
 
                     <ListView fx:id="secondChanceListView"

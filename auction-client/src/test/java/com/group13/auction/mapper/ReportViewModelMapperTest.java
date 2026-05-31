@@ -168,6 +168,18 @@ class ReportViewModelMapperTest {
     assertFalse(reviewViewModel.isReviewable());
   }
 
+  @Test
+  void toReviewViewModelShouldMapEvidenceUrls() {
+    ReportDTOs.QualityReportDTO dto = createReport("QR-4", "PENDING");
+    dto.setEvidenceUrls(List.of("/uploads/reports/img1.jpg", "/uploads/reports/img2.jpg"));
+
+    QualityReportReviewViewModel viewModel = ReportViewModelMapper.toReviewViewModel(dto);
+
+    assertEquals(
+        List.of("/uploads/reports/img1.jpg", "/uploads/reports/img2.jpg"),
+        viewModel.getEvidenceUrls());
+  }
+
   private static ReportDTOs.QualityReportDTO createReport(String reportId, String status) {
     ReportDTOs.QualityReportDTO dto = new ReportDTOs.QualityReportDTO();
     dto.setReportId(reportId);

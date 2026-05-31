@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /** Unit tests for {@link QualityReportReviewViewModel}. */
@@ -21,6 +22,7 @@ class QualityReportReviewViewModelTest {
             "Sản phẩm nhận được khác mô tả trong phiên đấu giá.",
             "PENDING",
             "26/05/2026 20:30",
+            List.of("/uploads/reports/evidence1.jpg"),
             true);
 
     assertEquals("QR-1", viewModel.getReportId());
@@ -31,6 +33,7 @@ class QualityReportReviewViewModelTest {
     assertEquals("Sản phẩm nhận được khác mô tả trong phiên đấu giá.", viewModel.getDescription());
     assertEquals("PENDING", viewModel.getStatus());
     assertEquals("26/05/2026 20:30", viewModel.getCreatedAtText());
+    assertEquals(List.of("/uploads/reports/evidence1.jpg"), viewModel.getEvidenceUrls());
     assertTrue(viewModel.isReviewable());
   }
 
@@ -46,6 +49,7 @@ class QualityReportReviewViewModelTest {
             "Sản phẩm đã được xử lý khiếu nại.",
             "RESOLVED",
             "26/05/2026 21:00",
+            List.of(),
             false);
 
     assertFalse(viewModel.isReviewable());

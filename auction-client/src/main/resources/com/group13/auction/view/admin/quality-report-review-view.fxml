@@ -9,6 +9,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -130,8 +131,11 @@
                         fx:id="reportDetailArea"
                         editable="false"
                         wrapText="true"
-                        VBox.vgrow="ALWAYS"
+                        prefRowCount="10"
                         styleClass="form-area"/>
+
+                <Label text="Ảnh bằng chứng" styleClass="section-title"/>
+                <FlowPane fx:id="evidenceGalleryPane" styleClass="evidence-gallery"/>
             </VBox>
         </HBox>
 

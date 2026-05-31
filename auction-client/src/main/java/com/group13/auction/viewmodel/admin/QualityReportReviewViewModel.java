@@ -1,5 +1,7 @@
 package com.group13.auction.viewmodel.admin;
 
+import java.util.List;
+
 /** View model hiển thị báo cáo chất lượng trong màn Admin Report Review. */
 public class QualityReportReviewViewModel {
 
@@ -11,6 +13,7 @@ public class QualityReportReviewViewModel {
   private final String description;
   private final String status;
   private final String createdAtText;
+  private final List<String> evidenceUrls;
   private final boolean reviewable;
 
   /**
@@ -24,6 +27,7 @@ public class QualityReportReviewViewModel {
    * @param description mô tả chi tiết
    * @param status trạng thái báo cáo
    * @param createdAtText thời gian tạo đã format
+   * @param evidenceUrls danh sách URL ảnh bằng chứng
    * @param reviewable true nếu admin có thể review báo cáo này
    */
   public QualityReportReviewViewModel(
@@ -35,6 +39,7 @@ public class QualityReportReviewViewModel {
       String description,
       String status,
       String createdAtText,
+      List<String> evidenceUrls,
       boolean reviewable) {
     this.reportId = reportId;
     this.reporterId = reporterId;
@@ -44,6 +49,7 @@ public class QualityReportReviewViewModel {
     this.description = description;
     this.status = status;
     this.createdAtText = createdAtText;
+    this.evidenceUrls = evidenceUrls == null ? List.of() : List.copyOf(evidenceUrls);
     this.reviewable = reviewable;
   }
 
@@ -77,6 +83,10 @@ public class QualityReportReviewViewModel {
 
   public String getCreatedAtText() {
     return createdAtText;
+  }
+
+  public List<String> getEvidenceUrls() {
+    return evidenceUrls;
   }
 
   public boolean isReviewable() {

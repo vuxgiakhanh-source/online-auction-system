@@ -117,6 +117,8 @@ public final class DTOMapper {
     // Populate winner payment info — client cần để hiển thị đúng trạng thái
     // đơn hàng (FUNDS_HELD / ITEM_RECEIVED) sau khi refresh mà không bị stale.
     if (auction.getWinner() != null) {
+      dto.setWinnerId(auction.getWinner().getWinner().getId());
+      dto.setWinnerUsername(auction.getWinner().getWinner().getUsername());
       dto.setPaymentStatus(auction.getWinner().getPaymentStatus().name());
       dto.setConfirmReceiptDeadline(auction.getWinner().getConfirmReceiptDeadline());
       dto.setReportDeadline(auction.getWinner().getReportDeadline());

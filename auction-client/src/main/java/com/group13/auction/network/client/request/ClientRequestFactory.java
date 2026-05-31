@@ -87,6 +87,10 @@ public final class ClientRequestFactory {
     return Packet.of(PacketType.SECOND_CHANCE_DECLINE, auctionId);
   }
 
+  public static Packet<Void> getMySecondChanceOffers() {
+    return Packet.of(PacketType.GET_MY_SECOND_CHANCE_OFFERS);
+  }
+
   // Auction
 
   public static Packet<AuctionDTOs.CreateAuctionRequestDTO> createAuction(

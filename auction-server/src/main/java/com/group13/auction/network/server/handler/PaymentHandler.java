@@ -21,7 +21,9 @@ import com.group13.auction.network.server.session.SessionManager;
 import com.group13.auction.network.server.util.DTOMapper;
 import com.group13.auction.service.PaymentService;
 import com.group13.auction.strategy.AuctionLockRegistry;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -45,7 +47,8 @@ public class PaymentHandler implements PacketHandler {
           PacketType.PAYMENT_REQUEST,
           PacketType.CONFIRM_ITEM_RECEIVED,
           PacketType.SECOND_CHANCE_ACCEPT,
-          PacketType.SECOND_CHANCE_DECLINE);
+          PacketType.SECOND_CHANCE_DECLINE,
+          PacketType.GET_MY_SECOND_CHANCE_OFFERS);
 
   private final PaymentService paymentService;
   private final com.group13.auction.service.AccountService accountService;
@@ -94,6 +97,7 @@ public class PaymentHandler implements PacketHandler {
       case CONFIRM_ITEM_RECEIVED -> handleConfirmItemReceived(session, payload, requestId);
       case SECOND_CHANCE_ACCEPT -> handleSecondChanceAccept(session, payload, requestId);
       case SECOND_CHANCE_DECLINE -> handleSecondChanceDecline(session, payload, requestId);
+      case GET_MY_SECOND_CHANCE_OFFERS -> handleGetMySecondChanceOffers(session, requestId);
       default -> {}
     }
   }
@@ -660,6 +664,33 @@ public class PaymentHandler implements PacketHandler {
       session.send(
           Packet.of(
               PacketType.SYSTEM_ERROR,
+              ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId),
+              requestId));
+    }
+  }
+
+  private void handleGetMySecondChanceOffers(ClientSession session, String requestId) {
+    try {
+      NormalUser user = requireNormalUser(session, requestId);
+      if (user == null) {
+        return;
+      }
+
+      List<PaymentDTOs.SecondChanceOfferDTO> dtos = new ArrayList<>();
+      for (com.group13.auction.model.auction.SecondChanceOffer offer :
+          secondChanceOfferDAO.findPendingOffersByRunnerUpId(user.getId())) {
+        Auction auction = AuctionManager.getInstance().findAuctionById(offer.getAuctionId());
+        dtos.add(DTOMapper.toSecondChanceOfferDTO(auction, offer));
+      }
+
+      session.send(Packet.of(PacketType.GET_MY_SECOND_CHANCE_OFFERS_SUCCESS, dtos, requestId));
+      log.debug(
+          "GET_MY_SECOND_CHANCE_OFFERS: userId={}, count={}", user.getId(), dtos.size());
+    } catch (Exception e) {
+      log.error("Get my second chance offers failed: requestId={}", requestId, e);
+      session.send(
+          Packet.of(
+              PacketType.GET_MY_SECOND_CHANCE_OFFERS_FAILED,
               ErrorDTO.of(ErrorDTO.INTERNAL_ERROR, e.getMessage(), requestId),
               requestId));
     }

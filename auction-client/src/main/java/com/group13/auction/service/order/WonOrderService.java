@@ -149,6 +149,12 @@ public final class WonOrderService {
       return false;
     }
 
+    String winnerId = safe(auction.getWinnerId());
+    if (!winnerId.isBlank()) {
+      return winnerId.equals(currentUserId);
+    }
+
+    // Fallback cho server/client cũ chưa có winnerId — giữ hành vi cũ.
     String leaderId = safe(auction.getCurrentLeaderId());
     return !leaderId.isBlank() && leaderId.equals(currentUserId);
   }

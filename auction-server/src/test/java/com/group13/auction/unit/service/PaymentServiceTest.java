@@ -129,9 +129,10 @@ class PaymentServiceTest {
     Auction auction = finishedAuctionWithPendingWinner();
     SecondChanceOffer offer =
         SecondChanceOffer.create(runnerUp, auction.getId(), 2_500_000L, DEPOSIT);
-    when(auctionWinnerDAO.saveWinner(any())).thenReturn(true);
+    when(auctionWinnerDAO.saveOrReplaceWinner(any())).thenReturn(true);
     paymentService.acceptSecondChanceOffer(offer, auction);
     assertEquals(SecondChanceOffer.OfferStatus.ACCEPTED, offer.getStatus());
+    verify(auctionWinnerDAO).saveOrReplaceWinner(any());
     verify(secondChanceOfferDAO).updateOfferStatus(offer.getId(), "ACCEPTED");
   }
 
