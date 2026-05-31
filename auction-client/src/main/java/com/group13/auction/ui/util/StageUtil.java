@@ -19,6 +19,7 @@ public final class StageUtil {
   public static void configurePrimaryStage(Stage stage) {
     Objects.requireNonNull(stage, "stage must not be null");
     stage.setTitle(UiConstants.APP_TITLE);
+    stage.setResizable(true);
     stage.setMinWidth(UiConstants.MIN_WIDTH);
     stage.setMinHeight(UiConstants.MIN_HEIGHT);
     stage.setWidth(UiConstants.DEFAULT_WIDTH);
