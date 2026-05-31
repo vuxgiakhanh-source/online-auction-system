@@ -936,6 +936,21 @@ class BidServiceTest {
     }
 
     @Test
+    @DisplayName("DB đã JOINED nhưng RAM mất state → restore join, không khóa cọc lần 2")
+    void joinAuction_dbAlreadyJoined_restoresStateWithoutLockingDepositAgain() {
+      freshBidder.addLeftAuction(runningAuction.getId());
+      when(userDAO.isActiveJoinedParticipant(freshBidder.getId(), runningAuction.getId()))
+          .thenReturn(true);
+
+      bidService.joinAuction(freshBidder, runningAuction, observer);
+
+      assertThat(freshBidder.hasJoined(runningAuction.getId())).isTrue();
+      assertThat(freshBidder.hasLeft(runningAuction.getId())).isFalse();
+      verify(walletService, never()).lockDeposit(any(), anyLong(), any());
+      verify(userDAO, never()).saveUserAuctionActivity(anyString(), anyString(), eq("JOINED"));
+    }
+
+    @Test
     @DisplayName("bidder không eligible → ném AuthenticationException ngay tại join")
     void joinAuction_ineligibleBidder_throwsAuthException() {
       // Arrange

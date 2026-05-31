@@ -699,9 +699,9 @@ public class PaymentHandler implements PacketHandler {
   // Helpers
 
   private NormalUser requireNormalUser(ClientSession session, String requestId) {
-    // Luôn đọc balance/lockedDeposit từ DB — tránh object in-memory cũ (vd. sau server restart
-    // hoặc khi deposit dùng addBalance SQL nhưng RAM vẫn giữ số dư cũ) khiến ví hiển thị sai sau
-    // đăng nhập lại.
+    // Luôn đọc balance/lockedDeposit từ DB, nhưng phải giữ participation state.
+    // findUserCoreByUsername() không load joined/watch/left; nếu cache thẳng object này,
+    // GET_WALLET_BALANCE sẽ làm mất trạng thái JOINED trong session.
     NormalUser user = userDAO.findUserCoreByUsername(session.getUsername());
     if (user == null) {
       log.warn(
@@ -715,6 +715,7 @@ public class PaymentHandler implements PacketHandler {
               requestId));
       return null;
     }
+    userDAO.hydrateParticipationState(user);
     AuctionManager.getInstance().refreshUser(user);
     session.setCachedUser(user);
     return user;

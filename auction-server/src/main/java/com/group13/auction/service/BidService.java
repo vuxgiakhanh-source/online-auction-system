@@ -110,14 +110,28 @@ public class BidService implements IBidService {
     if (!(user instanceof NormalUser bidder)) {
       throw new IllegalArgumentException("Chỉ NormalUser mới được tham gia đặt giá.");
     }
-    if (!bidder.tryMarkJoined(auction.getId())) {
-      log.warn("User already joined: userId={}, auctionId={}", bidder.getId(), auction.getId());
+    String auctionId = auction.getId();
+    if (bidder.hasJoined(auctionId)) {
+      log.warn("User already joined: userId={}, auctionId={}", bidder.getId(), auctionId);
+      return;
+    }
+    if (userDAO.isActiveJoinedParticipant(bidder.getId(), auctionId)) {
+      bidder.clearLeftAuction(auctionId);
+      bidder.addJoinedAuction(auctionId);
+      log.warn(
+          "User already joined in DB, restored session state: userId={}, auctionId={}",
+          bidder.getId(),
+          auctionId);
+      return;
+    }
+    if (!bidder.tryMarkJoined(auctionId)) {
+      log.warn("User already joined: userId={}, auctionId={}", bidder.getId(), auctionId);
       return;
     }
     try {
       joinAsNormalUser(bidder, auction, observer);
     } catch (RuntimeException e) {
-      bidder.removeJoinedAuction(auction.getId());
+      bidder.removeJoinedAuction(auctionId);
       throw e;
     }
   }

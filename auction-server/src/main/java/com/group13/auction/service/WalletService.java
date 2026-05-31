@@ -77,6 +77,7 @@ public class WalletService implements IWalletService {
       return;
     }
     user.restoreBalances(fromDb.getBalance(), fromDb.getLockedDeposit());
+    userDAO.hydrateParticipationState(fromDb);
     AuctionManager.getInstance().refreshUser(fromDb);
   }
 
